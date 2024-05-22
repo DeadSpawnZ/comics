@@ -2,7 +2,7 @@
 """Django's command-line utility for administrative tasks."""
 import os
 import sys
-
+from datetime import datetime
 
 def main():
     """Run administrative tasks."""
@@ -15,6 +15,11 @@ def main():
             "available on your PYTHONPATH environment variable? Did you "
             "forget to activate a virtual environment?"
         ) from exc
+
+    now = datetime.now()
+    timestamp = datetime.timestamp(now)
+    os.system(f"mysqldump --result-file=dump{timestamp}.sql")
+
     execute_from_command_line(sys.argv)
 
 
