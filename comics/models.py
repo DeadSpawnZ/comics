@@ -1,46 +1,69 @@
-from django.db import models
+from django.db.models import (
+    CharField,
+    DateField,
+    IntegerField,
+    ManyToManyField,
+    ForeignKey,
+    IntegerField,
+    F,
+    Model,
+    TextChoices,
+    SET_NULL,
+    GeneratedField
+)
 
 # Create your models here.
 
-class Editorial(models.Model):
-    class CountryAbbr(models.TextChoices):
+class Editorial(Model):
+    class CountryAbbr(TextChoices):
         MX = 'MX'
         US = 'US'
-    name = models.CharField(max_length=30)
-    country = models.CharField(max_length=3, choices=CountryAbbr)
-    # titles = models.ManyToManyField(Person, through="Membership")
+    name = CharField(max_length=30, unique=True)
+    country = CharField(max_length=3, choices=CountryAbbr)
+    # titles = ManyToManyField(Person, through="Membership")
 
     def __str__(self):
         return self.name
 
-class Title(models.Model):
-    name = models.CharField(max_length=50)
+class Title(Model):
+    name = CharField(max_length=50, unique=True)
 
     def __str__(self):
         return self.name
 
-class Publishing(models.Model):
-    class LangAbbr(models.TextChoices):
+class Publishing(Model):
+    class LangAbbr(TextChoices):
         EN = 'en'
         ES = 'es'
-    language = models.CharField(max_length=5, choices=LangAbbr)
-    publishing_title = models.CharField(max_length=50)
-    printing = models.CharField(max_length=10)
-    editorial = models.ForeignKey(Editorial, on_delete=models.SET_NULL, null=True)
-    title = models.ForeignKey(Title, on_delete=models.SET_NULL, null=True)
+    language = CharField(max_length=5, choices=LangAbbr)
+    publishing_title = CharField(max_length=50)
+    printing = CharField(max_length=10)
+    editorials = ManyToManyField(Editorial)
+    title = ForeignKey(Title, on_delete=SET_NULL, null=True)
 
     def __str__(self):
-        return self.editorial+'-'+self.title+'-'+self.printing
+        return str(self.title.name)+' ('+str(self.printing)+') '
 
-class Comic(models.Model):
-    name = models.CharField(max_length=100)
-    tag_name = models.CharField(max_length=100)
-    serie = models.CharField(max_length=20)
-    number = models.IntegerField()
-    variant = models.CharField(max_length=30)
-    price = models.IntegerField()
-    release_date = models.DateField()
-    publishing = models.ForeignKey(Publishing, on_delete=models.SET_NULL, null=True)
+class Artist(Model):
+    name = CharField(max_length=100, unique=True)
 
     def __str__(self):
         return self.name
+
+class Comic(Model):
+    name = GeneratedField(
+        expression=F('number'),
+        output_field=CharField(max_length=100),
+        db_persist=True)
+    # name = CharField(max_length=100, default='')
+    tag_name = CharField(max_length=100)
+    serie = CharField(max_length=20)
+    number = IntegerField(primary_key=True)
+    variant = CharField(max_length=30)
+    price = IntegerField()
+    release_date = DateField()
+    publishing = ForeignKey(Publishing, on_delete=SET_NULL, null=True)
+    artists = ManyToManyField(Artist)
+
+    def __str__(self):
+        return self.publishing.publishing_title + '#' + str(self.number)

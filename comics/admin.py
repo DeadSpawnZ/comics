@@ -2,9 +2,10 @@ from django.contrib import admin
 
 # Register your models here.
 
-from .models import Comic, Editorial, Title, Publishing
+from .models import Comic, Editorial, Title, Publishing, Artist
 
 admin.site.register(Comic)
 admin.site.register(Editorial)
 admin.site.register(Publishing)
 admin.site.register(Title)
+admin.site.register(Artist)
