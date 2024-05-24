@@ -5,7 +5,6 @@ import sys
 from datetime import datetime
 
 def main():
-    """Run administrative tasks."""
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'comic.settings')
     try:
         from django.core.management import execute_from_command_line
@@ -16,7 +15,11 @@ def main():
             "forget to activate a virtual environment?"
         ) from exc
 
-    execute_from_command_line(sys.argv)
+    now = datetime.now()
+    timestamp = datetime.timestamp(now)
+    output_filename = f"dump-{timestamp}.json"
+    lista = ['manage.py', 'dumpdata', '--exclude=auth', '--exclude=contenttypes', '-o', output_filename, '--indent=4']
+    execute_from_command_line(lista)
 
 if __name__ == '__main__':
     main()
