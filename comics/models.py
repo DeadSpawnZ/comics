@@ -1,4 +1,6 @@
 from datetime import datetime
+from django.contrib import admin
+from django.db.models.functions import Concat
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.utils.translation import gettext_lazy as _
 from django.db.models import (
@@ -51,13 +53,24 @@ class Publishing(Model):
         ES = 'es'
     language = CharField(max_length=5, choices=LangAbbr)
     publishing_title = CharField(max_length=50)
+    serie = CharField(max_length=20, default='1st')
     editorials = ManyToManyField(Editorial)
     printing = ForeignKey(Printing, on_delete=SET_NULL, null=True)
     title = ForeignKey(Title, on_delete=SET_NULL, null=True)
     year = IntegerField(_('year'), validators=[MinValueValidator(1984), max_value_current_year])
 
     def __str__(self):
-        return str(self.publishing_title)+' ('+str(self.year)+')'
+        return str(self.publishing_title)+' ('+str(self.year)+') ' + self.printing.name + ' Print'
+
+    def save(self, *args, **kwargs):
+        print(self.printing)
+        coincidences = Publishing.objects.filter(publishing_title=self.publishing_title).filter(year=self.year).filter(printing__name__contains=self.printing)
+        if hasattr(self, 'id'):
+            coincidences = coincidences.exclude(id=self.id)
+        if coincidences.exists():
+            msg = 'Duplicated publishing'
+            raise Exception(msg)
+        super(Publishing, self).save(*args, **kwargs)
 
 class Artist(Model):
     name = CharField(max_length=100, unique=True)
@@ -66,13 +79,26 @@ class Artist(Model):
         return self.name
 
 class Comic(Model):
+    publishing = ForeignKey(Publishing, on_delete=SET_NULL, null=True)
     number = IntegerField()
-    serie = CharField(max_length=20, default='1st')
     variant = CharField(max_length=30, default='A')
     price = DecimalField(max_digits=6, decimal_places=2, default=0.00)
     release_date = DateField(default=datetime.now)
-    publishing = ForeignKey(Publishing, on_delete=SET_NULL, null=True)
-    artists = ManyToManyField(Artist)
+    artists = ManyToManyField(Artist, blank=True)
 
     def __str__(self):
-        return self.publishing.publishing_title + ' #' + str(self.number) + self.variant
+        return self.publishing.publishing_title + ' #' + str(self.number)
+
+class Collector(Model):
+    name = CharField(max_length=100, unique=True)
+    comics = ManyToManyField(Comic, through="Collection")
+
+    def __str__(self):
+        return self.name
+
+class Collection(Model):
+    collector_id = ForeignKey(Collector, on_delete=SET_NULL, null=True)
+    comic_id = ForeignKey(Comic, on_delete=SET_NULL, null=True)
+    purchase_price = DecimalField(max_digits=6, decimal_places=2, default=0.00)
+    acquisition_date = DateField(default=datetime.now)
+    dealer = CharField(max_length=100, blank=True)
