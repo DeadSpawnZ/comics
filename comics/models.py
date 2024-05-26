@@ -51,18 +51,19 @@ class Publishing(Model):
     class LangAbbr(TextChoices):
         EN = 'en'
         ES = 'es'
-    language = CharField(max_length=5, choices=LangAbbr)
+    title = ForeignKey(Title, on_delete=SET_NULL, null=True)
     publishing_title = CharField(max_length=50)
     serie = CharField(max_length=20, default='1st')
-    editorials = ManyToManyField(Editorial)
     printing = ForeignKey(Printing, on_delete=SET_NULL, null=True)
-    title = ForeignKey(Title, on_delete=SET_NULL, null=True)
+    language = CharField(max_length=5, choices=LangAbbr)
+    editorials = ManyToManyField(Editorial)
     year = IntegerField(_('year'), validators=[MinValueValidator(1984), max_value_current_year])
 
     def __str__(self):
         return str(self.publishing_title)+' ('+str(self.year)+') ' + self.printing.name + ' Print'
 
     def save(self, *args, **kwargs):
+        self.publishing_title = self.publishing_title.strip()
         print(self.printing)
         coincidences = Publishing.objects.filter(publishing_title=self.publishing_title).filter(year=self.year).filter(printing__name__contains=self.printing)
         if hasattr(self, 'id'):
@@ -87,7 +88,18 @@ class Comic(Model):
     artists = ManyToManyField(Artist, blank=True)
 
     def __str__(self):
-        return self.publishing.publishing_title + ' #' + str(self.number)
+        return self.publishing.publishing_title + ' #' + str(self.number) + ' ' + self.variant
+
+    def save(self, *args, **kwargs):
+        self.variant = self.variant.upper().strip()
+
+        coincidences = Comic.objects.filter(publishing__name__contains=self.publishing).filter(number=self.number).filter(variant=self.variant)
+        if hasattr(self, 'id'):
+            coincidences = coincidences.exclude(id=self.id)
+        if coincidences.exists():
+            msg = 'Duplicated comic'
+            raise Exception(msg)
+        super(Comic, self).save(*args, **kwargs)
 
 class Collector(Model):
     name = CharField(max_length=100, unique=True)
