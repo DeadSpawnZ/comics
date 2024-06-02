@@ -10,13 +10,14 @@ from .models import (
     Artist,
     Printing,
     Collector,
-    Collection
+    Collection,
+    Dealer
 )
 
 admin.site.register(Artist)
 admin.site.register(Printing)
 admin.site.register(Collector)
-admin.site.register(Collection)
+admin.site.register(Dealer)
 
 @admin.register(Title)
 class TitleAdmin(admin.ModelAdmin):
@@ -38,9 +39,9 @@ class PublishingAdmin(admin.ModelAdmin):
 
 @admin.register(Comic)
 class ComicAdmin(admin.ModelAdmin):
-    list_display = ["__str__", "variant", "get_printing", "get_year", "release_date"]
+    list_display = ["__str__", "variant", "get_printing", "get_year", "get_serie", "release_date"]
     ordering = ["publishing__publishing_title", "number", "variant"]
-    search_fields = ["__str__"]
+    search_fields = ["publishing__publishing_title"]
     filter_horizontal = ('artists',)
 
     @admin.display(ordering='publishing__printing', description='printing')
@@ -50,3 +51,13 @@ class ComicAdmin(admin.ModelAdmin):
     @admin.display(ordering='publishing__year', description='year')
     def get_year(self, obj):
         return obj.publishing.year
+
+    @admin.display(ordering='publishing__serie', description='serie')
+    def get_serie(self, obj):
+        return obj.publishing.serie
+
+@admin.register(Collection)
+class CollectionAdmin(admin.ModelAdmin):
+    list_display = ["comic", "purchase_price", "acquisition_date", "dealer"]
+    ordering = ["comic"]
+    search_fields = ["comic"]
