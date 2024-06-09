@@ -17,6 +17,7 @@ from django.db.models import (
     SET_NULL,
     SET_DEFAULT,
     DecimalField,
+    BooleanField
 )
 
 # Create your models here.
@@ -59,7 +60,7 @@ class Publishing(Model):
     language = CharField(max_length=5, choices=LangAbbr)
     editorials = ManyToManyField(Editorial)
     date = DateField(default=datedate.today())
-    year = IntegerField(_('year'), validators=[MinValueValidator(1984), max_value_current_year])
+    year = IntegerField(_('year'), validators=[MinValueValidator(1970), max_value_current_year])
 
     def __str__(self):
         return str(self.publishing_title)+' ('+str(self.year)+') ' + self.serie + ' series ' + self.printing.name + ' Print'
@@ -127,6 +128,8 @@ class Collector(Model):
 
 class Dealer(Model):
     name = CharField(max_length=100)
+    real_name = CharField(max_length=100, blank=True)
+    fb = CharField(max_length=150, blank=True)
 
     def __str__(self):
         return self.name
@@ -137,6 +140,11 @@ class Collection(Model):
     purchase_price = DecimalField(max_digits=6, decimal_places=2, default=0.00)
     acquisition_date = DateField(default=datetime.now)
     dealer = ForeignKey(Dealer, on_delete=SET_NULL, null=True, blank=True)
+    selled = BooleanField(default=False)
+    sale_price = DecimalField(max_digits=6, decimal_places=2, default=0.00)
+
+    def __str__(self):
+        return self.comic.__str__()
 
 class StoryArc(Model):
     name = CharField(max_length=100, unique=True)

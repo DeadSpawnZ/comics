@@ -39,7 +39,7 @@ class PublishingAdmin(admin.ModelAdmin):
 
 @admin.register(Comic)
 class ComicAdmin(admin.ModelAdmin):
-    list_display = ["__str__", "variant", "get_printing", "get_year", "get_serie", "release_date"]
+    list_display = ["__str__", "variant", "get_printing", "get_year", "get_serie", "ratio", "release_date"]
     ordering = ["publishing__publishing_title", "number", "variant"]
     search_fields = ["publishing__publishing_title"]
     filter_horizontal = ('artists',)
@@ -58,6 +58,9 @@ class ComicAdmin(admin.ModelAdmin):
 
 @admin.register(Collection)
 class CollectionAdmin(admin.ModelAdmin):
-    list_display = ["comic", "purchase_price", "acquisition_date", "dealer"]
-    ordering = ["comic"]
-    search_fields = ["comic"]
+    list_display = ["__str__", "purchase_price", "acquisition", "dealer", "selled"]
+    ordering = ["acquisition_date","comic__publishing__publishing_title"]
+    search_fields = ["comic__publishing__publishing_title"]
+
+    def acquisition(self, obj):
+        return obj.acquisition_date.strftime("%d %B %Y / %A")
