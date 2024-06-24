@@ -3,6 +3,7 @@ from django.contrib import admin
 from django.db.models.functions import Concat
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.utils.translation import gettext_lazy as _
+from django.utils.timezone import now
 from django.db.models import (
     CharField,
     DateField,
@@ -31,6 +32,7 @@ class Editorial(Model):
     class CountryAbbr(TextChoices):
         MX = 'MX'
         US = 'US'
+        DE = 'DE'
     name = CharField(max_length=30, unique=True)
     country = CharField(max_length=3, choices=CountryAbbr)
     # titles = ManyToManyField(Person, through="Membership")
@@ -39,7 +41,7 @@ class Editorial(Model):
         return self.name
 
 class Title(Model):
-    name = CharField(max_length=50, unique=True)
+    name = CharField(max_length=70, unique=True)
 
     def __str__(self):
         return self.name
@@ -53,22 +55,33 @@ class Publishing(Model):
     class LangAbbr(TextChoices):
         EN = 'en'
         ES = 'es'
+        DE = 'de'
     title = ForeignKey(Title, on_delete=SET_NULL, null=True)
-    publishing_title = CharField(max_length=50)
+    publishing_title = CharField(max_length=70)
     serie = CharField(max_length=20, default='1st')
     printing = ForeignKey(Printing, on_delete=SET_NULL, null=True)
     language = CharField(max_length=5, choices=LangAbbr)
     editorials = ManyToManyField(Editorial)
-    date = DateField(default=datedate.today())
+    date = DateField(default=now().date())
     year = IntegerField(_('year'), validators=[MinValueValidator(1970), max_value_current_year])
 
     def __str__(self):
-        return str(self.publishing_title)+' ('+str(self.year)+') ' + self.serie + ' series ' + self.printing.name + ' Print'
+        return str(self.publishing_title)+' ('+str(self.year)+') ' + self.serie + ' series ' + self.printing.name + ' Print' + ' ' + self.language.upper()
 
     def save(self, *args, **kwargs):
         self.publishing_title = self.publishing_title.strip()
         print(self.printing)
-        coincidences = Publishing.objects.filter(publishing_title=self.publishing_title).filter(year=self.year).filter(serie=self.serie).filter(printing__name__contains=self.printing)
+        coincidences = Publishing.objects.filter(
+            publishing_title=self.publishing_title
+        ).filter(
+            year=self.year
+        ).filter(
+            serie=self.serie
+        ).filter(
+            printing__name__contains=self.printing
+        ).filter(
+            language=self.language
+        )
         if hasattr(self, 'id'):
             coincidences = coincidences.exclude(id=self.id)
         if coincidences.exists():
@@ -106,12 +119,13 @@ class Comic(Model):
     artists = ManyToManyField(Artist, blank=True)
 
     def __str__(self):
-        return self.publishing.publishing_title + ' #' + str(self.number) + ' ' + self.variant
+        return self.publishing.publishing_title + ' #' + str(self.number) + ' ' + self.variant + ' ' + self.publishing.serie + ' ' + self.publishing.printing.name + ' ' + self.publishing.language.upper()
 
     def save(self, *args, **kwargs):
         self.variant = self.variant.upper().strip()
 
-        coincidences = Comic.objects.filter(publishing__publishing_title__contains=self.publishing.publishing_title).filter(number=self.number).filter(variant=self.variant)
+        coincidences = Comic.objects.filter(publishing__publishing_title__exact=self.publishing.publishing_title).filter(number=self.number).filter(variant=self.variant)
+
         if hasattr(self, 'id'):
             coincidences = coincidences.exclude(id=self.id)
         if coincidences.exists():
