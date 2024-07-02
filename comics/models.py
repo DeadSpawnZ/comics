@@ -17,6 +17,7 @@ from django.db.models import (
     TextChoices,
     SET_NULL,
     SET_DEFAULT,
+    PROTECT,
     DecimalField,
     BooleanField
 )
@@ -33,6 +34,7 @@ class Editorial(Model):
         MX = 'MX'
         US = 'US'
         DE = 'DE'
+        ES = 'ES'
     name = CharField(max_length=30, unique=True)
     country = CharField(max_length=3, choices=CountryAbbr)
     # titles = ManyToManyField(Person, through="Membership")
@@ -56,10 +58,10 @@ class Publishing(Model):
         EN = 'en'
         ES = 'es'
         DE = 'de'
-    title = ForeignKey(Title, on_delete=SET_NULL, null=True)
+    title = ForeignKey(Title, on_delete=PROTECT, null=True)
     publishing_title = CharField(max_length=70)
     serie = CharField(max_length=20, default='1st')
-    printing = ForeignKey(Printing, on_delete=SET_NULL, null=True)
+    printing = ForeignKey(Printing, on_delete=PROTECT, null=True)
     language = CharField(max_length=5, choices=LangAbbr)
     editorials = ManyToManyField(Editorial)
     date = DateField(default=now().date())
@@ -70,7 +72,7 @@ class Publishing(Model):
 
     def save(self, *args, **kwargs):
         self.publishing_title = self.publishing_title.strip()
-        print(self.printing)
+
         coincidences = Publishing.objects.filter(
             publishing_title=self.publishing_title
         ).filter(
@@ -82,6 +84,7 @@ class Publishing(Model):
         ).filter(
             language=self.language
         )
+
         if hasattr(self, 'id'):
             coincidences = coincidences.exclude(id=self.id)
         if coincidences.exists():
@@ -96,7 +99,7 @@ class Artist(Model):
         return self.name
 
 class Comic(Model):
-    publishing = ForeignKey(Publishing, on_delete=SET_NULL, null=True)
+    publishing = ForeignKey(Publishing, on_delete=PROTECT, null=True)
     number = IntegerField()
     variant = CharField(max_length=30, default='A', blank=True)
     ratio = CharField(max_length=10, blank=True, validators=[
@@ -113,18 +116,38 @@ class Comic(Model):
             code='invalid_limit'
         ),
     ])
-    price = DecimalField(max_digits=6, decimal_places=2, default=0.00)
+    price = DecimalField(max_digits=8, decimal_places=2, default=0.00)
     release_date = DateField(default=datetime.now)
     details = TextField(max_length=500, blank=True)
     artists = ManyToManyField(Artist, blank=True)
 
     def __str__(self):
-        return self.publishing.publishing_title + ' #' + str(self.number) + ' ' + self.variant + ' ' + self.publishing.serie + ' ' + self.publishing.printing.name + ' ' + self.publishing.language.upper()
+        return """{publishing_title} #{number} {variant} {serie} {printing} {language} {year}""".format(
+            publishing_title=self.publishing.publishing_title,
+            number=str(self.number),
+            variant=self.variant,
+            serie=self.publishing.serie,
+            printing=self.publishing.printing.name,
+            language=self.publishing.language.upper(),
+            year=str(self.publishing.year)
+        )
 
     def save(self, *args, **kwargs):
         self.variant = self.variant.upper().strip()
 
-        coincidences = Comic.objects.filter(publishing__publishing_title__exact=self.publishing.publishing_title).filter(number=self.number).filter(variant=self.variant)
+        coincidences = Comic.objects.filter(
+            publishing__publishing_title__exact=self.publishing.publishing_title
+        ).filter(
+            number=self.number
+        ).filter(
+            variant=self.variant
+        ).filter(
+            publishing__serie__exact=self.publishing.serie
+        ).filter(
+            publishing__printing__exact=self.publishing.printing
+        ).filter(
+            publishing__year__exact=self.publishing.year
+        )
 
         if hasattr(self, 'id'):
             coincidences = coincidences.exclude(id=self.id)
@@ -149,16 +172,18 @@ class Dealer(Model):
         return self.name
 
 class Collection(Model):
-    collector = ForeignKey(Collector, on_delete=SET_NULL, null=True)
-    comic = ForeignKey(Comic, on_delete=SET_NULL, null=True)
-    purchase_price = DecimalField(max_digits=6, decimal_places=2, default=0.00)
+    collector = ForeignKey(Collector, on_delete=PROTECT, null=True)
+    comic = ForeignKey(Comic, on_delete=PROTECT, null=True)
+    purchase_price = DecimalField(max_digits=8, decimal_places=2, default=0.00)
     acquisition_date = DateField(default=datetime.now)
-    dealer = ForeignKey(Dealer, on_delete=SET_NULL, null=True, blank=True)
+    dealer = ForeignKey(Dealer, on_delete=PROTECT, null=True, blank=True)
     selled = BooleanField(default=False)
+    buyer = CharField(max_length=100, blank=True)
+    sale_date = DateField(blank=True, null=True)
     sale_price = DecimalField(max_digits=6, decimal_places=2, default=0.00)
 
     def __str__(self):
-        return self.comic.__str__()
+        return self.comic.publishing.publishing_title
 
 class StoryArc(Model):
     name = CharField(max_length=100, unique=True)

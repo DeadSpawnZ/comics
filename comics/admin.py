@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.utils.html import format_html
 
 # Register your models here.
 
@@ -36,17 +37,22 @@ class EditorialAdmin(admin.ModelAdmin):
 
 @admin.register(Publishing)
 class PublishingAdmin(admin.ModelAdmin):
-    list_display = ["__str__", "title", "year", "serie", "language"]
+    list_display = ["publishing_title", "title", "serie", "get_printing", "year", "language"]
     ordering = ["publishing_title"]
     search_fields = ["publishing_title"]
     filter_horizontal = ('editorials',)
 
+    @admin.display(ordering='printing', description='printing')
+    def get_printing(self, obj):
+        return obj.printing
+
 @admin.register(Comic)
 class ComicAdmin(admin.ModelAdmin):
-    list_display = ["__str__", "number", "variant", "get_printing", "get_year", "get_serie", "ratio", "release_date"]
+    list_display = ["get_comic", "number", "variant", "get_serie", "get_printing", "get_year", "ratio", "country"]
     ordering = ["publishing__publishing_title", "number", "variant"]
     search_fields = ["publishing__publishing_title"]
     filter_horizontal = ('artists',)
+    readonly_fields = ['country']
 
     @admin.display(ordering='publishing__printing', description='printing')
     def get_printing(self, obj):
@@ -60,9 +66,25 @@ class ComicAdmin(admin.ModelAdmin):
     def get_serie(self, obj):
         return obj.publishing.serie
 
+    @admin.display(ordering='publishing__publishing_title', description='comic')
+    def get_comic(self, obj):
+        return obj.publishing.publishing_title
+
+    def country(self, obj):
+        publishing = obj.publishing
+        editorials = Editorial.objects.filter(
+            publishing=publishing)
+        first_editorial = editorials[0] if editorials else None
+        if first_editorial:
+            country_code = first_editorial.country.lower()
+            icon_url = "/static/"+country_code+".png"
+            return format_html('<img src="{}" style="width:18px">', icon_url)
+        else:
+            None
+
 @admin.register(Collection)
 class CollectionAdmin(admin.ModelAdmin):
-    list_display = ["__str__", "get_number", "purchase_price", "acquisition", "dealer", "selled"]
+    list_display = ["__str__", "get_number", "get_variant", "purchase_price", "acquisition", "dealer", "get_serie"]
     ordering = ["comic__publishing__publishing_title", "comic__number", "comic__variant", "acquisition_date"]
     search_fields = ["comic__publishing__publishing_title"]
 
@@ -72,3 +94,11 @@ class CollectionAdmin(admin.ModelAdmin):
     @admin.display(ordering='comic__number', description='number')
     def get_number(self, obj):
         return obj.comic.number
+
+    @admin.display(ordering='comic__variant', description='variant')
+    def get_variant(self, obj):
+        return obj.comic.variant
+
+    @admin.display(ordering='comic__publishing__serie', description='serie')
+    def get_serie(self, obj):
+        return obj.comic.publishing.serie
