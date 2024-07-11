@@ -84,11 +84,12 @@ class ComicAdmin(admin.ModelAdmin):
 
 @admin.register(Collection)
 class CollectionAdmin(admin.ModelAdmin):
-    list_display = ["__str__", "get_number", "get_variant", "purchase_price", "acquisition", "dealer", "get_serie"]
+    list_display = ["__str__", "get_number", "get_variant", "purchase_price", "get_acquisition", "dealer", "get_serie"]
     ordering = ["comic__publishing__publishing_title", "comic__number", "comic__variant", "acquisition_date"]
     search_fields = ["comic__publishing__publishing_title"]
 
-    def acquisition(self, obj):
+    @admin.display(ordering='acquisition_date', description='acquisition')
+    def get_acquisition(self, obj):
         return obj.acquisition_date.strftime("%d %B %Y / %A")
 
     @admin.display(ordering='comic__number', description='number')
