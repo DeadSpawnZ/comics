@@ -1,3 +1,4 @@
 *.env
 /mysql_volume
 dump*.json
+/media/
