@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    {% if publishing_list %}
+        <ul>
+        {% for publishing in publishing_list %}
+            <li><a href="/publishing/{{ publishing.id }}/">{{ publishing.publishing_title }} 
+            ( {{ publishing.year }} ) 
+            {{ publishing.serie }} series
+            {{ publishing.printing }} print
+            {{ publishing.language }}
+            </a></li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>No publishings are available.</p>
+    {% endif %}
+{% endblock %}
