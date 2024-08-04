@@ -1,18 +1,38 @@
-{% extends 'base.html' %}
-
-{% block content %}
-    {% if publishing_list %}
-        <ul>
-        {% for publishing in publishing_list %}
-            <li><a href="/publishing/{{ publishing.id }}/">{{ publishing.publishing_title }} 
-            ( {{ publishing.year }} ) 
-            {{ publishing.serie }} series
-            {{ publishing.printing }} print
-            {{ publishing.language }}
-            </a></li>
+{% extends 'base.html' %} {% block content %} {% if publishing_list %}
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th scope="col">#</th>
+      <th scope="col">Publishing</th>
+      <th scope="col">Editorial</th>
+      <th scope="col">Country</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for publishing in publishing_list %}
+    <tr>
+      <th scope="row">{{ forloop.counter }}</th>
+      <td>
+        <a href="/publishing/{{ publishing.id }}/"
+          >{{ publishing.publishing_title }} ( {{ publishing.year }} ) {{ publishing.serie }} series 
+          {{ publishing.print }} print {{ publishing.language }}
+        </a>
+      </td>
+      <td>
+        {% for editorial in publishing.editorials %} {{ editorial }} 
+            {% if forloop.counter < publishing.editorials|length %} / 
+            {% endif %}
         {% endfor %}
-        </ul>
-    {% else %}
-        <p>No publishings are available.</p>
-    {% endif %}
-{% endblock %}
+      </td>
+      <td>
+        {% if publishing.country %}
+            <img src="/static/{{ publishing.country }}.png" style="width:18px">
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>No publishings are available.</p>
+{% endif %} {% endblock %}
