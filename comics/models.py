@@ -73,7 +73,7 @@ class Publishing(Model):
     printing = ForeignKey(Printing, on_delete=PROTECT, null=True)
     language = CharField(max_length=5, choices=LangAbbr)
     editorials = ManyToManyField(Editorial)
-    date = DateField(default=now().date())
+    date = DateField(default=datetime.now)
     year = IntegerField(
         _("year"), validators=[MinValueValidator(1970), max_value_current_year]
     )
@@ -247,11 +247,16 @@ class Dealer(Model):
 
 
 class Collection(Model):
+    TITLE_CHOICES = [
+        ("buying", "Buying"),
+        ("selling", "Selling"),
+    ]
     collector = ForeignKey(Collector, on_delete=PROTECT, null=True)
     comic = ForeignKey(Comic, on_delete=PROTECT, null=True)
-    purchase_price = DecimalField(max_digits=8, decimal_places=2, default=0.00)
-    acquisition_date = DateField(default=datetime.now)
-    dealer = ForeignKey(Dealer, on_delete=PROTECT, null=True, blank=True)
+    amount = DecimalField(max_digits=8, decimal_places=2, default=0.00)
+    trade_date = DateField(default=datetime.now)
+    trade_type = CharField(max_length=50, choices=TITLE_CHOICES, default="buying")
+    participant = ForeignKey(Dealer, on_delete=PROTECT, null=True, blank=True)
     selled = BooleanField(default=False)
     buyer = CharField(max_length=100, blank=True)
     sale_date = DateField(blank=True, null=True)
