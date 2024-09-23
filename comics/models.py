@@ -261,6 +261,7 @@ class Collection(Model):
     buyer = CharField(max_length=100, blank=True)
     sale_date = DateField(blank=True, null=True)
     sale_price = DecimalField(max_digits=6, decimal_places=2, default=0.00)
+    valuation = DecimalField(max_digits=4, decimal_places=2, default=0.00)
 
     def __str__(self):
         return self.comic.publishing.publishing_title
