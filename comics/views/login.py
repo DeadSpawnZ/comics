@@ -7,8 +7,6 @@ from django.contrib.auth import login
 def login_view(request):
     username = request.POST.get("username")
     password = request.POST.get("password")
-    print(username)
-    print(password)
     user = authenticate(username=username, password=password)
     if user is not None:
         login(request, user)

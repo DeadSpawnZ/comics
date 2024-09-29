@@ -32,12 +32,10 @@ def collectable(request, collectable_id):
 def all(request):
     try:
         user_id = request.user.id
-        username = request.user.username
         user = User.objects.get(id=user_id)
-        print(user)
-        collection_list = Collection.objects.filter(collector=user)
-        print(collection_list)
-        print("wtf")
+        collection_list = Collection.objects.filter(collector=user).order_by(
+            "comic__publishing__publishing_title"
+        )
         context = {"collection_list": collection_list}
         return render(request, "collection.html", context)
     except Exception as ex:
