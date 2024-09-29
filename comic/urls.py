@@ -19,15 +19,17 @@ from django.contrib import admin
 from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
-from comics.views import collection, publishing
+from comics.views import collection, publishing, login
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("collection/", collection.all, name="collectable_all"),
     path(
         "collection/<int:collectable_id>/", collection.collectable, name="collectable"
     ),
     path("publishing/", publishing.all, name="all"),
     path("publishing/<int:publishing_id>/", publishing.publishing, name="publishing"),
+    path("login/", login.login_view, name="login"),
 ]
 
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

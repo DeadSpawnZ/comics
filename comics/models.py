@@ -1,6 +1,7 @@
 from datetime import datetime, date as datedate
 from django.contrib import admin
 from django.db.models.functions import Concat
+from django.contrib.auth.models import User
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.utils.translation import gettext_lazy as _
 from django.utils.timezone import now
@@ -48,7 +49,7 @@ class Editorial(Model):
 
 
 class Title(Model):
-    name = CharField(max_length=70, unique=True)
+    name = CharField(max_length=100, unique=True)
 
     def __str__(self):
         return self.name
@@ -68,7 +69,7 @@ class Publishing(Model):
         DE = "de"
 
     title = ForeignKey(Title, on_delete=PROTECT, null=True)
-    publishing_title = CharField(max_length=70)
+    publishing_title = CharField(max_length=100)
     serie = CharField(max_length=20, default="1st")
     printing = ForeignKey(Printing, on_delete=PROTECT, null=True)
     language = CharField(max_length=5, choices=LangAbbr)
@@ -133,7 +134,7 @@ class Comic(Model):
         blank=True,
         validators=[
             RegexValidator(
-                regex="^[0-9]{1,3}+[\:][0-9]{1,3}$",
+                regex="^[0-9]{1,3}+:[0-9]{1,3}$",
                 message="Ratio must be a valid relation Example: (1:100)",
                 code="invalid_ratio",
             ),
@@ -229,14 +230,6 @@ class Comic(Model):
         self.image = new_image
 
 
-class Collector(Model):
-    name = CharField(max_length=100, unique=True)
-    comics = ManyToManyField(Comic, through="Collection")
-
-    def __str__(self):
-        return self.name
-
-
 class Dealer(Model):
     name = CharField(max_length=100)
     real_name = CharField(max_length=100, blank=True)
@@ -251,7 +244,7 @@ class Collection(Model):
         ("buying", "Buying"),
         ("selling", "Selling"),
     ]
-    collector = ForeignKey(Collector, on_delete=PROTECT, null=True)
+    collector = ForeignKey(User, on_delete=PROTECT)
     comic = ForeignKey(Comic, on_delete=PROTECT, null=True)
     amount = DecimalField(max_digits=8, decimal_places=2, default=0.00)
     trade_date = DateField(default=datetime.now)
@@ -262,9 +255,26 @@ class Collection(Model):
     sale_date = DateField(blank=True, null=True)
     sale_price = DecimalField(max_digits=6, decimal_places=2, default=0.00)
     valuation = DecimalField(max_digits=4, decimal_places=2, default=0.00)
+    signatures = ManyToManyField(Artist, blank=True, through="Signature")
 
     def __str__(self):
-        return self.comic.publishing.publishing_title
+        return self.comic.__str__()
+
+
+class Signature(Model):
+    artist = ForeignKey(Artist, on_delete=PROTECT)
+    collectable = ForeignKey(Collection, on_delete=PROTECT)
+    date = DateField(default=datetime.now)
+    has_coa = BooleanField(default=False)
+
+    def __str__(self):
+        return (
+            self.collectable.collector.__str__()
+            + " - "
+            + self.collectable.comic.__str__()
+            + " - "
+            + self.artist.__str__()
+        )
 
 
 class StoryArc(Model):

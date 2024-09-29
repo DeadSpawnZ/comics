@@ -10,14 +10,14 @@ from .models import (
     Publishing,
     Artist,
     Printing,
-    Collector,
     Collection,
     Dealer,
+    Signature,
 )
 
 admin.site.register(Artist)
 admin.site.register(Printing)
-admin.site.register(Collector)
+admin.site.register(Signature)
 
 
 @admin.register(Dealer)
@@ -121,6 +121,7 @@ class CollectionAdmin(admin.ModelAdmin):
         "trade_date",
     ]
     search_fields = ["comic__publishing__publishing_title"]
+    # filter_horizontal = ("signatures",)
 
     @admin.display(ordering="trade_date", description="acquisition")
     def get_acquisition(self, obj):

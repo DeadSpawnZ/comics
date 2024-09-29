@@ -1,8 +1,9 @@
 from django.db.models import F
 from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, render, redirect
 from django.template import loader
 from django.urls import reverse
+from django.contrib.auth import authenticate
 
 from comics.models import Publishing, Comic, Editorial, Printing
 
