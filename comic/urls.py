@@ -30,6 +30,7 @@ urlpatterns = [
     path("publishing/", publishing.all, name="all"),
     path("publishing/<int:publishing_id>/", publishing.publishing, name="publishing"),
     path("login/", login.login_view, name="login"),
+    path("logout/", login.logout_view, name="logout"),
 ]
 
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
