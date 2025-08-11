@@ -51,6 +51,13 @@ class Editorial(Model):
 class Title(Model):
     name = CharField(max_length=100, unique=True)
 
+    def process_name(self):
+        self.name = self.name.strip()
+
+    def save(self, *args, **kwargs):
+        self.process_name()
+        super(Title, self).save(*args, **kwargs)
+
     def __str__(self):
         return self.name
 
@@ -76,7 +83,10 @@ class Publishing(Model):
     editorials = ManyToManyField(Editorial)
     date = DateField(default=datetime.now)
     year = IntegerField(
-        _("year"), validators=[MinValueValidator(1970), max_value_current_year]
+        _("year"),
+        validators=[MinValueValidator(1970), max_value_current_year],
+        blank=True,
+        null=True,
     )
 
     def __str__(self):
@@ -98,9 +108,14 @@ class Publishing(Model):
             + self.language.upper()
         )
 
-    def save(self, *args, **kwargs):
+    def process_year(self):
+        if self.date and self.year is None:
+            self.year = self.date.year
+
+    def process_publishing_title(self):
         self.publishing_title = self.publishing_title.strip()
 
+    def validate_duplicates(self):
         coincidences = (
             Publishing.objects.filter(publishing_title=self.publishing_title)
             .filter(year=self.year)
@@ -114,6 +129,12 @@ class Publishing(Model):
         if coincidences.exists():
             msg = "Duplicated publishing"
             raise Exception(msg)
+
+    def save(self, *args, **kwargs):
+        self.process_year()
+        self.process_publishing_title()
+
+        self.validate_duplicates()
         super(Publishing, self).save(*args, **kwargs)
 
 
@@ -182,9 +203,7 @@ class Comic(Model):
         self.variant = self.variant.upper().strip()
 
         coincidences = (
-            Comic.objects.filter(
-                publishing__publishing_title__exact=self.publishing.publishing_title
-            )
+            Comic.objects.filter(publishing__publishing_title__exact=self.publishing.publishing_title)
             .filter(number=self.number)
             .filter(variant=self.variant)
             .filter(publishing__serie__exact=self.publishing.serie)
@@ -250,12 +269,9 @@ class Collection(Model):
     trade_date = DateField(default=datetime.now)
     trade_type = CharField(max_length=50, choices=TITLE_CHOICES, default="buying")
     participant = ForeignKey(Dealer, on_delete=PROTECT, null=True, blank=True)
-    selled = BooleanField(default=False)
-    buyer = CharField(max_length=100, blank=True)
-    sale_date = DateField(blank=True, null=True)
-    sale_price = DecimalField(max_digits=6, decimal_places=2, default=0.00)
     valuation = DecimalField(max_digits=4, decimal_places=2, default=0.00)
     signatures = ManyToManyField(Artist, blank=True, through="Signature")
+    previous_trade = ForeignKey("self", on_delete=SET_NULL, null=True, blank=True, related_name="next_trades")
 
     def __str__(self):
         return self.comic.__str__()

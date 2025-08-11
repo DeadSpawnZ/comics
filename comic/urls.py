@@ -24,13 +24,13 @@ from comics.views import collection, publishing, login
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("collection/", collection.all, name="collectable_all"),
-    path(
-        "collection/<int:collectable_id>/", collection.collectable, name="collectable"
-    ),
+    path("collection/<int:collectable_id>/", collection.collectable, name="collectable"),
     path("publishing/", publishing.all, name="all"),
     path("publishing/<int:publishing_id>/", publishing.publishing, name="publishing"),
     path("login/", login.login_view, name="login"),
     path("logout/", login.logout_view, name="logout"),
+    path("ajax/get-publishing-date/<int:publishing_id>/", publishing.get_publishing_date, name="get_publishing_date"),
+    path("ajax/get-comics/<int:publishing_id>/", publishing.get_comics_by_publishing, name="get_comics_by_publishing"),
 ]
 
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

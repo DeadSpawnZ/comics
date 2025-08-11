@@ -14,6 +14,7 @@ from .models import (
     Dealer,
     Signature,
 )
+from .forms import CollectionForm
 
 admin.site.register(Artist)
 admin.site.register(Printing)
@@ -60,6 +61,9 @@ class PublishingAdmin(admin.ModelAdmin):
 
 @admin.register(Comic)
 class ComicAdmin(admin.ModelAdmin):
+    class Media:
+        js = ("js/fill_release_date.js",)
+
     list_display = [
         "get_comic",
         "number",
@@ -105,6 +109,11 @@ class ComicAdmin(admin.ModelAdmin):
 
 @admin.register(Collection)
 class CollectionAdmin(admin.ModelAdmin):
+    class Media:
+        js = ("js/filter_comics_by_publishing.js",)
+
+    form = CollectionForm
+
     list_display = [
         "__str__",
         "get_number",
@@ -122,6 +131,7 @@ class CollectionAdmin(admin.ModelAdmin):
     ]
     search_fields = ["comic__publishing__publishing_title"]
     # filter_horizontal = ("signatures",)
+    list_filter = ["participant"]
 
     @admin.display(ordering="trade_date", description="acquisition")
     def get_acquisition(self, obj):

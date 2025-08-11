@@ -84,7 +84,7 @@ DATABASES = {
         "NAME": "mycomic",
         "USER": "root",
         "PASSWORD": "1234",
-        "HOST": "b162ebf00efd",
+        "HOST": "db",
         "PORT": "3306",
     }
 }
