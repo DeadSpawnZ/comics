@@ -114,6 +114,37 @@ class CollectionAdmin(admin.ModelAdmin):
 
     form = CollectionForm
 
+    fieldsets = (
+        ("Collector Information", {"fields": ("collector",)}),
+        (
+            "Comic Info",
+            {
+                "fields": (
+                    "publishing",
+                    "comic",
+                )
+            },
+        ),
+        (
+            "Trade Details",
+            {
+                "fields": (
+                    "amount",
+                    "trade_date",
+                    "trade_type",
+                    "participant",
+                )
+            },
+        ),
+        (
+            "Extras",
+            {
+                "fields": ("valuation", "previous_trade"),
+                "classes": ("collapse",),
+            },
+        ),
+    )
+
     list_display = [
         "__str__",
         "get_number",
