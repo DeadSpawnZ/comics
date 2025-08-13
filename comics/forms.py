@@ -33,10 +33,14 @@ class CollectionForm(forms.ModelForm):
         if "publishing" in self.data:
             try:
                 publishing_id = int(self.data.get("publishing"))
-                self.fields["comic"].queryset = Comic.objects.filter(publishing_id=publishing_id).order_by("number")
+                self.fields["comic"].queryset = Comic.objects.filter(publishing_id=publishing_id).order_by(
+                    "number", "variant"
+                )
             except (ValueError, TypeError):
                 pass
         elif self.instance.pk and self.instance.comic:
             publishing_instance = self.instance.comic.publishing
-            self.fields["comic"].queryset = Comic.objects.filter(publishing=publishing_instance).order_by("number")
+            self.fields["comic"].queryset = Comic.objects.filter(publishing=publishing_instance).order_by(
+                "number", "variant"
+            )
             self.initial["publishing"] = publishing_instance

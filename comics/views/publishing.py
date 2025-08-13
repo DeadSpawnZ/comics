@@ -53,7 +53,7 @@ def get_publishing_date(request, publishing_id):
 
 def get_comics_by_publishing(request, publishing_id):
     try:
-        comics = Comic.objects.filter(publishing_id=publishing_id).order_by("number")
+        comics = Comic.objects.filter(publishing_id=publishing_id).order_by("number", "variant")
         data = [{"id": comic.id, "text": str(comic)} for comic in comics]
         return JsonResponse({"results": data})
     except Comic.DoesNotExist:
