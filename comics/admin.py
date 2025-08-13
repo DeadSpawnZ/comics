@@ -53,6 +53,7 @@ class PublishingAdmin(admin.ModelAdmin):
         "get_printing",
         "year",
         "language",
+        "format",
     ]
     ordering = ["publishing_title"]
     search_fields = ["publishing_title"]
@@ -124,42 +125,20 @@ class CollectionAdmin(admin.ModelAdmin):
 
     form = CollectionForm
     change_list_template = "admin/collection_change_list.html"
+    list_select_related = ["comic", "comic__publishing", "participant"]
 
     fieldsets = (
         ("Collector Information", {"fields": ("collector",)}),
-        (
-            "Comic Info",
-            {
-                "fields": (
-                    "publishing",
-                    "comic",
-                )
-            },
-        ),
-        (
-            "Trade Details",
-            {
-                "fields": (
-                    "amount",
-                    "trade_date",
-                    "trade_type",
-                    "participant",
-                )
-            },
-        ),
-        (
-            "Extras",
-            {
-                "fields": ("valuation", "previous_trade"),
-                "classes": ("collapse",),
-            },
-        ),
+        ("Comic Info", {"fields": ("publishing", "comic")}),
+        ("Trade Details", {"fields": ("amount", "trade_date", "trade_type", "participant")}),
+        ("Extras", {"fields": ("valuation", "previous_trade"), "classes": ("collapse",)}),
     )
 
     list_display = [
-        "__str__",
+        "get_publishing_title",
         "get_number",
         "get_variant",
+        "get_format",
         "amount",
         "get_acquisition",
         "participant",
@@ -172,24 +151,37 @@ class CollectionAdmin(admin.ModelAdmin):
         "trade_date",
     ]
     search_fields = ["comic__publishing__publishing_title"]
-    # filter_horizontal = ("signatures",)
     list_filter = ["participant"]
+
+    def _from_comic(self, obj, attr):
+        return getattr(obj.comic, attr, None)
+
+    def _from_publishing(self, obj, attr):
+        return getattr(obj.comic.publishing, attr, None)
+
+    @admin.display(ordering="comic__publishing__publishing_title", description="Publishing Title")
+    def get_publishing_title(self, obj):
+        return self._from_publishing(obj, "publishing_title")
+
+    @admin.display(ordering="comic__number", description="number")
+    def get_number(self, obj):
+        return self._from_comic(obj, "number")
+
+    @admin.display(ordering="comic__variant", description="variant")
+    def get_variant(self, obj):
+        return self._from_comic(obj, "variant")
+
+    @admin.display(ordering="comic__publishing__format", description="format")
+    def get_format(self, obj):
+        return obj.comic.publishing.get_format_display()
 
     @admin.display(ordering="trade_date", description="acquisition")
     def get_acquisition(self, obj):
         return obj.trade_date.strftime("%d %B %Y / %A")
 
-    @admin.display(ordering="comic__number", description="number")
-    def get_number(self, obj):
-        return obj.comic.number
-
-    @admin.display(ordering="comic__variant", description="variant")
-    def get_variant(self, obj):
-        return obj.comic.variant
-
     @admin.display(ordering="comic__publishing__serie", description="serie")
     def get_serie(self, obj):
-        return obj.comic.publishing.serie
+        return self._from_publishing(obj, "serie")
 
     def get_urls(self):
         urls = super().get_urls()
@@ -208,13 +200,13 @@ class CollectionAdmin(admin.ModelAdmin):
 
         labels = [entry["month"].strftime("%B %Y") for entry in data]
         totals = [float(entry["total"]) for entry in data]
-        total_amount = Collection.objects.aggregate(total=Sum("amount"))["total"] or 0
+        total_amount = float(sum(entry["total"] or 0 for entry in data))
 
-        context = dict(
-            self.admin_site.each_context(request),
-            labels=labels,
-            totals=totals,
-            total_amount=total_amount,
-            title="Collection Stats",
-        )
+        context = {
+            **self.admin_site.each_context(request),
+            "labels": labels,
+            "totals": totals,
+            "total_amount": total_amount,
+            "title": "Collection Stats",
+        }
         return TemplateResponse(request, "admin/collection_stats.html", context)
