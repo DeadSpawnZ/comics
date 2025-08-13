@@ -67,7 +67,29 @@ class PublishingAdmin(admin.ModelAdmin):
 @admin.register(Comic)
 class ComicAdmin(admin.ModelAdmin):
     class Media:
-        js = ("js/fill_release_date.js",)
+        js = (
+            "js/fill_release_date.js",
+            "js/thumbnail_preview.js",
+        )
+
+    fieldsets = (
+        (
+            "Comic Info",
+            {
+                "fields": (
+                    "publishing",
+                    "number",
+                    "variant",
+                    "ratio",
+                    "limited_to",
+                    "price",
+                    "release_date",
+                )
+            },
+        ),
+        ("Images", {"fields": ("image", "thumbnail_preview", "thumbnail")}),
+        ("Extras", {"fields": ("details", "artists"), "classes": ("collapse",)}),
+    )
 
     list_display = [
         "get_comic",
@@ -83,7 +105,7 @@ class ComicAdmin(admin.ModelAdmin):
     ordering = ["publishing__publishing_title", "number", "variant"]
     search_fields = ["publishing__publishing_title"]
     filter_horizontal = ("artists",)
-    readonly_fields = ["country"]
+    readonly_fields = ["country", "thumbnail_preview"]
     list_select_related = ("publishing",)  # Optimize queries by selecting related publishing
 
     def _from_publishing(self, obj, attr):
@@ -116,6 +138,12 @@ class ComicAdmin(admin.ModelAdmin):
             icon_url = f"/static/{editorial.country.lower()}.png"
             return format_html('<img src="{}" style="width:18px">', icon_url)
         return "-"
+
+    @admin.display(description="Thumbnail Preview")
+    def thumbnail_preview(self, obj):
+        if obj.thumbnail and obj.thumbnail.url:
+            return format_html('<img id="thumb-preview" src="{}" style="max-height: 200px;" />', obj.thumbnail.url)
+        return format_html('<img id="thumb-preview" style="max-height: 200px; display:none;" />')
 
 
 @admin.register(Collection)

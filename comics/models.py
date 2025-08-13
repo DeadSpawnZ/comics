@@ -1,6 +1,8 @@
-from datetime import datetime, date as datedate
-from django.contrib import admin
-from django.db.models.functions import Concat
+import io
+import datetime
+from PIL import Image
+from django.core.files.uploadedfile import InMemoryUploadedFile
+from datetime import datetime
 from django.contrib.auth.models import User
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.utils.translation import gettext_lazy as _
@@ -13,7 +15,6 @@ from django.db.models import (
     ManyToManyField,
     ForeignKey,
     IntegerField,
-    F,
     Model,
     TextChoices,
     SET_NULL,
@@ -99,6 +100,7 @@ class Publishing(Model):
     def __str__(self):
         editorials = Editorial.objects.filter(publishing=self)
         first_editorial = editorials[0] if editorials else None
+        editorials = [editorial.name for editorial in editorials]
         country_code = first_editorial.country.upper() if first_editorial else ""
         return (
             str(self.publishing_title)
@@ -106,13 +108,13 @@ class Publishing(Model):
             + str(self.year)
             + ") "
             + self.serie
-            + " series "
+            + " Series "
             + self.printing.name
             + " Print"
             + " "
-            + country_code
-            + "-"
-            + self.language.upper()
+            + "["
+            + "/".join(editorials)
+            + "]"
         )
 
     def process_year(self):
@@ -155,7 +157,8 @@ class Artist(Model):
 
 class Comic(Model):
     publishing = ForeignKey(Publishing, on_delete=PROTECT, null=True)
-    image = ImageField(upload_to="images/", null=True, blank=True)
+    image = ImageField(upload_to="images/originals/", null=True, blank=True)
+    thumbnail = ImageField(upload_to="images/thumbnails/", null=True, blank=True)
     number = IntegerField()
     variant = CharField(max_length=30, default="A", blank=True)
     ratio = CharField(
@@ -201,15 +204,10 @@ class Comic(Model):
             year=str(self.publishing.year),
         )
 
-    def save(self, *args, **kwargs):
-        self.validate_duplicate()
-        self.process_image()
-
-        super(Comic, self).save(*args, **kwargs)
-
-    def validate_duplicate(self):
+    def process_variant(self):
         self.variant = self.variant.upper().strip()
 
+    def validate_duplicate(self):
         coincidences = (
             Comic.objects.filter(publishing__publishing_title__exact=self.publishing.publishing_title)
             .filter(number=self.number)
@@ -229,32 +227,74 @@ class Comic(Model):
         if not self.image:
             return
 
-        import io
-        from PIL import Image
-        from django.core.files.uploadedfile import InMemoryUploadedFile
-        import time, datetime
+        MAX_THUMB_WIDTH = 1080
+        MAX_THUMB_HEIGHT = 1920
 
-        temp_image = Image.open(self.image)
-        width, height = temp_image.size
-        new_size: tuple[int, int] = (1080, int(1080 * height / width))
-        new_img = temp_image.resize(new_size, Image.Resampling.LANCZOS)
+        try:
+            # Abrimos imagen original
+            img = Image.open(self.image)
+            img_format = img.format or "JPEG"
 
-        img_io = io.BytesIO()
-        new_img.save(img_io, format="JPEG")
-        img_io.seek(0)
+            # Establecemos nombre base
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            base_name = f"{self.publishing.publishing_title}_{self.number}_{self.variant}_{timestamp}".replace(" ", "_")
 
-        ts = time.time()
-        timestamp = datetime.datetime.fromtimestamp(ts).strftime("%d-%m-%Y %H:%M:%S")
-        new_image_name = f"{self.publishing.publishing_title}_{self.number}_{self.variant}_{timestamp}.jpg"
-        new_image = InMemoryUploadedFile(
-            img_io,
-            "ImageField",
-            new_image_name,
-            "image/jpeg",
-            img_io.getbuffer().nbytes,
-            None,
-        )
-        self.image = new_image
+            # Convertir RGBA a RGB si es necesario
+            if img_format == "PNG" and img.mode in ("RGBA", "LA"):
+                background = Image.new("RGB", img.size, (255, 255, 255))
+                background.paste(img, mask=img.split()[-1])  # canal alpha
+                img = background
+                img_format = "JPEG"
+            elif img.mode != "RGB":
+                img = img.convert("RGB")
+
+            # === Guardar imagen original ===
+            original_io = io.BytesIO()
+            img.save(original_io, format="JPEG", quality=95)
+            original_io.seek(0)
+
+            original_filename = f"{base_name}.jpg"
+            self.image = InMemoryUploadedFile(
+                original_io,
+                "ImageField",
+                original_filename,
+                "image/jpeg",
+                original_io.getbuffer().nbytes,
+                None,
+            )
+
+            # === Generar thumbnail ===
+            width, height = img.size
+            if width > MAX_THUMB_WIDTH or height > MAX_THUMB_HEIGHT:
+                scale = min(MAX_THUMB_WIDTH / width, MAX_THUMB_HEIGHT / height)
+                thumb_size = (int(width * scale), int(height * scale))
+                thumb_img = img.resize(thumb_size, Image.Resampling.LANCZOS)
+            else:
+                thumb_img = img.copy()
+
+            thumb_io = io.BytesIO()
+            thumb_img.save(thumb_io, format="JPEG", quality=80, optimize=True)
+            thumb_io.seek(0)
+
+            thumb_filename = f"{base_name}_thumb.jpg"
+            self.thumbnail = InMemoryUploadedFile(
+                thumb_io,
+                "ImageField",
+                thumb_filename,
+                "image/jpeg",
+                thumb_io.getbuffer().nbytes,
+                None,
+            )
+
+        except Exception as e:
+            print(f"Error procesando imagen y thumbnail: {e}")
+
+    def save(self, *args, **kwargs):
+        self.process_variant()
+        self.validate_duplicate()
+        self.process_image()
+
+        super(Comic, self).save(*args, **kwargs)
 
 
 class Dealer(Model):
