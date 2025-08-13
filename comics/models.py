@@ -71,15 +71,22 @@ class Publishing(Model):
         return MaxValueValidator(current_year())(value)
 
     class LangAbbr(TextChoices):
-        EN = "en"
-        ES = "es"
-        DE = "de"
+        EN = "en", _("English")
+        ES = "es", _("Spanish")
+        DE = "de", _("German")
+
+    class FormatChoices(TextChoices):
+        SINGLE_ISSUE = "single_issue", _("Grapa")
+        TRADE_PAPERBACK = "trade_paperback", _("TPB - Trade Paperback")
+        HARDCOVER = "hardcover", _("HC - Hardcover")
+        DIGITAL = "digital", _("Digital")
 
     title = ForeignKey(Title, on_delete=PROTECT, null=True)
     publishing_title = CharField(max_length=100)
     serie = CharField(max_length=20, default="1st")
     printing = ForeignKey(Printing, on_delete=PROTECT, null=True)
     language = CharField(max_length=5, choices=LangAbbr)
+    format = CharField(max_length=20, choices=FormatChoices, default=FormatChoices.SINGLE_ISSUE)
     editorials = ManyToManyField(Editorial)
     date = DateField(default=datetime.now)
     year = IntegerField(
@@ -122,6 +129,7 @@ class Publishing(Model):
             .filter(serie=self.serie)
             .filter(printing__name__contains=self.printing)
             .filter(language=self.language)
+            .filter(format=self.format)
         )
 
         if hasattr(self, "id"):

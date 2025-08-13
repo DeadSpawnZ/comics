@@ -1,5 +1,9 @@
 from django.contrib import admin
 from django.utils.html import format_html
+from django.urls import path
+from django.template.response import TemplateResponse
+from django.db.models.functions import TruncMonth
+from django.db.models import Sum
 
 # Register your models here.
 
@@ -68,6 +72,7 @@ class ComicAdmin(admin.ModelAdmin):
         "get_comic",
         "number",
         "variant",
+        "get_format",
         "get_serie",
         "get_printing",
         "get_year",
@@ -78,33 +83,38 @@ class ComicAdmin(admin.ModelAdmin):
     search_fields = ["publishing__publishing_title"]
     filter_horizontal = ("artists",)
     readonly_fields = ["country"]
+    list_select_related = ("publishing",)  # Optimize queries by selecting related publishing
 
-    @admin.display(ordering="publishing__printing", description="printing")
-    def get_printing(self, obj):
-        return obj.publishing.printing
-
-    @admin.display(ordering="publishing__year", description="year")
-    def get_year(self, obj):
-        return obj.publishing.year
-
-    @admin.display(ordering="publishing__serie", description="serie")
-    def get_serie(self, obj):
-        return obj.publishing.serie
+    def _from_publishing(self, obj, attr):
+        return getattr(obj.publishing, attr, None)
 
     @admin.display(ordering="publishing__publishing_title", description="comic")
     def get_comic(self, obj):
-        return obj.publishing.publishing_title
+        return self._from_publishing(obj, "publishing_title")
 
+    @admin.display(ordering="publishing__format", description="format")
+    def get_format(self, obj):
+        return obj.publishing.get_format_display()
+
+    @admin.display(ordering="publishing__serie", description="serie")
+    def get_serie(self, obj):
+        return self._from_publishing(obj, "serie")
+
+    @admin.display(ordering="publishing__printing", description="printing")
+    def get_printing(self, obj):
+        return self._from_publishing(obj, "printing")
+
+    @admin.display(ordering="publishing__year", description="year")
+    def get_year(self, obj):
+        return self._from_publishing(obj, "year")
+
+    @admin.display(description="Country")
     def country(self, obj):
-        publishing = obj.publishing
-        editorials = Editorial.objects.filter(publishing=publishing)
-        first_editorial = editorials[0] if editorials else None
-        if first_editorial:
-            country_code = first_editorial.country.lower()
-            icon_url = "/static/" + country_code + ".png"
+        editorial = Editorial.objects.filter(publishing=obj.publishing).first()
+        if editorial and editorial.country:
+            icon_url = f"/static/{editorial.country.lower()}.png"
             return format_html('<img src="{}" style="width:18px">', icon_url)
-        else:
-            None
+        return "-"
 
 
 @admin.register(Collection)
@@ -113,6 +123,7 @@ class CollectionAdmin(admin.ModelAdmin):
         js = ("js/filter_comics_by_publishing.js",)
 
     form = CollectionForm
+    change_list_template = "admin/collection_change_list.html"
 
     fieldsets = (
         ("Collector Information", {"fields": ("collector",)}),
@@ -179,3 +190,31 @@ class CollectionAdmin(admin.ModelAdmin):
     @admin.display(ordering="comic__publishing__serie", description="serie")
     def get_serie(self, obj):
         return obj.comic.publishing.serie
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path("stats/", self.admin_site.admin_view(self.stats_view), name="collection-stats"),
+        ]
+        return custom_urls + urls
+
+    def stats_view(self, request):
+        data = (
+            Collection.objects.annotate(month=TruncMonth("trade_date"))
+            .values("month")
+            .annotate(total=Sum("amount"))
+            .order_by("month")
+        )
+
+        labels = [entry["month"].strftime("%B %Y") for entry in data]
+        totals = [float(entry["total"]) for entry in data]
+        total_amount = Collection.objects.aggregate(total=Sum("amount"))["total"] or 0
+
+        context = dict(
+            self.admin_site.each_context(request),
+            labels=labels,
+            totals=totals,
+            total_amount=total_amount,
+            title="Collection Stats",
+        )
+        return TemplateResponse(request, "admin/collection_stats.html", context)

@@ -1,0 +1,63 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+
+<h2 style="font-size: 2.5rem; color: rgb(0, 247, 255);">
+    Total: ${{ total_amount|floatformat:2 }} MXN
+</h2>
+
+<canvas id="collectionChart" width="800" height="400"></canvas>
+
+<!-- ✅ Primero: carga de Chart.js y plugin -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+
+<script>
+    const ctx = document.getElementById("collectionChart").getContext("2d");
+
+    const chart = new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: {{ labels|safe }},  // asegúrate que sean strings con comillas
+            datasets: [{
+                label: "Total Amount",
+                data: {{ totals|safe }},
+                backgroundColor: "rgba(75, 192, 192, 0.6)",
+                borderColor: "rgba(75, 192, 192, 1)",
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                datalabels: {
+                    color: "#fff",
+                    anchor: "end",
+                    align: "top",
+                    formatter: function(value) {
+                        return "$" + value.toLocaleString("es-MX", { minimumFractionDigits: 2 }) + "";
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return "$" + context.raw.toLocaleString("es-MX", { minimumFractionDigits: 2 }) + "";
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return "$" + value.toLocaleString("es-MX");
+                        }
+                    }
+                }
+            }
+        },
+        plugins: [ChartDataLabels]
+    });
+</script>
+{% endblock %}
