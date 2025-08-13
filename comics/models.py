@@ -236,7 +236,7 @@ class Comic(Model):
             img_format = img.format or "JPEG"
 
             # Establecemos nombre base
-            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             base_name = f"{self.publishing.publishing_title}_{self.number}_{self.variant}_{timestamp}".replace(" ", "_")
 
             # Convertir RGBA a RGB si es necesario

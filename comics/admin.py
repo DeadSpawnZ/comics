@@ -68,8 +68,9 @@ class PublishingAdmin(admin.ModelAdmin):
 class ComicAdmin(admin.ModelAdmin):
     class Media:
         js = (
-            "js/fill_release_date.js",
-            "js/thumbnail_preview.js",
+            "js/custom/fill_release_date.js",
+            "js/custom/thumbnail_preview.js",
+            "js/custom/force_uppercase_variant.js",
         )
 
     fieldsets = (
@@ -149,7 +150,7 @@ class ComicAdmin(admin.ModelAdmin):
 @admin.register(Collection)
 class CollectionAdmin(admin.ModelAdmin):
     class Media:
-        js = ("js/filter_comics_by_publishing.js",)
+        js = ("js/custom/filter_comics_by_publishing.js",)
 
     form = CollectionForm
     change_list_template = "admin/collection_change_list.html"
