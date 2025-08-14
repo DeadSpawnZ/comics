@@ -1,0 +1,36 @@
+.card-img-container {
+    aspect-ratio: 2/3; /* Proporción tipo cómic */
+    position: relative;
+}
+
+.card-img-container img,
+.card-img-container > div {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    object-fit: cover;
+}
+
+.overlay-info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.6); /* Fondo con opacidad */
+    height: 60px !important; /* Altura fija */
+    font-size: 0.85rem;
+    line-height: 1.2;
+    text-align: center;
+    overflow: hidden;
+    padding-top: 4px;
+    padding-bottom: 4px;
+}
+
+.overlay-info .text-truncate {
+    font-size: clamp(0.6rem, 1vw, 0.9rem);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

@@ -78,6 +78,7 @@ class Publishing(Model):
 
     class FormatChoices(TextChoices):
         SINGLE_ISSUE = "single_issue", _("Grapa")
+        PRESTIGE = "prestige", _("Prestige")
         TRADE_PAPERBACK = "trade_paperback", _("TPB - Trade Paperback")
         HARDCOVER = "hardcover", _("HC - Hardcover")
         DIGITAL = "digital", _("Digital")

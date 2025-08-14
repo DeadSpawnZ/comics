@@ -31,6 +31,7 @@ urlpatterns = [
     path("logout/", login.logout_view, name="logout"),
     path("ajax/get-publishing-date/<int:publishing_id>/", publishing.get_publishing_date, name="get_publishing_date"),
     path("ajax/get-comics/<int:publishing_id>/", publishing.get_comics_by_publishing, name="get_comics_by_publishing"),
+    path("mis-colecciones/", collection.collector_collections_view, name="mis_colecciones"),
 ]
 
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
