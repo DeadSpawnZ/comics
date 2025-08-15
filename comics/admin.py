@@ -46,15 +46,7 @@ class EditorialAdmin(admin.ModelAdmin):
 
 @admin.register(Publishing)
 class PublishingAdmin(admin.ModelAdmin):
-    list_display = [
-        "publishing_title",
-        "title",
-        "serie",
-        "get_printing",
-        "year",
-        "language",
-        "format",
-    ]
+    list_display = ["publishing_title", "title", "serie", "get_printing", "year", "language"]
     ordering = ["publishing_title"]
     search_fields = ["publishing_title"]
     filter_horizontal = ("editorials",)
@@ -84,6 +76,7 @@ class ComicAdmin(admin.ModelAdmin):
                     "ratio",
                     "limited_to",
                     "price",
+                    "format",
                     "release_date",
                 )
             },
@@ -96,7 +89,7 @@ class ComicAdmin(admin.ModelAdmin):
         "get_comic",
         "number",
         "variant",
-        "get_format",
+        "format",
         "get_serie",
         "get_printing",
         "get_year",
@@ -115,10 +108,6 @@ class ComicAdmin(admin.ModelAdmin):
     @admin.display(ordering="publishing__publishing_title", description="comic")
     def get_comic(self, obj):
         return self._from_publishing(obj, "publishing_title")
-
-    @admin.display(ordering="publishing__format", description="format")
-    def get_format(self, obj):
-        return obj.publishing.get_format_display()
 
     @admin.display(ordering="publishing__serie", description="serie")
     def get_serie(self, obj):
@@ -200,9 +189,9 @@ class CollectionAdmin(admin.ModelAdmin):
     def get_variant(self, obj):
         return self._from_comic(obj, "variant")
 
-    @admin.display(ordering="comic__publishing__format", description="format")
+    @admin.display(ordering="comic__format", description="format")
     def get_format(self, obj):
-        return obj.comic.publishing.get_format_display()
+        return obj.comic.get_format_display()
 
     @admin.display(ordering="trade_date", description="acquisition")
     def get_acquisition(self, obj):

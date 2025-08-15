@@ -76,19 +76,11 @@ class Publishing(Model):
         ES = "es", _("Spanish")
         DE = "de", _("German")
 
-    class FormatChoices(TextChoices):
-        SINGLE_ISSUE = "single_issue", _("Grapa")
-        PRESTIGE = "prestige", _("Prestige")
-        TRADE_PAPERBACK = "trade_paperback", _("TPB - Trade Paperback")
-        HARDCOVER = "hardcover", _("HC - Hardcover")
-        DIGITAL = "digital", _("Digital")
-
     title = ForeignKey(Title, on_delete=PROTECT, null=True)
     publishing_title = CharField(max_length=100)
     serie = CharField(max_length=20, default="1st")
     printing = ForeignKey(Printing, on_delete=PROTECT, null=True)
     language = CharField(max_length=5, choices=LangAbbr)
-    format = CharField(max_length=20, choices=FormatChoices, default=FormatChoices.SINGLE_ISSUE)
     editorials = ManyToManyField(Editorial)
     date = DateField(default=datetime.now)
     year = IntegerField(
@@ -157,6 +149,13 @@ class Artist(Model):
 
 
 class Comic(Model):
+    class FormatChoices(TextChoices):
+        SINGLE_ISSUE = "single_issue", _("Grapa")
+        PRESTIGE = "prestige", _("Prestige")
+        TRADE_PAPERBACK = "trade_paperback", _("TPB - Trade Paperback")
+        HARDCOVER = "hardcover", _("HC - Hardcover")
+        DIGITAL = "digital", _("Digital")
+
     publishing = ForeignKey(Publishing, on_delete=PROTECT, null=True)
     image = ImageField(upload_to="images/originals/", null=True, blank=True)
     thumbnail = ImageField(upload_to="images/thumbnails/", null=True, blank=True)
@@ -185,6 +184,7 @@ class Comic(Model):
         ],
     )
     price = DecimalField(max_digits=8, decimal_places=2, default=0.00)
+    format = CharField(max_length=20, choices=FormatChoices, default=FormatChoices.SINGLE_ISSUE)
     release_date = DateField(default=datetime.now)
     details = TextField(max_length=500, blank=True)
     artists = ManyToManyField(Artist, blank=True)
