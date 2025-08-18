@@ -92,9 +92,7 @@ class Publishing(Model):
 
     def __str__(self):
         editorials = Editorial.objects.filter(publishing=self)
-        first_editorial = editorials[0] if editorials else None
         editorials = [editorial.name for editorial in editorials]
-        country_code = first_editorial.country.upper() if first_editorial else ""
         return (
             str(self.publishing_title)
             + " ("
@@ -124,7 +122,6 @@ class Publishing(Model):
             .filter(serie=self.serie)
             .filter(printing__name__contains=self.printing)
             .filter(language=self.language)
-            .filter(format=self.format)
         )
 
         if hasattr(self, "id"):
@@ -154,6 +151,7 @@ class Comic(Model):
         PRESTIGE = "prestige", _("Prestige")
         TRADE_PAPERBACK = "trade_paperback", _("TPB - Trade Paperback")
         HARDCOVER = "hardcover", _("HC - Hardcover")
+        ASHCAN = "ashcan", _("Ashcan")
         DIGITAL = "digital", _("Digital")
 
     publishing = ForeignKey(Publishing, on_delete=PROTECT, null=True)

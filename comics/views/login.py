@@ -10,7 +10,7 @@ def login_view(request):
     user = authenticate(username=username, password=password)
     if user is not None:
         login(request, user)
-        return redirect("/collection/")
+        return redirect("/collectables/")
     else:
         return HttpResponse("Your username and password didn't match.")
 
