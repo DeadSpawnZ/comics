@@ -92,7 +92,7 @@ class ComicAdmin(admin.ModelAdmin):
         "format",
         "get_serie",
         "get_printing",
-        "get_year",
+        "get_release_date",
         "ratio",
         "country",
     ]
@@ -117,9 +117,11 @@ class ComicAdmin(admin.ModelAdmin):
     def get_printing(self, obj):
         return self._from_publishing(obj, "printing")
 
-    @admin.display(ordering="publishing__year", description="year")
-    def get_year(self, obj):
-        return self._from_publishing(obj, "year")
+    @admin.display(description="release date")
+    def get_release_date(self, obj):
+        if obj.release_date:
+            return obj.release_date.strftime("%b %Y")
+        return "-"
 
     @admin.display(description="Country")
     def country(self, obj):

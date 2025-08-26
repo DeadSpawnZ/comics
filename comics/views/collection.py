@@ -47,7 +47,7 @@ def collector_collections_view(request):
     collections = (
         Collection.objects.filter(collector=collector)
         .select_related("comic__publishing")
-        .order_by("comic__publishing__publishing_title")
+        .order_by("comic__publishing__publishing_title", "comic__number", "comic__variant")
     )
 
     paginator = Paginator(collections, PAGE_LIMIT)

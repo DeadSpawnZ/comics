@@ -1,5 +1,5 @@
 from django import forms
-from .models import Collection, Comic, Publishing
+from .models import Collection, Comic, Publishing, Dealer
 
 
 class CollectionForm(forms.ModelForm):
@@ -44,3 +44,5 @@ class CollectionForm(forms.ModelForm):
                 "number", "variant"
             )
             self.initial["publishing"] = publishing_instance
+
+        self.fields["participant"].queryset = Dealer.objects.all().order_by("name")
