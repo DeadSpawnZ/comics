@@ -218,9 +218,12 @@ class Comic(Model):
 
         if hasattr(self, "id"):
             coincidences = coincidences.exclude(id=self.id)
-        if coincidences.exists():
-            msg = "Duplicated comic"
-            raise Exception(msg)
+
+        current_publishing_str = str(self.publishing).strip()
+        for comic in coincidences:
+            if str(comic.publishing).strip() == current_publishing_str:
+                msg = "Duplicated comic"
+                raise Exception(msg)
 
     def process_image(self) -> None:
         if not self.image:
