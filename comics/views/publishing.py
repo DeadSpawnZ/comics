@@ -5,7 +5,7 @@ from django.template import loader
 from django.urls import reverse
 from django.contrib.auth import authenticate
 
-from comics.models import Publishing, Comic, Editorial, Printing
+from comics.models import Publishing, Comic, Editorial
 
 
 def all(request):
@@ -14,9 +14,6 @@ def all(request):
         for pub in publishing_list:
             editorials = Editorial.objects.filter(publishing=pub["id"])
             pub["editorials"] = [editorial.name for editorial in editorials]
-
-            printing = Printing.objects.filter(id=pub["printing_id"])
-            pub["print"] = printing[0]
 
             first_editorial = editorials[0] if editorials else None
             country_code = first_editorial.country.lower() if first_editorial else ""

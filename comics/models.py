@@ -27,11 +27,6 @@ from django.db.models import (
 
 
 # Create your models here.
-class Printing(Model):
-    name = CharField(max_length=10)
-
-    def __str__(self):
-        return self.name
 
 
 class Editorial(Model):
@@ -79,7 +74,6 @@ class Publishing(Model):
     title = ForeignKey(Title, on_delete=PROTECT, null=True)
     publishing_title = CharField(max_length=100)
     serie = CharField(max_length=20, default="1st")
-    printing = ForeignKey(Printing, on_delete=PROTECT, null=True)
     language = CharField(max_length=5, choices=LangAbbr)
     editorials = ManyToManyField(Editorial)
     date = DateField(default=datetime.now)
@@ -100,8 +94,6 @@ class Publishing(Model):
             + ") "
             + self.serie
             + " Series "
-            + self.printing.name
-            + " Print"
             + " "
             + "["
             + "/".join(editorials)
@@ -120,7 +112,6 @@ class Publishing(Model):
             Publishing.objects.filter(publishing_title=self.publishing_title)
             .filter(year=self.year)
             .filter(serie=self.serie)
-            .filter(printing__name__contains=self.printing)
             .filter(language=self.language)
         )
 
@@ -145,7 +136,7 @@ class Artist(Model):
         return self.name
 
 
-class Comic(Model):
+class Comic(Model):  # This is an Edition of an Issue
     class FormatChoices(TextChoices):
         SINGLE_ISSUE = "single_issue", _("Grapa")
         PRESTIGE = "prestige", _("Prestige")
@@ -154,11 +145,17 @@ class Comic(Model):
         ASHCAN = "ashcan", _("Ashcan")
         DIGITAL = "digital", _("Digital")
 
+    class PrintingChoices(TextChoices):
+        FIRST = "1st", _("1st")
+        SECOND = "2nd", _("2nd")
+        THIRD = "3rd", _("3rd")
+        FOURTH = "4th", _("4th")
+        FIFTH = "5th", _("5th")
+
     publishing = ForeignKey(Publishing, on_delete=PROTECT, null=True)
-    image = ImageField(upload_to="images/originals/", null=True, blank=True)
-    thumbnail = ImageField(upload_to="images/thumbnails/", null=True, blank=True)
     number = IntegerField()
     variant = CharField(max_length=30, default="A", blank=True)
+    printing = CharField(max_length=10, choices=PrintingChoices.choices, default=PrintingChoices.FIRST)
     ratio = CharField(
         max_length=10,
         blank=True,
@@ -184,6 +181,8 @@ class Comic(Model):
     price = DecimalField(max_digits=8, decimal_places=2, default=0.00)
     format = CharField(max_length=20, choices=FormatChoices, default=FormatChoices.SINGLE_ISSUE)
     release_date = DateField(default=datetime.now)
+    image = ImageField(upload_to="images/originals/", null=True, blank=True)
+    thumbnail = ImageField(upload_to="images/thumbnails/", null=True, blank=True)
     details = TextField(max_length=500, blank=True)
     artists = ManyToManyField(Artist, blank=True)
 
@@ -197,7 +196,7 @@ class Comic(Model):
             number=str(self.number),
             variant=self.variant,
             serie=self.publishing.serie,
-            printing=self.publishing.printing.name,
+            printing=self.printing,
             country=country_code,
             language=self.publishing.language.upper(),
             year=str(self.publishing.year),
@@ -212,7 +211,7 @@ class Comic(Model):
             .filter(number=self.number)
             .filter(variant=self.variant)
             .filter(publishing__serie__exact=self.publishing.serie)
-            .filter(publishing__printing__exact=self.publishing.printing)
+            .filter(printing=self.printing)
             .filter(publishing__year__exact=self.publishing.year)
         )
 
@@ -226,8 +225,16 @@ class Comic(Model):
                 raise Exception(msg)
 
     def process_image(self) -> None:
-        if not self.image:
+        if self.pk and self.image and self.thumbnail:
             return
+        else:
+            try:
+                old_instance = Comic.objects.get(pk=self.pk)
+                if self.image == old_instance.image:
+                    print("Image not changed, skipping processing.")
+                    return
+            except Comic.DoesNotExist:
+                pass
 
         MAX_THUMB_WIDTH = 1080
         MAX_THUMB_HEIGHT = 1920

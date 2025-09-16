@@ -13,7 +13,6 @@ from .models import (
     Title,
     Publishing,
     Artist,
-    Printing,
     Collection,
     Dealer,
     Signature,
@@ -21,7 +20,6 @@ from .models import (
 from .forms import CollectionForm
 
 admin.site.register(Artist)
-admin.site.register(Printing)
 admin.site.register(Signature)
 
 
@@ -46,14 +44,10 @@ class EditorialAdmin(admin.ModelAdmin):
 
 @admin.register(Publishing)
 class PublishingAdmin(admin.ModelAdmin):
-    list_display = ["publishing_title", "title", "serie", "get_printing", "year", "language"]
+    list_display = ["publishing_title", "title", "serie", "year", "language"]
     ordering = ["publishing_title"]
     search_fields = ["publishing_title"]
     filter_horizontal = ("editorials",)
-
-    @admin.display(ordering="printing", description="printing")
-    def get_printing(self, obj):
-        return obj.printing
 
 
 @admin.register(Comic)
@@ -73,6 +67,7 @@ class ComicAdmin(admin.ModelAdmin):
                     "publishing",
                     "number",
                     "variant",
+                    "printing",
                     "ratio",
                     "limited_to",
                     "price",
@@ -91,7 +86,7 @@ class ComicAdmin(admin.ModelAdmin):
         "variant",
         "format",
         "get_serie",
-        "get_printing",
+        "printing",
         "get_release_date",
         "ratio",
         "country",
@@ -112,10 +107,6 @@ class ComicAdmin(admin.ModelAdmin):
     @admin.display(ordering="publishing__serie", description="serie")
     def get_serie(self, obj):
         return self._from_publishing(obj, "serie")
-
-    @admin.display(ordering="publishing__printing", description="printing")
-    def get_printing(self, obj):
-        return self._from_publishing(obj, "printing")
 
     @admin.display(description="release date")
     def get_release_date(self, obj):
