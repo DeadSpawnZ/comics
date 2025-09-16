@@ -74,7 +74,7 @@ class Publishing(Model):
     title = ForeignKey(Title, on_delete=PROTECT, null=True)
     publishing_title = CharField(max_length=100)
     serie = CharField(max_length=20, default="1st")
-    language = CharField(max_length=5, choices=LangAbbr)
+    language = CharField(max_length=5, choices=LangAbbr.choices, default=LangAbbr.EN)
     editorials = ManyToManyField(Editorial)
     date = DateField(default=datetime.now)
     year = IntegerField(
@@ -152,32 +152,27 @@ class Comic(Model):  # This is an Edition of an Issue
         FOURTH = "4th", _("4th")
         FIFTH = "5th", _("5th")
 
+    ratio_validator = [
+        RegexValidator(
+            regex="^[0-9]{1,3}+:[0-9]{1,3}$",
+            message="Ratio must be a valid relation Example: (1:100)",
+            code="invalid_ratio",
+        ),
+    ]
+    limited_to_validator = [
+        RegexValidator(
+            regex="^[0-9]{0,10}+$",
+            message="Not a valid number",
+            code="invalid_limit",
+        ),
+    ]
+
     publishing = ForeignKey(Publishing, on_delete=PROTECT, null=True)
     number = IntegerField()
     variant = CharField(max_length=30, default="A", blank=True)
     printing = CharField(max_length=10, choices=PrintingChoices.choices, default=PrintingChoices.FIRST)
-    ratio = CharField(
-        max_length=10,
-        blank=True,
-        validators=[
-            RegexValidator(
-                regex="^[0-9]{1,3}+:[0-9]{1,3}$",
-                message="Ratio must be a valid relation Example: (1:100)",
-                code="invalid_ratio",
-            ),
-        ],
-    )
-    limited_to = CharField(
-        max_length=10,
-        blank=True,
-        validators=[
-            RegexValidator(
-                regex="^[0-9]{0,10}+$",
-                message="Not a valid number",
-                code="invalid_limit",
-            ),
-        ],
-    )
+    ratio = CharField(max_length=10, blank=True, validators=ratio_validator)
+    limited_to = CharField(max_length=10, blank=True, validators=limited_to_validator)
     price = DecimalField(max_digits=8, decimal_places=2, default=0.00)
     format = CharField(max_length=20, choices=FormatChoices, default=FormatChoices.SINGLE_ISSUE)
     release_date = DateField(default=datetime.now)
@@ -316,15 +311,15 @@ class Dealer(Model):
 
 
 class Collection(Model):
-    TITLE_CHOICES = [
-        ("buying", "Buying"),
-        ("selling", "Selling"),
-    ]
+    class TradeChoices(TextChoices):
+        BUYING = "buying", _("Buying")
+        SELLING = "selling", _("Selling")
+
     collector = ForeignKey(User, on_delete=PROTECT)
     comic = ForeignKey(Comic, on_delete=PROTECT, null=True)
     amount = DecimalField(max_digits=8, decimal_places=2, default=0.00)
     trade_date = DateField(default=datetime.now)
-    trade_type = CharField(max_length=50, choices=TITLE_CHOICES, default="buying")
+    trade_type = CharField(max_length=50, choices=TradeChoices.choices, default=TradeChoices.BUYING)
     participant = ForeignKey(Dealer, on_delete=PROTECT, null=True, blank=True)
     valuation = DecimalField(max_digits=4, decimal_places=2, default=0.00)
     signatures = ManyToManyField(Artist, blank=True, through="Signature")
