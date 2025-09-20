@@ -328,6 +328,29 @@ class Collection(Model):
     def __str__(self):
         return self.comic.__str__()
 
+    def validate_duplicate(self):
+        coincidences = (
+            Collection.objects.filter(comic__publishing__publishing_title__exact=self.comic.publishing.publishing_title)
+            .filter(trade_date=self.trade_date)
+            .filter(amount=self.amount)
+            .filter(trade_type=self.trade_type)
+            .filter(participant=self.participant)
+        )
+
+        if hasattr(self, "id"):
+            coincidences = coincidences.exclude(id=self.id)
+
+        current_comic_str = str(self.comic).strip()
+        for collectable in coincidences:
+            if str(collectable.comic).strip() == current_comic_str:
+                msg = "Duplicated collectable"
+                raise Exception(msg)
+
+    def save(self, *args, **kwargs):
+        self.validate_duplicate()
+
+        super(Collection, self).save(*args, **kwargs)
+
 
 class Signature(Model):
     artist = ForeignKey(Artist, on_delete=PROTECT)
