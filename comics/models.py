@@ -324,6 +324,7 @@ class Collection(Model):
     valuation = DecimalField(max_digits=4, decimal_places=2, default=0.00)
     signatures = ManyToManyField(Artist, blank=True, through="Signature")
     previous_trade = ForeignKey("self", on_delete=SET_NULL, null=True, blank=True, related_name="next_trades")
+    notes = TextField(max_length=500, blank=True)
 
     def __str__(self):
         return self.comic.__str__()

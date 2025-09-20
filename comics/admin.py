@@ -142,7 +142,7 @@ class CollectionAdmin(admin.ModelAdmin):
         ("Collector Information", {"fields": ("collector",)}),
         ("Comic Info", {"fields": ("publishing", "comic")}),
         ("Trade Details", {"fields": ("amount", "trade_date", "trade_type", "participant")}),
-        ("Extras", {"fields": ("valuation", "previous_trade"), "classes": ("collapse",)}),
+        ("Extras", {"fields": ("valuation", "previous_trade", "notes"), "classes": ("collapse",)}),
     )
 
     list_display = [
