@@ -19,7 +19,7 @@ from .models import (
 )
 from .forms import CollectionForm
 
-admin.site.register(Artist)
+
 admin.site.register(Signature)
 
 
@@ -129,6 +129,17 @@ class ComicAdmin(admin.ModelAdmin):
         return format_html('<img id="thumb-preview" style="max-height: 200px; display:none;" />')
 
 
+@admin.register(Artist)
+class ArtistAdmin(admin.ModelAdmin):
+    search_fields = ["name"]
+
+
+class SignatureInline(admin.TabularInline):
+    model = Signature
+    extra = 0
+    # autocomplete_fields = ["artist"]
+
+
 @admin.register(Collection)
 class CollectionAdmin(admin.ModelAdmin):
     class Media:
@@ -144,6 +155,7 @@ class CollectionAdmin(admin.ModelAdmin):
         ("Trade Details", {"fields": ("amount", "trade_date", "trade_type", "participant")}),
         ("Extras", {"fields": ("valuation", "previous_trade", "notes"), "classes": ("collapse",)}),
     )
+    inlines = [SignatureInline]
 
     list_display = [
         "get_publishing_title",

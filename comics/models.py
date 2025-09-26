@@ -357,6 +357,7 @@ class Signature(Model):
     artist = ForeignKey(Artist, on_delete=PROTECT)
     collectable = ForeignKey(Collection, on_delete=PROTECT)
     date = DateField(default=datetime.now)
+    price = DecimalField(max_digits=6, decimal_places=2, default=0.00)
     has_coa = BooleanField(default=False)
 
     def __str__(self):
