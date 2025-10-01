@@ -78,6 +78,7 @@ class ComicAdmin(admin.ModelAdmin):
         ),
         ("Images", {"fields": ("image", "thumbnail_preview", "thumbnail")}),
         ("Extras", {"fields": ("details", "artists"), "classes": ("collapse",)}),
+        ("Compilation", {"fields": ("is_compilation", "compiled_issues")}),
     )
 
     list_display = [
@@ -93,7 +94,7 @@ class ComicAdmin(admin.ModelAdmin):
     ]
     ordering = ["publishing__publishing_title", "number", "variant"]
     search_fields = ["publishing__publishing_title"]
-    filter_horizontal = ("artists",)
+    filter_horizontal = ("artists", "compiled_issues")
     readonly_fields = ["country", "thumbnail_preview"]
     list_select_related = ("publishing",)  # Optimize queries by selecting related publishing
 

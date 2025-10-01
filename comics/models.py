@@ -1,6 +1,7 @@
 import io
 import datetime
 from PIL import Image
+from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from datetime import datetime
 from django.contrib.auth.models import User
@@ -167,7 +168,7 @@ class Comic(Model):  # This is an Edition of an Issue
         ),
     ]
 
-    publishing = ForeignKey(Publishing, on_delete=PROTECT, null=True)
+    publishing = ForeignKey(Publishing, on_delete=PROTECT, blank=True)
     number = IntegerField()
     variant = CharField(max_length=30, default="A", blank=True)
     printing = CharField(max_length=10, choices=PrintingChoices.choices, default=PrintingChoices.FIRST)
@@ -180,13 +181,21 @@ class Comic(Model):  # This is an Edition of an Issue
     thumbnail = ImageField(upload_to="images/thumbnails/", null=True, blank=True)
     details = TextField(max_length=500, blank=True)
     artists = ManyToManyField(Artist, blank=True)
+    is_compilation = BooleanField(default=False)
+    compiled_issues = ManyToManyField(
+        "self",
+        symmetrical=False,
+        related_name="included_in",
+        blank=True,
+        help_text="Individual issues that are compiled in this comic, if any.",
+    )
 
     def __str__(self):
         editorials = Editorial.objects.filter(publishing=self.publishing)
         first_editorial = editorials[0] if editorials else None
         country_code = first_editorial.country.upper() if first_editorial else ""
 
-        return """{publishing_title} #{number} {variant} {serie} {printing} {country}-{language} {year}""".format(
+        comic_name = """{publishing_title} #{number} {variant} {serie} {printing} {country}-{language} {year}""".format(
             publishing_title=self.publishing.publishing_title,
             number=str(self.number),
             variant=self.variant,
@@ -196,9 +205,10 @@ class Comic(Model):  # This is an Edition of an Issue
             language=self.publishing.language.upper(),
             year=str(self.publishing.year),
         )
+        if self.is_compilation:
+            comic_name += " [Compilation]"
 
-    def process_variant(self):
-        self.variant = self.variant.upper().strip()
+        return comic_name
 
     def validate_duplicate(self):
         coincidences = (
@@ -218,6 +228,23 @@ class Comic(Model):  # This is an Edition of an Issue
             if str(comic.publishing).strip() == current_publishing_str:
                 msg = "Duplicated comic"
                 raise Exception(msg)
+
+    def validate_compilation(self):
+        if not self.is_compilation and not self.publishing:
+            raise ValidationError("Non-compilation comics must have a publishing.")
+
+        if self.is_compilation and self.publishing:
+            raise ValidationError("Compilation comics should not have a publishing.")
+
+        if self.is_compilation and self.compiled_issues.count() == 0:
+            raise ValidationError("Compilation comics must include at least one compiled issue.")
+
+    def validate(self):
+        self.validate_compilation()
+        self.validate_duplicate()
+
+    def process_variant(self):
+        self.variant = self.variant.upper().strip()
 
     def process_image(self) -> None:
         if self.pk and self.image and self.thumbnail:
@@ -295,7 +322,7 @@ class Comic(Model):  # This is an Edition of an Issue
 
     def save(self, *args, **kwargs):
         self.process_variant()
-        self.validate_duplicate()
+        self.validate()
         self.process_image()
 
         super(Comic, self).save(*args, **kwargs)
