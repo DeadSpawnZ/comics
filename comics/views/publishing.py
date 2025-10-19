@@ -8,38 +8,6 @@ from django.contrib.auth import authenticate
 from comics.models import Publishing, Comic, Editorial
 
 
-def all(request):
-    try:
-        publishing_list = Publishing.objects.all().order_by("publishing_title").values()
-        for pub in publishing_list:
-            editorials = Editorial.objects.filter(publishing=pub["id"])
-            pub["editorials"] = [editorial.name for editorial in editorials]
-
-            first_editorial = editorials[0] if editorials else None
-            country_code = first_editorial.country.lower() if first_editorial else ""
-            pub["country"] = country_code
-        context = {
-            "publishing_list": publishing_list,
-        }
-        return render(request, "publishings.html", context)
-    except Exception as ex:
-        print(str(ex))
-        pass
-
-
-def publishing(request, publishing_id):
-    comics_list = Comic.objects.filter(publishing_id=publishing_id)
-    try:
-        return render(
-            request,
-            "comics.html",
-            {"comics_list": comics_list},
-        )
-    except Exception as ex:
-        print(str(ex))
-        pass
-
-
 def get_publishing_date(request, publishing_id):
     try:
         publishing = Publishing.objects.get(id=publishing_id)

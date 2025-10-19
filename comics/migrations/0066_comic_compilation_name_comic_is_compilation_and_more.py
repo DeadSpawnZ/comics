@@ -7,23 +7,20 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('comics', '0065_signature_price'),
+        ("comics", "0065_signature_price"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='comic',
-            name='compilation_name',
-            field=models.CharField(blank=True, max_length=100, null=True),
-        ),
-        migrations.AddField(
-            model_name='comic',
-            name='is_compilation',
+            model_name="comic",
+            name="is_compilation",
             field=models.BooleanField(default=False),
         ),
         migrations.AlterField(
-            model_name='comic',
-            name='publishing',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, to='comics.publishing'),
+            model_name="comic",
+            name="publishing",
+            field=models.ForeignKey(
+                blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, to="comics.publishing"
+            ),
         ),
     ]

@@ -1,4 +1,4 @@
-{% extends 'base.html' %} {% block content %}
+{% extends 'base.html' %} {% load static %} {% block content %}
 
 <div class="container my-4">
     <h1 class="mb-4 text-center">Mis Colecciones</h1>
@@ -51,25 +51,44 @@
 
                     <!-- Detalles -->
                     <div class="col-md-7">
-                    <!-- Comic Info -->
-                    <h5 class="mb-2">{{ collection.comic.publishing.publishing_title }}</h5>
-                    <ul class="list-unstyled mb-4">
-                        <li><strong>Issue:</strong> #{{ collection.comic.number }} {{ collection.comic.variant }}</li>
-                        <li><strong>Price:</strong> ${{ collection.comic.price }}</li>
-                        <li><strong>Release Date:</strong> {{ collection.comic.release_date }}</li>
-                        <li><strong>Language:</strong> {{ collection.comic.publishing.get_language_display }}</li>
-                        <li><strong>Format:</strong> {{ collection.comic.get_format_display }}</li>
-                    </ul>
+                        <!-- Comic Info -->
+                        <h5 class="mb-2">{{ collection.comic.publishing.publishing_title }}</h5>
+                        <ul class="list-unstyled mb-4">
+                            <li><strong>Issue:</strong> #{{ collection.comic.number }} {{ collection.comic.variant }}</li>
+                            <li><strong>Price:</strong> ${{ collection.comic.price }}</li>
+                            <li><strong>Release Date:</strong> {{ collection.comic.release_date }}</li>
+                            <li><strong>Language:</strong> {{ collection.comic.publishing.get_language_display }}</li>
+                            <li><strong>Format:</strong> {{ collection.comic.get_format_display }}</li>
+                        </ul>
 
-                    <!-- Collection Info -->
-                    <h6 class="text-muted">Collection</h6>
-                    <ul class="list-unstyled">
-                        <li><strong>Amount Paid:</strong> ${{ collection.amount }} MXN</li>
-                        <li><strong>Trade Date:</strong> {{ collection.trade_date }}</li>
-                        <li><strong>Trade Type:</strong> {{ collection.get_trade_type_display }}</li>
-                        <li><strong>Participant:</strong> {{ collection.participant }}</li>
-                        <li><strong>Valuation:</strong> {{ collection.valuation }}</li>
-                    </ul>
+                        <!-- Collection Info -->
+                        <h6 class="text-muted">Collection</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Amount Paid:</strong> ${{ collection.amount }} MXN</li>
+                            <li><strong>Trade Date:</strong> {{ collection.trade_date }}</li>
+                            <li><strong>Trade Type:</strong> {{ collection.get_trade_type_display }}</li>
+                            <li><strong>Participant:</strong> {{ collection.participant }}</li>
+                            <li><strong>Valuation:</strong> {{ collection.valuation }}</li>
+                        </ul>
+
+                        <!-- Signatures -->
+                        {% if collection.prefetched_signatures %}
+                            <h6 class="text-muted mt-4">Firmas</h6>
+                            <div class="class="list-unstyled">
+                                {% for signature in collection.prefetched_signatures %}
+                                    <div class="artist-card text-center">
+                                        {% if signature.artist.photo %}
+                                            <img src="{{ signature.artist.photo.url }}" class="artist-photo rounded-circle mb-1" alt="{{ signature.artist.name }}">
+                                        {% else %}
+                                            <div class="artist-photo-placeholder rounded-circle bg-light d-flex align-items-center justify-content-center text-muted mb-1" style="width: 60px; height: 60px;">
+                                                <small>Sin foto</small>
+                                            </div>
+                                        {% endif %}
+                                        <div class="small">{{ signature.artist.name }}</div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
                     </div>
                 </div>
 
@@ -127,4 +146,19 @@
     {% endif %}
 
 </div>
+<style>
+.artist-photo {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+}
+.artist-card {
+    width: 70px;
+    text-align: center;
+}
+.artist-photo-placeholder {
+    width: 60px;
+    height: 60px;
+}
+</style>
 {% endblock %}

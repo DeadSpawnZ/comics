@@ -132,6 +132,7 @@ class Publishing(Model):
 
 class Artist(Model):
     name = CharField(max_length=100, unique=True)
+    photo = ImageField(upload_to="artists/photos/", null=True, blank=True)
 
     def __str__(self):
         return self.name

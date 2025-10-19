@@ -119,7 +119,7 @@ class ComicAdmin(admin.ModelAdmin):
     def country(self, obj):
         editorial = Editorial.objects.filter(publishing=obj.publishing).first()
         if editorial and editorial.country:
-            icon_url = f"/static/{editorial.country.lower()}.png"
+            icon_url = f"/static/images/{editorial.country.lower()}.png"
             return format_html('<img src="{}" style="width:18px">', icon_url)
         return "-"
 

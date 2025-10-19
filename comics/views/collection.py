@@ -1,12 +1,10 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.paginator import Paginator
-from django.db.models import F
-from django.http import HttpResponse, HttpResponseRedirect
+from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404, render
-from django.urls import reverse
 
-from comics.models import Collection
+from comics.models import Collection, Signature
 
 PAGE_LIMIT = 30
 
@@ -29,26 +27,25 @@ def collectable(request, collectable_id):
 
 
 @login_required
-def all(request):
-    try:
-        user_id = request.user.id
-        user = User.objects.get(id=user_id)
-        collection_list = Collection.objects.filter(collector=user).order_by("comic__publishing__publishing_title")
-        context = {"collection_list": collection_list}
-        return render(request, "collection.html", context)
-    except Exception as ex:
-        print(str(ex))
-        pass
-
-
-@login_required
 def collector_collections_view(request):
     collector = request.user
     letter = request.GET.get("letter", "A")
+
+    # Prefetch para artistas firmantes
+    signed_artists = Prefetch(
+        "signature_set",
+        queryset=Signature.objects.select_related("artist"),
+        to_attr="prefetched_signatures",
+    )
+
     collections = (
         Collection.objects.filter(collector=collector)
         .filter(comic__publishing__publishing_title__istartswith=letter)
-        .select_related("comic__publishing")
+        .select_related("comic__publishing", "participant")  # mejora acceso
+        .prefetch_related(
+            "comic__artists",  # artistas que participaron en el cómic
+            signed_artists,  # artistas que firmaron el ejemplar
+        )
         .order_by("comic__publishing__publishing_title", "comic__number", "comic__variant")
     )
 
