@@ -402,3 +402,4 @@ class StoryArc(Model):
     name = CharField(max_length=100, unique=True)
     publishings = ManyToManyField(Publishing)
     order = IntegerField()
+    notes = TextField(max_length=500, blank=True)
