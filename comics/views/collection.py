@@ -44,8 +44,10 @@ def all(request):
 @login_required
 def collector_collections_view(request):
     collector = request.user
+    letter = request.GET.get("letter", "A")
     collections = (
         Collection.objects.filter(collector=collector)
+        .filter(comic__publishing__publishing_title__istartswith=letter)
         .select_related("comic__publishing")
         .order_by("comic__publishing__publishing_title", "comic__number", "comic__variant")
     )
@@ -54,4 +56,12 @@ def collector_collections_view(request):
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
 
-    return render(request, "collections/collector_collections.html", {"page_obj": page_obj})
+    return render(
+        request,
+        "collections/collector_collections.html",
+        {
+            "page_obj": page_obj,
+            "selected_letter": letter,
+            "alphabet": [chr(i) for i in range(ord("A"), ord("Z") + 1)],
+        },
+    )
