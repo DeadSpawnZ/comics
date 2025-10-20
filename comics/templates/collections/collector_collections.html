@@ -26,6 +26,16 @@
                     <span class="text-muted">Sin imagen</span>
                     </div>
                 {% endif %}
+                <!-- Country editorial -->
+                {% with first_editorial=collection.comic.publishing.editorials.first %}
+                    {% if first_editorial %}
+                        <img
+                            src="{% static 'images/' %}{{ first_editorial.country }}.png"
+                            alt="{{ first_editorial.name }}"
+                            class="country-flag position-absolute top-0 end-0 m-1"
+                        >
+                    {% endif %}
+                {% endwith %}
                 <div class="overlay-info">
                     <div class="fw-bold">{{ collection.comic.publishing.publishing_title }}</div>
                     <small>#{{ collection.comic.number }} {{ collection.comic.variant }}</small>

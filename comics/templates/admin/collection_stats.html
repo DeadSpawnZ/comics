@@ -1,9 +1,10 @@
 {% extends "admin/base_site.html" %}
+{% load humanize %}
 
 {% block content %}
 
 <h2 style="font-size: 2.5rem; color: rgb(0, 247, 255);">
-    Total: ${{ total_amount|floatformat:2 }} MXN
+    Total: $ {{ total_amount|floatformat:2|intcomma }} MXN
 </h2>
 
 <canvas id="collectionChart" width="800" height="400"></canvas>

@@ -46,6 +46,7 @@ def collector_collections_view(request):
             "comic__artists",  # artistas que participaron en el cómic
             signed_artists,  # artistas que firmaron el ejemplar
         )
+        .prefetch_related("comic__publishing__editorials")
         .order_by("comic__publishing__publishing_title", "comic__number", "comic__variant")
     )
 

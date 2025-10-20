@@ -39,3 +39,23 @@
   text-overflow: unset;
   font-size: clamp(0.6rem, 1vw, 0.8rem);
 }
+
+.card-img-container {
+  position: relative;
+}
+
+.country-flag {
+  width: 32px;
+  height: 32px;
+  object-fit: cover;          /* mantiene proporción */
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.3);
+  background-color: white;
+  padding: 2px;
+  transition: opacity 0.3s ease-in-out;
+  z-index: 10;
+}
+
+.card-img-container:hover .country-flag {
+  opacity: 0;
+}

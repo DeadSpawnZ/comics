@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "comics.apps.ComicsConfig",
+    "django.contrib.humanize",
 ]
 
 MIDDLEWARE = [
