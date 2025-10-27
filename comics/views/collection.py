@@ -1,10 +1,10 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.paginator import Paginator
-from django.db.models import Prefetch
+from django.db.models import Prefetch, OuterRef, Subquery
 from django.shortcuts import get_object_or_404, render
 
-from comics.models import Collection, Signature
+from comics.models import Collection, Signature, Editorial
 
 PAGE_LIMIT = 30
 
@@ -38,16 +38,27 @@ def collector_collections_view(request):
         to_attr="prefetched_signatures",
     )
 
+    first_editorial_country = Subquery(
+        Editorial.objects.filter(publishing__comic=OuterRef("comic")).order_by("id").values("country")[:1]
+    )
+
     collections = (
         Collection.objects.filter(collector=collector)
         .filter(comic__publishing__publishing_title__istartswith=letter)
-        .select_related("comic__publishing", "participant")  # mejora acceso
+        .select_related("comic__publishing", "participant")
         .prefetch_related(
-            "comic__artists",  # artistas que participaron en el cómic
-            signed_artists,  # artistas que firmaron el ejemplar
+            "comic__artists",
+            signed_artists,
+            "comic__publishing__editorials",
         )
-        .prefetch_related("comic__publishing__editorials")
-        .order_by("comic__publishing__publishing_title", "comic__number", "comic__variant")
+        .annotate(first_editorial_country=first_editorial_country)
+        .order_by(
+            "comic__publishing__publishing_title",
+            "first_editorial_country",
+            "comic__number",
+            "comic__variant",
+            "trade_date",
+        )
     )
 
     paginator = Paginator(collections, PAGE_LIMIT)

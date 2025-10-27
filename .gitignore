@@ -2,3 +2,4 @@
 /mysql_volume
 dump*.json
 /media/
+.DS_Store

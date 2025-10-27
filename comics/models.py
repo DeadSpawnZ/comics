@@ -36,6 +36,7 @@ class Editorial(Model):
         US = "US"
         DE = "DE"
         ES = "ES"
+        JP = "JP"
 
     name = CharField(max_length=30, unique=True)
     country = CharField(max_length=3, choices=CountryAbbr)

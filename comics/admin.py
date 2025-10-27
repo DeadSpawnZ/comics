@@ -44,10 +44,19 @@ class EditorialAdmin(admin.ModelAdmin):
 
 @admin.register(Publishing)
 class PublishingAdmin(admin.ModelAdmin):
-    list_display = ["publishing_title", "title", "serie", "year", "language"]
+    list_display = ("publishing_title", "title", "get_editorials", "serie", "year", "language")
     ordering = ["publishing_title"]
     search_fields = ["publishing_title"]
     filter_horizontal = ("editorials",)
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.prefetch_related("editorials")
+
+    def get_editorials(self, obj):
+        return " / ".join(e.name for e in obj.editorials.all())
+
+    get_editorials.short_description = "Editorials"
 
 
 @admin.register(Comic)
