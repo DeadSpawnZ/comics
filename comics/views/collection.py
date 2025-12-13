@@ -51,10 +51,7 @@ def collector_collections_view(request):
     collections = (
         Collection.objects.filter(collector=collector)
         .filter(comic__publishing__publishing_title__istartswith=letter)
-        .exclude(
-            Q(trade_type=Collection.TradeChoices.SELLING, previous_trade__isnull=False)
-            | Q(id__in=sold_previous_trade_ids)
-        )
+        .exclude(Q(trade_type=Collection.TradeChoices.SELLING) | Q(id__in=sold_previous_trade_ids))
         .select_related("comic__publishing", "participant")
         .prefetch_related(
             "comic__artists",

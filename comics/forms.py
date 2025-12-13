@@ -33,17 +33,10 @@ class CollectionForm(forms.ModelForm):
         self.filter_previous_trade()
 
     def filter_comics_by_publishing(self):
-        self.fields["comic"].queryset = Comic.objects.none()
+        if "publishing" not in self.data:
+            return
 
-        if "publishing" in self.data:
-            try:
-                publishing_id = int(self.data.get("publishing"))
-                self.fields["comic"].queryset = Comic.objects.filter(publishing_id=publishing_id).order_by(
-                    "number", "variant"
-                )
-            except (ValueError, TypeError):
-                pass
-        elif self.instance.pk and self.instance.comic:
+        if self.instance.pk and self.instance.comic:
             publishing_instance = self.instance.comic.publishing
             self.fields["comic"].queryset = Comic.objects.filter(publishing=publishing_instance).order_by(
                 "number", "variant"
@@ -51,9 +44,14 @@ class CollectionForm(forms.ModelForm):
             self.initial["publishing"] = publishing_instance
 
     def filter_previous_trade(self):
-        qs = Collection.objects.filter(trade_type=Collection.TradeChoices.BUYING).order_by(
+        if "previous_trade" in self.data:
+            return
+
+        comic_instance = self.instance.comic
+        qs = Collection.objects.filter(comic=comic_instance, trade_type=Collection.TradeChoices.BUYING).order_by(
             "comic__publishing__publishing_title",
             "comic__number",
+            "comic__variant",
             "trade_date",
         )
 
