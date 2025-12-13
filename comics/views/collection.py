@@ -1,7 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.paginator import Paginator
-from django.db.models import Prefetch, OuterRef, Subquery
+from django.db.models import Prefetch, OuterRef, Subquery, Q
 from django.shortcuts import get_object_or_404, render
 
 from comics.models import Collection, Signature, Editorial
@@ -42,9 +42,19 @@ def collector_collections_view(request):
         Editorial.objects.filter(publishing__comic=OuterRef("comic")).order_by("id").values("country")[:1]
     )
 
+    sold_previous_trade_ids = Collection.objects.filter(
+        collector=collector,
+        trade_type=Collection.TradeChoices.SELLING,
+        previous_trade__isnull=False,
+    ).values_list("previous_trade_id", flat=True)
+
     collections = (
         Collection.objects.filter(collector=collector)
         .filter(comic__publishing__publishing_title__istartswith=letter)
+        .exclude(
+            Q(trade_type=Collection.TradeChoices.SELLING, previous_trade__isnull=False)
+            | Q(id__in=sold_previous_trade_ids)
+        )
         .select_related("comic__publishing", "participant")
         .prefetch_related(
             "comic__artists",

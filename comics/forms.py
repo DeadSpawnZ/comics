@@ -28,6 +28,11 @@ class CollectionForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self.filter_comics_by_publishing()
+        self.fields["participant"].queryset = Dealer.objects.all().order_by("name")
+        self.filter_previous_trade()
+
+    def filter_comics_by_publishing(self):
         self.fields["comic"].queryset = Comic.objects.none()
 
         if "publishing" in self.data:
@@ -45,4 +50,14 @@ class CollectionForm(forms.ModelForm):
             )
             self.initial["publishing"] = publishing_instance
 
-        self.fields["participant"].queryset = Dealer.objects.all().order_by("name")
+    def filter_previous_trade(self):
+        qs = Collection.objects.filter(trade_type=Collection.TradeChoices.BUYING).order_by(
+            "comic__publishing__publishing_title",
+            "comic__number",
+            "trade_date",
+        )
+
+        self.fields["previous_trade"].queryset = qs
+        self.fields["previous_trade"].label_from_instance = (
+            lambda obj: f"{obj.comic} || {obj.trade_date} || {obj.participant.name}"
+        )

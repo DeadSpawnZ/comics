@@ -176,6 +176,7 @@ class CollectionAdmin(admin.ModelAdmin):
         "get_acquisition",
         "participant",
         "get_serie",
+        "trade_type",
     ]
     ordering = [
         "comic__publishing__publishing_title",
