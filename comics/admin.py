@@ -176,7 +176,7 @@ class CollectionAdmin(admin.ModelAdmin):
         "get_acquisition",
         "participant",
         "get_serie",
-        "trade_type",
+        "trade_type_colored",
     ]
     ordering = [
         "comic__publishing__publishing_title",
@@ -216,6 +216,14 @@ class CollectionAdmin(admin.ModelAdmin):
     @admin.display(ordering="comic__publishing__serie", description="serie")
     def get_serie(self, obj):
         return self._from_publishing(obj, "serie")
+
+    @admin.display(description="Trade type", ordering="trade_type")
+    def trade_type_colored(self, obj):
+        if obj.trade_type == Collection.TradeChoices.SELLING and obj.previous_trade is None:
+            return format_html(
+                '<span style="color: purple; font-weight: bold;">{}</span>', obj.get_trade_type_display()
+            )
+        return obj.get_trade_type_display()
 
     def get_urls(self):
         urls = super().get_urls()
