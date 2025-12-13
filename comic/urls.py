@@ -27,6 +27,7 @@ urlpatterns = [
     path("logout/", login.logout_view, name="logout"),
     path("ajax/get-publishing-date/<int:publishing_id>/", publishing.get_publishing_date, name="get_publishing_date"),
     path("ajax/get-comics/<int:publishing_id>/", publishing.get_comics_by_publishing, name="get_comics_by_publishing"),
+    path("ajax/get-previous-trades/<int:comic_id>/", collection.get_previous_trades, name="get_previous_trades"),
     path("collectables/", collection.collector_collections_view, name="collectables"),
 ]
 

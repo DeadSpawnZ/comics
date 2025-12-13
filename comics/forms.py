@@ -33,9 +33,6 @@ class CollectionForm(forms.ModelForm):
         self.filter_previous_trade()
 
     def filter_comics_by_publishing(self):
-        if "publishing" not in self.data:
-            return
-
         if self.instance.pk and self.instance.comic:
             publishing_instance = self.instance.comic.publishing
             self.fields["comic"].queryset = Comic.objects.filter(publishing=publishing_instance).order_by(
@@ -44,18 +41,34 @@ class CollectionForm(forms.ModelForm):
             self.initial["publishing"] = publishing_instance
 
     def filter_previous_trade(self):
-        if "previous_trade" in self.data:
+        if not self.instance.pk:
+            self.fields["previous_trade"].queryset = Comic.objects.none()
             return
 
-        comic_instance = self.instance.comic
-        qs = Collection.objects.filter(comic=comic_instance, trade_type=Collection.TradeChoices.BUYING).order_by(
-            "comic__publishing__publishing_title",
-            "comic__number",
-            "comic__variant",
-            "trade_date",
-        )
+        if self.instance.previous_trade:
+            self.initial["previous_trade"] = self.instance.previous_trade
 
-        self.fields["previous_trade"].queryset = qs
-        self.fields["previous_trade"].label_from_instance = (
-            lambda obj: f"{obj.comic} || {obj.trade_date} || {obj.participant.name}"
-        )
+        if self.instance.comic:
+            comic_id = self.instance.comic.id
+            used_previous_trades_ids = Collection.objects.exclude(previous_trade=None).values_list(
+                "previous_trade_id", flat=True
+            )
+            if self.instance.previous_trade.id in used_previous_trades_ids:
+                used_previous_trades_ids = [
+                    uid for uid in used_previous_trades_ids if uid != self.instance.previous_trade.id
+                ]
+            qs = (
+                Collection.objects.filter(comic_id=comic_id, trade_type=Collection.TradeChoices.BUYING)
+                .exclude(id__in=used_previous_trades_ids)
+                .order_by(
+                    "comic__publishing__publishing_title",
+                    "comic__number",
+                    "comic__variant",
+                    "trade_date",
+                )
+            )
+
+            self.fields["previous_trade"].queryset = qs
+            self.fields["previous_trade"].label_from_instance = (
+                lambda obj: f"{obj.comic} || {obj.trade_date} || {obj.participant.name}"
+            )

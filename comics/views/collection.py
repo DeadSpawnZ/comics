@@ -3,8 +3,9 @@ from django.contrib.auth.models import User
 from django.core.paginator import Paginator
 from django.db.models import Prefetch, OuterRef, Subquery, Q
 from django.shortcuts import get_object_or_404, render
+from django.http import JsonResponse
 
-from comics.models import Collection, Signature, Editorial
+from comics.models import Collection, Signature, Editorial, Comic
 
 PAGE_LIMIT = 30
 
@@ -81,3 +82,30 @@ def collector_collections_view(request):
             "alphabet": [chr(i) for i in range(ord("A"), ord("Z") + 1)],
         },
     )
+
+
+def get_previous_trades(request, comic_id):
+    try:
+        used_previous_trades_ids = Collection.objects.exclude(previous_trade=None).values_list(
+            "previous_trade_id", flat=True
+        )
+        trades = (
+            Collection.objects.filter(comic_id=comic_id, trade_type=Collection.TradeChoices.BUYING)
+            .exclude(id__in=used_previous_trades_ids)
+            .order_by(
+                "comic__publishing__publishing_title",
+                "comic__number",
+                "comic__variant",
+                "trade_date",
+            )
+        )
+
+        data = [
+            {"id": trade.id, "text": f"{trade.comic} || {trade.trade_date} || {trade.participant.name}"}
+            for trade in trades
+        ]
+        return JsonResponse({"results": data})
+    except Collection.DoesNotExist:
+        return JsonResponse({"results": []})
+    except Exception as e:
+        return JsonResponse({"error": str(e)})

@@ -153,7 +153,7 @@ class SignatureInline(admin.TabularInline):
 @admin.register(Collection)
 class CollectionAdmin(admin.ModelAdmin):
     class Media:
-        js = ("js/custom/filter_comics_by_publishing.js",)
+        js = ("js/custom/collection_form_events.js",)
 
     form = CollectionForm
     change_list_template = "admin/collection_change_list.html"

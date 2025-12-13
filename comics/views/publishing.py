@@ -5,7 +5,7 @@ from django.template import loader
 from django.urls import reverse
 from django.contrib.auth import authenticate
 
-from comics.models import Publishing, Comic, Editorial
+from comics.models import Publishing, Comic
 
 
 def get_publishing_date(request, publishing_id):
