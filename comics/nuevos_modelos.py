@@ -40,3 +40,30 @@ class CompilationItem(models.Model):
     )  # is_compilation=True
     issue = models.ForeignKey(Issue, on_delete=models.CASCADE)
     order = models.PositiveIntegerField()
+
+
+
+
+
+#Future models
+# Comic
+publishing = ForeignKey(Publishing, on_delete=PROTECT, blank=True)
+number = IntegerField()
+release_date = DateField(default=datetime.now)
+details = TextField(max_length=500, blank=True)
+artists = ManyToManyField(Artist, blank=True)
+is_compilation = BooleanField(default=False)
+compiled_issues = ManyToManyField(
+
+
+
+# Edition
+format = CharField(max_length=20, choices=FormatChoices, default=FormatChoices.SINGLE_ISSUE)
+variant = CharField(max_length=30, default="A", blank=True)
+ratio = CharField(max_length=10, blank=True, validators=ratio_validator)
+limited_to = CharField(max_length=10, blank=True, validators=limited_to_validator)
+price = DecimalField(max_digits=8, decimal_places=2, default=0.00)
+image = ImageField(upload_to="images/originals/", null=True, blank=True)
+thumbnail = ImageField(upload_to="images/thumbnails/", null=True, blank=True)
+printing = CharField(max_length=10, choices=PrintingChoices.choices, default=PrintingChoices.FIRST)
+

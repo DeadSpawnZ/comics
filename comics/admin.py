@@ -79,7 +79,7 @@ class ComicAdmin(admin.ModelAdmin):
                     "printing",
                     "ratio",
                     "limited_to",
-                    "price",
+                    "cover_price",
                     "format",
                     "release_date",
                 )

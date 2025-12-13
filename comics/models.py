@@ -176,7 +176,7 @@ class Comic(Model):  # This is an Edition of an Issue
     printing = CharField(max_length=10, choices=PrintingChoices.choices, default=PrintingChoices.FIRST)
     ratio = CharField(max_length=10, blank=True, validators=ratio_validator)
     limited_to = CharField(max_length=10, blank=True, validators=limited_to_validator)
-    price = DecimalField(max_digits=8, decimal_places=2, default=0.00)
+    cover_price = DecimalField(max_digits=8, decimal_places=2, default=0.00)
     format = CharField(max_length=20, choices=FormatChoices, default=FormatChoices.SINGLE_ISSUE)
     release_date = DateField(default=datetime.now)
     image = ImageField(upload_to="images/originals/", null=True, blank=True)
