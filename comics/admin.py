@@ -233,8 +233,11 @@ class CollectionAdmin(admin.ModelAdmin):
         return custom_urls + urls
 
     def stats_view(self, request):
+        excluded_ids = Collection.objects.exclude(previous_trade=None).values_list("previous_trade_id", flat=True)
         data = (
-            Collection.objects.annotate(month=TruncMonth("trade_date"))
+            Collection.objects.filter(trade_type=Collection.TradeChoices.BUYING)
+            .exclude(id__in=excluded_ids)
+            .annotate(month=TruncMonth("trade_date"))
             .values("month")
             .annotate(total=Sum("amount"))
             .order_by("month")

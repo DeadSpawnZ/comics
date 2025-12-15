@@ -86,8 +86,10 @@ def collector_collections_view(request):
 
 def get_previous_trades(request, comic_id):
     try:
-        used_previous_trades_ids = Collection.objects.exclude(previous_trade=None).values_list(
-            "previous_trade_id", flat=True
+        used_previous_trades_ids = (
+            Collection.objects.filter(comic_id=comic_id)
+            .exclude(previous_trade=None)
+            .values_list("previous_trade_id", flat=True)
         )
         trades = (
             Collection.objects.filter(comic_id=comic_id, trade_type=Collection.TradeChoices.BUYING)

@@ -41,19 +41,21 @@ class CollectionForm(forms.ModelForm):
             self.initial["publishing"] = publishing_instance
 
     def filter_previous_trade(self):
-        if not self.instance.pk:
-            self.fields["previous_trade"].queryset = Comic.objects.none()
-            return
+        # if not self.instance.pk:
+        #     self.fields["previous_trade"].queryset = Comic.objects.none()
+        #     return
 
         if self.instance.previous_trade:
             self.initial["previous_trade"] = self.instance.previous_trade
 
         if self.instance.comic:
             comic_id = self.instance.comic.id
-            used_previous_trades_ids = Collection.objects.exclude(previous_trade=None).values_list(
-                "previous_trade_id", flat=True
+            used_previous_trades_ids = (
+                Collection.objects.filter(comic_id=comic_id)
+                .exclude(previous_trade=None)
+                .values_list("previous_trade_id", flat=True)
             )
-            if self.instance.previous_trade.id in used_previous_trades_ids:
+            if self.instance.previous_trade and self.instance.previous_trade.id in used_previous_trades_ids:
                 used_previous_trades_ids = [
                     uid for uid in used_previous_trades_ids if uid != self.instance.previous_trade.id
                 ]
