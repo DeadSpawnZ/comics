@@ -249,16 +249,11 @@ class Comic(Model):  # This is an Edition of an Issue
         self.variant = self.variant.upper().strip()
 
     def process_image(self) -> None:
-        if self.pk and self.image and self.thumbnail:
-            return
-        else:
-            try:
-                old_instance = Comic.objects.get(pk=self.pk)
-                if self.image == old_instance.image:
-                    print("Image not changed, skipping processing.")
-                    return
-            except Comic.DoesNotExist:
-                pass
+        if self.pk:
+            old_instance = Comic.objects.get(pk=self.pk)
+            if self.image == old_instance.image:
+                print("Image not changed, skipping processing.")
+                return
 
         MAX_THUMB_WIDTH = 1080
         MAX_THUMB_HEIGHT = 1920
