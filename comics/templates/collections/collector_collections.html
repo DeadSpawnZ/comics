@@ -65,7 +65,7 @@
                         <h5 class="mb-2">{{ collection.comic.publishing.publishing_title }}</h5>
                         <ul class="list-unstyled mb-4">
                             <li><strong>Issue:</strong> #{{ collection.comic.number }} {{ collection.comic.variant }}</li>
-                            <li><strong>Price:</strong> ${{ collection.comic.price }}</li>
+                            <li><strong>Price:</strong> ${{ collection.comic.cover_price }}</li>
                             <li><strong>Release Date:</strong> {{ collection.comic.release_date }}</li>
                             <li><strong>Language:</strong> {{ collection.comic.publishing.get_language_display }}</li>
                             <li><strong>Format:</strong> {{ collection.comic.get_format_display }}</li>

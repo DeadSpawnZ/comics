@@ -4,8 +4,9 @@ import os
 import sys
 from datetime import datetime
 
+
 def main():
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'comic.settings')
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "comic.settings")
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
@@ -18,8 +19,15 @@ def main():
     now = datetime.now()
     timestamp = datetime.timestamp(now)
     output_filename = f"dump-{timestamp}.json"
-    lista = ['manage.py', 'dumpdata', '--exclude=auth', '--exclude=contenttypes', '-o', output_filename, '--indent=4']
+    lista = [
+        "manage.py",
+        "dumpdata",
+        "-o",
+        output_filename,
+        "--indent=4",
+    ]
     execute_from_command_line(lista)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

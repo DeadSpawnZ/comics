@@ -82,11 +82,11 @@ WSGI_APPLICATION = "comic.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": "mycomic",
-        "USER": "root",
-        "PASSWORD": "1234",
-        "HOST": "db",
-        "PORT": "3306",
+        "NAME": os.getenv('MYSQL_DATABASE'),
+        "USER": os.getenv('MYSQL_USER'),
+        "PASSWORD": os.getenv('MYSQL_PASSWORD'),
+        "HOST": os.getenv('DATABASE_HOST', 'mysql_container'),
+        "PORT": os.getenv('MYSQL_PORT'),
     }
 }
 

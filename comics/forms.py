@@ -19,7 +19,7 @@ class CollectionForm(forms.ModelForm):
         ]
 
     publishing = forms.ModelChoiceField(
-        queryset=Publishing.objects.all().order_by("publishing_title"),
+        queryset=Publishing.objects.all().order_by("publishing_title", "date"),
         required=False,
         label="Publishing",
         help_text="Select a publishing to filter comics",

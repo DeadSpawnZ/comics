@@ -330,6 +330,9 @@ class Dealer(Model):
     real_name = CharField(max_length=100, blank=True)
     fb = CharField(max_length=150, blank=True)
 
+    class Meta:
+        ordering = ["name"]
+
     def __str__(self):
         return self.name
 
