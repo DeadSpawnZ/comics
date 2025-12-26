@@ -16,6 +16,7 @@ from .models import (
     Collection,
     Dealer,
     Signature,
+    GeekCollectable,
 )
 from .forms import CollectionForm
 
@@ -255,3 +256,10 @@ class CollectionAdmin(admin.ModelAdmin):
             "title": "Collection Stats",
         }
         return TemplateResponse(request, "admin/collection_stats.html", context)
+
+@admin.register(GeekCollectable)
+class GeekCollectableAdmin(admin.ModelAdmin):
+    list_display = ["name", "amount", "trade_date", "participant"]
+    ordering = ["name"]
+    search_fields = ["name", "participant__name"]
+    list_filter = ["trade_date", "participant"]

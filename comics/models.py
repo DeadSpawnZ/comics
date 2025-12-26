@@ -25,7 +25,7 @@ from django.db.models import (
     BooleanField,
     ImageField,
 )
-
+from .helper import generate_image_jpge
 
 # Create your models here.
 
@@ -402,3 +402,29 @@ class StoryArc(Model):
     publishings = ManyToManyField(Publishing)
     order = IntegerField()
     notes = TextField(max_length=500, blank=True)
+
+
+class GeekCollectable(Model):
+    name = CharField(max_length=100)
+    description = TextField(max_length=500, blank=True)
+    amount = DecimalField(max_digits=8, decimal_places=2, default=0.00)
+    trade_date = DateField(default=datetime.now)
+    participant = ForeignKey(Dealer, on_delete=PROTECT, default=1)
+    image = ImageField(upload_to="collectables/", null=True, blank=True)
+
+    def __str__(self):
+        return self.name
+
+    def process_image(self):
+        try:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            base_name = f"{self.name}_{timestamp}".replace(" ", "_")
+
+            self.image = generate_image_jpge(base_name, self.image)
+        except Exception as e:
+            raise e
+
+    def save(self, *args, **kwargs):
+        self.process_image()
+
+        super(GeekCollectable, self).save(*args, **kwargs)
