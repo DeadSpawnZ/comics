@@ -32,3 +32,10 @@ def generate_image_jpge(base_name, image) -> InMemoryUploadedFile:
         original_io.getbuffer().nbytes,
         None,
     )
+
+def collectable_image_path(instance, filename):
+    ext = filename.split('.')[-1]
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    name = instance.name.replace(" ", "_")
+    filename = f"{name}_{timestamp}.{ext}"
+    return os.path.join("collectables", filename)

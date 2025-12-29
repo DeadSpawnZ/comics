@@ -147,6 +147,7 @@ class Comic(Model):  # This is an Edition of an Issue
         HARDCOVER = "hardcover", _("HC - Hardcover")
         ASHCAN = "ashcan", _("Ashcan")
         DIGITAL = "digital", _("Digital")
+        MAGAZINE = "magazine", _("Magazine")
 
     class PrintingChoices(TextChoices):
         FIRST = "1st", _("1st")

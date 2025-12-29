@@ -74,3 +74,17 @@ class CollectionForm(forms.ModelForm):
             self.fields["previous_trade"].label_from_instance = (
                 lambda obj: f"{obj.comic} || {obj.trade_date} || {obj.participant.name}"
             )
+
+
+class ComicForm(forms.ModelForm):
+    class Meta:
+        model = Comic
+        fields = "__all__"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["publishing"].queryset = Publishing.objects.order_by(
+            "publishing_title",
+            "year",
+            "serie",
+        )

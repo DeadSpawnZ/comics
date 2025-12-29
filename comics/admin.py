@@ -18,7 +18,7 @@ from .models import (
     Signature,
     GeekCollectable,
 )
-from .forms import CollectionForm
+from .forms import CollectionForm, ComicForm
 
 
 admin.site.register(Signature)
@@ -69,6 +69,7 @@ class ComicAdmin(admin.ModelAdmin):
             "js/custom/force_uppercase_variant.js",
         )
 
+    form = ComicForm
     fieldsets = (
         (
             "Comic Info",
