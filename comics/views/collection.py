@@ -31,6 +31,7 @@ def collectable(request, collectable_id):
 def collector_collections_view(request):
     collector = request.user
     letter = request.GET.get("letter", "A")
+    selected_country = request.GET.get("country")
 
     # Prefetch para artistas firmantes
     signed_artists = Prefetch(
@@ -63,11 +64,17 @@ def collector_collections_view(request):
         .order_by(
             "comic__publishing__publishing_title",
             "first_editorial_country",
+            "comic__publishing__serie",
             "comic__number",
             "comic__variant",
             "trade_date",
         )
     )
+
+    if selected_country:
+        collections = collections.filter(
+            comic__publishing__editorials__country=selected_country
+        ).distinct()
 
     paginator = Paginator(collections, PAGE_LIMIT)
     page_number = request.GET.get("page")
@@ -79,6 +86,8 @@ def collector_collections_view(request):
         {
             "page_obj": page_obj,
             "selected_letter": letter,
+            "selected_country": selected_country,
+            "editorial_countries": Editorial.CountryAbbr.choices,
             "alphabet": [chr(i) for i in range(ord("A"), ord("Z") + 1)],
         },
     )

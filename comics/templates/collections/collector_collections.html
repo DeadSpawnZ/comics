@@ -2,13 +2,42 @@
 
 <div class="container my-4">
     <h1 class="mb-4 text-center">Mis Colecciones</h1>
+    <!-- FILTRO POR PAÍS DE EDITORIAL -->
+    <form method="get" class="d-flex justify-content-center mb-3 gap-2">
+
+        <!-- Mantener letra -->
+        <input type="hidden" name="letter" value="{{ selected_letter }}">
+
+        <label for="country" class="align-self-center fw-semibold">
+            Editorial:
+        </label>
+
+        <select
+            name="country"
+            id="country"
+            class="form-select form-select-sm w-auto"
+            onchange="this.form.submit()"
+        >
+            <option value="">Todas</option>
+            {% for value, label in editorial_countries %}
+                <option value="{{ value }}"
+                    {% if value == selected_country %}selected{% endif %}
+                >
+                    {{ label }}
+                </option>
+            {% endfor %}
+        </select>
+
+    </form>
 
     <!-- PAGINACIÓN POR LETRAS -->
     <nav class="mt-4">
         <ul class="pagination justify-content-center flex-wrap">
             {% for letter in alphabet %}
             <li class="page-item {% if letter == selected_letter %}active{% endif %}">
-                <a class="page-link" href="?letter={{ letter }}">{{ letter }}</a>
+                <a class="page-link" href="?letter={{ letter }}{% if selected_country %}&country={{ selected_country }}{% endif %}">
+                    {{ letter }}
+                </a>
             </li>
             {% endfor %}
         </ul>
@@ -38,7 +67,7 @@
                 {% endwith %}
                 <div class="overlay-info">
                     <div class="fw-bold">{{ collection.comic.publishing.publishing_title }}</div>
-                    <small>#{{ collection.comic.number }} {{ collection.comic.variant }}</small>
+                    <small>#{{ collection.comic.number }} {{ collection.comic.variant }} {{ collection.comic.publishing.serie}}</small>
                 </div>
                 </div>
             </div>
@@ -61,17 +90,8 @@
 
                     <!-- Detalles -->
                     <div class="col-md-7">
-                        <!-- Comic Info -->
-                        <h5 class="mb-2">{{ collection.comic.publishing.publishing_title }}</h5>
-                        <ul class="list-unstyled mb-4">
-                            <li><strong>Issue:</strong> #{{ collection.comic.number }} {{ collection.comic.variant }}</li>
-                            <li><strong>Price:</strong> ${{ collection.comic.cover_price }}</li>
-                            <li><strong>Release Date:</strong> {{ collection.comic.release_date }}</li>
-                            <li><strong>Language:</strong> {{ collection.comic.publishing.get_language_display }}</li>
-                            <li><strong>Format:</strong> {{ collection.comic.get_format_display }}</li>
-                        </ul>
-
                         <!-- Collection Info -->
+                        <h5 class="mb-2">{{ collection.comic.publishing.publishing_title }}</h5>
                         <h6 class="text-muted">Collection</h6>
                         <ul class="list-unstyled">
                             <li><strong>Amount Paid:</strong> ${{ collection.amount }} MXN</li>
@@ -79,6 +99,16 @@
                             <li><strong>Trade Type:</strong> {{ collection.get_trade_type_display }}</li>
                             <li><strong>Participant:</strong> {{ collection.participant }}</li>
                             <li><strong>Valuation:</strong> {{ collection.valuation }}</li>
+                        </ul>
+
+                        <!-- Issue Info -->
+                        <h6 class="text-muted">Issue Information</h6>
+                        <ul class="list-unstyled mb-4">
+                            <li><strong>Issue:</strong> #{{ collection.comic.number }} {{ collection.comic.variant }}</li>
+                            <li><strong>Price:</strong> ${{ collection.comic.cover_price }}</li>
+                            <li><strong>Release Date:</strong> {{ collection.comic.release_date }}</li>
+                            <li><strong>Language:</strong> {{ collection.comic.publishing.get_language_display }}</li>
+                            <li><strong>Format:</strong> {{ collection.comic.get_format_display }}</li>
                         </ul>
 
                         <!-- Signatures -->
@@ -119,10 +149,10 @@
 
             {% if page_obj.has_previous %}
             <li class="page-item">
-                <a class="page-link" href="?letter={{ selected_letter }}&page=1">&laquo;</a>
+                <a class="page-link" href="?letter={{ selected_letter }}&page=1{% if selected_country %}&country={{ selected_country }}{% endif %}">&laquo;</a>
             </li>
             <li class="page-item">
-                <a class="page-link" href="?letter={{ selected_letter }}&page={{ page_obj.previous_page_number }}">&lsaquo;</a>
+                <a class="page-link" href="?letter={{ selected_letter }}&page={{ page_obj.previous_page_number }}{% if selected_country %}&country={{ selected_country }}{% endif %}">&lsaquo;</a>
             </li>
             {% else %}
             <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
@@ -134,17 +164,21 @@
                 {% if page_obj.number == i %}
                 <li class="page-item active"><span class="page-link">{{ i }}</span></li>
                 {% else %}
-                <li class="page-item"><a class="page-link" href="?letter={{ selected_letter }}&page={{ i }}">{{ i }}</a></li>
+                <li class="page-item">
+                    <a class="page-link" href="?letter={{ selected_letter }}&page={{ i }}{% if selected_country %}&country={{ selected_country }}{% endif %}">
+                    {{ i }}
+                    </a>
+                </li>
                 {% endif %}
             {% endif %}
             {% endfor %}
 
             {% if page_obj.has_next %}
             <li class="page-item">
-                <a class="page-link" href="?letter={{ selected_letter }}&page={{ page_obj.next_page_number }}">&rsaquo;</a>
+                <a class="page-link" href="?letter={{ selected_letter }}&page={{ page_obj.next_page_number }}{% if selected_country %}&country={{ selected_country }}{% endif %}">&rsaquo;</a>
             </li>
             <li class="page-item">
-                <a class="page-link" href="?letter={{ selected_letter }}&page={{ page_obj.paginator.num_pages }}">&raquo;</a>
+                <a class="page-link" href="?letter={{ selected_letter }}&page={{ page_obj.paginator.num_pages }}{% if selected_country %}&country={{ selected_country }}{% endif %}">&raquo;</a>
             </li>
             {% else %}
             <li class="page-item disabled"><span class="page-link">&rsaquo;</span></li>
