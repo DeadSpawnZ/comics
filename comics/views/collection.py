@@ -65,6 +65,7 @@ def collector_collections_view(request):
             "comic__publishing__publishing_title",
             "first_editorial_country",
             "comic__publishing__serie",
+            "comic__publishing__year",
             "comic__number",
             "comic__variant",
             "trade_date",
