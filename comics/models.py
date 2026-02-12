@@ -81,7 +81,7 @@ class Publishing(Model):
     date = DateField(default=datetime.now)
     year = IntegerField(
         _("year"),
-        validators=[MinValueValidator(1970), max_value_current_year],
+        validators=[MinValueValidator(1960), max_value_current_year],
         blank=True,
         null=True,
     )
@@ -170,9 +170,13 @@ class Comic(Model):  # This is an Edition of an Issue
             code="invalid_limit",
         ),
     ]
+    numero_o_fraccion = RegexValidator(
+        regex=r'^(\d+|\d+/\d+)$',
+        message='Debe ser un número entero o una fracción (ej: 3 o 1/2)'
+    )
 
     publishing = ForeignKey(Publishing, on_delete=PROTECT, blank=True)
-    number = IntegerField()
+    number = CharField(max_length=5, validators=[numero_o_fraccion])
     variant = CharField(max_length=30, default="A", blank=True)
     printing = CharField(max_length=10, choices=PrintingChoices.choices, default=PrintingChoices.FIRST)
     ratio = CharField(max_length=10, blank=True, validators=ratio_validator)

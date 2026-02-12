@@ -33,12 +33,22 @@ class CollectionForm(forms.ModelForm):
         self.filter_previous_trade()
 
     def filter_comics_by_publishing(self):
-        if self.instance.pk and self.instance.comic:
-            publishing_instance = self.instance.comic.publishing
-            self.fields["comic"].queryset = Comic.objects.filter(publishing=publishing_instance).order_by(
-                "number", "variant"
-            )
-            self.initial["publishing"] = publishing_instance
+        if "publishing" in self.data:
+            try:
+                publishing_id = int(self.data.get("publishing"))
+                self.fields["comic"].queryset = Comic.objects.filter(
+                    publishing_id=publishing_id
+                ).order_by("number", "variant")
+            except (ValueError, TypeError):
+                pass
+
+        # EDIT: objeto existente
+        elif self.instance.pk and self.instance.comic:
+            publishing = self.instance.comic.publishing
+            self.fields["comic"].queryset = Comic.objects.filter(
+                publishing=publishing
+            ).order_by("number", "variant")
+            self.initial["publishing"] = publishing
 
     def filter_previous_trade(self):
         # if not self.instance.pk:
@@ -72,7 +82,7 @@ class CollectionForm(forms.ModelForm):
 
             self.fields["previous_trade"].queryset = qs
             self.fields["previous_trade"].label_from_instance = (
-                lambda obj: f"{obj.comic} || {obj.trade_date} || {obj.participant.name}"
+                lambda obj: f"{obj.comic} || {obj.trade_date} || {getattr(obj.participant, 'name', None)}"
             )
 
 
