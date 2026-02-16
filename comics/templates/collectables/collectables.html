@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="container my-4">
+    <h1 class="mb-4 text-center">Collectables</h1>
+
+    <!-- PAGINACIÓN POR LETRAS -->
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center flex-wrap">
+            <li class="page-item {% if not selected_letter %}active{% endif %}">
+                <a class="page-link" href="?">
+                    All
+                </a>
+            </li>
+            {% for letter in alphabet %}
+            <li class="page-item {% if letter == selected_letter %}active{% endif %}">
+                <a class="page-link" href="?letter={{ letter }}">
+                    {{ letter }}
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+    </nav>
+
+    <div class="row g-4">
+        {% for collectable in page_obj %}
+        <div class="col-6 col-sm-4 col-md-3 col-lg-2">
+            <div class="card shadow-sm border-0 overflow-hidden"
+                 role="button"
+                 data-bs-toggle="modal"
+                 data-bs-target="#collectableModal{{ collectable.id }}">
+
+                <div class="card-img-container position-relative">
+
+                    {% if collectable.image %}
+                        <img src="{{ collectable.image.url }}"
+                             class="img-fluid"
+                             alt="{{ collectable.name }}">
+                    {% else %}
+                        <div class="bg-light d-flex align-items-center justify-content-center"
+                             style="height:200px;">
+                            <span class="text-muted">Sin imagen</span>
+                        </div>
+                    {% endif %}
+
+                    <div class="overlay-info p-2 text-white"
+                         style="position:absolute; bottom:0; width:100%; background:rgba(0,0,0,0.6);">
+                        <div class="fw-bold">{{ collectable.name }}</div>
+                        <small>${{ collectable.amount }} MXN</small>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal -->
+        <div class="modal fade"
+             id="collectableModal{{ collectable.id }}"
+             tabindex="-1"
+             aria-hidden="true">
+
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content">
+
+                    <div class="modal-body d-flex flex-column flex-md-row gap-3">
+
+                        <!-- Imagen -->
+                        <div class="col-md-5 text-center">
+                            {% if collectable.image %}
+                                <img src="{{ collectable.image.url }}"
+                                     alt="{{ collectable.name }}"
+                                     class="img-fluid rounded shadow-sm">
+                            {% else %}
+                                <div class="d-flex align-items-center justify-content-center bg-light rounded shadow-sm"
+                                     style="height:100%;">
+                                    <span class="text-muted">Sin imagen</span>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Detalles -->
+                        <div class="col-md-7">
+                            <h5 class="mb-3">{{ collectable.name }}</h5>
+
+                            <ul class="list-unstyled">
+                                <li><strong>Monto:</strong> ${{ collectable.amount }} MXN</li>
+                                <li><strong>Fecha de intercambio:</strong> {{ collectable.trade_date }}</li>
+                                <li><strong>Participante:</strong> {{ collectable.participant }}</li>
+                            </ul>
+
+                            {% if collectable.description %}
+                                <h6 class="text-muted mt-3">Descripción</h6>
+                                <p>{{ collectable.description }}</p>
+                            {% endif %}
+                        </div>
+
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button"
+                                class="btn btn-secondary"
+                                data-bs-dismiss="modal">
+                            Cerrar
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        {% endfor %}
+    </div>
+
+    <!-- PAGINACIÓN NUMÉRICA -->
+    {% if page_obj.has_other_pages %}
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?letter={{ selected_letter }}&page=1">&laquo;</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?letter={{ selected_letter }}&page={{ page_obj.previous_page_number }}">&lsaquo;</a>
+            </li>
+            {% else %}
+            <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+            <li class="page-item disabled"><span class="page-link">&lsaquo;</span></li>
+            {% endif %}
+
+            {% for i in page_obj.paginator.page_range %}
+            {% if i >= page_obj.number|add:"-2" and i <= page_obj.number|add:"2" %}
+                {% if page_obj.number == i %}
+                <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                {% else %}
+                <li class="page-item">
+                    <a class="page-link" href="?letter={{ selected_letter }}&page={{ i }}">
+                        {{ i }}
+                    </a>
+                </li>
+                {% endif %}
+            {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?letter={{ selected_letter }}&page={{ page_obj.next_page_number }}">&rsaquo;</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?letter={{ selected_letter }}&page={{ page_obj.paginator.num_pages }}">&raquo;</a>
+            </li>
+            {% else %}
+            <li class="page-item disabled"><span class="page-link">&rsaquo;</span></li>
+            <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+            {% endif %}
+
+        </ul>
+    </nav>
+    {% endif %}
+
+</div>
+
+{% endblock %}

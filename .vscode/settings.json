@@ -1,4 +1,5 @@
 {
-    "editor.formatOnSave": false,
-    "prettier.printWidth": 120
+    "editor.formatOnSave": true,
+    "prettier.printWidth": 120,
+    "editor.defaultFormatter": "ms-python.black-formatter"
 }

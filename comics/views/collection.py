@@ -28,7 +28,7 @@ def collectable(request, collectable_id):
 
 
 @login_required
-def collector_collections_view(request):
+def comics_view(request):
     collector = request.user
     letter = request.GET.get("letter", "A")
     selected_country = request.GET.get("country")

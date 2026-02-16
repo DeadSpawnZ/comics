@@ -19,7 +19,8 @@ from django.contrib import admin
 from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
-from comics.views import collection, publishing, login
+from comics.views import (
+    collection, publishing, login, collectables)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -28,7 +29,8 @@ urlpatterns = [
     path("ajax/get-publishing-date/<int:publishing_id>/", publishing.get_publishing_date, name="get_publishing_date"),
     path("ajax/get-comics/<int:publishing_id>/", publishing.get_comics_by_publishing, name="get_comics_by_publishing"),
     path("ajax/get-previous-trades/<int:comic_id>/", collection.get_previous_trades, name="get_previous_trades"),
-    path("collectables/", collection.collector_collections_view, name="collectables"),
+    path("comics/", collection.comics_view, name="comics"),
+    path("collectables/", collectables.collectables_view, name="collectables"),
 ]
 
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

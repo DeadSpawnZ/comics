@@ -331,7 +331,7 @@ class Comic(Model):  # This is an Edition of an Issue
 
 
 class Dealer(Model):
-    name = CharField(max_length=100)
+    name = CharField(max_length=100, unique=True)
     real_name = CharField(max_length=100, blank=True)
     fb = CharField(max_length=150, blank=True)
 
