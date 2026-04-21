@@ -1,0 +1,34 @@
+version: '3.9'
+
+services:
+  db:
+    container_name: mysql_container
+    image: mysql:8.1.0
+    restart: always
+    volumes:
+      - mysql_volume:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    env_file: mysql.env
+
+  web:
+    container_name: django_container
+    build: .
+    restart: always
+    volumes:
+    - .:/code
+    - media_volume:/code/media
+    ports:
+      - "8080:8000"
+    environment:
+      - DATABASE_HOST=db
+      - MYSQL_DATABASE=mycomic
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=1234
+      - MYSQL_PORT=3306
+    depends_on:
+      - db
+
+volumes:
+  mysql_volume:
+  media_volume:
