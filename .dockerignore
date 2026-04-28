@@ -14,3 +14,6 @@ staticfiles/
 Dockerfile*
 docker-compose*
 *.log
+dump*.json
+README.md
+.vscode

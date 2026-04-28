@@ -1,8 +1,5 @@
-version: '3.9'
-
 services:
   db:
-    container_name: mysql_container
     image: mysql:8.1.0
     restart: always
     volumes:
@@ -12,17 +9,16 @@ services:
     env_file: mysql.env
 
   web:
-    container_name: django_container
     build: .
+    image: comi:1.0-beta
     restart: always
     volumes:
-    - .:/code
-    - media_volume:/code/media
+      - media_volume:/code/media
     ports:
       - "8080:8000"
     environment:
       - DATABASE_HOST=db
-      - MYSQL_DATABASE=mycomic
+      - MYSQL_DATABASE=comic
       - MYSQL_USER=root
       - MYSQL_PASSWORD=1234
       - MYSQL_PORT=3306
