@@ -264,16 +264,24 @@
 /* Hover overlay */
 .overlay-info {
     position: absolute;
-    inset: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
     background: rgba(0,0,0,.75);
     color: white;
+    padding: 4px 6px;
     opacity: 0;
     transition: opacity .25s ease;
 
     display: flex;
     flex-direction: column;
-    justify-content: end;
-    padding: 10px;
+    justify-content: center;
+    text-align: center;
+    z-index: 2;
+    font-size: 0.75rem;
+    line-height: 1;
+    overflow: hidden;
 }
 
 /* Mostrar overlay */
