@@ -55,13 +55,29 @@
                     <span class="text-muted">Sin imagen</span>
                     </div>
                 {% endif %}
+                <!-- Artistas -->
+                {% if collection.prefetched_signatures %}
+                <div class="artist-stack">
+                    {% for signature in collection.prefetched_signatures %}
+                        {% if signature.artist.photo %}
+                            <img
+                                src="{{ signature.artist.photo.url }}"
+                                alt="{{ signature.artist.name }}"
+                                class="artist-mini-photo"
+                                title="{{ signature.artist.name }}"
+                            >
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                {% endif %}
+
                 <!-- Country editorial -->
                 {% with first_editorial=collection.comic.publishing.editorials.first %}
                     {% if first_editorial %}
                         <img
                             src="{% static 'images/' %}{{ first_editorial.country }}.png"
                             alt="{{ first_editorial.name }}"
-                            class="country-flag position-absolute top-0 end-0 m-1"
+                            class="country-flag"
                         >
                     {% endif %}
                 {% endwith %}
@@ -203,6 +219,72 @@
 .artist-photo-placeholder {
     width: 60px;
     height: 60px;
+}
+
+.card-img-container {
+    position: relative;
+    overflow: hidden;
+}
+
+/* Bandera */
+.country-flag {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 28px;
+    height: 28px;
+    object-fit: cover;
+    z-index: 2;
+    transition: opacity .25s ease;
+}
+
+/* Contenedor vertical artistas */
+.artist-stack {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    z-index: 2;
+    transition: opacity .25s ease;
+}
+
+/* Fotos artistas */
+.artist-mini-photo {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid white;
+    background: white;
+    box-shadow: 0 1px 4px rgba(0,0,0,.3);
+}
+
+/* Hover overlay */
+.overlay-info {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,.75);
+    color: white;
+    opacity: 0;
+    transition: opacity .25s ease;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: end;
+    padding: 10px;
+}
+
+/* Mostrar overlay */
+.card:hover .overlay-info {
+    opacity: 1;
+}
+
+/* Ocultar bandera y artistas en hover */
+.card:hover .country-flag,
+.card:hover .artist-stack {
+    opacity: 0;
 }
 </style>
 {% endblock %}

@@ -1,9 +1,19 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.paginator import Paginator
-from django.db.models import Prefetch, OuterRef, Subquery, Q
 from django.shortcuts import get_object_or_404, render
 from django.http import JsonResponse
+from django.db.models import (
+    Q,
+    OuterRef,
+    Subquery,
+    Prefetch,
+    IntegerField,
+    Case,
+    When,
+    Value,
+)
+from django.db.models.functions import Cast
 
 from comics.models import Collection, Signature, Editorial, Comic
 
@@ -60,12 +70,22 @@ def comics_view(request):
             signed_artists,
             "comic__publishing__editorials",
         )
-        .annotate(first_editorial_country=first_editorial_country)
+        .annotate(first_editorial_country=first_editorial_country,
+            comic_number_int=Case(
+                When(
+                    comic__number__regex=r'^\d+$',
+                    then=Cast("comic__number", IntegerField())
+                ),
+                default=Value(None),
+                output_field=IntegerField(),
+            )
+        )
         .order_by(
             "comic__publishing__publishing_title",
             "first_editorial_country",
             "comic__publishing__serie",
             "comic__publishing__year",
+            "comic_number_int",
             "comic__number",
             "comic__variant",
             "trade_date",

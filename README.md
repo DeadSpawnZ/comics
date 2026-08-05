@@ -19,7 +19,7 @@ ERROR: failed to build: failed to solve: invalid file request mysql_volume/mysql
 Para restaurar un dump de la base de datos es necesario entrar al contenedor con:
 
 ```
-docker exec -it django-container bash
+docker exec -it comi-web-1 bash
 ```
 Y ejecutar el siguiente comando para cargar el dump
 ```
