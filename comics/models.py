@@ -155,6 +155,7 @@ class Comic(Model):  # This is an Edition of an Issue
         THIRD = "3rd", _("3rd")
         FOURTH = "4th", _("4th")
         FIFTH = "5th", _("5th")
+        SIXTH = "6th", _("6th")
 
     ratio_validator = [
         RegexValidator(
