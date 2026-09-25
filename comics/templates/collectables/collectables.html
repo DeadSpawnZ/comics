@@ -22,9 +22,9 @@
 
   <div class="row g-3">
     {% for collectable in page_obj %}
-    <div class="col-6 col-sm-4 col-md-3 col-lg-2">
+    <div class="col-12 col-sm-6 col-lg-4 col-xxl-3">
       <div class="md-card" role="button" data-bs-toggle="modal" data-bs-target="#collectableModal{{ collectable.id }}">
-        <div class="card-img-container card-img-container--square">
+        <div class="card-img-container card-img-container--landscape">
           {% if collectable.image %}
             <img src="{{ collectable.image.url }}" class="comic-img" alt="{{ collectable.name }}" loading="lazy">
           {% else %}
@@ -54,7 +54,7 @@
                 {% if collectable.image %}
                   <img src="{{ collectable.image.url }}" alt="{{ collectable.name }}" class="img-fluid rounded-4 shadow-sm" loading="lazy">
                 {% else %}
-                  <div class="img-placeholder rounded-4 ratio ratio-1x1">
+                  <div class="img-placeholder rounded-4 ratio ratio-3x2">
                     <span class="d-flex align-items-center justify-content-center">
                       <span class="material-symbols-outlined" aria-hidden="true">image</span>
                     </span>

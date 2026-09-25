@@ -21,6 +21,10 @@
   --bs-aspect-ratio: 150%;
 }
 
+.ratio-3x2 {
+  --bs-aspect-ratio: 66.6667%;
+}
+
 .empty-state-icon {
   font-size: 3rem;
   color: var(--md-on-surface-variant);
@@ -35,8 +39,8 @@
   background-color: #000;
 }
 
-.card-img-container--square {
-  aspect-ratio: 1 / 1;
+.card-img-container--landscape {
+  aspect-ratio: 3 / 2;
 }
 
 .comic-img {
