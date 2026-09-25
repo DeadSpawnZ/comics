@@ -69,15 +69,24 @@ class CollectionForm(forms.ModelForm):
                 used_previous_trades_ids = [
                     uid for uid in used_previous_trades_ids if uid != self.instance.previous_trade.id
                 ]
-            qs = (
-                Collection.objects.filter(comic_id=comic_id, trade_type=Collection.TradeChoices.BUYING)
-                .exclude(id__in=used_previous_trades_ids)
-                .order_by(
-                    "comic__publishing__publishing_title",
-                    "comic__number",
-                    "comic__variant",
-                    "trade_date",
-                )
+            qs = Collection.objects.filter(comic_id=comic_id, trade_type=Collection.TradeChoices.BUYING).exclude(
+                id__in=used_previous_trades_ids
+            )
+
+            # Un registro no puede ser su propio previous_trade.
+            if self.instance.pk:
+                qs = qs.exclude(pk=self.instance.pk)
+
+            # No se puede vender algo que aun no se poseia: solo se ofrecen compras
+            # ocurridas en la fecha de venta o antes.
+            if self.instance.trade_date:
+                qs = qs.filter(trade_date__lte=self.instance.trade_date)
+
+            qs = qs.order_by(
+                "comic__publishing__publishing_title",
+                "comic__number",
+                "comic__variant",
+                "trade_date",
             )
 
             self.fields["previous_trade"].queryset = qs

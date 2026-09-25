@@ -386,10 +386,18 @@ class Collection(Model):
                 fields=["comic", "trade_date", "amount", "trade_type", "participant"],
                 name="unique_collection_comic_date_amount_type_participant",
             ),
+            # MySQL no permite que un CHECK constraint referencie una columna
+            # auto-increment (error 3818), asi que "no puede ser su propio
+            # previous_trade" solo se puede validar en Python (ver
+            # validate_previous_trade), no a nivel de base de datos.
         ]
 
     def __str__(self):
         return self.comic.__str__()
+
+    def validate_previous_trade(self):
+        if self.pk and self.previous_trade_id == self.pk:
+            raise ValidationError("A collection can't be its own previous trade.")
 
     def validate_duplicate(self):
         coincidences = (
@@ -409,6 +417,7 @@ class Collection(Model):
                 raise ValidationError("Duplicated collectable")
 
     def save(self, *args, **kwargs):
+        self.validate_previous_trade()
         self.validate_duplicate()
 
         super(Collection, self).save(*args, **kwargs)

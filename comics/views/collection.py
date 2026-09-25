@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, render
 from django.http import JsonResponse
+from django.utils.dateparse import parse_date
 from django.db.models import (
     Q,
     OuterRef,
@@ -127,12 +128,19 @@ def get_previous_trades(request, comic_id):
             .exclude(id__in=used_previous_trades_ids)
             .select_related("comic__publishing", "participant")
             .prefetch_related("comic__publishing__editorials")
-            .order_by(
-                "comic__publishing__publishing_title",
-                "comic__number",
-                "comic__variant",
-                "trade_date",
-            )
+        )
+
+        # No se puede vender algo que aun no se poseia: solo se ofrecen compras
+        # ocurridas en la fecha de venta o antes.
+        before_date = parse_date(request.GET.get("before", ""))
+        if before_date:
+            trades = trades.filter(trade_date__lte=before_date)
+
+        trades = trades.order_by(
+            "comic__publishing__publishing_title",
+            "comic__number",
+            "comic__variant",
+            "trade_date",
         )
 
         data = [
