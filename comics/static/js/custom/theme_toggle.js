@@ -7,8 +7,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function applyIcon(theme) {
-    icon.classList.toggle("fa-moon-o", theme !== "dark");
-    icon.classList.toggle("fa-sun-o", theme === "dark");
+    icon.textContent = theme === "dark" ? "light_mode" : "dark_mode";
   }
 
   applyIcon(document.documentElement.getAttribute("data-bs-theme"));

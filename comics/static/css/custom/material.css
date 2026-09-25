@@ -1,0 +1,520 @@
+/*
+ * Capa visual Material 3 (tema azure-blue de Angular Material 18) sobre Bootstrap 5.3.
+ * Los tokens --md-* se mapean a las variables --bs-* para que los componentes de
+ * Bootstrap que siguen en uso hereden los colores en claro y oscuro.
+ */
+
+:root,
+:root[data-bs-theme="light"] {
+  --md-primary: #005cbb;
+  --md-primary-rgb: 0, 92, 187;
+  --md-on-primary: #ffffff;
+  --md-primary-container: #d7e3ff;
+  --md-on-primary-container: #001b3f;
+  --md-secondary-container: #dae2f9;
+  --md-on-secondary-container: #131c2b;
+  --md-surface: #faf9fd;
+  --md-surface-rgb: 250, 249, 253;
+  --md-surface-container-low: #f4f3f7;
+  --md-surface-container: #efedf1;
+  --md-surface-container-high: #e9e7eb;
+  --md-surface-container-highest: #e3e2e6;
+  --md-on-surface: #1a1b1f;
+  --md-on-surface-rgb: 26, 27, 31;
+  --md-on-surface-variant: #44474e;
+  --md-outline: #74777f;
+  --md-outline-variant: #c4c6d0;
+  --md-shadow: 0, 0, 0;
+}
+
+:root[data-bs-theme="dark"] {
+  --md-primary: #abc7ff;
+  --md-primary-rgb: 171, 199, 255;
+  --md-on-primary: #002f65;
+  --md-primary-container: #00458f;
+  --md-on-primary-container: #d7e3ff;
+  --md-secondary-container: #3e4759;
+  --md-on-secondary-container: #dae2f9;
+  --md-surface: #121316;
+  --md-surface-rgb: 18, 19, 22;
+  --md-surface-container-low: #1a1b1f;
+  --md-surface-container: #1e1f23;
+  --md-surface-container-high: #292a2d;
+  --md-surface-container-highest: #343538;
+  --md-on-surface: #e3e2e6;
+  --md-on-surface-rgb: 227, 226, 230;
+  --md-on-surface-variant: #c4c6d0;
+  --md-outline: #8e9099;
+  --md-outline-variant: #44474e;
+  --md-shadow: 0, 0, 0;
+}
+
+:root,
+:root[data-bs-theme="light"],
+:root[data-bs-theme="dark"] {
+  --bs-body-font-family: "Roboto", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --bs-body-bg: var(--md-surface);
+  --bs-body-bg-rgb: var(--md-surface-rgb);
+  --bs-body-color: var(--md-on-surface);
+  --bs-body-color-rgb: var(--md-on-surface-rgb);
+  --bs-emphasis-color: var(--md-on-surface);
+  --bs-secondary-color: var(--md-on-surface-variant);
+  --bs-tertiary-bg: var(--md-surface-container-low);
+  --bs-secondary-bg: var(--md-surface-container-high);
+  --bs-border-color: var(--md-outline-variant);
+  --bs-primary: var(--md-primary);
+  --bs-primary-rgb: var(--md-primary-rgb);
+  --bs-link-color: var(--md-primary);
+  --bs-link-color-rgb: var(--md-primary-rgb);
+  --bs-link-hover-color: var(--md-primary);
+  --bs-focus-ring-color: rgba(var(--md-primary-rgb), 0.25);
+  --bs-border-radius: 12px;
+
+  --md-elevation-1: 0 1px 2px rgba(var(--md-shadow), 0.3), 0 1px 3px 1px rgba(var(--md-shadow), 0.15);
+  --md-elevation-2: 0 1px 2px rgba(var(--md-shadow), 0.3), 0 2px 6px 2px rgba(var(--md-shadow), 0.15);
+  --md-elevation-3: 0 4px 8px 3px rgba(var(--md-shadow), 0.15), 0 1px 3px rgba(var(--md-shadow), 0.3);
+}
+
+body {
+  letter-spacing: 0.01em;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+  font-size: 1.35rem;
+  line-height: 1;
+  vertical-align: middle;
+  user-select: none;
+}
+
+/* Tipografia */
+.md-headline-small {
+  font-size: 1.5rem;
+  font-weight: 400;
+  line-height: 2rem;
+}
+
+.md-title-medium {
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.md-label-large {
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.md-body-medium {
+  font-size: 0.875rem;
+  color: var(--md-on-surface-variant);
+}
+
+/* Top app bar */
+.md-top-app-bar {
+  background-color: var(--md-surface-container);
+  color: var(--md-on-surface);
+  min-height: 64px;
+  padding-block: 0.5rem;
+}
+
+.md-top-app-bar .navbar-brand {
+  color: var(--md-on-surface);
+  font-size: 1.375rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.md-top-app-bar .navbar-brand .material-symbols-outlined {
+  color: var(--md-primary);
+  font-size: 1.75rem;
+}
+
+.md-nav-link {
+  color: var(--md-on-surface-variant);
+  border-radius: 999px;
+  padding: 0.5rem 1rem !important;
+  font-weight: 500;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.md-nav-link:hover,
+.md-nav-link:focus-visible {
+  color: var(--md-on-surface);
+  background-color: rgba(var(--md-on-surface-rgb), 0.08);
+}
+
+.md-nav-link.active {
+  color: var(--md-on-secondary-container);
+  background-color: var(--md-secondary-container);
+}
+
+/* Botones */
+.md-btn {
+  --md-btn-bg: transparent;
+  --md-btn-color: var(--md-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  height: 40px;
+  padding: 0 1.5rem;
+  border-radius: 999px;
+  border: 0;
+  background-color: var(--md-btn-bg);
+  color: var(--md-btn-color);
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow 0.15s ease;
+}
+
+.md-btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-color: currentColor;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  pointer-events: none;
+}
+
+.md-btn:hover::after {
+  opacity: 0.08;
+}
+
+.md-btn:focus-visible::after,
+.md-btn:active::after {
+  opacity: 0.12;
+}
+
+.md-btn:focus-visible {
+  outline: 2px solid var(--md-primary);
+  outline-offset: 2px;
+}
+
+.md-btn--filled {
+  --md-btn-bg: var(--md-primary);
+  --md-btn-color: var(--md-on-primary);
+}
+
+.md-btn--filled:hover {
+  box-shadow: var(--md-elevation-1);
+}
+
+.md-btn--tonal {
+  --md-btn-bg: var(--md-secondary-container);
+  --md-btn-color: var(--md-on-secondary-container);
+}
+
+.md-btn--outlined {
+  border: 1px solid var(--md-outline);
+}
+
+.md-btn--text {
+  padding: 0 0.75rem;
+}
+
+.md-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--md-on-surface-variant);
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.md-icon-btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-color: currentColor;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.md-icon-btn:hover::after {
+  opacity: 0.08;
+}
+
+.md-icon-btn:focus-visible {
+  outline: 2px solid var(--md-primary);
+  outline-offset: 2px;
+}
+
+.md-icon-btn.is-disabled {
+  opacity: 0.38;
+  pointer-events: none;
+}
+
+/* Menu (dropdown de Bootstrap con estilo M3) */
+.md-menu {
+  --bs-dropdown-bg: var(--md-surface-container);
+  --bs-dropdown-border-width: 0;
+  --bs-dropdown-border-radius: 4px;
+  --bs-dropdown-link-color: var(--md-on-surface);
+  --bs-dropdown-link-hover-bg: rgba(var(--md-on-surface-rgb), 0.08);
+  --bs-dropdown-link-hover-color: var(--md-on-surface);
+  --bs-dropdown-link-active-bg: rgba(var(--md-on-surface-rgb), 0.12);
+  --bs-dropdown-link-active-color: var(--md-on-surface);
+  --bs-dropdown-item-padding-y: 0.75rem;
+  --bs-dropdown-header-color: var(--md-on-surface-variant);
+  box-shadow: var(--md-elevation-2);
+  min-width: 200px;
+  padding-block: 0.5rem;
+}
+
+.md-menu .dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+}
+
+/* Superficies */
+.md-surface-card {
+  background-color: var(--md-surface-container-low);
+  border-radius: 16px;
+  padding: 1.25rem;
+}
+
+/* Campos de formulario (outlined) */
+.md-field .form-control,
+.md-field .form-select {
+  background-color: transparent;
+  color: var(--md-on-surface);
+  border: 1px solid var(--md-outline);
+  border-radius: 4px;
+}
+
+.md-field .form-control:hover,
+.md-field .form-select:hover {
+  border-color: var(--md-on-surface);
+}
+
+.md-field .form-control:focus,
+.md-field .form-select:focus {
+  border-color: var(--md-primary);
+  box-shadow: inset 0 0 0 1px var(--md-primary);
+}
+
+.md-field.form-floating > label {
+  color: var(--md-on-surface-variant);
+}
+
+.md-field.form-floating > .form-control:focus ~ label,
+.md-field.form-floating > .form-select:focus ~ label {
+  color: var(--md-primary);
+}
+
+.md-field.form-floating > .form-control:focus ~ label::after,
+.md-field.form-floating > .form-control:not(:placeholder-shown) ~ label::after,
+.md-field.form-floating > .form-select ~ label::after {
+  background-color: transparent;
+}
+
+.md-field .form-select option {
+  background-color: var(--md-surface-container);
+  color: var(--md-on-surface);
+}
+
+/* Chips de filtro */
+.md-chip-set {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.md-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  height: 32px;
+  min-width: 36px;
+  padding: 0 0.75rem;
+  justify-content: center;
+  border: 1px solid var(--md-outline-variant);
+  border-radius: 8px;
+  color: var(--md-on-surface-variant);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.md-chip::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-color: currentColor;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.md-chip:hover::after {
+  opacity: 0.08;
+}
+
+.md-chip:focus-visible {
+  outline: 2px solid var(--md-primary);
+  outline-offset: 2px;
+}
+
+.md-chip.is-selected {
+  background-color: var(--md-secondary-container);
+  border-color: var(--md-secondary-container);
+  color: var(--md-on-secondary-container);
+  padding-left: 0.5rem;
+}
+
+.md-chip .material-symbols-outlined {
+  font-size: 1.1rem;
+}
+
+/* Cards */
+.md-card {
+  background-color: var(--md-surface-container-low);
+  border-radius: 12px;
+  box-shadow: var(--md-elevation-1);
+  overflow: hidden;
+  cursor: pointer;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.md-card:hover {
+  box-shadow: var(--md-elevation-3);
+  transform: translateY(-2px);
+}
+
+.md-card:focus-visible {
+  outline: 2px solid var(--md-primary);
+  outline-offset: 2px;
+}
+
+/* Dialogos (modal de Bootstrap con estilo M3) */
+.md-dialog {
+  --bs-modal-bg: var(--md-surface-container-high);
+  --bs-modal-color: var(--md-on-surface);
+  --bs-modal-border-width: 0;
+  --bs-modal-border-radius: 28px;
+  --bs-modal-inner-border-radius: 28px;
+  --bs-modal-padding: 1.5rem;
+  --bs-modal-header-border-width: 0;
+  --bs-modal-footer-border-width: 0;
+  --bs-modal-box-shadow: var(--md-elevation-3);
+}
+
+.md-dialog .modal-content {
+  box-shadow: var(--md-elevation-3);
+}
+
+.md-dialog .modal-header {
+  padding-bottom: 0.5rem;
+}
+
+.md-dialog .modal-footer {
+  padding-top: 0;
+  gap: 0.5rem;
+}
+
+.md-dialog .modal-footer > * {
+  margin: 0;
+}
+
+.md-list {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 1rem;
+  row-gap: 0.5rem;
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.md-list dt {
+  color: var(--md-on-surface-variant);
+  font-weight: 400;
+}
+
+.md-list dd {
+  margin: 0;
+  color: var(--md-on-surface);
+}
+
+.md-section-label {
+  color: var(--md-primary);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+
+/* Paginador estilo mat-paginator */
+.md-paginator {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  padding: 0.5rem 0.5rem 0.5rem 1rem;
+  border-radius: 16px;
+  background-color: var(--md-surface-container-low);
+  color: var(--md-on-surface-variant);
+  font-size: 0.75rem;
+}
+
+.md-paginator__range {
+  margin-right: auto;
+}
+
+.md-paginator__pages {
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.md-paginator__page {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 0.25rem;
+  border-radius: 999px;
+  color: var(--md-on-surface-variant);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+a.md-paginator__page:hover {
+  background-color: rgba(var(--md-on-surface-rgb), 0.08);
+  color: var(--md-on-surface);
+}
+
+.md-paginator__page.is-current {
+  background-color: var(--md-primary);
+  color: var(--md-on-primary);
+}

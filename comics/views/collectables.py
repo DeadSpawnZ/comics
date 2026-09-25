@@ -12,14 +12,9 @@ def collectables_view(request):
     letter = request.GET.get("letter")
     search = request.GET.get("search")
 
-    collectables = GeekCollectable.objects.select_related("participant")
+    collectables = GeekCollectable.objects.select_related("participant").order_by("name", "trade_date")
     if letter:
-        collectables = (
-            GeekCollectable.objects
-            .filter(name__istartswith=letter)
-            .select_related("participant")
-            .order_by("name", "trade_date")
-        )
+        collectables = collectables.filter(name__istartswith=letter)
 
     # 🔎 Búsqueda opcional
     if search:
@@ -31,12 +26,14 @@ def collectables_view(request):
     paginator = Paginator(collectables, PAGE_LIMIT)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
+    elided_page_range = page_obj.paginator.get_elided_page_range(page_obj.number, on_each_side=1, on_ends=1)
 
     return render(
         request,
         "collectables/collectables.html",
         {
             "page_obj": page_obj,
+            "elided_page_range": elided_page_range,
             "selected_letter": letter,
             "search": search,
             "alphabet": [chr(i) for i in range(ord("A"), ord("Z") + 1)],

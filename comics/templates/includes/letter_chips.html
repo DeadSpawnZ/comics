@@ -1,0 +1,20 @@
+<div class="md-chip-set" role="group" aria-label="Filtrar por letra">
+  <a
+    href="{% querystring letter='' page=None %}"
+    class="md-chip {% if not selected_letter %}is-selected{% endif %}"
+    {% if not selected_letter %}aria-current="true"{% endif %}
+  >
+    {% if not selected_letter %}<span class="material-symbols-outlined" aria-hidden="true">check</span>{% endif %}
+    Todas
+  </a>
+  {% for letter in alphabet %}
+  <a
+    href="{% querystring letter=letter page=None %}"
+    class="md-chip {% if letter == selected_letter %}is-selected{% endif %}"
+    {% if letter == selected_letter %}aria-current="true"{% endif %}
+  >
+    {% if letter == selected_letter %}<span class="material-symbols-outlined" aria-hidden="true">check</span>{% endif %}
+    {{ letter }}
+  </a>
+  {% endfor %}
+</div>

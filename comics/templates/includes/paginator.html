@@ -1,0 +1,57 @@
+{% if page_obj.paginator.count %}
+<nav class="md-paginator mt-4" aria-label="Paginación">
+  <span class="md-paginator__range">
+    {{ page_obj.start_index }} – {{ page_obj.end_index }} de {{ page_obj.paginator.count }}
+  </span>
+
+  {% if page_obj.has_other_pages %}
+  <div class="d-flex align-items-center">
+    {% if page_obj.has_previous %}
+      <a class="md-icon-btn" href="{% querystring page=1 %}" aria-label="Primera página" title="Primera página">
+        <span class="material-symbols-outlined" aria-hidden="true">first_page</span>
+      </a>
+      <a class="md-icon-btn" href="{% querystring page=page_obj.previous_page_number %}" aria-label="Página anterior" title="Página anterior">
+        <span class="material-symbols-outlined" aria-hidden="true">chevron_left</span>
+      </a>
+    {% else %}
+      <span class="md-icon-btn is-disabled" aria-hidden="true">
+        <span class="material-symbols-outlined">first_page</span>
+      </span>
+      <span class="md-icon-btn is-disabled" aria-hidden="true">
+        <span class="material-symbols-outlined">chevron_left</span>
+      </span>
+    {% endif %}
+
+    <ul class="md-paginator__pages">
+      {% for i in elided_page_range %}
+        <li>
+          {% if i == page_obj.paginator.ELLIPSIS %}
+            <span class="md-paginator__page">{{ i }}</span>
+          {% elif i == page_obj.number %}
+            <span class="md-paginator__page is-current" aria-current="page">{{ i }}</span>
+          {% else %}
+            <a class="md-paginator__page" href="{% querystring page=i %}">{{ i }}</a>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+
+    {% if page_obj.has_next %}
+      <a class="md-icon-btn" href="{% querystring page=page_obj.next_page_number %}" aria-label="Página siguiente" title="Página siguiente">
+        <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+      </a>
+      <a class="md-icon-btn" href="{% querystring page=page_obj.paginator.num_pages %}" aria-label="Última página" title="Última página">
+        <span class="material-symbols-outlined" aria-hidden="true">last_page</span>
+      </a>
+    {% else %}
+      <span class="md-icon-btn is-disabled" aria-hidden="true">
+        <span class="material-symbols-outlined">chevron_right</span>
+      </span>
+      <span class="md-icon-btn is-disabled" aria-hidden="true">
+        <span class="material-symbols-outlined">last_page</span>
+      </span>
+    {% endif %}
+  </div>
+  {% endif %}
+</nav>
+{% endif %}

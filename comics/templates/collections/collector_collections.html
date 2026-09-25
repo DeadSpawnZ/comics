@@ -5,240 +5,186 @@
     <!-- FILTROS -->
     <aside class="col-12 col-lg-3 col-xl-2">
       <button
-        class="btn btn-outline-secondary w-100 d-lg-none mb-2"
+        class="md-btn md-btn--tonal w-100 d-lg-none mb-2"
         type="button"
         data-bs-toggle="collapse"
         data-bs-target="#filtersPanel"
         aria-expanded="false"
         aria-controls="filtersPanel"
       >
-        <i class="fa fa-filter" aria-hidden="true"></i> Filtros
+        <span class="material-symbols-outlined" aria-hidden="true">filter_list</span>
+        Filtros
       </button>
 
       <div class="filters-panel collapse d-lg-block" id="filtersPanel">
-        <div class="bg-body-tertiary border rounded-3 p-3 sticky-lg-top">
-          <h2 class="h6 text-uppercase fw-bold mb-3">Filtros</h2>
+        <div class="md-surface-card sticky-lg-top">
+          <h2 class="md-title-medium mb-3 d-flex align-items-center gap-2">
+            <span class="material-symbols-outlined" aria-hidden="true">tune</span>
+            Filtros
+          </h2>
 
-          <form method="get" id="country-filter-form">
+          <form method="get" class="mb-4">
             <input type="hidden" name="letter" value="{{ selected_letter }}">
-            <div class="mb-3">
-              <label for="country" class="form-label small text-uppercase fw-semibold text-body-secondary">
-                Editorial
-              </label>
-              <select
-                name="country"
-                id="country"
-                class="form-select form-select-sm"
-                onchange="this.form.submit()"
-              >
+            <div class="form-floating md-field">
+              <select name="country" id="country" class="form-select" onchange="this.form.submit()">
                 <option value="">Todas</option>
                 {% for value, label in editorial_countries %}
-                  <option value="{{ value }}" {% if value == selected_country %}selected{% endif %}>
-                    {{ label }}
-                  </option>
+                  <option value="{{ value }}" {% if value == selected_country %}selected{% endif %}>{{ label }}</option>
                 {% endfor %}
               </select>
+              <label for="country">País de la editorial</label>
             </div>
           </form>
 
-          <div>
-            <span class="form-label d-block small text-uppercase fw-semibold text-body-secondary">
-              Letra
-            </span>
-            <div class="letter-grid">
-              <a
-                href="{% querystring letter='' page=None %}"
-                class="letter-btn {% if not selected_letter %}active{% endif %}"
-              >
-                Todas
-              </a>
-              {% for letter in alphabet %}
-              <a
-                href="{% querystring letter=letter page=None %}"
-                class="letter-btn {% if letter == selected_letter %}active{% endif %}"
-              >
-                {{ letter }}
-              </a>
-              {% endfor %}
-            </div>
-          </div>
+          <div class="md-section-label">Letra</div>
+          {% include 'includes/letter_chips.html' %}
         </div>
       </div>
     </aside>
 
     <!-- CONTENIDO -->
     <div class="col-12 col-lg-9 col-xl-10">
-      <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
-        <h1 class="h3 mb-0">Mis Colecciones</h1>
-        <span class="text-body-secondary small">{{ page_obj.paginator.count }} pieza{{ page_obj.paginator.count|pluralize }}</span>
+      <div class="d-flex align-items-baseline justify-content-between mb-3 flex-wrap gap-2">
+        <h1 class="md-headline-small mb-0">Mis colecciones</h1>
+        <span class="md-body-medium">{{ page_obj.paginator.count }} pieza{{ page_obj.paginator.count|pluralize }}</span>
       </div>
 
       {% if not page_obj.object_list %}
-        <p class="text-body-secondary">No se encontraron colecciones con estos filtros.</p>
+        <div class="md-surface-card text-center py-5">
+          <span class="material-symbols-outlined d-block mb-2 empty-state-icon" aria-hidden="true">search_off</span>
+          <p class="md-body-medium mb-0">No se encontraron colecciones con estos filtros.</p>
+        </div>
       {% endif %}
 
-      <div class="row g-4">
+      <div class="row g-3">
         {% for collection in page_obj %}
         <div class="col-6 col-sm-4 col-md-3 col-lg-2">
-          <div class="card shadow-sm border-0 overflow-hidden" role="button" data-bs-toggle="modal" data-bs-target="#collectionModal{{ collection.id }}">
+          <div class="md-card" role="button" data-bs-toggle="modal" data-bs-target="#collectionModal{{ collection.id }}">
             <div class="card-img-container">
-            {% if collection.comic.thumbnail %}
-                <img src="{{ collection.comic.thumbnail.url }}" class="comic-img" alt="Thumbnail">
-            {% else %}
-                <div class="comic-img bg-body-secondary d-flex align-items-center justify-content-center">
-                <span class="text-body-secondary">Sin imagen</span>
+              {% if collection.comic.thumbnail %}
+                <img src="{{ collection.comic.thumbnail.url }}" class="comic-img" alt="{{ collection.comic.publishing.publishing_title }} #{{ collection.comic.number }}" loading="lazy">
+              {% else %}
+                <div class="comic-img img-placeholder">
+                  <span class="material-symbols-outlined" aria-hidden="true">image</span>
                 </div>
-            {% endif %}
-            <!-- Artistas -->
-            {% if collection.prefetched_signatures %}
-            <div class="artist-stack">
-                {% for signature in collection.prefetched_signatures %}
-                    {% if signature.artist.photo %}
-                        <img
-                            src="{{ signature.artist.photo.url }}"
-                            alt="{{ signature.artist.name }}"
-                            class="artist-mini-photo"
-                            title="{{ signature.artist.name }}"
-                        >
-                    {% endif %}
-                {% endfor %}
-            </div>
-            {% endif %}
+              {% endif %}
 
-            <!-- Country editorial -->
-            {% with first_editorial=collection.comic.publishing.editorials.first %}
-                {% if first_editorial %}
+              {% if collection.prefetched_signatures %}
+              <div class="artist-stack">
+                {% for signature in collection.prefetched_signatures %}
+                  {% if signature.artist.photo %}
                     <img
-                        src="{% static 'images/' %}{{ first_editorial.country }}.png"
-                        alt="{{ first_editorial.name }}"
-                        class="country-flag"
+                      src="{{ signature.artist.photo.url }}"
+                      alt="{{ signature.artist.name }}"
+                      class="artist-mini-photo"
+                      title="{{ signature.artist.name }}"
                     >
+                  {% endif %}
+                {% endfor %}
+              </div>
+              {% endif %}
+
+              {% with first_editorial=collection.comic.publishing.editorials.first %}
+                {% if first_editorial %}
+                  <img
+                    src="{% static 'images/' %}{{ first_editorial.country }}.png"
+                    alt="{{ first_editorial.name }}"
+                    class="country-flag"
+                  >
                 {% endif %}
-            {% endwith %}
-            <div class="overlay-info">
+              {% endwith %}
+
+              <div class="overlay-info">
                 <div class="fw-bold">{{ collection.comic.publishing.publishing_title }}</div>
                 <small>#{{ collection.comic.number }} {{ collection.comic.variant }} {{ collection.comic.publishing.serie }} {{ collection.comic.printing }}</small>
-            </div>
+              </div>
             </div>
           </div>
         </div>
-        <!-- Modal para cada colección -->
-        <div class="modal fade" id="collectionModal{{ collection.id }}" tabindex="-1" aria-labelledby="modalLabel{{ collection.id }}" aria-hidden="true">
-          <div class="modal-dialog modal-lg modal-dialog-centered">
+
+        <!-- Diálogo de detalle -->
+        <div class="modal fade md-dialog" id="collectionModal{{ collection.id }}" tabindex="-1" aria-labelledby="modalLabel{{ collection.id }}" aria-hidden="true">
+          <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
-            <div class="modal-body d-flex flex-column flex-md-row gap-3">
-                <!-- Imagen -->
-                <div class="col-md-5 text-center">
-                {% if collection.comic.image %}
-                    <img src="{{ collection.comic.image.url }}" alt="Comic Image" class="img-fluid rounded shadow-sm">
-                {% else %}
-                    <div class="d-flex align-items-center justify-content-center bg-body-secondary rounded shadow-sm" style="height: 100%;">
-                        <span class="text-body-secondary">Sin imagen</span>
-                    </div>
-                {% endif %}
+              <div class="modal-header">
+                <div>
+                  <h2 class="modal-title md-headline-small" id="modalLabel{{ collection.id }}">
+                    {{ collection.comic.publishing.publishing_title }}
+                  </h2>
+                  <div class="md-body-medium">
+                    #{{ collection.comic.number }} {{ collection.comic.variant }} · {{ collection.comic.get_format_display }}
+                  </div>
                 </div>
-
-                <!-- Detalles -->
-                <div class="col-md-7">
-                    <!-- Collection Info -->
-                    <h5 class="mb-2">{{ collection.comic.publishing.publishing_title }}</h5>
-                    <h6 class="text-body-secondary">Collection</h6>
-                    <ul class="list-unstyled">
-                        <li><strong>Amount Paid:</strong> ${{ collection.amount }} MXN</li>
-                        <li><strong>Trade Date:</strong> {{ collection.trade_date }}</li>
-                        <li><strong>Trade Type:</strong> {{ collection.get_trade_type_display }}</li>
-                        <li><strong>Participant:</strong> {{ collection.participant }}</li>
-                        <li><strong>Valuation:</strong> {{ collection.valuation }}</li>
-                    </ul>
-
-                    <!-- Issue Info -->
-                    <h6 class="text-body-secondary">Issue Information</h6>
-                    <ul class="list-unstyled mb-4">
-                        <li><strong>Issue:</strong> #{{ collection.comic.number }} {{ collection.comic.variant }}</li>
-                        <li><strong>Price:</strong> ${{ collection.comic.cover_price }}</li>
-                        <li><strong>Release Date:</strong> {{ collection.comic.release_date }}</li>
-                        <li><strong>Language:</strong> {{ collection.comic.publishing.get_language_display }}</li>
-                        <li><strong>Format:</strong> {{ collection.comic.get_format_display }}</li>
-                    </ul>
-
-                    <!-- Signatures -->
-                    {% if collection.prefetched_signatures %}
-                        <h6 class="text-body-secondary mt-4">Firmas</h6>
-                        <div class="list-unstyled">
-                            {% for signature in collection.prefetched_signatures %}
-                                <div class="artist-card text-center">
-                                    {% if signature.artist.photo %}
-                                        <img src="{{ signature.artist.photo.url }}" class="artist-photo rounded-circle mb-1" alt="{{ signature.artist.name }}">
-                                    {% else %}
-                                        <div class="artist-photo-placeholder rounded-circle bg-body-secondary d-flex align-items-center justify-content-center text-body-secondary mb-1">
-                                            <small>Sin foto</small>
-                                        </div>
-                                    {% endif %}
-                                    <div class="small">{{ signature.artist.name }}</div>
-                                </div>
-                            {% endfor %}
-                        </div>
+              </div>
+              <div class="modal-body">
+                <div class="row g-4">
+                  <div class="col-md-5">
+                    {% if collection.comic.image %}
+                      <img src="{{ collection.comic.image.url }}" alt="{{ collection.comic.publishing.publishing_title }}" class="img-fluid rounded-4 shadow-sm" loading="lazy">
+                    {% else %}
+                      <div class="img-placeholder rounded-4 ratio ratio-2x3">
+                        <span class="d-flex align-items-center justify-content-center">
+                          <span class="material-symbols-outlined" aria-hidden="true">image</span>
+                        </span>
+                      </div>
                     {% endif %}
-                </div>
-            </div>
+                  </div>
 
-            <!-- Footer -->
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-            </div>
+                  <div class="col-md-7 d-flex flex-column gap-4">
+                    <section>
+                      <div class="md-section-label">Colección</div>
+                      <dl class="md-list">
+                        <dt>Monto pagado</dt><dd>${{ collection.amount }} MXN</dd>
+                        <dt>Fecha</dt><dd>{{ collection.trade_date }}</dd>
+                        <dt>Tipo</dt><dd>{{ collection.get_trade_type_display }}</dd>
+                        <dt>Participante</dt><dd>{{ collection.participant|default:"—" }}</dd>
+                        <dt>Valuación</dt><dd>{{ collection.valuation }}</dd>
+                      </dl>
+                    </section>
+
+                    <section>
+                      <div class="md-section-label">Issue</div>
+                      <dl class="md-list">
+                        <dt>Número</dt><dd>#{{ collection.comic.number }} {{ collection.comic.variant }}</dd>
+                        <dt>Precio de portada</dt><dd>${{ collection.comic.cover_price }}</dd>
+                        <dt>Lanzamiento</dt><dd>{{ collection.comic.release_date }}</dd>
+                        <dt>Idioma</dt><dd>{{ collection.comic.publishing.get_language_display }}</dd>
+                        <dt>Formato</dt><dd>{{ collection.comic.get_format_display }}</dd>
+                      </dl>
+                    </section>
+
+                    {% if collection.prefetched_signatures %}
+                    <section>
+                      <div class="md-section-label">Firmas</div>
+                      <div class="d-flex flex-wrap gap-3">
+                        {% for signature in collection.prefetched_signatures %}
+                          <div class="artist-card">
+                            {% if signature.artist.photo %}
+                              <img src="{{ signature.artist.photo.url }}" class="artist-photo rounded-circle mb-1" alt="{{ signature.artist.name }}">
+                            {% else %}
+                              <div class="artist-photo-placeholder rounded-circle mb-1">
+                                <span class="material-symbols-outlined" aria-hidden="true">person</span>
+                              </div>
+                            {% endif %}
+                            <div class="small">{{ signature.artist.name }}</div>
+                          </div>
+                        {% endfor %}
+                      </div>
+                    </section>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="md-btn md-btn--text" data-bs-dismiss="modal">Cerrar</button>
+              </div>
             </div>
           </div>
         </div>
         {% endfor %}
       </div>
 
-      <!-- PAGINACIÓN -->
-      {% if page_obj.has_other_pages %}
-      <nav class="mt-4" aria-label="Paginación de colecciones">
-        <div class="text-center text-body-secondary small mb-2">
-          Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
-        </div>
-        <ul class="pagination justify-content-center flex-wrap">
-
-            {% if page_obj.has_previous %}
-            <li class="page-item">
-                <a class="page-link" href="{% querystring page=1 %}" aria-label="Primera">&laquo;</a>
-            </li>
-            <li class="page-item">
-                <a class="page-link" href="{% querystring page=page_obj.previous_page_number %}" aria-label="Anterior">&lsaquo;</a>
-            </li>
-            {% else %}
-            <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
-            <li class="page-item disabled"><span class="page-link">&lsaquo;</span></li>
-            {% endif %}
-
-            {% for i in elided_page_range %}
-                {% if i == page_obj.paginator.ELLIPSIS %}
-                <li class="page-item disabled"><span class="page-link">{{ i }}</span></li>
-                {% elif i == page_obj.number %}
-                <li class="page-item active"><span class="page-link">{{ i }}</span></li>
-                {% else %}
-                <li class="page-item">
-                    <a class="page-link" href="{% querystring page=i %}">{{ i }}</a>
-                </li>
-                {% endif %}
-            {% endfor %}
-
-            {% if page_obj.has_next %}
-            <li class="page-item">
-                <a class="page-link" href="{% querystring page=page_obj.next_page_number %}" aria-label="Siguiente">&rsaquo;</a>
-            </li>
-            <li class="page-item">
-                <a class="page-link" href="{% querystring page=page_obj.paginator.num_pages %}" aria-label="Última">&raquo;</a>
-            </li>
-            {% else %}
-            <li class="page-item disabled"><span class="page-link">&rsaquo;</span></li>
-            <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
-            {% endif %}
-
-        </ul>
-      </nav>
-      {% endif %}
+      {% include 'includes/paginator.html' %}
     </div>
   </div>
 </div>
