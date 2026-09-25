@@ -1,200 +1,235 @@
 {% extends 'base.html' %} {% load static %} {% block content %}
 
-<div class="container my-4">
-    <h1 class="mb-4 text-center">Mis Colecciones</h1>
-    <!-- FILTRO POR PAÍS DE EDITORIAL -->
-    <form method="get" class="d-flex justify-content-center mb-3 gap-2">
+<div class="my-4">
+  <div class="row g-4">
+    <!-- FILTROS -->
+    <aside class="col-12 col-lg-3 col-xl-2">
+      <button
+        class="btn btn-outline-secondary w-100 d-lg-none mb-2"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#filtersPanel"
+        aria-expanded="false"
+        aria-controls="filtersPanel"
+      >
+        <i class="fa fa-filter" aria-hidden="true"></i> Filtros
+      </button>
 
-        <!-- Mantener letra -->
-        <input type="hidden" name="letter" value="{{ selected_letter }}">
+      <div class="filters-panel collapse d-lg-block" id="filtersPanel">
+        <div class="bg-body-tertiary border rounded-3 p-3 sticky-lg-top">
+          <h2 class="h6 text-uppercase fw-bold mb-3">Filtros</h2>
 
-        <label for="country" class="align-self-center fw-semibold">
-            Editorial:
-        </label>
-
-        <select
-            name="country"
-            id="country"
-            class="form-select form-select-sm w-auto"
-            onchange="this.form.submit()"
-        >
-            <option value="">Todas</option>
-            {% for value, label in editorial_countries %}
-                <option value="{{ value }}"
-                    {% if value == selected_country %}selected{% endif %}
-                >
+          <form method="get" id="country-filter-form">
+            <input type="hidden" name="letter" value="{{ selected_letter }}">
+            <div class="mb-3">
+              <label for="country" class="form-label small text-uppercase fw-semibold text-body-secondary">
+                Editorial
+              </label>
+              <select
+                name="country"
+                id="country"
+                class="form-select form-select-sm"
+                onchange="this.form.submit()"
+              >
+                <option value="">Todas</option>
+                {% for value, label in editorial_countries %}
+                  <option value="{{ value }}" {% if value == selected_country %}selected{% endif %}>
                     {{ label }}
-                </option>
-            {% endfor %}
-        </select>
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+          </form>
 
-    </form>
+          <div>
+            <span class="form-label d-block small text-uppercase fw-semibold text-body-secondary">
+              Letra
+            </span>
+            <div class="letter-grid">
+              <a
+                href="{% querystring letter='' page=None %}"
+                class="letter-btn {% if not selected_letter %}active{% endif %}"
+              >
+                Todas
+              </a>
+              {% for letter in alphabet %}
+              <a
+                href="{% querystring letter=letter page=None %}"
+                class="letter-btn {% if letter == selected_letter %}active{% endif %}"
+              >
+                {{ letter }}
+              </a>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
 
-    <!-- PAGINACIÓN POR LETRAS -->
-    <nav class="mt-4">
-        <ul class="pagination justify-content-center flex-wrap">
-            {% for letter in alphabet %}
-            <li class="page-item {% if letter == selected_letter %}active{% endif %}">
-                <a class="page-link" href="?letter={{ letter }}{% if selected_country %}&country={{ selected_country }}{% endif %}">
-                    {{ letter }}
-                </a>
-            </li>
-            {% endfor %}
-        </ul>
-    </nav>
+    <!-- CONTENIDO -->
+    <div class="col-12 col-lg-9 col-xl-10">
+      <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+        <h1 class="h3 mb-0">Mis Colecciones</h1>
+        <span class="text-body-secondary small">{{ page_obj.paginator.count }} pieza{{ page_obj.paginator.count|pluralize }}</span>
+      </div>
 
-    <div class="row g-4">
+      {% if not page_obj.object_list %}
+        <p class="text-body-secondary">No se encontraron colecciones con estos filtros.</p>
+      {% endif %}
+
+      <div class="row g-4">
         {% for collection in page_obj %}
         <div class="col-6 col-sm-4 col-md-3 col-lg-2">
-            <div class="card shadow-sm border-0 overflow-hidden" role="button" data-bs-toggle="modal" data-bs-target="#collectionModal{{ collection.id }}">
-                <div class="card-img-container">
-                {% if collection.comic.thumbnail %}
-                    <img src="{{ collection.comic.thumbnail.url }}" class="comic-img" alt="Thumbnail">
-                {% else %}
-                    <div class="comic-img bg-light d-flex align-items-center justify-content-center">
-                    <span class="text-muted">Sin imagen</span>
-                    </div>
-                {% endif %}
-                <!-- Artistas -->
-                {% if collection.prefetched_signatures %}
-                <div class="artist-stack">
-                    {% for signature in collection.prefetched_signatures %}
-                        {% if signature.artist.photo %}
-                            <img
-                                src="{{ signature.artist.photo.url }}"
-                                alt="{{ signature.artist.name }}"
-                                class="artist-mini-photo"
-                                title="{{ signature.artist.name }}"
-                            >
-                        {% endif %}
-                    {% endfor %}
+          <div class="card shadow-sm border-0 overflow-hidden" role="button" data-bs-toggle="modal" data-bs-target="#collectionModal{{ collection.id }}">
+            <div class="card-img-container">
+            {% if collection.comic.thumbnail %}
+                <img src="{{ collection.comic.thumbnail.url }}" class="comic-img" alt="Thumbnail">
+            {% else %}
+                <div class="comic-img bg-body-secondary d-flex align-items-center justify-content-center">
+                <span class="text-body-secondary">Sin imagen</span>
                 </div>
-                {% endif %}
-
-                <!-- Country editorial -->
-                {% with first_editorial=collection.comic.publishing.editorials.first %}
-                    {% if first_editorial %}
+            {% endif %}
+            <!-- Artistas -->
+            {% if collection.prefetched_signatures %}
+            <div class="artist-stack">
+                {% for signature in collection.prefetched_signatures %}
+                    {% if signature.artist.photo %}
                         <img
-                            src="{% static 'images/' %}{{ first_editorial.country }}.png"
-                            alt="{{ first_editorial.name }}"
-                            class="country-flag"
+                            src="{{ signature.artist.photo.url }}"
+                            alt="{{ signature.artist.name }}"
+                            class="artist-mini-photo"
+                            title="{{ signature.artist.name }}"
                         >
                     {% endif %}
-                {% endwith %}
-                <div class="overlay-info">
-                    <div class="fw-bold">{{ collection.comic.publishing.publishing_title }}</div>
-                    <small>#{{ collection.comic.number }} {{ collection.comic.variant }} {{ collection.comic.publishing.serie }} {{ collection.comic.printing }}</small>
-                </div>
-                </div>
+                {% endfor %}
             </div>
+            {% endif %}
+
+            <!-- Country editorial -->
+            {% with first_editorial=collection.comic.publishing.editorials.first %}
+                {% if first_editorial %}
+                    <img
+                        src="{% static 'images/' %}{{ first_editorial.country }}.png"
+                        alt="{{ first_editorial.name }}"
+                        class="country-flag"
+                    >
+                {% endif %}
+            {% endwith %}
+            <div class="overlay-info">
+                <div class="fw-bold">{{ collection.comic.publishing.publishing_title }}</div>
+                <small>#{{ collection.comic.number }} {{ collection.comic.variant }} {{ collection.comic.publishing.serie }} {{ collection.comic.printing }}</small>
+            </div>
+            </div>
+          </div>
         </div>
         <!-- Modal para cada colección -->
         <div class="modal fade" id="collectionModal{{ collection.id }}" tabindex="-1" aria-labelledby="modalLabel{{ collection.id }}" aria-hidden="true">
-            <div class="modal-dialog modal-lg modal-dialog-centered">
-                <div class="modal-content">
-                <div class="modal-body d-flex flex-column flex-md-row gap-3">
-                    <!-- Imagen -->
-                    <div class="col-md-5 text-center">
-                    {% if collection.comic.image %}
-                        <img src="{{ collection.comic.image.url }}" alt="Comic Image" class="img-fluid rounded shadow-sm">
-                    {% else %}
-                        <div class="d-flex align-items-center justify-content-center bg-light rounded shadow-sm" style="height: 100%;">
-                            <span class="text-muted">Sin imagen</span>
+          <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+            <div class="modal-body d-flex flex-column flex-md-row gap-3">
+                <!-- Imagen -->
+                <div class="col-md-5 text-center">
+                {% if collection.comic.image %}
+                    <img src="{{ collection.comic.image.url }}" alt="Comic Image" class="img-fluid rounded shadow-sm">
+                {% else %}
+                    <div class="d-flex align-items-center justify-content-center bg-body-secondary rounded shadow-sm" style="height: 100%;">
+                        <span class="text-body-secondary">Sin imagen</span>
+                    </div>
+                {% endif %}
+                </div>
+
+                <!-- Detalles -->
+                <div class="col-md-7">
+                    <!-- Collection Info -->
+                    <h5 class="mb-2">{{ collection.comic.publishing.publishing_title }}</h5>
+                    <h6 class="text-body-secondary">Collection</h6>
+                    <ul class="list-unstyled">
+                        <li><strong>Amount Paid:</strong> ${{ collection.amount }} MXN</li>
+                        <li><strong>Trade Date:</strong> {{ collection.trade_date }}</li>
+                        <li><strong>Trade Type:</strong> {{ collection.get_trade_type_display }}</li>
+                        <li><strong>Participant:</strong> {{ collection.participant }}</li>
+                        <li><strong>Valuation:</strong> {{ collection.valuation }}</li>
+                    </ul>
+
+                    <!-- Issue Info -->
+                    <h6 class="text-body-secondary">Issue Information</h6>
+                    <ul class="list-unstyled mb-4">
+                        <li><strong>Issue:</strong> #{{ collection.comic.number }} {{ collection.comic.variant }}</li>
+                        <li><strong>Price:</strong> ${{ collection.comic.cover_price }}</li>
+                        <li><strong>Release Date:</strong> {{ collection.comic.release_date }}</li>
+                        <li><strong>Language:</strong> {{ collection.comic.publishing.get_language_display }}</li>
+                        <li><strong>Format:</strong> {{ collection.comic.get_format_display }}</li>
+                    </ul>
+
+                    <!-- Signatures -->
+                    {% if collection.prefetched_signatures %}
+                        <h6 class="text-body-secondary mt-4">Firmas</h6>
+                        <div class="list-unstyled">
+                            {% for signature in collection.prefetched_signatures %}
+                                <div class="artist-card text-center">
+                                    {% if signature.artist.photo %}
+                                        <img src="{{ signature.artist.photo.url }}" class="artist-photo rounded-circle mb-1" alt="{{ signature.artist.name }}">
+                                    {% else %}
+                                        <div class="artist-photo-placeholder rounded-circle bg-body-secondary d-flex align-items-center justify-content-center text-body-secondary mb-1">
+                                            <small>Sin foto</small>
+                                        </div>
+                                    {% endif %}
+                                    <div class="small">{{ signature.artist.name }}</div>
+                                </div>
+                            {% endfor %}
                         </div>
                     {% endif %}
-                    </div>
-
-                    <!-- Detalles -->
-                    <div class="col-md-7">
-                        <!-- Collection Info -->
-                        <h5 class="mb-2">{{ collection.comic.publishing.publishing_title }}</h5>
-                        <h6 class="text-muted">Collection</h6>
-                        <ul class="list-unstyled">
-                            <li><strong>Amount Paid:</strong> ${{ collection.amount }} MXN</li>
-                            <li><strong>Trade Date:</strong> {{ collection.trade_date }}</li>
-                            <li><strong>Trade Type:</strong> {{ collection.get_trade_type_display }}</li>
-                            <li><strong>Participant:</strong> {{ collection.participant }}</li>
-                            <li><strong>Valuation:</strong> {{ collection.valuation }}</li>
-                        </ul>
-
-                        <!-- Issue Info -->
-                        <h6 class="text-muted">Issue Information</h6>
-                        <ul class="list-unstyled mb-4">
-                            <li><strong>Issue:</strong> #{{ collection.comic.number }} {{ collection.comic.variant }}</li>
-                            <li><strong>Price:</strong> ${{ collection.comic.cover_price }}</li>
-                            <li><strong>Release Date:</strong> {{ collection.comic.release_date }}</li>
-                            <li><strong>Language:</strong> {{ collection.comic.publishing.get_language_display }}</li>
-                            <li><strong>Format:</strong> {{ collection.comic.get_format_display }}</li>
-                        </ul>
-
-                        <!-- Signatures -->
-                        {% if collection.prefetched_signatures %}
-                            <h6 class="text-muted mt-4">Firmas</h6>
-                            <div class="class="list-unstyled">
-                                {% for signature in collection.prefetched_signatures %}
-                                    <div class="artist-card text-center">
-                                        {% if signature.artist.photo %}
-                                            <img src="{{ signature.artist.photo.url }}" class="artist-photo rounded-circle mb-1" alt="{{ signature.artist.name }}">
-                                        {% else %}
-                                            <div class="artist-photo-placeholder rounded-circle bg-light d-flex align-items-center justify-content-center text-muted mb-1" style="width: 60px; height: 60px;">
-                                                <small>Sin foto</small>
-                                            </div>
-                                        {% endif %}
-                                        <div class="small">{{ signature.artist.name }}</div>
-                                    </div>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <!-- Footer -->
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                </div>
                 </div>
             </div>
+
+            <!-- Footer -->
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+            </div>
+          </div>
         </div>
         {% endfor %}
-    </div>
+      </div>
 
-    <!-- PAGINACIÓN -->
-    {% if page_obj.has_other_pages %}
-    <nav class="mt-4">
-        <ul class="pagination justify-content-center">
+      <!-- PAGINACIÓN -->
+      {% if page_obj.has_other_pages %}
+      <nav class="mt-4" aria-label="Paginación de colecciones">
+        <div class="text-center text-body-secondary small mb-2">
+          Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+        </div>
+        <ul class="pagination justify-content-center flex-wrap">
 
             {% if page_obj.has_previous %}
             <li class="page-item">
-                <a class="page-link" href="?letter={{ selected_letter }}&page=1{% if selected_country %}&country={{ selected_country }}{% endif %}">&laquo;</a>
+                <a class="page-link" href="{% querystring page=1 %}" aria-label="Primera">&laquo;</a>
             </li>
             <li class="page-item">
-                <a class="page-link" href="?letter={{ selected_letter }}&page={{ page_obj.previous_page_number }}{% if selected_country %}&country={{ selected_country }}{% endif %}">&lsaquo;</a>
+                <a class="page-link" href="{% querystring page=page_obj.previous_page_number %}" aria-label="Anterior">&lsaquo;</a>
             </li>
             {% else %}
             <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
             <li class="page-item disabled"><span class="page-link">&lsaquo;</span></li>
             {% endif %}
 
-            {% for i in page_obj.paginator.page_range %}
-            {% if i >= page_obj.number|add:"-2" and i <= page_obj.number|add:"2" %}
-                {% if page_obj.number == i %}
+            {% for i in elided_page_range %}
+                {% if i == page_obj.paginator.ELLIPSIS %}
+                <li class="page-item disabled"><span class="page-link">{{ i }}</span></li>
+                {% elif i == page_obj.number %}
                 <li class="page-item active"><span class="page-link">{{ i }}</span></li>
                 {% else %}
                 <li class="page-item">
-                    <a class="page-link" href="?letter={{ selected_letter }}&page={{ i }}{% if selected_country %}&country={{ selected_country }}{% endif %}">
-                    {{ i }}
-                    </a>
+                    <a class="page-link" href="{% querystring page=i %}">{{ i }}</a>
                 </li>
                 {% endif %}
-            {% endif %}
             {% endfor %}
 
             {% if page_obj.has_next %}
             <li class="page-item">
-                <a class="page-link" href="?letter={{ selected_letter }}&page={{ page_obj.next_page_number }}{% if selected_country %}&country={{ selected_country }}{% endif %}">&rsaquo;</a>
+                <a class="page-link" href="{% querystring page=page_obj.next_page_number %}" aria-label="Siguiente">&rsaquo;</a>
             </li>
             <li class="page-item">
-                <a class="page-link" href="?letter={{ selected_letter }}&page={{ page_obj.paginator.num_pages }}{% if selected_country %}&country={{ selected_country }}{% endif %}">&raquo;</a>
+                <a class="page-link" href="{% querystring page=page_obj.paginator.num_pages %}" aria-label="Última">&raquo;</a>
             </li>
             {% else %}
             <li class="page-item disabled"><span class="page-link">&rsaquo;</span></li>
@@ -202,97 +237,9 @@
             {% endif %}
 
         </ul>
-    </nav>
-    {% endif %}
-
+      </nav>
+      {% endif %}
+    </div>
+  </div>
 </div>
-<style>
-.artist-photo {
-    width: 60px;
-    height: 60px;
-    object-fit: cover;
-}
-.artist-card {
-    width: 70px;
-    text-align: center;
-}
-.artist-photo-placeholder {
-    width: 60px;
-    height: 60px;
-}
-
-.card-img-container {
-    position: relative;
-    overflow: hidden;
-}
-
-/* Bandera */
-.country-flag {
-    position: absolute;
-    top: 6px;
-    right: 6px;
-    width: 28px;
-    height: 28px;
-    object-fit: cover;
-    z-index: 2;
-    transition: opacity .25s ease;
-}
-
-/* Contenedor vertical artistas */
-.artist-stack {
-    position: absolute;
-    top: 6px;
-    left: 6px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    z-index: 2;
-    transition: opacity .25s ease;
-}
-
-/* Fotos artistas */
-.artist-mini-photo {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid white;
-    background: white;
-    box-shadow: 0 1px 4px rgba(0,0,0,.3);
-}
-
-/* Hover overlay */
-.overlay-info {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 60px;
-    background: rgba(0,0,0,.75);
-    color: white;
-    padding: 4px 6px;
-    opacity: 0;
-    transition: opacity .25s ease;
-
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    text-align: center;
-    z-index: 2;
-    font-size: 0.75rem;
-    line-height: 1;
-    overflow: hidden;
-}
-
-/* Mostrar overlay */
-.card:hover .overlay-info {
-    opacity: 1;
-}
-
-/* Ocultar bandera y artistas en hover */
-.card:hover .country-flag,
-.card:hover .artist-stack {
-    opacity: 0;
-}
-</style>
 {% endblock %}

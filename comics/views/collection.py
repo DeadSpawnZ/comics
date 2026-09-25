@@ -63,7 +63,6 @@ def comics_view(request):
 
     collections = (
         Collection.objects.filter(collector=collector)
-        .filter(comic__publishing__title__name__istartswith=letter)
         .exclude(Q(trade_type=Collection.TradeChoices.SELLING) | Q(id__in=sold_previous_trade_ids))
         .select_related("comic__publishing", "participant")
         .prefetch_related(
@@ -94,6 +93,10 @@ def comics_view(request):
         )
     )
 
+    # "" (Todas) desactiva el filtro por letra en vez de forzar una letra.
+    if letter:
+        collections = collections.filter(comic__publishing__title__name__istartswith=letter)
+
     if selected_country:
         collections = collections.filter(
             comic__publishing__editorials__country=selected_country
@@ -102,12 +105,14 @@ def comics_view(request):
     paginator = Paginator(collections, PAGE_LIMIT)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
+    elided_page_range = page_obj.paginator.get_elided_page_range(page_obj.number, on_each_side=1, on_ends=1)
 
     return render(
         request,
         "collections/collector_collections.html",
         {
             "page_obj": page_obj,
+            "elided_page_range": elided_page_range,
             "selected_letter": letter,
             "selected_country": selected_country,
             "editorial_countries": Editorial.CountryAbbr.choices,

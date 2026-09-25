@@ -5,6 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Mi Proyecto Django</title>
     {% load static %}
+    <script>
+      // Aplica el tema guardado antes de pintar la pagina, para evitar un
+      // parpadeo claro->oscuro al cargar.
+      (function () {
+        try {
+          var theme = localStorage.getItem("theme");
+          if (!theme) {
+            theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+          }
+          document.documentElement.setAttribute("data-bs-theme", theme);
+        } catch (e) {}
+      })();
+    </script>
     <!-- Bootstrap CSS -->
     <link href="{% static 'vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
     <!-- Font Awesome CSS (via CDN por ahora, sin vendorear) -->
@@ -55,7 +68,18 @@
               </ul>
             </li>
           </ul>
-          <ul class="navbar-nav ms-auto">
+          <ul class="navbar-nav ms-auto align-items-lg-center">
+            <li class="nav-item me-lg-2">
+              <button
+                id="theme-toggle"
+                type="button"
+                class="btn btn-outline-light btn-sm"
+                aria-label="Cambiar tema claro/oscuro"
+                title="Cambiar tema claro/oscuro"
+              >
+                <i class="fa fa-moon-o" id="theme-toggle-icon" aria-hidden="true"></i>
+              </button>
+            </li>
             <li class="nav-item">
               {% if user.is_authenticated %}
               <a class="nav-link active" aria-current="page" href="{% url 'logout' %}">
@@ -100,12 +124,13 @@
       </div>
     </div>
 
-    <div class="container">{% block content %} {% endblock %}</div>
+    <div class="container-fluid">{% block content %} {% endblock %}</div>
 
     {% block extra_js %} {% endblock %}
 
 
     <!-- Bootstrap JS (incluye Popper) -->
     <script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'js/custom/theme_toggle.js' %}"></script>
   </body>
 </html>
