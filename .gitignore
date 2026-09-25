@@ -1,5 +1,8 @@
 *.env
 /mysql_volume
 dump*.json
+/backups/
 /media/
+/staticfiles/
 .DS_Store
+*.sqlite3

@@ -1,8 +1,25 @@
 #!/usr/bin/env python
-"""Django's command-line utility for administrative tasks."""
+"""Genera un respaldo (dumpdata) de la base de datos.
+
+Uso:
+    python dump.py [ruta_de_salida.json]
+
+Si no se indica una ruta, se genera "dump-<timestamp>.json" en el
+directorio actual. Se excluyen las tablas que Django regenera solo
+(contenttypes, permisos, sesiones y el log del admin) porque son la
+causa mas comun de errores de integridad al restaurar el dump con
+`loaddata` en otro entorno.
+"""
 import os
 import sys
 from datetime import datetime
+
+EXCLUDED_MODELS = [
+    "contenttypes",
+    "auth.permission",
+    "admin.logentry",
+    "sessions.session",
+]
 
 
 def main():
@@ -16,17 +33,18 @@ def main():
             "forget to activate a virtual environment?"
         ) from exc
 
-    now = datetime.now()
-    timestamp = datetime.timestamp(now)
-    output_filename = f"dump-{timestamp}.json"
-    lista = [
-        "manage.py",
-        "dumpdata",
-        "-o",
-        output_filename,
-        "--indent=4",
-    ]
-    execute_from_command_line(lista)
+    if len(sys.argv) > 1:
+        output_filename = sys.argv[1]
+    else:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        output_filename = f"dump-{timestamp}.json"
+
+    argv = ["manage.py", "dumpdata", "-o", output_filename, "--indent=4"]
+    for model in EXCLUDED_MODELS:
+        argv += ["--exclude", model]
+
+    execute_from_command_line(argv)
+    print(output_filename)
 
 
 if __name__ == "__main__":

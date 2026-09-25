@@ -109,6 +109,10 @@ class ComicAdmin(admin.ModelAdmin):
     readonly_fields = ["country", "thumbnail_preview"]
     list_select_related = ("publishing",)  # Optimize queries by selecting related publishing
 
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.prefetch_related("publishing__editorials")
+
     def _from_publishing(self, obj, attr):
         return getattr(obj.publishing, attr, None)
 
@@ -128,7 +132,10 @@ class ComicAdmin(admin.ModelAdmin):
 
     @admin.display(description="Country")
     def country(self, obj):
-        editorial = Editorial.objects.filter(publishing=obj.publishing).first()
+        # Lee de la cache de prefetch_related("publishing__editorials") en vez de
+        # disparar una query de Editorial por cada fila de la lista.
+        editorials = obj.publishing.editorials.all()
+        editorial = editorials[0] if editorials else None
         if editorial and editorial.country:
             icon_url = f"/static/images/{editorial.country}.png"
             return format_html('<img src="{}" style="width:18px">', icon_url)

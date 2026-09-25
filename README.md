@@ -1,31 +1,89 @@
 Proyecto de registro de comics
 
+## Requisitos previos
+
+Antes de levantar el proyecto crea, en la raíz del repo, un archivo `mysql.env` (usado por el servicio `db` de docker-compose) con estas variables:
+
+```
+MYSQL_DATABASE=comic
+MYSQL_ROOT_PASSWORD=<password root>
+MYSQL_USER=<usuario de la app>
+MYSQL_PASSWORD=<password del usuario>
+```
+
+Opcionalmente puedes crear un `.env` en la raíz con `COMPOSE_PROJECT_NAME=<nombre>` para fijar el nombre del proyecto de Docker Compose. Ninguno de los dos archivos se sube al repositorio (están en `.gitignore`).
+
 ## Instalación
-Para correr el proyecto es necesario primero hacer el build de la imagen de Django con el nombre comics-web
+
+Levanta el proyecto (esto construye la imagen del servicio `web` automáticamente, no hace falta un `docker build` manual aparte):
+
 ```bash
-docker build -t comics-web .
+docker compose up --build
 ```
 
-Y posteriormente ejecuta el docker-compose con
+En el primer arranque, aplica las migraciones y crea un superusuario para poder entrar al admin:
+
 ```bash
-docker compose up
+docker compose exec web python manage.py migrate
+docker compose exec web python manage.py createsuperuser
 ```
 
-Si aparece el error, solo se debe borrar la carpeta mysql_volume y comenzar desde el inicio.
+La app queda disponible en `http://localhost:8080/` y el admin en `http://localhost:8080/admin/`.
+
+## Respaldar la base de datos
+
+Para generar un respaldo (`dumpdata`) y copiarlo directamente a tu equipo, desde la raíz del repo en PowerShell:
+
+```powershell
+.\scripts\backup-db.ps1
+```
+
+El script valida que el contenedor esté corriendo, genera el dump dentro del contenedor `web`, lo copia a `.\backups\` con un nombre `dump-<fecha>.json`, limpia el archivo temporal del contenedor y conserva únicamente los últimos 10 respaldos locales (configurable con `-Keep`). También puedes elegir otra carpeta de destino con `-OutputDir`:
+
+```powershell
+.\scripts\backup-db.ps1 -OutputDir D:\backups\comi -Keep 20
+```
+
+Si prefieres generarlo manualmente dentro del contenedor:
+
 ```bash
-ERROR: failed to build: failed to solve: invalid file request mysql_volume/mysql.sock
+docker compose exec web python dump.py
 ```
 
-Para restaurar un dump de la base de datos es necesario entrar al contenedor con:
+## Restaurar un dump
 
+```bash
+docker compose exec web python manage.py loaddata /code/dump-<fecha>.json
 ```
-docker exec -it comi-web-1 bash
+
+Si el archivo está solo en tu equipo (por ejemplo, uno generado con `backup-db.ps1`), primero cópialo dentro del contenedor:
+
+```powershell
+docker compose cp .\backups\dump-<fecha>.json web:/code/dump-<fecha>.json
 ```
-Y ejecutar el siguiente comando para cargar el dump
+
+Si aparece un error de integridad de datos al restaurar, limpia las tablas existentes antes de reintentar:
+
+```bash
+docker compose exec web python manage.py flush
 ```
-python manage.py loaddata /code/dump-1766186315.745431.json
+
+## Correr localmente con configuración de producción
+
+Por defecto (`docker compose up`) el proyecto corre en modo desarrollo: `DEBUG=True`, `runserver` con autoreload y `ALLOWED_HOSTS=*`. Para levantar el mismo stack pero con la configuración que usarías en producción (`DEBUG=False`, `ALLOWED_HOSTS` restringido, gunicorn en vez de `runserver`), usa el archivo de override `docker-compose.prod.yaml`:
+
+```bash
+docker compose -f docker-compose.yaml -f docker-compose.prod.yaml up --build
 ```
-Si existe algun error de integridad de datos solo basta con hacer una limpieza de los datos de las tablas existentes
-```
-python manage.py flush
-```
+
+Los estáticos se sirven igual en ambos modos (vía WhiteNoise, ya recolectados en la imagen con `collectstatic` durante el build), así que no hay diferencia de comportamiento ahí entre desarrollo y este modo "producción" local.
+
+Antes de un despliegue real, además define `DJANGO_SECRET_KEY` con un valor propio (el `SECRET_KEY` por defecto en `settings.py` está expuesto en el historial del repo) y ajusta `DJANGO_ALLOWED_HOSTS` al dominio real.
+
+## Notas
+
+- Si ves un error del estilo `failed to solve: invalid file request mysql_volume/mysql.sock`, es porque quedó un volumen de MySQL corrupto. Bájalo y elimina el volumen con `docker compose down -v` y vuelve a levantar el proyecto (esto borra los datos de la base local).
+- El contenedor `web` corre como usuario sin privilegios (`app`). Si ya tenías un `media_volume` creado por una versión anterior de la imagen (donde corría como `root`), la primera vez que actualices vas a necesitar arreglar los permisos una sola vez:
+  ```bash
+  docker compose exec --user root web chown -R app:app /code/media
+  ```

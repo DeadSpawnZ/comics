@@ -125,6 +125,8 @@ def get_previous_trades(request, comic_id):
         trades = (
             Collection.objects.filter(comic_id=comic_id, trade_type=Collection.TradeChoices.BUYING)
             .exclude(id__in=used_previous_trades_ids)
+            .select_related("comic__publishing", "participant")
+            .prefetch_related("comic__publishing__editorials")
             .order_by(
                 "comic__publishing__publishing_title",
                 "comic__number",

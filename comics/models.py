@@ -1,5 +1,6 @@
 import io
 import datetime
+import logging
 from PIL import Image
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import InMemoryUploadedFile
@@ -24,8 +25,11 @@ from django.db.models import (
     DecimalField,
     BooleanField,
     ImageField,
+    UniqueConstraint,
 )
 from .helper import generate_image_jpge
+
+logger = logging.getLogger(__name__)
 
 # Create your models here.
 
@@ -86,6 +90,14 @@ class Publishing(Model):
         null=True,
     )
 
+    class Meta:
+        constraints = [
+            UniqueConstraint(
+                fields=["publishing_title", "year", "serie", "language"],
+                name="unique_publishing_title_year_serie_language",
+            ),
+        ]
+
     def __str__(self):
         editorials = Editorial.objects.filter(publishing=self)
         editorials = [editorial.name for editorial in editorials]
@@ -120,8 +132,7 @@ class Publishing(Model):
         if hasattr(self, "id"):
             coincidences = coincidences.exclude(id=self.id)
         if coincidences.exists():
-            msg = "Duplicated publishing"
-            raise Exception(msg)
+            raise ValidationError("Duplicated publishing")
 
     def save(self, *args, **kwargs):
         self.process_year()
@@ -198,8 +209,19 @@ class Comic(Model):  # This is an Edition of an Issue
         help_text="Individual issues that are compiled in this comic, if any.",
     )
 
+    class Meta:
+        constraints = [
+            UniqueConstraint(
+                fields=["publishing", "number", "variant", "printing"],
+                name="unique_comic_publishing_number_variant_printing",
+            ),
+        ]
+
     def __str__(self):
-        editorials = Editorial.objects.filter(publishing=self.publishing)
+        # Se consulta a traves de la relacion (en vez de Editorial.objects.filter(...))
+        # para poder aprovechar un prefetch_related("publishing__editorials") hecho
+        # por quien llame a esta funcion y evitar N+1 al listar muchos comics.
+        editorials = self.publishing.editorials.all()
         first_editorial = editorials[0] if editorials else None
         country_code = first_editorial.country.upper() if first_editorial else ""
 
@@ -234,8 +256,7 @@ class Comic(Model):  # This is an Edition of an Issue
         current_publishing_str = str(self.publishing).strip()
         for comic in coincidences:
             if str(comic.publishing).strip() == current_publishing_str:
-                msg = "Duplicated comic"
-                raise Exception(msg)
+                raise ValidationError("Duplicated comic")
 
     def validate_compilation(self):
         if not self.is_compilation and not self.publishing:
@@ -320,8 +341,8 @@ class Comic(Model):  # This is an Edition of an Issue
                 None,
             )
 
-        except Exception as e:
-            print(f"Error procesando imagen y thumbnail: {e}")
+        except Exception:
+            logger.exception("Error procesando imagen y thumbnail para comic %s", self.pk)
 
     def save(self, *args, **kwargs):
         self.process_variant()
@@ -359,6 +380,14 @@ class Collection(Model):
     previous_trade = ForeignKey("self", on_delete=SET_NULL, null=True, blank=True, related_name="next_trades")
     notes = TextField(max_length=500, blank=True)
 
+    class Meta:
+        constraints = [
+            UniqueConstraint(
+                fields=["comic", "trade_date", "amount", "trade_type", "participant"],
+                name="unique_collection_comic_date_amount_type_participant",
+            ),
+        ]
+
     def __str__(self):
         return self.comic.__str__()
 
@@ -377,8 +406,7 @@ class Collection(Model):
         current_comic_str = str(self.comic).strip()
         for collectable in coincidences:
             if str(collectable.comic).strip() == current_comic_str:
-                msg = "Duplicated collectable"
-                raise Exception(msg)
+                raise ValidationError("Duplicated collectable")
 
     def save(self, *args, **kwargs):
         self.validate_duplicate()

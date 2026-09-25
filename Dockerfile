@@ -1,12 +1,12 @@
-FROM python:3.11-slim AS builder
+FROM python:3.11-slim-bookworm AS builder
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 WORKDIR /code
 
-# Dependencias de build + libs necesarias
-RUN apt-get update && apt-get install -y \
+# Dependencias de build + headers necesarios para compilar mysqlclient y Pillow
+RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     pkg-config \
     default-libmysqlclient-dev \
@@ -24,25 +24,32 @@ RUN pip install --upgrade pip && \
 
 
 # 🔽 Imagen final (más ligera)
-FROM python:3.11-slim
+FROM python:3.11-slim-bookworm
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 WORKDIR /code
 
-# Solo libs necesarias en runtime (sin build tools)
-RUN apt-get update && apt-get install -y \
-    default-libmysqlclient-dev \
-    libjpeg-dev \
-    zlib1g-dev \
-    libpng-dev \
-    libfreetype6-dev \
+# Solo las librerías compartidas en tiempo de ejecución (sin -dev/headers ni build tools)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libmariadb3 \
+    libjpeg62-turbo \
+    zlib1g \
+    libpng16-16 \
+    libfreetype6 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copiamos solo lo necesario del builder
 COPY --from=builder /install /usr/local
 
-COPY . .
+RUN groupadd --system app && useradd --system --gid app --home-dir /code --no-create-home app \
+    && chown app:app /code
+
+COPY --chown=app:app . .
+
+USER app
+
+RUN python manage.py collectstatic --noinput
 
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
