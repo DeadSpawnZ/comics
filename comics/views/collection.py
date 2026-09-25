@@ -62,7 +62,7 @@ def comics_view(request):
 
     collections = (
         Collection.objects.filter(collector=collector)
-        .filter(comic__publishing__publishing_title__istartswith=letter)
+        .filter(comic__publishing__title__name__istartswith=letter)
         .exclude(Q(trade_type=Collection.TradeChoices.SELLING) | Q(id__in=sold_previous_trade_ids))
         .select_related("comic__publishing", "participant")
         .prefetch_related(
@@ -81,6 +81,7 @@ def comics_view(request):
             )
         )
         .order_by(
+            "comic__publishing__title__name",
             "comic__publishing__publishing_title",
             "first_editorial_country",
             "comic__publishing__serie",
