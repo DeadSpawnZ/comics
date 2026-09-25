@@ -5,7 +5,6 @@ from django.shortcuts import get_object_or_404, render
 from django.http import JsonResponse
 from django.utils.dateparse import parse_date
 from django.db.models import (
-    Q,
     OuterRef,
     Subquery,
     Prefetch,
@@ -55,15 +54,8 @@ def comics_view(request):
         Editorial.objects.filter(publishing__comic=OuterRef("comic")).order_by("id").values("country")[:1]
     )
 
-    sold_previous_trade_ids = Collection.objects.filter(
-        collector=collector,
-        trade_type=Collection.TradeChoices.SELLING,
-        previous_trade__isnull=False,
-    ).values_list("previous_trade_id", flat=True)
-
     collections = (
-        Collection.objects.filter(collector=collector)
-        .exclude(Q(trade_type=Collection.TradeChoices.SELLING) | Q(id__in=sold_previous_trade_ids))
+        Collection.objects.owned_by(collector)
         .select_related("comic__publishing", "participant")
         .prefetch_related(
             "comic__artists",

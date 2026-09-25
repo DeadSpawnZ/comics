@@ -26,6 +26,10 @@ from django.db.models import (
     BooleanField,
     ImageField,
     UniqueConstraint,
+    PositiveSmallIntegerField,
+    CASCADE,
+    Q,
+    QuerySet,
 )
 from .helper import generate_image_jpge
 
@@ -364,10 +368,22 @@ class Dealer(Model):
         return self.name
 
 
+class CollectionQuerySet(QuerySet):
+    def owned_by(self, user):
+        """Compras de `user` que no se han vendido (no son previous_trade de una venta)."""
+        selling = self.model.TradeChoices.SELLING
+        sold_ids = self.model.objects.filter(
+            collector=user, trade_type=selling, previous_trade__isnull=False
+        ).values_list("previous_trade_id", flat=True)
+        return self.filter(collector=user).exclude(Q(trade_type=selling) | Q(id__in=sold_ids))
+
+
 class Collection(Model):
     class TradeChoices(TextChoices):
         BUYING = "buying", _("Buying")
         SELLING = "selling", _("Selling")
+
+    objects = CollectionQuerySet.as_manager()
 
     collector = ForeignKey(User, on_delete=PROTECT)
     comic = ForeignKey(Comic, on_delete=PROTECT, null=True)
@@ -445,6 +461,78 @@ class StoryArc(Model):
     publishings = ManyToManyField(Publishing)
     order = IntegerField()
     notes = TextField(max_length=500, blank=True)
+
+
+class Connecting(Model):
+    """Grupo de portadas que juntas forman una imagen mas grande."""
+
+    name = CharField(max_length=100, unique=True)
+    rows = PositiveSmallIntegerField(default=1, validators=[MinValueValidator(1)])
+    columns = PositiveSmallIntegerField(validators=[MinValueValidator(1)])
+    notes = TextField(max_length=500, blank=True)
+    comics = ManyToManyField(Comic, through="ConnectingPiece", related_name="connectings")
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def layout(self):
+        return f"{self.rows}×{self.columns}"
+
+    def ownership_grid(self, user):
+        """Matriz rows x columns con la pieza de cada posicion (o None) y si `user` la tiene."""
+        pieces = list(self.pieces.select_related("comic__publishing"))
+        owned_comic_ids = set(
+            Collection.objects.owned_by(user)
+            .filter(comic_id__in=[piece.comic_id for piece in pieces])
+            .values_list("comic_id", flat=True)
+        )
+        by_position = {(piece.row, piece.column): piece for piece in pieces}
+        grid = []
+        for row in range(1, self.rows + 1):
+            cells = []
+            for column in range(1, self.columns + 1):
+                piece = by_position.get((row, column))
+                if piece:
+                    piece.owned = piece.comic_id in owned_comic_ids
+                cells.append(piece)
+            grid.append(cells)
+        return grid
+
+
+class ConnectingPiece(Model):
+    connecting = ForeignKey(Connecting, on_delete=CASCADE, related_name="pieces")
+    comic = ForeignKey(Comic, on_delete=PROTECT, related_name="connecting_pieces")
+    row = PositiveSmallIntegerField(default=1, validators=[MinValueValidator(1)], help_text="1 = fila de arriba")
+    column = PositiveSmallIntegerField(validators=[MinValueValidator(1)], help_text="1 = columna izquierda")
+
+    class Meta:
+        ordering = ["row", "column"]
+        constraints = [
+            UniqueConstraint(fields=["connecting", "row", "column"], name="unique_connecting_position"),
+            UniqueConstraint(fields=["connecting", "comic"], name="unique_connecting_comic"),
+        ]
+
+    def __str__(self):
+        return f"{self.connecting} ({self.row}, {self.column})"
+
+    def clean(self):
+        # En el admin, al crear un connecting nuevo, la pieza ya trae el padre
+        # (sin guardar) con sus rows/columns, asi que se puede validar igual.
+        try:
+            connecting = self.connecting
+        except Connecting.DoesNotExist:
+            return
+        errors = {}
+        if self.row and self.row > connecting.rows:
+            errors["row"] = f"El connecting solo tiene {connecting.rows} fila(s)."
+        if self.column and self.column > connecting.columns:
+            errors["column"] = f"El connecting solo tiene {connecting.columns} columna(s)."
+        if errors:
+            raise ValidationError(errors)
 
 
 class GeekCollectable(Model):

@@ -1,9 +1,10 @@
 from django.contrib import admin
+from django.contrib.admin.utils import unquote
 from django.utils.html import format_html
 from django.urls import path
 from django.template.response import TemplateResponse
 from django.db.models.functions import TruncMonth
-from django.db.models import Sum
+from django.db.models import Count, Sum
 
 # Register your models here.
 
@@ -17,6 +18,8 @@ from .models import (
     Dealer,
     Signature,
     GeekCollectable,
+    Connecting,
+    ConnectingPiece,
 )
 from .forms import CollectionForm, ComicForm
 
@@ -271,3 +274,58 @@ class GeekCollectableAdmin(admin.ModelAdmin):
     ordering = ["name"]
     search_fields = ["name", "participant__name"]
     list_filter = ["trade_date", "participant"]
+
+class ConnectingPieceInline(admin.TabularInline):
+    model = ConnectingPiece
+    extra = 0
+    fields = ["row", "column", "comic"]
+    autocomplete_fields = ["comic"]
+
+
+@admin.register(Connecting)
+class ConnectingAdmin(admin.ModelAdmin):
+    list_display = ["name", "layout", "piece_count"]
+    search_fields = ["name"]
+    fields = ["name", "rows", "columns", "notes"]
+    inlines = [ConnectingPieceInline]
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).annotate(piece_count=Count("pieces"))
+
+    @admin.display(description="Disposición")
+    def layout(self, obj):
+        return obj.layout
+
+    @admin.display(description="Piezas", ordering="piece_count")
+    def piece_count(self, obj):
+        return f"{obj.piece_count} / {obj.rows * obj.columns}"
+
+    def save_formset(self, request, form, formset, change):
+        if formset.model is not ConnectingPiece:
+            return super().save_formset(request, form, formset, change)
+
+        # Intercambiar comics o posiciones entre piezas choca con los UniqueConstraint
+        # si se actualizan fila por fila (MySQL valida cada UPDATE y no soporta
+        # constraints diferidos). Las piezas modificadas se borran y se vuelven a
+        # insertar ya con sus valores finales; el formset ya valido que el estado
+        # final no tenga duplicados.
+        instances = formset.save(commit=False)
+        for obj in formset.deleted_objects:
+            obj.delete()
+        ConnectingPiece.objects.filter(pk__in=[obj.pk for obj in instances if obj.pk]).delete()
+        for obj in instances:
+            obj.pk = None
+            obj._state.adding = True
+            obj.save()
+        formset.save_m2m()
+
+    def change_view(self, request, object_id, form_url="", extra_context=None):
+        extra_context = extra_context or {}
+        connecting = self.get_object(request, unquote(object_id))
+        if connecting is not None:
+            grid = connecting.ownership_grid(request.user)
+            pieces = [cell for row in grid for cell in row if cell]
+            extra_context["ownership_grid"] = grid
+            extra_context["owned_count"] = sum(1 for piece in pieces if piece.owned)
+            extra_context["piece_total"] = len(pieces)
+        return super().change_view(request, object_id, form_url, extra_context=extra_context)

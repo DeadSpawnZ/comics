@@ -1,0 +1,98 @@
+{% extends "admin/change_form.html" %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+  .connecting-preview {
+    margin: 20px 0;
+    padding: 16px;
+    border: 1px solid var(--hairline-color);
+    border-radius: 8px;
+    background: var(--darkened-bg);
+  }
+  .connecting-preview h2 {
+    margin: 0 0 4px;
+    font-size: 1rem;
+  }
+  .connecting-preview__summary {
+    color: var(--body-quiet-color);
+    margin: 0 0 12px;
+  }
+  .connecting-preview__grid {
+    display: grid;
+    gap: 6px;
+    max-width: 100%;
+  }
+  .connecting-preview__cell {
+    position: relative;
+    aspect-ratio: 2 / 3;
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--body-bg);
+    border: 1px dashed var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    color: var(--body-quiet-color);
+    text-align: center;
+    padding: 4px;
+  }
+  .connecting-preview__cell img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .connecting-preview__cell.is-missing img {
+    filter: grayscale(1);
+    opacity: 0.35;
+  }
+  .connecting-preview__badge {
+    position: absolute;
+    left: 4px;
+    bottom: 4px;
+    padding: 1px 6px;
+    border-radius: 999px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    background: rgba(0, 0, 0, 0.7);
+    color: #fff;
+  }
+  .connecting-preview__cell.is-missing .connecting-preview__badge {
+    background: #ba2121;
+  }
+</style>
+{% endblock %}
+
+{% block after_related_objects %}
+{{ block.super }}
+{% if ownership_grid %}
+<div class="connecting-preview">
+  <h2>Vista previa</h2>
+  <p class="connecting-preview__summary">
+    Tienes {{ owned_count }} de {{ piece_total }} pieza{{ piece_total|pluralize }} configurada{{ piece_total|pluralize }}.
+    Muestra lo guardado; guarda para ver cambios.
+  </p>
+  <div class="connecting-preview__grid" style="grid-template-columns: repeat({{ original.columns }}, minmax(0, 110px));">
+    {% for row in ownership_grid %}
+      {% for piece in row %}
+        {% if piece %}
+          <div class="connecting-preview__cell {% if not piece.owned %}is-missing{% endif %}" title="{{ piece.comic }}">
+            {% if piece.comic.thumbnail %}
+              <img src="{{ piece.comic.thumbnail.url }}" alt="{{ piece.comic }}" loading="lazy">
+            {% else %}
+              {{ piece.comic.publishing.publishing_title }} #{{ piece.comic.number }}
+            {% endif %}
+            <span class="connecting-preview__badge">{% if piece.owned %}Lo tienes{% else %}Falta{% endif %}</span>
+          </div>
+        {% else %}
+          <div class="connecting-preview__cell">Vacía</div>
+        {% endif %}
+      {% endfor %}
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}
