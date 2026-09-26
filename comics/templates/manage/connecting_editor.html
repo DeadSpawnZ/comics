@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/custom/manage.css' %}">
+{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+<div class="my-4" id="connecting-editor">
+  <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <a class="md-icon-btn" href="{% url 'manage_connectings' %}" aria-label="Volver a connectings" title="Volver a connectings">
+        <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+      </a>
+      <h1 class="md-headline-small mb-0">
+        {% if connecting %}{{ connecting.name }}{% else %}Nuevo connecting{% endif %}
+      </h1>
+    </div>
+    <div class="d-flex align-items-center gap-3">
+      <span class="md-body-medium" id="editor-status" aria-live="polite"></span>
+      <button type="button" class="md-btn md-btn--filled" id="editor-save">
+        <span class="material-symbols-outlined" aria-hidden="true">save</span>
+        Guardar
+      </button>
+    </div>
+  </div>
+
+  <div class="editor-errors mb-3" id="editor-errors" role="alert" hidden></div>
+
+  <div class="row g-4">
+    <!-- Buscador de comics -->
+    <aside class="col-12 col-lg-4 col-xl-3">
+      <div class="md-surface-card editor-picker">
+        <h2 class="md-title-medium mb-3 d-flex align-items-center gap-2">
+          <span class="material-symbols-outlined" aria-hidden="true">search</span>
+          Comics
+        </h2>
+
+        <div class="form-floating md-field mb-2">
+          <input type="search" class="form-control" id="publishing-search" placeholder="Filtrar publishings" autocomplete="off">
+          <label for="publishing-search">Filtrar publishings</label>
+        </div>
+        <div class="form-floating md-field mb-3">
+          <select class="form-select" id="publishing-select">
+            <option value="">Elige un publishing…</option>
+          </select>
+          <label for="publishing-select">Publishing</label>
+        </div>
+
+        <p class="md-body-medium mb-2" id="picker-hint">Elige un publishing para ver sus comics.</p>
+        <div class="picker-results" id="picker-results"></div>
+      </div>
+    </aside>
+
+    <!-- Connecting -->
+    <div class="col-12 col-lg-8 col-xl-9">
+      <div class="md-surface-card mb-3">
+        <div class="row g-3">
+          <div class="col-12 col-md-6">
+            <div class="form-floating md-field">
+              <input type="text" class="form-control" id="connecting-name" maxlength="100" placeholder="Nombre" required>
+              <label for="connecting-name">Nombre</label>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="form-floating md-field">
+              <input type="number" class="form-control" id="connecting-rows" min="1" max="20" placeholder="Filas">
+              <label for="connecting-rows">Filas</label>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="form-floating md-field">
+              <input type="number" class="form-control" id="connecting-columns" min="1" max="20" placeholder="Columnas">
+              <label for="connecting-columns">Columnas</label>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="form-floating md-field">
+              <textarea class="form-control" id="connecting-notes" maxlength="500" placeholder="Notas" style="height: 80px"></textarea>
+              <label for="connecting-notes">Notas</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="md-surface-card">
+        <div class="d-flex align-items-baseline justify-content-between flex-wrap gap-2 mb-3">
+          <h2 class="md-title-medium mb-0">Cuadrícula</h2>
+          <span class="md-body-medium" id="grid-summary"></span>
+        </div>
+        <p class="md-body-medium mb-3">
+          Arrastra una portada a una celda; arrastra entre celdas para intercambiarlas.
+          Sin arrastrar: haz clic en una portada y luego en la celda.
+        </p>
+        <div class="editor-grid" id="editor-grid"></div>
+
+        <div class="editor-overflow mt-3" id="editor-overflow" hidden>
+          <div class="md-section-label">Fuera de la cuadrícula</div>
+          <p class="md-body-medium mb-2">Estas piezas quedaron fuera al cambiar el tamaño. Arrástralas a una celda o quítalas para poder guardar.</p>
+          <div class="editor-overflow__items" id="editor-overflow-items"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="md-snackbar" id="editor-snackbar" role="status" hidden></div>
+</div>
+
+{{ editor_data|json_script:"connecting-editor-data" }}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/custom/connecting_editor.js' %}"></script>
+{% endblock %}

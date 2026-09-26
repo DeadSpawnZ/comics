@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/custom/manage.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="my-4">
+  <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+    <div>
+      <h1 class="md-headline-small mb-0">Connectings</h1>
+      <span class="md-body-medium">{{ cards|length }} connecting{{ cards|length|pluralize }}</span>
+    </div>
+    <a class="md-btn md-btn--filled" href="{% url 'manage_connecting_new' %}">
+      <span class="material-symbols-outlined" aria-hidden="true">add</span>
+      Nuevo connecting
+    </a>
+  </div>
+
+  {% if not cards %}
+    <div class="md-surface-card text-center py-5">
+      <span class="material-symbols-outlined d-block mb-2 empty-state-icon" aria-hidden="true">grid_view</span>
+      <p class="md-body-medium mb-3">Todavía no hay connectings.</p>
+      <a class="md-btn md-btn--tonal" href="{% url 'manage_connecting_new' %}">Crear el primero</a>
+    </div>
+  {% endif %}
+
+  <div class="row g-3">
+    {% for card in cards %}
+    <div class="col-12 col-md-6 col-xl-4">
+      <a class="md-card connecting-card d-block text-decoration-none" href="{% url 'manage_connecting_edit' card.connecting.pk %}">
+        <div class="connecting-card__frame">
+        <div class="connecting-card__mosaic" style="--cols: {{ card.connecting.columns }}; --rows: {{ card.connecting.rows }};">
+          {% for row in card.grid %}
+            {% for piece in row %}
+              {% if piece and piece.comic.thumbnail %}
+                <img src="{{ piece.comic.thumbnail.url }}" alt="" loading="lazy" class="{% if not piece.owned %}is-missing{% endif %}">
+              {% else %}
+                <span class="connecting-card__empty"></span>
+              {% endif %}
+            {% endfor %}
+          {% endfor %}
+        </div>
+        </div>
+        <div class="p-3">
+          <div class="md-title-medium text-body">{{ card.connecting.name }}</div>
+          <div class="md-body-medium">
+            {{ card.connecting.layout }} · {{ card.piece_count }}/{{ card.capacity }} piezas · tienes {{ card.owned_count }}
+          </div>
+        </div>
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

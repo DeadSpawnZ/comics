@@ -27,6 +27,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0..1,0&display=block" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/custom/material.css' %}">
     <link rel="stylesheet" href="{% static 'css/custom/collections.css' %}">
+    {% block extra_css %}{% endblock %}
   </head>
   <body>
     {% with url_name=request.resolver_match.url_name %}
@@ -65,6 +66,16 @@
                 Collectables
               </a>
             </li>
+            {% if user.is_staff %}
+            <li class="nav-item">
+              <a class="nav-link md-nav-link {% if url_name|slice:':7' == 'manage_' %}active{% endif %}"
+                 {% if url_name|slice:':7' == 'manage_' %}aria-current="page"{% endif %}
+                 href="{% url 'manage_connectings' %}">
+                <span class="material-symbols-outlined" aria-hidden="true">dashboard_customize</span>
+                Gestión
+              </a>
+            </li>
+            {% endif %}
           </ul>
           <div class="d-flex align-items-center gap-1 ms-auto mt-2 mt-lg-0">
             <button

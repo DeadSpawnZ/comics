@@ -1,0 +1,318 @@
+/* ---------- Lista de connectings ---------- */
+.connecting-card__frame {
+  display: flex;
+  justify-content: center;
+  background-color: var(--md-surface-container-highest);
+}
+
+/* Ancho maximo calculado para que la cuadricula completa (celdas 2:3) quepa en 260px de alto. */
+.connecting-card__mosaic {
+  display: grid;
+  grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+  gap: 2px;
+  padding: 2px;
+  width: 100%;
+  max-width: calc(260px * var(--cols) / (var(--rows) * 1.5));
+}
+
+.connecting-card__mosaic img,
+.connecting-card__empty {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  display: block;
+}
+
+.connecting-card__mosaic img.is-missing {
+  filter: grayscale(1);
+  opacity: 0.4;
+}
+
+.connecting-card__empty {
+  background-color: var(--md-surface-container);
+}
+
+/* ---------- Editor: errores y snackbar ---------- */
+.editor-errors {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  background-color: #ffdad6;
+  color: #410002;
+}
+
+:root[data-bs-theme="dark"] .editor-errors {
+  background-color: #93000a;
+  color: #ffdad6;
+}
+
+.editor-errors ul {
+  margin: 0;
+  padding-left: 1rem;
+}
+
+.md-snackbar {
+  position: fixed;
+  left: 50%;
+  bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  z-index: 1080;
+  padding: 0.875rem 1rem;
+  min-width: 240px;
+  border-radius: 4px;
+  background-color: var(--md-on-surface);
+  color: var(--md-surface);
+  box-shadow: var(--md-elevation-3);
+  font-size: 0.875rem;
+}
+
+/* ---------- Editor: buscador ---------- */
+.editor-picker {
+  position: sticky;
+  top: calc(64px + 1rem);
+}
+
+.picker-results {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 0.5rem;
+  max-height: calc(100vh - 420px);
+  min-height: 120px;
+  overflow-y: auto;
+  padding: 4px;
+  border-radius: 12px;
+  transition: background-color 0.15s ease;
+}
+
+.picker-results.is-drop-target {
+  background-color: rgba(var(--md-primary-rgb), 0.08);
+  outline: 2px dashed var(--md-primary);
+}
+
+.picker-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 4px;
+  border-radius: 10px;
+  cursor: grab;
+  outline: none;
+}
+
+.picker-item:hover {
+  background-color: rgba(var(--md-on-surface-rgb), 0.06);
+}
+
+.picker-item:focus-visible,
+.picker-item.is-selected {
+  box-shadow: 0 0 0 2px var(--md-primary);
+}
+
+.picker-item.is-placed .editor-cover {
+  opacity: 0.45;
+}
+
+.picker-item.is-dragging {
+  opacity: 0.4;
+}
+
+.picker-item__label {
+  font-size: 0.75rem;
+  line-height: 1.2;
+  color: var(--md-on-surface-variant);
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.picker-item__placed {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background-color: var(--md-primary);
+  color: var(--md-on-primary);
+}
+
+.picker-item__placed .material-symbols-outlined {
+  font-size: 0.95rem;
+}
+
+/* ---------- Editor: portada ---------- */
+.editor-cover {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: var(--md-surface-container-highest);
+}
+
+.editor-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  pointer-events: none;
+}
+
+.editor-cover.is-missing img {
+  filter: grayscale(1);
+  opacity: 0.5;
+}
+
+.editor-cover__placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 0.25rem;
+  font-size: 0.7rem;
+  text-align: center;
+  color: var(--md-on-surface-variant);
+}
+
+.editor-cover__badge {
+  position: absolute;
+  left: 4px;
+  bottom: 4px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 0.625rem;
+  font-weight: 500;
+  line-height: 1.5;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+}
+
+.editor-cover.is-missing .editor-cover__badge {
+  background: #ba1a1a;
+}
+
+/* ---------- Editor: cuadricula ---------- */
+.editor-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--cols), minmax(0, 150px));
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.editor-cell {
+  position: relative;
+  border-radius: 10px;
+  cursor: grab;
+  outline: none;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.editor-cell.is-empty {
+  aspect-ratio: 2 / 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed var(--md-outline-variant);
+  cursor: default;
+}
+
+.editor-cell.is-armed {
+  cursor: pointer;
+}
+
+.editor-cell.is-armed.is-empty:hover {
+  border-color: var(--md-primary);
+  background-color: rgba(var(--md-primary-rgb), 0.06);
+}
+
+.editor-cell:focus-visible,
+.editor-cell.is-selected {
+  box-shadow: 0 0 0 3px var(--md-primary);
+}
+
+.editor-cell.is-drop-target {
+  box-shadow: 0 0 0 3px var(--md-primary);
+  transform: scale(1.03);
+}
+
+.editor-cell.is-empty.is-drop-target {
+  border-color: var(--md-primary);
+  background-color: rgba(var(--md-primary-rgb), 0.1);
+}
+
+.editor-cell.is-dragging {
+  opacity: 0.4;
+}
+
+.editor-cell__empty-label,
+.editor-cell__position {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--md-on-surface-variant);
+}
+
+.editor-cell__position {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  line-height: 1.5;
+}
+
+.editor-cell__remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.editor-cell__remove .material-symbols-outlined {
+  font-size: 1.1rem;
+}
+
+.editor-cell:hover .editor-cell__remove,
+.editor-cell:focus-within .editor-cell__remove,
+.editor-cell.is-selected .editor-cell__remove {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .editor-cell__remove {
+    opacity: 1;
+  }
+}
+
+/* ---------- Editor: piezas fuera de la cuadricula ---------- */
+.editor-overflow {
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px dashed #ba1a1a;
+}
+
+.editor-overflow__items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.editor-cell--overflow {
+  width: 90px;
+}

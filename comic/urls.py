@@ -20,7 +20,7 @@ from django.urls import path, re_path
 from django.conf import settings
 from django.views.static import serve as serve_static
 from comics.views import (
-    collection, publishing, login, collectables)
+    collection, publishing, login, collectables, manage)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -31,6 +31,10 @@ urlpatterns = [
     path("ajax/get-previous-trades/<int:comic_id>/", collection.get_previous_trades, name="get_previous_trades"),
     path("comics/", collection.comics_view, name="comics"),
     path("collectables/", collectables.collectables_view, name="collectables"),
+    path("gestion/connectings/", manage.connecting_list, name="manage_connectings"),
+    path("gestion/connectings/nuevo/", manage.connecting_editor, name="manage_connecting_new"),
+    path("gestion/connectings/<int:pk>/", manage.connecting_editor, name="manage_connecting_edit"),
+    path("gestion/api/comics/", manage.publishing_comics, name="manage_publishing_comics"),
 ]
 
 # Los estaticos los sirve WhiteNoise (ver MIDDLEWARE), en dev y en "produccion" local.

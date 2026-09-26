@@ -482,6 +482,43 @@ class Connecting(Model):
     def layout(self):
         return f"{self.rows}×{self.columns}"
 
+    def clean_placements(self, placements):
+        """Valida [{"row", "column", "comic"}, ...] contra la cuadricula y devuelve tuplas (row, column, comic_id)."""
+        errors = []
+        cleaned = []
+        for index, placement in enumerate(placements, start=1):
+            try:
+                row, column, comic_id = (int(placement[key]) for key in ("row", "column", "comic"))
+            except (KeyError, TypeError, ValueError):
+                errors.append(f"La pieza {index} no es válida.")
+                continue
+            if not (1 <= row <= self.rows and 1 <= column <= self.columns):
+                errors.append(f"La posición ({row}, {column}) está fuera de la cuadrícula de {self.layout}.")
+                continue
+            cleaned.append((row, column, comic_id))
+
+        positions = [(row, column) for row, column, _ in cleaned]
+        if len(positions) != len(set(positions)):
+            errors.append("Hay dos piezas en la misma posición.")
+        comic_ids = [comic_id for _, _, comic_id in cleaned]
+        if len(comic_ids) != len(set(comic_ids)):
+            errors.append("Un comic no puede estar dos veces en el mismo connecting.")
+        if Comic.objects.filter(id__in=comic_ids).count() != len(set(comic_ids)):
+            errors.append("Alguno de los comics ya no existe.")
+
+        if errors:
+            raise ValidationError(errors)
+        return cleaned
+
+    def set_pieces(self, cleaned_placements):
+        """Reemplaza todas las piezas. Se borran y se insertan de nuevo porque
+        actualizarlas una por una choca con los UniqueConstraint al intercambiar."""
+        self.pieces.all().delete()
+        ConnectingPiece.objects.bulk_create(
+            ConnectingPiece(connecting=self, row=row, column=column, comic_id=comic_id)
+            for row, column, comic_id in cleaned_placements
+        )
+
     def ownership_grid(self, user):
         """Matriz rows x columns con la pieza de cada posicion (o None) y si `user` la tiene."""
         pieces = list(self.pieces.select_related("comic__publishing"))
