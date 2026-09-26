@@ -1,16 +1,17 @@
+{% load i18n %}
 {% if page_obj.paginator.count %}
-<nav class="md-paginator mt-4" aria-label="Paginación">
+<nav class="md-paginator mt-4" aria-label="{% translate 'Pagination' %}">
   <span class="md-paginator__range">
-    {{ page_obj.start_index }} – {{ page_obj.end_index }} de {{ page_obj.paginator.count }}
+    {% blocktranslate with start=page_obj.start_index end=page_obj.end_index total=page_obj.paginator.count %}{{ start }} – {{ end }} of {{ total }}{% endblocktranslate %}
   </span>
 
   {% if page_obj.has_other_pages %}
   <div class="d-flex align-items-center">
     {% if page_obj.has_previous %}
-      <a class="md-icon-btn" href="{% querystring page=1 %}" aria-label="Primera página" title="Primera página">
+      <a class="md-icon-btn" href="{% querystring page=1 %}" aria-label="{% translate 'First page' %}" title="{% translate 'First page' %}">
         <span class="material-symbols-outlined" aria-hidden="true">first_page</span>
       </a>
-      <a class="md-icon-btn" href="{% querystring page=page_obj.previous_page_number %}" aria-label="Página anterior" title="Página anterior">
+      <a class="md-icon-btn" href="{% querystring page=page_obj.previous_page_number %}" aria-label="{% translate 'Previous page' %}" title="{% translate 'Previous page' %}">
         <span class="material-symbols-outlined" aria-hidden="true">chevron_left</span>
       </a>
     {% else %}
@@ -37,10 +38,10 @@
     </ul>
 
     {% if page_obj.has_next %}
-      <a class="md-icon-btn" href="{% querystring page=page_obj.next_page_number %}" aria-label="Página siguiente" title="Página siguiente">
+      <a class="md-icon-btn" href="{% querystring page=page_obj.next_page_number %}" aria-label="{% translate 'Next page' %}" title="{% translate 'Next page' %}">
         <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
       </a>
-      <a class="md-icon-btn" href="{% querystring page=page_obj.paginator.num_pages %}" aria-label="Última página" title="Última página">
+      <a class="md-icon-btn" href="{% querystring page=page_obj.paginator.num_pages %}" aria-label="{% translate 'Last page' %}" title="{% translate 'Last page' %}">
         <span class="material-symbols-outlined" aria-hidden="true">last_page</span>
       </a>
     {% else %}

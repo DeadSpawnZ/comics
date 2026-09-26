@@ -12,6 +12,7 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.utils.translation import gettext as _, gettext_lazy, ngettext, pgettext_lazy
 from django.views.decorators.http import require_GET, require_POST
 
 from comics.forms import EditionManageForm
@@ -21,7 +22,11 @@ from comics.views.manage import _number_sort_key
 PAGE_SIZE = 25
 CONTENT_SINGLE = "single"
 CONTENT_COMPILATION = "compilation"
-TYPE_TABS = [("", "Todas"), ("individual", "Individuales"), ("compilacion", "Compilaciones")]
+TYPE_TABS = [
+    ("", pgettext_lazy("editions", "All")),
+    ("individual", gettext_lazy("Single")),
+    ("compilacion", gettext_lazy("Compilations")),
+]
 
 
 def _log(request, edition, flag, message):
@@ -132,7 +137,8 @@ def edition_form(request, pk=None):
                 created = edition is None
                 label = "Creada" if created else "Modificada"
                 _log(request, saved, ADDITION if created else CHANGE, f"{label} desde Gestión.")
-                messages.success(request, f"Edición {'creada' if created else 'guardada'}: {saved}")
+                message = _("Edition created: %(edition)s") if created else _("Edition saved: %(edition)s")
+                messages.success(request, message % {"edition": saved})
                 if "save_continue" in request.POST:
                     return redirect(f"{reverse('manage_edition_edit', args=[saved.pk])}?{urlencode({'next': back_url})}")
                 return redirect(back_url)
@@ -173,26 +179,26 @@ def _clean_content(data, content):
         try:
             collected_ids = [int(value) for value in json.loads(data.get("collected") or "[]")]
         except (TypeError, ValueError):
-            errors.append("La lista de issues recopilados no es válida.")
+            errors.append(_("The list of collected issues is not valid."))
             collected_ids = []
         if not errors and not collected_ids:
-            errors.append("Una compilación necesita al menos un issue recopilado.")
+            errors.append(_("A compilation needs at least one collected issue."))
         if len(collected_ids) != len(set(collected_ids)):
-            errors.append("Un issue está repetido en la compilación.")
+            errors.append(_("An issue is repeated in the compilation."))
         if collected_ids and Issue.objects.filter(pk__in=collected_ids).count() != len(set(collected_ids)):
-            errors.append("Alguno de los issues recopilados ya no existe.")
+            errors.append(_("One of the collected issues no longer exists."))
     elif content == CONTENT_SINGLE:
         raw = data.get("issue") or ""
         if raw:
             try:
                 issue_id = int(raw)
             except ValueError:
-                errors.append("El issue elegido no es válido.")
+                errors.append(_("The chosen issue is not valid."))
             else:
                 if not Issue.objects.filter(pk=issue_id).exists():
-                    errors.append("El issue elegido ya no existe.")
+                    errors.append(_("The chosen issue no longer exists."))
     else:
-        errors.append("Elige si la edición es un issue individual o una compilación.")
+        errors.append(_("Choose whether the edition is a single issue or a compilation."))
     return issue_id, collected_ids, errors
 
 
@@ -236,12 +242,19 @@ def edition_delete(request, pk):
         pieces = edition.connecting_pieces.count()
         uses = []
         if collections:
-            uses.append(f"{collections} registro{'s' if collections != 1 else ''} de colección")
+            uses.append(
+                ngettext("%(count)d collection record", "%(count)d collection records", collections)
+                % {"count": collections}
+            )
         if pieces:
-            uses.append(f"{pieces} connecting{'s' if pieces != 1 else ''}")
-        messages.error(request, f"No se puede eliminar «{label}»: se usa en {' y '.join(uses)}.")
+            uses.append(ngettext("%(count)d connecting", "%(count)d connectings", pieces) % {"count": pieces})
+        messages.error(
+            request,
+            _("“%(name)s” cannot be deleted: it is used in %(uses)s.")
+            % {"name": label, "uses": (" " + _("and") + " ").join(uses)},
+        )
     else:
-        messages.success(request, f"Edición eliminada: {label}")
+        messages.success(request, _("Edition deleted: %(edition)s") % {"edition": label})
     return redirect(back_url)
 
 

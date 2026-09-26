@@ -1,10 +1,10 @@
 {% extends 'manage/base_manage.html' %}
-{% load static %}
+{% load static i18n %}
 
 {% block breadcrumb %}
 <a href="{% url 'manage_connectings' %}">Connectings</a>
 <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
-<span class="is-current">{% if connecting %}{{ connecting.name }}{% else %}Nuevo{% endif %}</span>
+<span class="is-current">{% if connecting %}{{ connecting.name }}{% else %}{% translate "New" context "connecting" %}{% endif %}</span>
 {% endblock %}
 
 {% block manage_content %}
@@ -12,18 +12,18 @@
 <div id="connecting-editor">
   <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
     <div class="d-flex align-items-center gap-2">
-      <a class="md-icon-btn" href="{% url 'manage_connectings' %}" aria-label="Volver a connectings" title="Volver a connectings">
+      <a class="md-icon-btn" href="{% url 'manage_connectings' %}" aria-label="{% translate 'Back to connectings' %}" title="{% translate 'Back to connectings' %}">
         <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
       </a>
       <h1 class="md-headline-small mb-0">
-        {% if connecting %}{{ connecting.name }}{% else %}Nuevo connecting{% endif %}
+        {% if connecting %}{{ connecting.name }}{% else %}{% translate "New connecting" %}{% endif %}
       </h1>
     </div>
     <div class="d-flex align-items-center gap-3">
       <span class="md-body-medium" id="editor-status" aria-live="polite"></span>
       <button type="button" class="md-btn md-btn--filled" id="editor-save">
         <span class="material-symbols-outlined" aria-hidden="true">save</span>
-        Guardar
+        {% translate "Save" %}
       </button>
     </div>
   </div>
@@ -40,17 +40,17 @@
         </h2>
 
         <div class="form-floating md-field mb-2">
-          <input type="search" class="form-control" id="publishing-search" placeholder="Filtrar publishings" autocomplete="off">
-          <label for="publishing-search">Filtrar publishings</label>
+          <input type="search" class="form-control" id="publishing-search" placeholder="{% translate 'Filter publishings' %}" autocomplete="off">
+          <label for="publishing-search">{% translate "Filter publishings" %}</label>
         </div>
         <div class="form-floating md-field mb-3">
           <select class="form-select" id="publishing-select">
-            <option value="">Elige un publishing…</option>
+            <option value="">{% translate "Choose a publishing…" %}</option>
           </select>
           <label for="publishing-select">Publishing</label>
         </div>
 
-        <p class="md-body-medium mb-2" id="picker-hint">Elige un publishing para ver sus comics.</p>
+        <p class="md-body-medium mb-2" id="picker-hint">{% translate "Choose a publishing to see its comics." %}</p>
         <div class="picker-results" id="picker-results"></div>
       </div>
     </aside>
@@ -61,26 +61,26 @@
         <div class="row g-3">
           <div class="col-12 col-md-6">
             <div class="form-floating md-field">
-              <input type="text" class="form-control" id="connecting-name" maxlength="100" placeholder="Nombre" required>
-              <label for="connecting-name">Nombre</label>
+              <input type="text" class="form-control" id="connecting-name" maxlength="100" placeholder="{% translate 'Name' %}" required>
+              <label for="connecting-name">{% translate "Name" %}</label>
             </div>
           </div>
           <div class="col-6 col-md-3">
             <div class="form-floating md-field">
-              <input type="number" class="form-control" id="connecting-rows" min="1" max="20" placeholder="Filas">
-              <label for="connecting-rows">Filas</label>
+              <input type="number" class="form-control" id="connecting-rows" min="1" max="20" placeholder="{% translate 'Rows' %}">
+              <label for="connecting-rows">{% translate "Rows" %}</label>
             </div>
           </div>
           <div class="col-6 col-md-3">
             <div class="form-floating md-field">
-              <input type="number" class="form-control" id="connecting-columns" min="1" max="20" placeholder="Columnas">
-              <label for="connecting-columns">Columnas</label>
+              <input type="number" class="form-control" id="connecting-columns" min="1" max="20" placeholder="{% translate 'Columns' %}">
+              <label for="connecting-columns">{% translate "Columns" %}</label>
             </div>
           </div>
           <div class="col-12">
             <div class="form-floating md-field">
-              <textarea class="form-control" id="connecting-notes" maxlength="500" placeholder="Notas" style="height: 80px"></textarea>
-              <label for="connecting-notes">Notas</label>
+              <textarea class="form-control" id="connecting-notes" maxlength="500" placeholder="{% translate 'Notes' %}" style="height: 80px"></textarea>
+              <label for="connecting-notes">{% translate "Notes" %}</label>
             </div>
           </div>
         </div>
@@ -88,18 +88,20 @@
 
       <div class="md-surface-card">
         <div class="d-flex align-items-baseline justify-content-between flex-wrap gap-2 mb-3">
-          <h2 class="md-title-medium mb-0">Cuadrícula</h2>
+          <h2 class="md-title-medium mb-0">{% translate "Grid" %}</h2>
           <span class="md-body-medium" id="grid-summary"></span>
         </div>
         <p class="md-body-medium mb-3">
-          Arrastra una portada a una celda; arrastra entre celdas para intercambiarlas.
-          Sin arrastrar: haz clic en una portada y luego en la celda.
+          {% blocktranslate trimmed %}
+            Drag a cover onto a cell; drag between cells to swap them.
+            Without dragging: click a cover and then the cell.
+          {% endblocktranslate %}
         </p>
         <div class="editor-grid" id="editor-grid"></div>
 
         <div class="editor-overflow mt-3" id="editor-overflow" hidden>
-          <div class="md-section-label">Fuera de la cuadrícula</div>
-          <p class="md-body-medium mb-2">Estas piezas quedaron fuera al cambiar el tamaño. Arrástralas a una celda o quítalas para poder guardar.</p>
+          <div class="md-section-label">{% translate "Outside the grid" %}</div>
+          <p class="md-body-medium mb-2">{% translate "These pieces fell outside when the size changed. Drag them to a cell or remove them to be able to save." %}</p>
           <div class="editor-overflow__items" id="editor-overflow-items"></div>
         </div>
       </div>

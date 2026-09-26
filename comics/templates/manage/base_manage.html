@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load static i18n %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/custom/manage.css' %}">
@@ -8,15 +8,15 @@
 {% block content %}
 {% with url_name=request.resolver_match.url_name %}
 <div class="manage-layout my-4">
-  <nav class="manage-nav" aria-label="Secciones de gestión">
-    <div class="manage-nav__title">Gestión</div>
+  <nav class="manage-nav" aria-label="{% translate 'Management sections' %}">
+    <div class="manage-nav__title">{% translate "Management" %}</div>
     <ul>
       <li>
         <a class="manage-nav__link {% if 'edition' in url_name %}is-active{% endif %}"
            {% if 'edition' in url_name %}aria-current="page"{% endif %}
            href="{% url 'manage_editions' %}">
           <span class="material-symbols-outlined" aria-hidden="true">menu_book</span>
-          Ediciones
+          {% translate "Editions" %}
         </a>
       </li>
       <li>
@@ -31,8 +31,8 @@
   </nav>
 
   <div class="manage-content">
-    <nav class="manage-breadcrumb" aria-label="Ruta">
-      <a href="{% url 'manage_home' %}">Gestión</a>
+    <nav class="manage-breadcrumb" aria-label="{% translate 'Breadcrumb' %}">
+      <a href="{% url 'manage_home' %}">{% translate "Management" %}</a>
       <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
       {% block breadcrumb %}{% endblock %}
     </nav>

@@ -1,5 +1,6 @@
 from django import forms
 from django.core.exceptions import NON_FIELD_ERRORS
+from django.utils.translation import gettext_lazy as _
 from .models import Collection, Edition, Publishing, Dealer
 
 
@@ -138,17 +139,17 @@ class EditionManageForm(forms.ModelForm):
         ]
         labels = {
             "publishing": "Publishing",
-            "number": "Número",
-            "variant": "Variante",
-            "printing": "Impresión",
-            "format": "Formato",
-            "release_date": "Fecha de lanzamiento",
-            "cover_price": "Precio de portada",
+            "number": _("Number"),
+            "variant": _("Variant"),
+            "printing": _("Printing"),
+            "format": _("Format"),
+            "release_date": _("Release date"),
+            "cover_price": _("Cover price"),
             "ratio": "Ratio",
-            "limited_to": "Limitada a",
-            "image": "Portada",
-            "cover_artists": "Artistas de portada",
-            "notes": "Notas",
+            "limited_to": _("Limited to"),
+            "image": _("Cover"),
+            "cover_artists": _("Cover artists"),
+            "notes": _("Notes"),
         }
         widgets = {
             "release_date": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
@@ -158,7 +159,7 @@ class EditionManageForm(forms.ModelForm):
         }
         error_messages = {
             NON_FIELD_ERRORS: {
-                "unique_together": "Ya existe una edición con ese publishing, número, variante e impresión.",
+                "unique_together": _("An edition with that publishing, number, variant and printing already exists."),
             },
         }
 

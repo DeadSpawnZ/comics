@@ -16,7 +16,8 @@ Including another URLconf
 """
 
 from django.contrib import admin
-from django.urls import path, re_path
+from django.urls import include, path, re_path
+from django.views.i18n import JavaScriptCatalog
 from django.conf import settings
 from django.views.static import serve as serve_static
 from django.views.generic import RedirectView
@@ -25,6 +26,8 @@ from comics.views import (
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("i18n/", include("django.conf.urls.i18n")),
+    path("jsi18n/", JavaScriptCatalog.as_view(), name="javascript-catalog"),
     path("login/", login.login_view, name="login"),
     path("logout/", login.logout_view, name="logout"),
     path("ajax/get-publishing-date/<int:publishing_id>/", publishing.get_publishing_date, name="get_publishing_date"),

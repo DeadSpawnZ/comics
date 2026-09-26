@@ -88,9 +88,9 @@
       const actions = document.createElement("span");
       actions.className = "collected-list__actions";
       actions.append(
-        iconButton("arrow_upward", `Subir ${issue.label}`, () => move(index, -1), index === 0),
-        iconButton("arrow_downward", `Bajar ${issue.label}`, () => move(index, 1), index === collected.length - 1),
-        iconButton("close", `Quitar ${issue.label}`, () => {
+        iconButton("arrow_upward", interpolate(gettext("Move %(name)s up"), { name: issue.label }, true), () => move(index, -1), index === 0),
+        iconButton("arrow_downward", interpolate(gettext("Move %(name)s down"), { name: issue.label }, true), () => move(index, 1), index === collected.length - 1),
+        iconButton("close", interpolate(gettext("Remove %(name)s"), { name: issue.label }, true), () => {
           collected.splice(index, 1);
           renderCollected();
         }, false)
@@ -109,13 +109,13 @@
   }
 
   collectedPublishing.addEventListener("change", async () => {
-    collectedIssue.replaceChildren(new Option(collectedPublishing.value ? "Cargando…" : "Elige primero un publishing", ""));
+    collectedIssue.replaceChildren(new Option(collectedPublishing.value ? gettext("Loading…") : gettext("Choose a publishing first"), ""));
     collectedIssue.disabled = true;
     renderAddState();
     if (!collectedPublishing.value) return;
     const issues = await fetchIssues(collectedPublishing.value);
     collectedIssue.replaceChildren(
-      new Option(issues.length ? "Elige un issue…" : "Este publishing no tiene issues", ""),
+      new Option(issues.length ? gettext("Choose an issue…") : gettext("This publishing has no issues"), ""),
       ...issues.map((issue) => new Option(issue.label, issue.id))
     );
     collectedIssue.disabled = issues.length === 0;

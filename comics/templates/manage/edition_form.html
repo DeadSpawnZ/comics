@@ -1,10 +1,10 @@
 {% extends 'manage/base_manage.html' %}
-{% load static %}
+{% load static i18n %}
 
 {% block breadcrumb %}
-<a href="{{ back_url }}">Ediciones</a>
+<a href="{{ back_url }}">{% translate "Editions" %}</a>
 <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
-<span class="is-current">{% if edition %}{{ edition.publishing.publishing_title }} #{{ edition.number }} {{ edition.variant }}{% else %}Nueva{% endif %}</span>
+<span class="is-current">{% if edition %}{{ edition.publishing.publishing_title }} #{{ edition.number }} {{ edition.variant }}{% else %}{% translate "New" context "edition" %}{% endif %}</span>
 {% endblock %}
 
 {% block manage_content %}
@@ -14,10 +14,10 @@
 
   <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
     <div class="d-flex align-items-center gap-2">
-      <a class="md-icon-btn" href="{{ back_url }}" aria-label="Volver a ediciones" title="Volver a ediciones">
+      <a class="md-icon-btn" href="{{ back_url }}" aria-label="{% translate 'Back to editions' %}" title="{% translate 'Back to editions' %}">
         <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
       </a>
-      <h1 class="md-headline-small mb-0">{% if edition %}Editar edición{% else %}Nueva edición{% endif %}</h1>
+      <h1 class="md-headline-small mb-0">{% if edition %}{% translate "Edit edition" %}{% else %}{% translate "New edition" %}{% endif %}</h1>
     </div>
     <div class="d-flex align-items-center gap-2 flex-wrap">
       {% if edition %}
@@ -25,13 +25,13 @@
                 data-delete-url="{% url 'manage_edition_delete' edition.pk %}"
                 data-delete-name="{{ edition.publishing.publishing_title }} #{{ edition.number }} {{ edition.variant }}">
           <span class="material-symbols-outlined" aria-hidden="true">delete</span>
-          Eliminar
+          {% translate "Delete" %}
         </button>
       {% endif %}
-      <button type="submit" name="save_continue" class="md-btn md-btn--tonal">Guardar y seguir editando</button>
+      <button type="submit" name="save_continue" class="md-btn md-btn--tonal">{% translate "Save and continue editing" %}</button>
       <button type="submit" class="md-btn md-btn--filled">
         <span class="material-symbols-outlined" aria-hidden="true">save</span>
-        Guardar
+        {% translate "Save" %}
       </button>
     </div>
   </div>
@@ -42,7 +42,7 @@
       <ul>
         {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
         {% for error in content_errors %}<li>{{ error }}</li>{% endfor %}
-        {% if form.errors and not form.non_field_errors %}<li>Revisa los campos marcados.</li>{% endif %}
+        {% if form.errors and not form.non_field_errors %}<li>{% translate "Check the highlighted fields." %}</li>{% endif %}
       </ul>
     </div>
   {% endif %}
@@ -51,11 +51,11 @@
     <!-- Edition data -->
     <div class="col-12 col-xl-8">
       <div class="md-surface-card h-100">
-        <h2 class="md-title-medium mb-3">Datos de la edición</h2>
+        <h2 class="md-title-medium mb-3">{% translate "Edition data" %}</h2>
         <div class="row g-3">
           <div class="col-12">
             <input type="search" class="form-control form-control-sm mb-1 filter-input" data-filter-select="{{ form.publishing.id_for_label }}"
-                   placeholder="Filtrar publishings…" aria-label="Filtrar publishings">
+                   placeholder="{% translate 'Filter publishings…' %}" aria-label="{% translate 'Filter publishings' %}">
             {% include 'manage/includes/field.html' with field=form.publishing %}
           </div>
           <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=form.number %}</div>
@@ -74,28 +74,28 @@
     <!-- Cover and artists -->
     <div class="col-12 col-xl-4">
       <div class="md-surface-card h-100">
-        <h2 class="md-title-medium mb-3">Portada</h2>
+        <h2 class="md-title-medium mb-3">{% translate "Cover" %}</h2>
         <div class="edition-cover-preview mb-3">
           {% if edition and edition.thumbnail %}
-            <img src="{{ edition.thumbnail.url }}" alt="Portada actual" id="cover-preview">
+            <img src="{{ edition.thumbnail.url }}" alt="{% translate 'Current cover' %}" id="cover-preview">
           {% else %}
             <img alt="" id="cover-preview" hidden>
             <span class="material-symbols-outlined" aria-hidden="true" id="cover-placeholder">image</span>
           {% endif %}
         </div>
         <label class="form-label md-label-large" for="{{ form.image.id_for_label }}">
-          {% if edition and edition.image %}Reemplazar portada{% else %}Subir portada{% endif %}
+          {% if edition and edition.image %}{% translate "Replace cover" %}{% else %}{% translate "Upload cover" %}{% endif %}
         </label>
         {{ form.image }}
         {% for error in form.image.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
-        <div class="md-body-medium mt-1 mb-3">La miniatura se genera sola al guardar.</div>
+        <div class="md-body-medium mt-1 mb-3">{% translate "The thumbnail is generated automatically on save." %}</div>
 
         <div class="md-section-label">{{ form.cover_artists.label }}</div>
         <div class="checkbox-list">
           {% for checkbox in form.cover_artists %}
             <label class="form-check">{{ checkbox.tag }} <span class="form-check-label">{{ checkbox.choice_label }}</span></label>
           {% empty %}
-            <span class="md-body-medium">No hay artistas registrados.</span>
+            <span class="md-body-medium">{% translate "There are no artists yet." %}</span>
           {% endfor %}
         </div>
       </div>
@@ -104,43 +104,45 @@
     <!-- Content: issue or compilation -->
     <div class="col-12">
       <div class="md-surface-card">
-        <h2 class="md-title-medium mb-1">Contenido</h2>
-        <p class="md-body-medium mb-3">¿Qué historia trae esta edición?</p>
+        <h2 class="md-title-medium mb-1">{% translate "Content" %}</h2>
+        <p class="md-body-medium mb-3">{% translate "Which story does this edition contain?" %}</p>
 
-        <div class="md-segmented mb-3" role="radiogroup" aria-label="Tipo de contenido">
+        <div class="md-segmented mb-3" role="radiogroup" aria-label="{% translate 'Content type' %}">
           <label class="md-segmented__option">
             <input type="radio" name="content" value="single" {% if content != 'compilation' %}checked{% endif %}>
-            <span><span class="material-symbols-outlined" aria-hidden="true">auto_stories</span> Issue individual</span>
+            <span><span class="material-symbols-outlined" aria-hidden="true">auto_stories</span> {% translate "Single issue" context "content type" %}</span>
           </label>
           <label class="md-segmented__option">
             <input type="radio" name="content" value="compilation" {% if content == 'compilation' %}checked{% endif %}>
-            <span><span class="material-symbols-outlined" aria-hidden="true">library_books</span> Compilación</span>
+            <span><span class="material-symbols-outlined" aria-hidden="true">library_books</span> {% translate "Compilation" %}</span>
           </label>
         </div>
 
         <div id="content-single" {% if content == 'compilation' %}hidden{% endif %}>
           <p class="md-body-medium">
-            Por default la edición es del issue de su publishing y número. Si es una edición extranjera o de aniversario
-            de un issue de otra serie, elige ese issue.
+            {% blocktranslate trimmed %}
+              By default the edition belongs to the issue of its publishing and number. If it is a foreign or
+              anniversary edition of an issue from another series, choose that issue.
+            {% endblocktranslate %}
           </p>
           <div class="row g-3">
             <div class="col-12 col-md-6">
               <input type="search" class="form-control form-control-sm mb-1 filter-input" data-filter-select="issue-publishing"
-                     placeholder="Filtrar publishings…" aria-label="Filtrar publishings del issue">
+                     placeholder="{% translate 'Filter publishings…' %}" aria-label="{% translate 'Filter the issue publishings' %}">
               <div class="form-floating md-field">
                 <select class="form-select" id="issue-publishing">
-                  <option value="">Elige un publishing…</option>
+                  <option value="">{% translate "Choose a publishing…" %}</option>
                   {% for option in form.publishing.field.queryset %}
                     <option value="{{ option.pk }}" {% if option.pk == issue_publishing_id %}selected{% endif %}>{{ option.publishing_title }}{% if option.year %} ({{ option.year }}){% endif %} {{ option.serie }} · {{ option.language|upper }}</option>
                   {% endfor %}
                 </select>
-                <label for="issue-publishing">Publishing del issue</label>
+                <label for="issue-publishing">{% translate "Issue publishing" %}</label>
               </div>
             </div>
             <div class="col-12 col-md-6 d-flex flex-column justify-content-end">
               <div class="form-floating md-field">
                 <select class="form-select" id="issue-select" name="issue">
-                  <option value="">Automático (según publishing y número)</option>
+                  <option value="">{% translate "Automatic (by publishing and number)" %}</option>
                   {% for issue in issue_options %}
                     <option value="{{ issue.pk }}" {% if issue.pk == selected_issue_id %}selected{% endif %}>{{ issue }}</option>
                   {% endfor %}
@@ -152,14 +154,14 @@
         </div>
 
         <div id="content-compilation" {% if content != 'compilation' %}hidden{% endif %}>
-          <p class="md-body-medium">Agrega los issues que recopila, en orden de lectura.</p>
+          <p class="md-body-medium">{% translate "Add the issues it collects, in reading order." %}</p>
           <div class="row g-3 align-items-end">
             <div class="col-12 col-md-5">
               <input type="search" class="form-control form-control-sm mb-1 filter-input" data-filter-select="collected-publishing"
-                     placeholder="Filtrar publishings…" aria-label="Filtrar publishings de la compilación">
+                     placeholder="{% translate 'Filter publishings…' %}" aria-label="{% translate 'Filter the compilation publishings' %}">
               <div class="form-floating md-field">
                 <select class="form-select" id="collected-publishing">
-                  <option value="">Elige un publishing…</option>
+                  <option value="">{% translate "Choose a publishing…" %}</option>
                   {% for option in form.publishing.field.queryset %}
                     <option value="{{ option.pk }}">{{ option.publishing_title }}{% if option.year %} ({{ option.year }}){% endif %} {{ option.serie }} · {{ option.language|upper }}</option>
                   {% endfor %}
@@ -170,7 +172,7 @@
             <div class="col-8 col-md-5">
               <div class="form-floating md-field">
                 <select class="form-select" id="collected-issue" disabled>
-                  <option value="">Elige primero un publishing</option>
+                  <option value="">{% translate "Choose a publishing first" %}</option>
                 </select>
                 <label for="collected-issue">Issue</label>
               </div>
@@ -178,12 +180,12 @@
             <div class="col-4 col-md-2">
               <button type="button" class="md-btn md-btn--tonal w-100" id="collected-add" disabled>
                 <span class="material-symbols-outlined" aria-hidden="true">add</span>
-                Agregar
+                {% translate "Add" %}
               </button>
             </div>
           </div>
           <ol class="collected-list mt-3" id="collected-list"></ol>
-          <p class="md-body-medium mb-0" id="collected-empty">Todavía no hay issues en la compilación.</p>
+          <p class="md-body-medium mb-0" id="collected-empty">{% translate "There are no issues in the compilation yet." %}</p>
           <input type="hidden" name="collected" id="collected-input">
         </div>
       </div>

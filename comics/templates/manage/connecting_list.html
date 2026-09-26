@@ -1,4 +1,5 @@
 {% extends 'manage/base_manage.html' %}
+{% load i18n %}
 
 {% block breadcrumb %}<span class="is-current">Connectings</span>{% endblock %}
 
@@ -7,19 +8,19 @@
   <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
     <div>
       <h1 class="md-headline-small mb-0">Connectings</h1>
-      <span class="md-body-medium">{{ cards|length }} connecting{{ cards|length|pluralize }}</span>
+      <span class="md-body-medium">{% blocktranslate count counter=cards|length %}{{ counter }} connecting{% plural %}{{ counter }} connectings{% endblocktranslate %}</span>
     </div>
     <a class="md-btn md-btn--filled" href="{% url 'manage_connecting_new' %}">
       <span class="material-symbols-outlined" aria-hidden="true">add</span>
-      Nuevo connecting
+      {% translate "New connecting" %}
     </a>
   </div>
 
   {% if not cards %}
     <div class="md-surface-card text-center py-5">
       <span class="material-symbols-outlined d-block mb-2 empty-state-icon" aria-hidden="true">grid_view</span>
-      <p class="md-body-medium mb-3">Todavía no hay connectings.</p>
-      <a class="md-btn md-btn--tonal" href="{% url 'manage_connecting_new' %}">Crear el primero</a>
+      <p class="md-body-medium mb-3">{% translate "There are no connectings yet." %}</p>
+      <a class="md-btn md-btn--tonal" href="{% url 'manage_connecting_new' %}">{% translate "Create the first one" %}</a>
     </div>
   {% endif %}
 
@@ -43,7 +44,7 @@
         <div class="p-3">
           <div class="md-title-medium text-body">{{ card.connecting.name }}</div>
           <div class="md-body-medium">
-            {{ card.connecting.layout }} · {{ card.piece_count }}/{{ card.capacity }} piezas · tienes {{ card.owned_count }}
+            {% blocktranslate with layout=card.connecting.layout pieces=card.piece_count capacity=card.capacity owned=card.owned_count %}{{ layout }} · {{ pieces }}/{{ capacity }} pieces · you own {{ owned }}{% endblocktranslate %}
           </div>
         </div>
       </a>

@@ -1,22 +1,23 @@
 {% extends 'manage/base_manage.html' %}
+{% load i18n %}
 
-{% block breadcrumb %}<span class="is-current">Ediciones</span>{% endblock %}
+{% block breadcrumb %}<span class="is-current">{% translate "Editions" %}</span>{% endblock %}
 
 {% block manage_content %}
 <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
   <div>
-    <h1 class="md-headline-small mb-0">Ediciones</h1>
-    <span class="md-body-medium">{{ page_obj.paginator.count }} edici{{ page_obj.paginator.count|pluralize:"ón,ones" }}</span>
+    <h1 class="md-headline-small mb-0">{% translate "Editions" %}</h1>
+    <span class="md-body-medium">{% blocktranslate count counter=page_obj.paginator.count %}{{ counter }} edition{% plural %}{{ counter }} editions{% endblocktranslate %}</span>
   </div>
   <a class="md-btn md-btn--filled" href="{% url 'manage_edition_new' %}?next={{ request.get_full_path|urlencode }}">
     <span class="material-symbols-outlined" aria-hidden="true">add</span>
-    Nueva edición
+    {% translate "New edition" %}
   </a>
 </div>
 
 <div class="md-surface-card manage-table">
   <div class="manage-toolbar">
-    <div class="manage-tabs" role="tablist" aria-label="Tipo de edición">
+    <div class="manage-tabs" role="tablist" aria-label="{% translate 'Edition type' %}">
       {% for value, label, count in tabs %}
         <a class="manage-tab {% if value == type_filter %}is-active{% endif %}" role="tab"
            aria-selected="{% if value == type_filter %}true{% else %}false{% endif %}"
@@ -30,19 +31,19 @@
       <input type="hidden" name="tipo" value="{{ type_filter }}">
       <div class="form-floating md-field">
         <select class="form-select" id="filter-format" name="format" onchange="this.form.submit()">
-          <option value="">Todos</option>
+          <option value="">{% translate "All" context "formats" %}</option>
           {% for value, label in format_choices %}
             <option value="{{ value }}" {% if value == format_filter %}selected{% endif %}>{{ label }}</option>
           {% endfor %}
         </select>
-        <label for="filter-format">Formato</label>
+        <label for="filter-format">{% translate "Format" %}</label>
       </div>
       <div class="form-floating md-field">
-        <input type="search" class="form-control" id="filter-q" name="q" value="{{ query }}" placeholder="Buscar">
-        <label for="filter-q">Buscar título o número</label>
+        <input type="search" class="form-control" id="filter-q" name="q" value="{{ query }}" placeholder="{% translate 'Search' %}">
+        <label for="filter-q">{% translate "Search title or number" %}</label>
       </div>
       {% if query or format_filter %}
-        <a class="md-btn md-btn--text" href="{% querystring q=None format=None page=None %}">Limpiar</a>
+        <a class="md-btn md-btn--text" href="{% querystring q=None format=None page=None %}">{% translate "Clear" %}</a>
       {% endif %}
     </form>
   </div>
@@ -50,7 +51,7 @@
   {% if not page_obj.object_list %}
     <div class="text-center py-5">
       <span class="material-symbols-outlined d-block mb-2 empty-state-icon" aria-hidden="true">search_off</span>
-      <p class="md-body-medium mb-0">No hay ediciones con estos filtros.</p>
+      <p class="md-body-medium mb-0">{% translate "No editions match these filters." %}</p>
     </div>
   {% else %}
     <ul class="manage-rows">
@@ -68,7 +69,7 @@
             {{ edition.publishing.publishing_title }} #{{ edition.number }} {{ edition.variant }}
           </a>
           <div class="md-body-medium">
-            {{ edition.printing }} impresión · Serie {{ edition.publishing.serie }}{% if edition.publishing.year %} · {{ edition.publishing.year }}{% endif %} · {{ edition.publishing.language|upper }}
+            {% blocktranslate with printing=edition.printing %}{{ printing }} printing{% endblocktranslate %} · {% blocktranslate with serie=edition.publishing.serie %}Series {{ serie }}{% endblocktranslate %}{% if edition.publishing.year %} · {{ edition.publishing.year }}{% endif %} · {{ edition.publishing.language|upper }}
           </div>
         </div>
         <div class="manage-row__chips">
@@ -76,27 +77,27 @@
           {% if edition.compiled_count %}
             <span class="md-assist-chip md-assist-chip--primary">
               <span class="material-symbols-outlined" aria-hidden="true">library_books</span>
-              Compilación · {{ edition.compiled_count }} issue{{ edition.compiled_count|pluralize }}
+              {% blocktranslate count counter=edition.compiled_count %}Compilation · {{ counter }} issue{% plural %}Compilation · {{ counter }} issues{% endblocktranslate %}
             </span>
           {% elif edition.linked_elsewhere %}
-            <span class="md-assist-chip md-assist-chip--primary" title="Vinculada a mano a otro issue">
+            <span class="md-assist-chip md-assist-chip--primary" title="{% translate 'Manually linked to another issue' %}">
               <span class="material-symbols-outlined" aria-hidden="true">link</span>
               {{ edition.issue }}
             </span>
           {% elif not edition.issue_id %}
-            <span class="md-assist-chip md-assist-chip--error">Sin issue</span>
+            <span class="md-assist-chip md-assist-chip--error">{% translate "No issue" %}</span>
           {% endif %}
         </div>
         <div class="manage-row__actions">
           <a class="md-icon-btn" href="{% url 'manage_edition_edit' edition.pk %}?next={{ request.get_full_path|urlencode }}"
-             aria-label="Editar {{ edition.publishing.publishing_title }} #{{ edition.number }} {{ edition.variant }}" title="Editar">
+             aria-label="{% blocktranslate with title=edition.publishing.publishing_title number=edition.number variant=edition.variant %}Edit {{ title }} #{{ number }} {{ variant }}{% endblocktranslate %}" title="{% translate 'Edit' %}">
             <span class="material-symbols-outlined" aria-hidden="true">edit</span>
           </a>
           <button type="button" class="md-btn md-btn--danger-outlined" data-bs-toggle="modal" data-bs-target="#deleteDialog"
                   data-delete-url="{% url 'manage_edition_delete' edition.pk %}"
                   data-delete-name="{{ edition.publishing.publishing_title }} #{{ edition.number }} {{ edition.variant }}">
             <span class="material-symbols-outlined" aria-hidden="true">delete</span>
-            Eliminar
+            {% translate "Delete" %}
           </button>
         </div>
       </li>

@@ -613,3 +613,8 @@ a.md-paginator__page:hover {
   outline: 2px solid var(--md-primary);
   outline-offset: -2px;
 }
+
+/* Reserved space for the check icon in menus, so items stay aligned when unchecked */
+.md-menu__check {
+  width: 1.35rem;
+}

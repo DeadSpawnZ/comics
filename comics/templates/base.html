@@ -1,5 +1,7 @@
 <!DOCTYPE html>
-<html lang="es">
+{% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+<html lang="{{ LANGUAGE_CODE }}">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -44,7 +46,7 @@
           data-bs-target="#mainNav"
           aria-controls="mainNav"
           aria-expanded="false"
-          aria-label="Abrir navegación"
+          aria-label="{% translate 'Open navigation' %}"
         >
           <span class="material-symbols-outlined" aria-hidden="true">menu</span>
         </button>
@@ -72,7 +74,7 @@
                  {% if url_name|slice:':7' == 'manage_' %}aria-current="page"{% endif %}
                  href="{% url 'manage_home' %}">
                 <span class="material-symbols-outlined" aria-hidden="true">dashboard_customize</span>
-                Gestión
+                {% translate "Management" %}
               </a>
             </li>
             {% endif %}
@@ -82,11 +84,39 @@
               id="theme-toggle"
               type="button"
               class="md-icon-btn"
-              aria-label="Cambiar tema claro/oscuro"
-              title="Cambiar tema claro/oscuro"
+              aria-label="{% translate 'Toggle light/dark theme' %}"
+              title="{% translate 'Toggle light/dark theme' %}"
             >
               <span class="material-symbols-outlined" id="theme-toggle-icon" aria-hidden="true">dark_mode</span>
             </button>
+
+            {% get_available_languages as AVAILABLE_LANGUAGES %}
+            {% get_language_info_list for AVAILABLE_LANGUAGES as languages %}
+            <div class="dropdown">
+              <button
+                class="md-icon-btn"
+                type="button"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+                aria-label="{% translate 'Change language' %}"
+                title="{% translate 'Change language' %}"
+              >
+                <span class="material-symbols-outlined" aria-hidden="true">translate</span>
+              </button>
+              <form method="post" action="{% url 'set_language' %}" class="dropdown-menu dropdown-menu-end md-menu">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <h6 class="dropdown-header">{% translate "Language" %}</h6>
+                {% for language in languages %}
+                  <button type="submit" name="language" value="{{ language.code }}" class="dropdown-item"
+                          lang="{{ language.code }}" {% if language.code == LANGUAGE_CODE %}aria-current="true"{% endif %}>
+                    <span class="material-symbols-outlined md-menu__check" aria-hidden="true">{% if language.code == LANGUAGE_CODE %}check{% endif %}</span>
+                    {{ language.name_local|capfirst }}
+                  </button>
+                {% endfor %}
+              </form>
+            </div>
+
             {% if user.is_authenticated %}
             <div class="dropdown">
               <button
@@ -94,7 +124,7 @@
                 type="button"
                 data-bs-toggle="dropdown"
                 aria-expanded="false"
-                aria-label="Cuenta de {{ user.username }}"
+                aria-label="{% blocktranslate with username=user.username %}Account of {{ username }}{% endblocktranslate %}"
                 title="{{ user.username }}"
               >
                 <span class="material-symbols-outlined" aria-hidden="true">account_circle</span>
@@ -105,14 +135,14 @@
                 <li>
                   <a class="dropdown-item" href="{% url 'admin:index' %}">
                     <span class="material-symbols-outlined" aria-hidden="true">admin_panel_settings</span>
-                    Administración
+                    {% translate "Administration" %}
                   </a>
                 </li>
                 {% endif %}
                 <li>
                   <a class="dropdown-item" href="{% url 'logout' %}">
                     <span class="material-symbols-outlined" aria-hidden="true">logout</span>
-                    Cerrar sesión
+                    {% translate "Log out" %}
                   </a>
                 </li>
               </ul>
@@ -120,7 +150,7 @@
             {% else %}
             <button type="button" class="md-btn md-btn--filled" data-bs-toggle="modal" data-bs-target="#loginDialog">
               <span class="material-symbols-outlined" aria-hidden="true">login</span>
-              Iniciar sesión
+              {% translate "Log in" %}
             </button>
             {% endif %}
           </div>
@@ -136,21 +166,21 @@
           <form method="post" action="{% url 'login' %}">
             {% csrf_token %}
             <div class="modal-header">
-              <h2 class="modal-title md-headline-small" id="loginDialogTitle">Iniciar sesión</h2>
+              <h2 class="modal-title md-headline-small" id="loginDialogTitle">{% translate "Log in" %}</h2>
             </div>
             <div class="modal-body d-flex flex-column gap-3">
               <div class="form-floating md-field">
-                <input type="text" class="form-control" id="loginUsername" name="username" placeholder="Usuario" autocomplete="username" required>
-                <label for="loginUsername">Usuario</label>
+                <input type="text" class="form-control" id="loginUsername" name="username" placeholder="{% translate 'Username' %}" autocomplete="username" required>
+                <label for="loginUsername">{% translate "Username" %}</label>
               </div>
               <div class="form-floating md-field">
-                <input type="password" class="form-control" id="loginPassword" name="password" placeholder="Contraseña" autocomplete="current-password" required>
-                <label for="loginPassword">Contraseña</label>
+                <input type="password" class="form-control" id="loginPassword" name="password" placeholder="{% translate 'Password' %}" autocomplete="current-password" required>
+                <label for="loginPassword">{% translate "Password" %}</label>
               </div>
             </div>
             <div class="modal-footer">
-              <button type="button" class="md-btn md-btn--text" data-bs-dismiss="modal">Cancelar</button>
-              <button type="submit" class="md-btn md-btn--filled">Entrar</button>
+              <button type="button" class="md-btn md-btn--text" data-bs-dismiss="modal">{% translate "Cancel" %}</button>
+              <button type="submit" class="md-btn md-btn--filled">{% translate "Sign in" %}</button>
             </div>
           </form>
         </div>
@@ -160,6 +190,8 @@
 
     <main class="container-fluid">{% block content %} {% endblock %}</main>
 
+    <!-- Translation catalog for JavaScript (provides gettext/interpolate) -->
+    <script src="{% url 'javascript-catalog' %}"></script>
     {% block extra_js %} {% endblock %}
 
     <!-- Bootstrap JS (includes Popper) -->

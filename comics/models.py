@@ -7,6 +7,7 @@ from django.core.files.uploadedfile import InMemoryUploadedFile
 from datetime import datetime
 from django.contrib.auth.models import User
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
+from django.utils.translation import gettext, ngettext
 from django.utils.translation import gettext_lazy as _
 from django.utils.timezone import now
 from django.db.models import (
@@ -198,7 +199,7 @@ class Edition(Model):
     format. It belongs to a publishing and points to the issue it contains, or to several if it is a compilation."""
 
     class FormatChoices(TextChoices):
-        SINGLE_ISSUE = "single_issue", _("Grapa")
+        SINGLE_ISSUE = "single_issue", _("Single issue")
         PRESTIGE = "prestige", _("Prestige")
         TRADE_PAPERBACK = "trade_paperback", _("TPB - Trade Paperback")
         HARDCOVER = "hardcover", _("HC - Hardcover")
@@ -583,21 +584,24 @@ class Connecting(Model):
             try:
                 row, column, edition_id = (int(placement[key]) for key in ("row", "column", "edition"))
             except (KeyError, TypeError, ValueError):
-                errors.append(f"La pieza {index} no es válida.")
+                errors.append(gettext("Piece %(index)s is not valid.") % {"index": index})
                 continue
             if not (1 <= row <= self.rows and 1 <= column <= self.columns):
-                errors.append(f"La posición ({row}, {column}) está fuera de la cuadrícula de {self.layout}.")
+                errors.append(
+                    gettext("Position (%(row)s, %(column)s) is outside the %(layout)s grid.")
+                    % {"row": row, "column": column, "layout": self.layout}
+                )
                 continue
             cleaned.append((row, column, edition_id))
 
         positions = [(row, column) for row, column, _ in cleaned]
         if len(positions) != len(set(positions)):
-            errors.append("Hay dos piezas en la misma posición.")
+            errors.append(gettext("Two pieces are in the same position."))
         edition_ids = [edition_id for _, _, edition_id in cleaned]
         if len(edition_ids) != len(set(edition_ids)):
-            errors.append("Un comic no puede estar dos veces en el mismo connecting.")
+            errors.append(gettext("A comic cannot appear twice in the same connecting."))
         if Edition.objects.filter(id__in=edition_ids).count() != len(set(edition_ids)):
-            errors.append("Alguno de los comics ya no existe.")
+            errors.append(gettext("One of the comics no longer exists."))
 
         if errors:
             raise ValidationError(errors)
@@ -658,9 +662,15 @@ class ConnectingPiece(Model):
             return
         errors = {}
         if self.row and self.row > connecting.rows:
-            errors["row"] = f"El connecting solo tiene {connecting.rows} fila(s)."
+            errors["row"] = ngettext(
+                "The connecting only has %(count)d row.", "The connecting only has %(count)d rows.", connecting.rows
+            ) % {"count": connecting.rows}
         if self.column and self.column > connecting.columns:
-            errors["column"] = f"El connecting solo tiene {connecting.columns} columna(s)."
+            errors["column"] = ngettext(
+                "The connecting only has %(count)d column.",
+                "The connecting only has %(count)d columns.",
+                connecting.columns,
+            ) % {"count": connecting.columns}
         if errors:
             raise ValidationError(errors)
 

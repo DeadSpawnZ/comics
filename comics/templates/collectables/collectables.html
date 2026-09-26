@@ -1,22 +1,22 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load static i18n %}
 {% block content %}
 
 <div class="my-4">
   <div class="d-flex align-items-baseline justify-content-between mb-3 flex-wrap gap-2">
     <h1 class="md-headline-small mb-0">Collectables</h1>
-    <span class="md-body-medium">{{ page_obj.paginator.count }} pieza{{ page_obj.paginator.count|pluralize }}</span>
+    <span class="md-body-medium">{% blocktranslate count counter=page_obj.paginator.count %}{{ counter }} item{% plural %}{{ counter }} items{% endblocktranslate %}</span>
   </div>
 
   <div class="md-surface-card mb-4">
-    <div class="md-section-label">Letra</div>
+    <div class="md-section-label">{% translate "Letter" %}</div>
     {% include 'includes/letter_chips.html' %}
   </div>
 
   {% if not page_obj.object_list %}
     <div class="md-surface-card text-center py-5">
       <span class="material-symbols-outlined d-block mb-2 empty-state-icon" aria-hidden="true">search_off</span>
-      <p class="md-body-medium mb-0">No se encontraron collectables con estos filtros.</p>
+      <p class="md-body-medium mb-0">{% translate "No collectables match these filters." %}</p>
     </div>
   {% endif %}
 
@@ -64,17 +64,17 @@
 
               <div class="col-md-7 d-flex flex-column gap-4">
                 <section>
-                  <div class="md-section-label">Detalles</div>
+                  <div class="md-section-label">{% translate "Details" %}</div>
                   <dl class="md-list">
-                    <dt>Monto</dt><dd>${{ collectable.amount }} MXN</dd>
-                    <dt>Fecha</dt><dd>{{ collectable.trade_date }}</dd>
-                    <dt>Participante</dt><dd>{{ collectable.participant|default:"—" }}</dd>
+                    <dt>{% translate "Amount" %}</dt><dd>${{ collectable.amount }} MXN</dd>
+                    <dt>{% translate "Date" %}</dt><dd>{{ collectable.trade_date }}</dd>
+                    <dt>{% translate "Participant" %}</dt><dd>{{ collectable.participant|default:"—" }}</dd>
                   </dl>
                 </section>
 
                 {% if collectable.description %}
                 <section>
-                  <div class="md-section-label">Descripción</div>
+                  <div class="md-section-label">{% translate "Description" %}</div>
                   <p class="mb-0">{{ collectable.description }}</p>
                 </section>
                 {% endif %}
@@ -82,7 +82,7 @@
             </div>
           </div>
           <div class="modal-footer">
-            <button type="button" class="md-btn md-btn--text" data-bs-dismiss="modal">Cerrar</button>
+            <button type="button" class="md-btn md-btn--text" data-bs-dismiss="modal">{% translate "Close" %}</button>
           </div>
         </div>
       </div>

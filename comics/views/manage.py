@@ -9,6 +9,7 @@ from django.db.models import Count
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
+from django.utils.translation import gettext as _, gettext_lazy
 from django.views.decorators.http import require_GET
 
 from comics.models import Collection, Edition, Connecting, Publishing
@@ -18,8 +19,13 @@ class ConnectingForm(forms.ModelForm):
     class Meta:
         model = Connecting
         fields = ["name", "rows", "columns", "notes"]
-        labels = {"name": "Nombre", "rows": "Filas", "columns": "Columnas", "notes": "Notas"}
-        error_messages = {"name": {"unique": "Ya existe un connecting con ese nombre."}}
+        labels = {
+            "name": gettext_lazy("Name"),
+            "rows": gettext_lazy("Rows"),
+            "columns": gettext_lazy("Columns"),
+            "notes": gettext_lazy("Notes"),
+        }
+        error_messages = {"name": {"unique": gettext_lazy("A connecting with that name already exists.")}}
 
 
 def _number_sort_key(edition):
@@ -122,7 +128,7 @@ def _save_connecting(request, connecting):
     try:
         payload = json.loads(request.body)
     except ValueError:
-        return JsonResponse({"errors": ["La solicitud no es válida."]}, status=400)
+        return JsonResponse({"errors": [_("The request is not valid.")]}, status=400)
 
     form = ConnectingForm(payload, instance=connecting)
     if not form.is_valid():

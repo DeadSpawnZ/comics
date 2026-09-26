@@ -1,4 +1,4 @@
-{% extends 'base.html' %} {% load static %} {% block content %}
+{% extends 'base.html' %} {% load static i18n %} {% block content %}
 
 <div class="my-4">
   <div class="row g-4">
@@ -13,30 +13,30 @@
         aria-controls="filtersPanel"
       >
         <span class="material-symbols-outlined" aria-hidden="true">filter_list</span>
-        Filtros
+        {% translate "Filters" %}
       </button>
 
       <div class="filters-panel collapse d-lg-block" id="filtersPanel">
         <div class="md-surface-card sticky-lg-top">
           <h2 class="md-title-medium mb-3 d-flex align-items-center gap-2">
             <span class="material-symbols-outlined" aria-hidden="true">tune</span>
-            Filtros
+            {% translate "Filters" %}
           </h2>
 
           <form method="get" class="mb-4">
             <input type="hidden" name="letter" value="{{ selected_letter }}">
             <div class="form-floating md-field">
               <select name="country" id="country" class="form-select" onchange="this.form.submit()">
-                <option value="">Todas</option>
+                <option value="">{% translate "All" context "countries" %}</option>
                 {% for value, label in editorial_countries %}
                   <option value="{{ value }}" {% if value == selected_country %}selected{% endif %}>{{ label }}</option>
                 {% endfor %}
               </select>
-              <label for="country">País de la editorial</label>
+              <label for="country">{% translate "Editorial country" %}</label>
             </div>
           </form>
 
-          <div class="md-section-label">Letra</div>
+          <div class="md-section-label">{% translate "Letter" %}</div>
           {% include 'includes/letter_chips.html' %}
         </div>
       </div>
@@ -45,14 +45,14 @@
     <!-- CONTENT -->
     <div class="col-12 col-lg-9 col-xl-10">
       <div class="d-flex align-items-baseline justify-content-between mb-3 flex-wrap gap-2">
-        <h1 class="md-headline-small mb-0">Mis colecciones</h1>
-        <span class="md-body-medium">{{ page_obj.paginator.count }} pieza{{ page_obj.paginator.count|pluralize }}</span>
+        <h1 class="md-headline-small mb-0">{% translate "My collection" %}</h1>
+        <span class="md-body-medium">{% blocktranslate count counter=page_obj.paginator.count %}{{ counter }} item{% plural %}{{ counter }} items{% endblocktranslate %}</span>
       </div>
 
       {% if not page_obj.object_list %}
         <div class="md-surface-card text-center py-5">
           <span class="material-symbols-outlined d-block mb-2 empty-state-icon" aria-hidden="true">search_off</span>
-          <p class="md-body-medium mb-0">No se encontraron colecciones con estos filtros.</p>
+          <p class="md-body-medium mb-0">{% translate "No collections match these filters." %}</p>
         </div>
       {% endif %}
 
@@ -132,30 +132,30 @@
 
                   <div class="col-md-7 d-flex flex-column gap-4">
                     <section>
-                      <div class="md-section-label">Colección</div>
+                      <div class="md-section-label">{% translate "Collection" %}</div>
                       <dl class="md-list">
-                        <dt>Monto pagado</dt><dd>${{ collection.amount }} MXN</dd>
-                        <dt>Fecha</dt><dd>{{ collection.trade_date }}</dd>
-                        <dt>Tipo</dt><dd>{{ collection.get_trade_type_display }}</dd>
-                        <dt>Participante</dt><dd>{{ collection.participant|default:"—" }}</dd>
-                        <dt>Valuación</dt><dd>{{ collection.valuation }}</dd>
+                        <dt>{% translate "Amount paid" %}</dt><dd>${{ collection.amount }} MXN</dd>
+                        <dt>{% translate "Date" %}</dt><dd>{{ collection.trade_date }}</dd>
+                        <dt>{% translate "Type" %}</dt><dd>{{ collection.get_trade_type_display }}</dd>
+                        <dt>{% translate "Participant" %}</dt><dd>{{ collection.participant|default:"—" }}</dd>
+                        <dt>{% translate "Valuation" %}</dt><dd>{{ collection.valuation }}</dd>
                       </dl>
                     </section>
 
                     <section>
                       <div class="md-section-label">Issue</div>
                       <dl class="md-list">
-                        <dt>Número</dt><dd>#{{ collection.edition.number }} {{ collection.edition.variant }}</dd>
-                        <dt>Precio de portada</dt><dd>${{ collection.edition.cover_price }}</dd>
-                        <dt>Lanzamiento</dt><dd>{{ collection.edition.release_date }}</dd>
-                        <dt>Idioma</dt><dd>{{ collection.edition.publishing.get_language_display }}</dd>
-                        <dt>Formato</dt><dd>{{ collection.edition.get_format_display }}</dd>
+                        <dt>{% translate "Number" %}</dt><dd>#{{ collection.edition.number }} {{ collection.edition.variant }}</dd>
+                        <dt>{% translate "Cover price" %}</dt><dd>${{ collection.edition.cover_price }}</dd>
+                        <dt>{% translate "Release" %}</dt><dd>{{ collection.edition.release_date }}</dd>
+                        <dt>{% translate "Language" %}</dt><dd>{{ collection.edition.publishing.get_language_display }}</dd>
+                        <dt>{% translate "Format" %}</dt><dd>{{ collection.edition.get_format_display }}</dd>
                       </dl>
                     </section>
 
                     {% if collection.prefetched_signatures %}
                     <section>
-                      <div class="md-section-label">Firmas</div>
+                      <div class="md-section-label">{% translate "Signatures" %}</div>
                       <div class="d-flex flex-wrap gap-3">
                         {% for signature in collection.prefetched_signatures %}
                           <div class="artist-card">
@@ -176,7 +176,7 @@
                 </div>
               </div>
               <div class="modal-footer">
-                <button type="button" class="md-btn md-btn--text" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="md-btn md-btn--text" data-bs-dismiss="modal">{% translate "Close" %}</button>
               </div>
             </div>
           </div>

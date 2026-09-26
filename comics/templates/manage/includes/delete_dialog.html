@@ -1,3 +1,4 @@
+{% load i18n %}
 <div class="modal fade md-dialog" id="deleteDialog" tabindex="-1" aria-labelledby="deleteDialogTitle" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
@@ -5,14 +6,14 @@
         {% csrf_token %}
         <input type="hidden" name="next" value="{{ delete_next|default:request.get_full_path }}">
         <div class="modal-header">
-          <h2 class="modal-title md-headline-small" id="deleteDialogTitle">¿Eliminar edición?</h2>
+          <h2 class="modal-title md-headline-small" id="deleteDialogTitle">{% translate "Delete edition?" %}</h2>
         </div>
         <div class="modal-body">
-          Se eliminará <strong id="deleteDialogName"></strong>. Esta acción no se puede deshacer.
+          {% blocktranslate trimmed %}<strong id="deleteDialogName"></strong> will be deleted. This action cannot be undone.{% endblocktranslate %}
         </div>
         <div class="modal-footer">
-          <button type="button" class="md-btn md-btn--text" data-bs-dismiss="modal">Cancelar</button>
-          <button type="submit" class="md-btn md-btn--danger">Eliminar</button>
+          <button type="button" class="md-btn md-btn--text" data-bs-dismiss="modal">{% translate "Cancel" %}</button>
+          <button type="submit" class="md-btn md-btn--danger">{% translate "Delete" %}</button>
         </div>
       </form>
     </div>

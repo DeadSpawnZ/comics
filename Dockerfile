@@ -38,6 +38,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     zlib1g \
     libpng16-16 \
     libfreetype6 \
+    gettext \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy only what is needed from the builder
@@ -50,6 +51,8 @@ COPY --chown=app:app . .
 
 USER app
 
-RUN python manage.py collectstatic --noinput
+# Compile the .po translations into .mo files (gettext is also used by makemessages)
+RUN python manage.py compilemessages \
+    && python manage.py collectstatic --noinput
 
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]

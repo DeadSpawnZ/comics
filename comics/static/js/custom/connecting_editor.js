@@ -74,7 +74,7 @@
 
   function markDirty() {
     dirty = true;
-    el.status.textContent = "Cambios sin guardar";
+    el.status.textContent = gettext("Unsaved changes");
   }
 
   // ---------- Render ----------
@@ -97,7 +97,7 @@
     }
     const badge = document.createElement("span");
     badge.className = "editor-cover__badge";
-    badge.textContent = comic.owned ? "Lo tienes" : "Falta";
+    badge.textContent = comic.owned ? gettext("You own it") : gettext("Missing");
     cover.append(badge);
     return cover;
   }
@@ -171,8 +171,8 @@
     const remove = document.createElement("button");
     remove.type = "button";
     remove.className = "editor-cell__remove";
-    remove.setAttribute("aria-label", `Quitar ${comicLabel(comic)}`);
-    remove.title = "Quitar";
+    remove.setAttribute("aria-label", interpolate(gettext("Remove %(name)s"), { name: comicLabel(comic) }, true));
+    remove.title = gettext("Remove");
     remove.innerHTML = '<span class="material-symbols-outlined" aria-hidden="true">close</span>';
     remove.addEventListener("click", (event) => {
       event.stopPropagation();
@@ -200,10 +200,17 @@
 
         if (pieces.has(key)) {
           renderPiece(key, cell, { showPosition: true });
-          cell.setAttribute("aria-label", `Fila ${row}, columna ${column}: ${comicLabel(comics.get(pieces.get(key)))}`);
+          cell.setAttribute(
+            "aria-label",
+            interpolate(
+              gettext("Row %(row)s, column %(column)s: %(name)s"),
+              { row, column, name: comicLabel(comics.get(pieces.get(key))) },
+              true
+            )
+          );
         } else {
           cell.classList.add("is-empty");
-          cell.setAttribute("aria-label", `Fila ${row}, columna ${column}: vacía`);
+          cell.setAttribute("aria-label", interpolate(gettext("Row %(row)s, column %(column)s: empty"), { row, column }, true));
           const position = document.createElement("span");
           position.className = "editor-cell__empty-label";
           position.textContent = `${row}·${column}`;
@@ -245,7 +252,11 @@
   function renderSummary() {
     const placed = [...pieces.keys()].filter(inBounds);
     const owned = placed.filter((key) => comics.get(pieces.get(key)).owned).length;
-    el.summary.textContent = `${placed.length}/${rows * columns} celdas · tienes ${owned}`;
+    el.summary.textContent = interpolate(
+      gettext("%(placed)s/%(total)s cells · you own %(owned)s"),
+      { placed: placed.length, total: rows * columns, owned },
+      true
+    );
   }
 
   function renderPicker() {
@@ -271,7 +282,7 @@
         const placed = document.createElement("span");
         placed.className = "picker-item__placed";
         placed.innerHTML = '<span class="material-symbols-outlined" aria-hidden="true">check</span>';
-        placed.title = "Ya está en la cuadrícula";
+        placed.title = gettext("Already in the grid");
         item.append(placed);
       }
 
@@ -312,7 +323,7 @@
   function renderPublishingOptions() {
     const query = normalize(el.publishingSearch.value.trim());
     const current = el.publishingSelect.value;
-    const options = [new Option("Elige un publishing…", "")];
+    const options = [new Option(gettext("Choose a publishing…"), "")];
     for (const publishing of data.publishings) {
       if (!query || normalize(publishing.label).includes(query)) {
         options.push(new Option(publishing.label, publishing.id, false, String(publishing.id) === current));
@@ -325,10 +336,10 @@
     pickerResults = [];
     renderPicker();
     if (!publishingId) {
-      el.pickerHint.textContent = "Elige un publishing para ver sus comics.";
+      el.pickerHint.textContent = gettext("Choose a publishing to see its comics.");
       return;
     }
-    el.pickerHint.textContent = "Cargando…";
+    el.pickerHint.textContent = gettext("Loading…");
     try {
       const response = await fetch(`${data.comicsUrl}?publishing=${encodeURIComponent(publishingId)}`, {
         headers: { Accept: "application/json" },
@@ -338,11 +349,11 @@
       pickerResults = payload.results;
       for (const comic of pickerResults) comics.set(comic.id, comic);
       el.pickerHint.textContent = pickerResults.length
-        ? "Arrastra una portada a la cuadrícula o haz clic en ella y luego en una celda."
-        : "Este publishing no tiene comics.";
+        ? gettext("Drag a cover onto the grid, or click it and then a cell.")
+        : gettext("This publishing has no comics.");
       renderPicker();
     } catch (e) {
-      el.pickerHint.textContent = "No se pudieron cargar los comics. Intenta de nuevo.";
+      el.pickerHint.textContent = gettext("The comics could not be loaded. Try again.");
     }
   }
 
@@ -378,7 +389,7 @@
     if (saving) return;
     const outside = [...pieces.keys()].filter((key) => !inBounds(key));
     if (outside.length) {
-      showErrors(["Hay piezas fuera de la cuadrícula. Colócalas en una celda o quítalas antes de guardar."]);
+      showErrors([gettext("There are pieces outside the grid. Place them in a cell or remove them before saving.")]);
       return;
     }
 
@@ -395,7 +406,7 @@
 
     saving = true;
     el.save.disabled = true;
-    el.status.textContent = "Guardando…";
+    el.status.textContent = gettext("Saving…");
     try {
       const response = await fetch(data.saveUrl, {
         method: "POST",
@@ -404,14 +415,14 @@
       });
       const isJson = (response.headers.get("Content-Type") || "").includes("application/json");
       if (!isJson) {
-        showErrors(["Tu sesión expiró o no tienes permisos. Recarga la página e inicia sesión."]);
-        el.status.textContent = "Cambios sin guardar";
+        showErrors([gettext("Your session expired or you do not have permission. Reload the page and log in.")]);
+        el.status.textContent = gettext("Unsaved changes");
         return;
       }
       const result = await response.json();
       if (!response.ok) {
-        showErrors(result.errors || ["No se pudo guardar."]);
-        el.status.textContent = "Cambios sin guardar";
+        showErrors(result.errors || [gettext("Could not save.")]);
+        el.status.textContent = gettext("Unsaved changes");
         return;
       }
       showErrors([]);
@@ -421,10 +432,10 @@
         return;
       }
       el.status.textContent = "";
-      showSnackbar("Connecting guardado");
+      showSnackbar(gettext("Connecting saved"));
     } catch (e) {
-      showErrors(["No se pudo conectar con el servidor."]);
-      el.status.textContent = "Cambios sin guardar";
+      showErrors([gettext("Could not connect to the server.")]);
+      el.status.textContent = gettext("Unsaved changes");
     } finally {
       saving = false;
       el.save.disabled = false;

@@ -80,6 +80,19 @@ Los estáticos se sirven igual en ambos modos (vía WhiteNoise, ya recolectados 
 
 Antes de un despliegue real, además define `DJANGO_SECRET_KEY` con un valor propio (el `SECRET_KEY` por defecto en `settings.py` está expuesto en el historial del repo) y ajusta `DJANGO_ALLOWED_HOSTS` al dominio real.
 
+## Traducciones (español / inglés)
+
+El idioma se elige desde el botón de traducción en la barra superior y se guarda en una cookie. Sin elección previa se usa el idioma del navegador si es español o inglés; si no, español.
+
+Los textos de la interfaz se escriben en **inglés** en el código (`{% translate %}` en plantillas, `gettext` en Python y en JS) y su traducción al español vive en `locale/es/LC_MESSAGES/`: `django.po` para Python y plantillas, `djangojs.po` para JavaScript. Al agregar o cambiar textos:
+
+1. Extrae los textos nuevos a los `.po`:
+   ```bash
+   docker compose run --rm -v "$(pwd):/code" web sh -c 'python manage.py makemessages -l es --no-wrap -i staticfiles -i media -i backups -i "comics/static/vendor/*" && python manage.py makemessages -d djangojs -l es --no-wrap -i staticfiles -i media -i backups -i "comics/static/vendor/*"'
+   ```
+2. Escribe la traducción en cada `msgstr` vacío de los `.po`.
+3. Reconstruye la imagen (`docker compose up --build`): el build compila los `.po` a `.mo` con `compilemessages`. Los `.mo` no se versionan.
+
 ## Notas
 
 - Si ves un error del estilo `failed to solve: invalid file request mysql_volume/mysql.sock`, es porque quedó un volumen de MySQL corrupto. Bájalo y elimina el volumen con `docker compose down -v` y vuelve a levantar el proyecto (esto borra los datos de la base local).
