@@ -387,9 +387,9 @@
       rows,
       columns,
       notes: el.notes.value,
-      pieces: [...pieces].map(([key, comic]) => {
+      pieces: [...pieces].map(([key, edition]) => {
         const [row, column] = parseKey(key);
-        return { row, column, comic };
+        return { row, column, edition };
       }),
     };
 
@@ -445,8 +445,8 @@
     el.columns.value = columns;
     el.notes.value = data.connecting.notes;
     for (const piece of data.connecting.pieces) {
-      comics.set(piece.comic.id, piece.comic);
-      pieces.set(cellKey(piece.row, piece.column), piece.comic.id);
+      comics.set(piece.edition.id, piece.edition);
+      pieces.set(cellKey(piece.row, piece.column), piece.edition.id);
     }
 
     el.rows.addEventListener("input", () => {

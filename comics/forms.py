@@ -1,5 +1,5 @@
 from django import forms
-from .models import Collection, Comic, Publishing, Dealer
+from .models import Collection, Edition, Publishing, Dealer
 
 
 class CollectionForm(forms.ModelForm):
@@ -8,7 +8,7 @@ class CollectionForm(forms.ModelForm):
         fields = [
             "collector",
             "publishing",
-            "comic",
+            "edition",
             "amount",
             "trade_date",
             "trade_type",
@@ -28,40 +28,40 @@ class CollectionForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.filter_comics_by_publishing()
+        self.filter_editions_by_publishing()
         self.fields["participant"].queryset = Dealer.objects.all().order_by("name")
         self.filter_previous_trade()
 
-    def filter_comics_by_publishing(self):
+    def filter_editions_by_publishing(self):
         if "publishing" in self.data:
             try:
                 publishing_id = int(self.data.get("publishing"))
-                self.fields["comic"].queryset = Comic.objects.filter(
+                self.fields["edition"].queryset = Edition.objects.filter(
                     publishing_id=publishing_id
                 ).order_by("number", "variant")
             except (ValueError, TypeError):
                 pass
 
         # EDIT: objeto existente
-        elif self.instance.pk and self.instance.comic:
-            publishing = self.instance.comic.publishing
-            self.fields["comic"].queryset = Comic.objects.filter(
+        elif self.instance.pk and self.instance.edition:
+            publishing = self.instance.edition.publishing
+            self.fields["edition"].queryset = Edition.objects.filter(
                 publishing=publishing
             ).order_by("number", "variant")
             self.initial["publishing"] = publishing
 
     def filter_previous_trade(self):
         # if not self.instance.pk:
-        #     self.fields["previous_trade"].queryset = Comic.objects.none()
+        #     self.fields["previous_trade"].queryset = Edition.objects.none()
         #     return
 
         if self.instance.previous_trade:
             self.initial["previous_trade"] = self.instance.previous_trade
 
-        if self.instance.comic:
-            comic_id = self.instance.comic.id
+        if self.instance.edition:
+            edition_id = self.instance.edition.id
             used_previous_trades_ids = (
-                Collection.objects.filter(comic_id=comic_id)
+                Collection.objects.filter(edition_id=edition_id)
                 .exclude(previous_trade=None)
                 .values_list("previous_trade_id", flat=True)
             )
@@ -69,7 +69,7 @@ class CollectionForm(forms.ModelForm):
                 used_previous_trades_ids = [
                     uid for uid in used_previous_trades_ids if uid != self.instance.previous_trade.id
                 ]
-            qs = Collection.objects.filter(comic_id=comic_id, trade_type=Collection.TradeChoices.BUYING).exclude(
+            qs = Collection.objects.filter(edition_id=edition_id, trade_type=Collection.TradeChoices.BUYING).exclude(
                 id__in=used_previous_trades_ids
             )
 
@@ -83,21 +83,21 @@ class CollectionForm(forms.ModelForm):
                 qs = qs.filter(trade_date__lte=self.instance.trade_date)
 
             qs = qs.order_by(
-                "comic__publishing__publishing_title",
-                "comic__number",
-                "comic__variant",
+                "edition__publishing__publishing_title",
+                "edition__number",
+                "edition__variant",
                 "trade_date",
             )
 
             self.fields["previous_trade"].queryset = qs
             self.fields["previous_trade"].label_from_instance = (
-                lambda obj: f"{obj.comic} || {obj.trade_date} || {getattr(obj.participant, 'name', None)}"
+                lambda obj: f"{obj.edition} || {obj.trade_date} || {getattr(obj.participant, 'name', None)}"
             )
 
 
-class ComicForm(forms.ModelForm):
+class EditionForm(forms.ModelForm):
     class Meta:
-        model = Comic
+        model = Edition
         fields = "__all__"
 
     def __init__(self, *args, **kwargs):

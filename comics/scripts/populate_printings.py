@@ -1,13 +1,13 @@
-from comics.models import Comic  # ajusta el import al path correcto
+from comics.models import Edition  # ajusta el import al path correcto
 from django.db import transaction
 
 # Opcional: Mapeo por si algún día quieres renombrar o validar
-VALID_PRINTINGS = {choice.value for choice in Comic.PrintingChoices}
+VALID_PRINTINGS = {choice.value for choice in Edition.PrintingChoices}
 
 
 @transaction.atomic
 def populate_comic_printing_field():
-    comics = Comic.objects.select_related("publishing__printing").all()
+    comics = Edition.objects.select_related("publishing__printing").all()
     updated = 0
     skipped = 0
 
@@ -21,10 +21,10 @@ def populate_comic_printing_field():
                     comic.save(update_fields=["printing"])
                     updated += 1
             else:
-                print(f"[SKIPPED] Comic ID {comic.id} - Invalid printing: '{printing_name}'")
+                print(f"[SKIPPED] Edition ID {comic.id} - Invalid printing: '{printing_name}'")
                 skipped += 1
         else:
-            print(f"[SKIPPED] Comic ID {comic.id} has no publishing or printing.")
+            print(f"[SKIPPED] Edition ID {comic.id} has no publishing or printing.")
             skipped += 1
 
     print(f"Updated {updated} comics.")

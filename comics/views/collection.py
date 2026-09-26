@@ -15,7 +15,7 @@ from django.db.models import (
 )
 from django.db.models.functions import Cast
 
-from comics.models import Collection, Signature, Editorial, Comic
+from comics.models import Collection, Signature, Editorial, Edition
 
 PAGE_LIMIT = 30
 
@@ -51,47 +51,46 @@ def comics_view(request):
     )
 
     first_editorial_country = Subquery(
-        Editorial.objects.filter(publishing__comic=OuterRef("comic")).order_by("id").values("country")[:1]
+        Editorial.objects.filter(publishing__edition=OuterRef("edition")).order_by("id").values("country")[:1]
     )
 
     collections = (
         Collection.objects.owned_by(collector)
-        .select_related("comic__publishing", "participant")
+        .select_related("edition__publishing", "participant")
         .prefetch_related(
-            "comic__artists",
             signed_artists,
-            "comic__publishing__editorials",
+            "edition__publishing__editorials",
         )
         .annotate(first_editorial_country=first_editorial_country,
-            comic_number_int=Case(
+            edition_number_int=Case(
                 When(
-                    comic__number__regex=r'^\d+$',
-                    then=Cast("comic__number", IntegerField())
+                    edition__number__regex=r'^\d+$',
+                    then=Cast("edition__number", IntegerField())
                 ),
                 default=Value(None),
                 output_field=IntegerField(),
             )
         )
         .order_by(
-            "comic__publishing__title__name",
-            "comic__publishing__publishing_title",
+            "edition__publishing__title__name",
+            "edition__publishing__publishing_title",
             "first_editorial_country",
-            "comic__publishing__serie",
-            "comic__publishing__year",
-            "comic_number_int",
-            "comic__number",
-            "comic__variant",
+            "edition__publishing__serie",
+            "edition__publishing__year",
+            "edition_number_int",
+            "edition__number",
+            "edition__variant",
             "trade_date",
         )
     )
 
     # "" (Todas) desactiva el filtro por letra en vez de forzar una letra.
     if letter:
-        collections = collections.filter(comic__publishing__title__name__istartswith=letter)
+        collections = collections.filter(edition__publishing__title__name__istartswith=letter)
 
     if selected_country:
         collections = collections.filter(
-            comic__publishing__editorials__country=selected_country
+            edition__publishing__editorials__country=selected_country
         ).distinct()
 
     paginator = Paginator(collections, PAGE_LIMIT)
@@ -113,18 +112,18 @@ def comics_view(request):
     )
 
 
-def get_previous_trades(request, comic_id):
+def get_previous_trades(request, edition_id):
     try:
         used_previous_trades_ids = (
-            Collection.objects.filter(comic_id=comic_id)
+            Collection.objects.filter(edition_id=edition_id)
             .exclude(previous_trade=None)
             .values_list("previous_trade_id", flat=True)
         )
         trades = (
-            Collection.objects.filter(comic_id=comic_id, trade_type=Collection.TradeChoices.BUYING)
+            Collection.objects.filter(edition_id=edition_id, trade_type=Collection.TradeChoices.BUYING)
             .exclude(id__in=used_previous_trades_ids)
-            .select_related("comic__publishing", "participant")
-            .prefetch_related("comic__publishing__editorials")
+            .select_related("edition__publishing", "participant")
+            .prefetch_related("edition__publishing__editorials")
         )
 
         # No se puede vender algo que aun no se poseia: solo se ofrecen compras
@@ -134,14 +133,14 @@ def get_previous_trades(request, comic_id):
             trades = trades.filter(trade_date__lte=before_date)
 
         trades = trades.order_by(
-            "comic__publishing__publishing_title",
-            "comic__number",
-            "comic__variant",
+            "edition__publishing__publishing_title",
+            "edition__number",
+            "edition__variant",
             "trade_date",
         )
 
         data = [
-            {"id": trade.id, "text": f"{trade.comic} || {trade.trade_date} || {trade.participant.name}"}
+            {"id": trade.id, "text": f"{trade.edition} || {trade.trade_date} || {trade.participant.name}"}
             for trade in trades
         ]
         return JsonResponse({"results": data})

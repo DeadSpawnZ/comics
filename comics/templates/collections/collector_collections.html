@@ -61,8 +61,8 @@
         <div class="col-6 col-sm-4 col-md-3 col-lg-2">
           <div class="md-card" role="button" data-bs-toggle="modal" data-bs-target="#collectionModal{{ collection.id }}">
             <div class="card-img-container">
-              {% if collection.comic.thumbnail %}
-                <img src="{{ collection.comic.thumbnail.url }}" class="comic-img" alt="{{ collection.comic.publishing.publishing_title }} #{{ collection.comic.number }}" loading="lazy">
+              {% if collection.edition.thumbnail %}
+                <img src="{{ collection.edition.thumbnail.url }}" class="comic-img" alt="{{ collection.edition.publishing.publishing_title }} #{{ collection.edition.number }}" loading="lazy">
               {% else %}
                 <div class="comic-img img-placeholder">
                   <span class="material-symbols-outlined" aria-hidden="true">image</span>
@@ -84,7 +84,7 @@
               </div>
               {% endif %}
 
-              {% with first_editorial=collection.comic.publishing.editorials.first %}
+              {% with first_editorial=collection.edition.publishing.editorials.first %}
                 {% if first_editorial %}
                   <img
                     src="{% static 'images/' %}{{ first_editorial.country }}.png"
@@ -95,8 +95,8 @@
               {% endwith %}
 
               <div class="overlay-info">
-                <div class="fw-bold">{{ collection.comic.publishing.publishing_title }}</div>
-                <small>#{{ collection.comic.number }} {{ collection.comic.variant }} {{ collection.comic.publishing.serie }} {{ collection.comic.printing }}</small>
+                <div class="fw-bold">{{ collection.edition.publishing.publishing_title }}</div>
+                <small>#{{ collection.edition.number }} {{ collection.edition.variant }} {{ collection.edition.publishing.serie }} {{ collection.edition.printing }}</small>
               </div>
             </div>
           </div>
@@ -109,18 +109,18 @@
               <div class="modal-header">
                 <div>
                   <h2 class="modal-title md-headline-small" id="modalLabel{{ collection.id }}">
-                    {{ collection.comic.publishing.publishing_title }}
+                    {{ collection.edition.publishing.publishing_title }}
                   </h2>
                   <div class="md-body-medium">
-                    #{{ collection.comic.number }} {{ collection.comic.variant }} · {{ collection.comic.get_format_display }}
+                    #{{ collection.edition.number }} {{ collection.edition.variant }} · {{ collection.edition.get_format_display }}
                   </div>
                 </div>
               </div>
               <div class="modal-body">
                 <div class="row g-4">
                   <div class="col-md-5">
-                    {% if collection.comic.image %}
-                      <img src="{{ collection.comic.image.url }}" alt="{{ collection.comic.publishing.publishing_title }}" class="img-fluid rounded-4 shadow-sm" loading="lazy">
+                    {% if collection.edition.image %}
+                      <img src="{{ collection.edition.image.url }}" alt="{{ collection.edition.publishing.publishing_title }}" class="img-fluid rounded-4 shadow-sm" loading="lazy">
                     {% else %}
                       <div class="img-placeholder rounded-4 ratio ratio-2x3">
                         <span class="d-flex align-items-center justify-content-center">
@@ -145,11 +145,11 @@
                     <section>
                       <div class="md-section-label">Issue</div>
                       <dl class="md-list">
-                        <dt>Número</dt><dd>#{{ collection.comic.number }} {{ collection.comic.variant }}</dd>
-                        <dt>Precio de portada</dt><dd>${{ collection.comic.cover_price }}</dd>
-                        <dt>Lanzamiento</dt><dd>{{ collection.comic.release_date }}</dd>
-                        <dt>Idioma</dt><dd>{{ collection.comic.publishing.get_language_display }}</dd>
-                        <dt>Formato</dt><dd>{{ collection.comic.get_format_display }}</dd>
+                        <dt>Número</dt><dd>#{{ collection.edition.number }} {{ collection.edition.variant }}</dd>
+                        <dt>Precio de portada</dt><dd>${{ collection.edition.cover_price }}</dd>
+                        <dt>Lanzamiento</dt><dd>{{ collection.edition.release_date }}</dd>
+                        <dt>Idioma</dt><dd>{{ collection.edition.publishing.get_language_display }}</dd>
+                        <dt>Formato</dt><dd>{{ collection.edition.get_format_display }}</dd>
                       </dl>
                     </section>
 

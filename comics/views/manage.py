@@ -11,7 +11,7 @@ from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.views.decorators.http import require_GET
 
-from comics.models import Collection, Comic, Connecting, Publishing
+from comics.models import Collection, Edition, Connecting, Publishing
 
 
 class ConnectingForm(forms.ModelForm):
@@ -22,24 +22,24 @@ class ConnectingForm(forms.ModelForm):
         error_messages = {"name": {"unique": "Ya existe un connecting con ese nombre."}}
 
 
-def _number_sort_key(comic):
-    number = comic.number.strip()
+def _number_sort_key(edition):
+    number = edition.number.strip()
     return (0, int(number), "") if number.isdigit() else (1, 0, number)
 
 
-def _comic_payload(comic, owned_ids):
+def _edition_payload(edition, owned_ids):
     return {
-        "id": comic.id,
-        "title": comic.publishing.publishing_title,
-        "detail": f"#{comic.number} {comic.variant} · {comic.printing}".strip(),
-        "thumbnail": comic.thumbnail.url if comic.thumbnail else None,
-        "owned": comic.id in owned_ids,
+        "id": edition.id,
+        "title": edition.publishing.publishing_title,
+        "detail": f"#{edition.number} {edition.variant} · {edition.printing}".strip(),
+        "thumbnail": edition.thumbnail.url if edition.thumbnail else None,
+        "owned": edition.id in owned_ids,
     }
 
 
-def _owned_comic_ids(user, comic_ids):
+def _owned_edition_ids(user, edition_ids):
     return set(
-        Collection.objects.owned_by(user).filter(comic_id__in=comic_ids).values_list("comic_id", flat=True)
+        Collection.objects.owned_by(user).filter(edition_id__in=edition_ids).values_list("edition_id", flat=True)
     )
 
 
@@ -71,10 +71,10 @@ def connecting_editor(request, pk=None):
 
     pieces = []
     if connecting:
-        placed = list(connecting.pieces.select_related("comic__publishing"))
-        owned_ids = _owned_comic_ids(request.user, [piece.comic_id for piece in placed])
+        placed = list(connecting.pieces.select_related("edition__publishing"))
+        owned_ids = _owned_edition_ids(request.user, [piece.edition_id for piece in placed])
         pieces = [
-            {"row": piece.row, "column": piece.column, "comic": _comic_payload(piece.comic, owned_ids)}
+            {"row": piece.row, "column": piece.column, "edition": _edition_payload(piece.edition, owned_ids)}
             for piece in placed
         ]
 
@@ -164,9 +164,9 @@ def publishing_comics(request):
     except ValueError:
         return JsonResponse({"results": []})
 
-    comics = sorted(
-        Comic.objects.filter(publishing_id=publishing_id).select_related("publishing"),
-        key=lambda comic: (_number_sort_key(comic), comic.variant, comic.printing),
+    editions = sorted(
+        Edition.objects.filter(publishing_id=publishing_id).select_related("publishing"),
+        key=lambda edition: (_number_sort_key(edition), edition.variant, edition.printing),
     )
-    owned_ids = _owned_comic_ids(request.user, [comic.id for comic in comics])
-    return JsonResponse({"results": [_comic_payload(comic, owned_ids) for comic in comics]})
+    owned_ids = _owned_edition_ids(request.user, [edition.id for edition in editions])
+    return JsonResponse({"results": [_edition_payload(edition, owned_ids) for edition in editions]})

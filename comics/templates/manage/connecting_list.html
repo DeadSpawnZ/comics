@@ -34,8 +34,8 @@
         <div class="connecting-card__mosaic" style="--cols: {{ card.connecting.columns }}; --rows: {{ card.connecting.rows }};">
           {% for row in card.grid %}
             {% for piece in row %}
-              {% if piece and piece.comic.thumbnail %}
-                <img src="{{ piece.comic.thumbnail.url }}" alt="" loading="lazy" class="{% if not piece.owned %}is-missing{% endif %}">
+              {% if piece and piece.edition.thumbnail %}
+                <img src="{{ piece.edition.thumbnail.url }}" alt="" loading="lazy" class="{% if not piece.owned %}is-missing{% endif %}">
               {% else %}
                 <span class="connecting-card__empty"></span>
               {% endif %}

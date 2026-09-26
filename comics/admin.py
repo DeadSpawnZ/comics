@@ -9,7 +9,9 @@ from django.db.models import Count, Sum
 # Register your models here.
 
 from .models import (
-    Comic,
+    CollectedIssue,
+    Edition,
+    Issue,
     Editorial,
     Title,
     Publishing,
@@ -21,7 +23,24 @@ from .models import (
     Connecting,
     ConnectingPiece,
 )
-from .forms import CollectionForm, ComicForm
+from .forms import CollectionForm, EditionForm
+
+
+def save_formset_reinserting(formset):
+    """Guarda un inline cuyas filas tienen UniqueConstraint (posicion, orden, etc.).
+    Intercambiar valores entre filas choca con los constraints si se actualizan una por
+    una (MySQL valida cada UPDATE y no soporta constraints diferidos), asi que las filas
+    modificadas se borran y se insertan de nuevo con sus valores finales. El formset ya
+    valido que el estado final no tenga duplicados."""
+    instances = formset.save(commit=False)
+    for obj in formset.deleted_objects:
+        obj.delete()
+    formset.model.objects.filter(pk__in=[obj.pk for obj in instances if obj.pk]).delete()
+    for obj in instances:
+        obj.pk = None
+        obj._state.adding = True
+        obj.save()
+    formset.save_m2m()
 
 
 admin.site.register(Signature)
@@ -63,8 +82,57 @@ class PublishingAdmin(admin.ModelAdmin):
     get_editorials.short_description = "Editorials"
 
 
-@admin.register(Comic)
-class ComicAdmin(admin.ModelAdmin):
+class EditionInline(admin.TabularInline):
+    """Ediciones de un issue (solo lectura; se editan desde cada edicion)."""
+
+    model = Edition
+    fk_name = "issue"
+    extra = 0
+    can_delete = False
+    show_change_link = True
+    verbose_name = "edición"
+    verbose_name_plural = "ediciones"
+    fields = ["publishing", "number", "variant", "printing", "format", "release_date"]
+    readonly_fields = fields
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(Issue)
+class IssueAdmin(admin.ModelAdmin):
+    list_display = ["__str__", "publishing", "number", "edition_count", "first_release"]
+    list_select_related = ["publishing"]
+    ordering = ["publishing__publishing_title", "number"]
+    search_fields = ["publishing__publishing_title", "number"]
+    autocomplete_fields = ["publishing"]
+    filter_horizontal = ["creators"]
+    fields = ["publishing", "number", "synopsis", "creators"]
+    inlines = [EditionInline]
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).with_first_release().annotate(edition_count=Count("editions"))
+
+    @admin.display(description="Ediciones", ordering="edition_count")
+    def edition_count(self, obj):
+        return obj.edition_count
+
+    @admin.display(description="1.ª impresión", ordering="first_release")
+    def first_release(self, obj):
+        return obj.first_release or "-"
+
+
+class CollectedIssueInline(admin.TabularInline):
+    model = CollectedIssue
+    extra = 0
+    fields = ["order", "issue"]
+    autocomplete_fields = ["issue"]
+    verbose_name = "issue recopilado"
+    verbose_name_plural = "Compilación: issues que recopila (déjalo vacío si no es compilación)"
+
+
+@admin.register(Edition)
+class EditionAdmin(admin.ModelAdmin):
     class Media:
         js = (
             "js/custom/fill_release_date.js",
@@ -72,10 +140,10 @@ class ComicAdmin(admin.ModelAdmin):
             "js/custom/force_uppercase_variant.js",
         )
 
-    form = ComicForm
+    form = EditionForm
     fieldsets = (
         (
-            "Comic Info",
+            "Edition Info",
             {
                 "fields": (
                     "publishing",
@@ -90,10 +158,12 @@ class ComicAdmin(admin.ModelAdmin):
                 )
             },
         ),
+        ("Issue", {"fields": ("issue",)}),
         ("Images", {"fields": ("image", "thumbnail_preview", "thumbnail")}),
-        ("Extras", {"fields": ("details", "artists"), "classes": ("collapse",)}),
-        ("Compilation", {"fields": ("is_compilation", "compiled_issues")}),
+        ("Extras", {"fields": ("notes", "cover_artists"), "classes": ("collapse",)}),
     )
+    inlines = [CollectedIssueInline]
+    autocomplete_fields = ["issue"]
 
     list_display = [
         "get_comic",
@@ -108,9 +178,20 @@ class ComicAdmin(admin.ModelAdmin):
     ]
     ordering = ["publishing__publishing_title", "number", "variant"]
     search_fields = ["publishing__publishing_title"]
-    filter_horizontal = ("artists", "compiled_issues")
+    filter_horizontal = ("cover_artists",)
     readonly_fields = ["country", "thumbnail_preview"]
     list_select_related = ("publishing",)  # Optimize queries by selecting related publishing
+
+    def save_formset(self, request, form, formset, change):
+        if formset.model is CollectedIssue:
+            save_formset_reinserting(formset)
+        else:
+            super().save_formset(request, form, formset, change)
+
+    def save_related(self, request, form, formsets, change):
+        super().save_related(request, form, formsets, change)
+        # Los issues recopilados se guardan despues de la edicion: hasta aqui se sabe si es compilacion.
+        form.instance.sync_compilation_state()
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -169,11 +250,11 @@ class CollectionAdmin(admin.ModelAdmin):
 
     form = CollectionForm
     change_list_template = "admin/collection_change_list.html"
-    list_select_related = ["comic", "comic__publishing", "participant"]
+    list_select_related = ["edition", "edition__publishing", "participant"]
 
     fieldsets = (
         ("Collector Information", {"fields": ("collector",)}),
-        ("Comic Info", {"fields": ("publishing", "comic")}),
+        ("Edition Info", {"fields": ("publishing", "edition")}),
         ("Trade Details", {"fields": ("amount", "trade_date", "trade_type", "participant")}),
         ("Extras", {"fields": ("valuation", "previous_trade", "notes"), "classes": ("collapse",)}),
     )
@@ -191,41 +272,41 @@ class CollectionAdmin(admin.ModelAdmin):
         "trade_type_colored",
     ]
     ordering = [
-        "comic__publishing__publishing_title",
-        "comic__number",
-        "comic__variant",
+        "edition__publishing__publishing_title",
+        "edition__number",
+        "edition__variant",
         "trade_date",
     ]
-    search_fields = ["comic__publishing__publishing_title"]
+    search_fields = ["edition__publishing__publishing_title"]
     list_filter = ["participant"]
 
-    def _from_comic(self, obj, attr):
-        return getattr(obj.comic, attr, None)
+    def _from_edition(self, obj, attr):
+        return getattr(obj.edition, attr, None)
 
     def _from_publishing(self, obj, attr):
-        return getattr(obj.comic.publishing, attr, None)
+        return getattr(obj.edition.publishing, attr, None)
 
-    @admin.display(ordering="comic__publishing__publishing_title", description="Publishing Title")
+    @admin.display(ordering="edition__publishing__publishing_title", description="Publishing Title")
     def get_publishing_title(self, obj):
         return self._from_publishing(obj, "publishing_title")
 
-    @admin.display(ordering="comic__number", description="number")
+    @admin.display(ordering="edition__number", description="number")
     def get_number(self, obj):
-        return self._from_comic(obj, "number")
+        return self._from_edition(obj, "number")
 
-    @admin.display(ordering="comic__variant", description="variant")
+    @admin.display(ordering="edition__variant", description="variant")
     def get_variant(self, obj):
-        return self._from_comic(obj, "variant")
+        return self._from_edition(obj, "variant")
 
-    @admin.display(ordering="comic__format", description="format")
+    @admin.display(ordering="edition__format", description="format")
     def get_format(self, obj):
-        return obj.comic.get_format_display()
+        return obj.edition.get_format_display()
 
     @admin.display(ordering="trade_date", description="acquisition")
     def get_acquisition(self, obj):
         return obj.trade_date.strftime("%d %B %Y / %A")
 
-    @admin.display(ordering="comic__publishing__serie", description="serie")
+    @admin.display(ordering="edition__publishing__serie", description="serie")
     def get_serie(self, obj):
         return self._from_publishing(obj, "serie")
 
@@ -278,8 +359,8 @@ class GeekCollectableAdmin(admin.ModelAdmin):
 class ConnectingPieceInline(admin.TabularInline):
     model = ConnectingPiece
     extra = 0
-    fields = ["row", "column", "comic"]
-    autocomplete_fields = ["comic"]
+    fields = ["row", "column", "edition"]
+    autocomplete_fields = ["edition"]
 
 
 @admin.register(Connecting)
@@ -301,23 +382,10 @@ class ConnectingAdmin(admin.ModelAdmin):
         return f"{obj.piece_count} / {obj.rows * obj.columns}"
 
     def save_formset(self, request, form, formset, change):
-        if formset.model is not ConnectingPiece:
-            return super().save_formset(request, form, formset, change)
-
-        # Intercambiar comics o posiciones entre piezas choca con los UniqueConstraint
-        # si se actualizan fila por fila (MySQL valida cada UPDATE y no soporta
-        # constraints diferidos). Las piezas modificadas se borran y se vuelven a
-        # insertar ya con sus valores finales; el formset ya valido que el estado
-        # final no tenga duplicados.
-        instances = formset.save(commit=False)
-        for obj in formset.deleted_objects:
-            obj.delete()
-        ConnectingPiece.objects.filter(pk__in=[obj.pk for obj in instances if obj.pk]).delete()
-        for obj in instances:
-            obj.pk = None
-            obj._state.adding = True
-            obj.save()
-        formset.save_m2m()
+        if formset.model is ConnectingPiece:
+            save_formset_reinserting(formset)
+        else:
+            super().save_formset(request, form, formset, change)
 
     def change_view(self, request, object_id, form_url="", extra_context=None):
         extra_context = extra_context or {}

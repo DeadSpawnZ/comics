@@ -5,7 +5,7 @@ from django.template import loader
 from django.urls import reverse
 from django.contrib.auth import authenticate
 
-from comics.models import Publishing, Comic
+from comics.models import Publishing, Edition
 
 
 def get_publishing_date(request, publishing_id):
@@ -18,10 +18,10 @@ def get_publishing_date(request, publishing_id):
 
 def get_comics_by_publishing(request, publishing_id):
     try:
-        comics = Comic.objects.filter(publishing_id=publishing_id).order_by("number", "variant")
-        data = [{"id": comic.id, "text": str(comic)} for comic in comics]
+        editions = Edition.objects.filter(publishing_id=publishing_id).order_by("number", "variant")
+        data = [{"id": edition.id, "text": str(edition)} for edition in editions]
         return JsonResponse({"results": data})
-    except Comic.DoesNotExist:
+    except Edition.DoesNotExist:
         return JsonResponse({"results": []})
     except Exception as e:
         return JsonResponse({"error": str(e)})

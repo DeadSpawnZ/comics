@@ -79,11 +79,11 @@
     {% for row in ownership_grid %}
       {% for piece in row %}
         {% if piece %}
-          <div class="connecting-preview__cell {% if not piece.owned %}is-missing{% endif %}" title="{{ piece.comic }}">
-            {% if piece.comic.thumbnail %}
-              <img src="{{ piece.comic.thumbnail.url }}" alt="{{ piece.comic }}" loading="lazy">
+          <div class="connecting-preview__cell {% if not piece.owned %}is-missing{% endif %}" title="{{ piece.edition }}">
+            {% if piece.edition.thumbnail %}
+              <img src="{{ piece.edition.thumbnail.url }}" alt="{{ piece.edition }}" loading="lazy">
             {% else %}
-              {{ piece.comic.publishing.publishing_title }} #{{ piece.comic.number }}
+              {{ piece.edition.publishing.publishing_title }} #{{ piece.edition.number }}
             {% endif %}
             <span class="connecting-preview__badge">{% if piece.owned %}Lo tienes{% else %}Falta{% endif %}</span>
           </div>

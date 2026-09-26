@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 function filterComicsByPublishing(publishingId) {
   const publishingField = document.getElementById("id_publishing");
-  const comicField = document.getElementById("id_comic");
+  const comicField = document.getElementById("id_edition");
 
   if (!(publishingField && comicField)) {
     return;
@@ -32,7 +32,7 @@ function filterComicsByPublishing(publishingId) {
 }
 
 function filterPreviousTrade() {
-  const comicField = document.getElementById("id_comic");
+  const comicField = document.getElementById("id_edition");
   const previousTradeField = document.getElementById("id_previous_trade");
   const tradeTypeField = document.getElementById("id_trade_type");
   const tradeDateField = document.getElementById("id_trade_date");
