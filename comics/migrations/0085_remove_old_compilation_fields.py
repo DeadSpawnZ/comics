@@ -3,7 +3,7 @@ from django.db import migrations, models
 
 
 def ensure_old_fields_empty(apps, schema_editor):
-    """Salvaguarda: los campos que se eliminan deben estar vacios para no perder datos."""
+    """Safeguard: the fields being removed must be empty so no data is lost."""
     Comic = apps.get_model("comics", "Comic")
     compilations = Comic.objects.filter(is_compilation=True).count()
     compiled = Comic.compiled_issues.through.objects.count()

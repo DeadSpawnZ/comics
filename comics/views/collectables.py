@@ -16,7 +16,7 @@ def collectables_view(request):
     if letter:
         collectables = collectables.filter(name__istartswith=letter)
 
-    # 🔎 Búsqueda opcional
+    # 🔎 Optional search
     if search:
         collectables = collectables.filter(
             Q(name__icontains=search) |

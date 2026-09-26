@@ -143,7 +143,7 @@ def _save_connecting(request, connecting):
     with transaction.atomic():
         obj.save()
         obj.set_pieces(placements)
-        # Registro en el historial del admin ("Historia" y "Acciones recientes").
+        # Record in the admin history ("Historia" and "Acciones recientes").
         pieces = f"{len(placements)} pieza{'s' if len(placements) != 1 else ''}"
         LogEntry.objects.log_actions(
             user_id=request.user.pk,

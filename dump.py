@@ -1,14 +1,14 @@
 #!/usr/bin/env python
-"""Genera un respaldo (dumpdata) de la base de datos.
+"""Create a database backup (dumpdata).
 
-Uso:
-    python dump.py [ruta_de_salida.json]
+Usage:
+    python dump.py [output_path.json]
 
-Si no se indica una ruta, se genera "dump-<timestamp>.json" en el
-directorio actual. Se excluyen las tablas que Django regenera solo
-(contenttypes, permisos, sesiones y el log del admin) porque son la
-causa mas comun de errores de integridad al restaurar el dump con
-`loaddata` en otro entorno.
+If no path is given, "dump-<timestamp>.json" is created in the
+current directory. Tables that Django regenerates by itself
+(contenttypes, permissions, sessions and the admin log) are excluded
+because they are the most common cause of integrity errors when the
+dump is restored with `loaddata` in another environment.
 """
 import os
 import sys

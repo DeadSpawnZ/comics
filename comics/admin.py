@@ -27,11 +27,11 @@ from .forms import CollectionForm, EditionForm
 
 
 def save_formset_reinserting(formset):
-    """Guarda un inline cuyas filas tienen UniqueConstraint (posicion, orden, etc.).
-    Intercambiar valores entre filas choca con los constraints si se actualizan una por
-    una (MySQL valida cada UPDATE y no soporta constraints diferidos), asi que las filas
-    modificadas se borran y se insertan de nuevo con sus valores finales. El formset ya
-    valido que el estado final no tenga duplicados."""
+    """Save an inline whose rows have UniqueConstraints (position, order, etc.).
+    Swapping values between rows violates the constraints if rows are updated one by
+    one (MySQL checks every UPDATE and does not support deferred constraints), so the
+    changed rows are deleted and inserted again with their final values. The formset
+    already validated that the final state has no duplicates."""
     instances = formset.save(commit=False)
     for obj in formset.deleted_objects:
         obj.delete()
@@ -83,7 +83,7 @@ class PublishingAdmin(admin.ModelAdmin):
 
 
 class EditionInline(admin.TabularInline):
-    """Ediciones de un issue (solo lectura; se editan desde cada edicion)."""
+    """Editions of an issue (read-only; they are edited from each edition)."""
 
     model = Edition
     fk_name = "issue"
@@ -190,7 +190,7 @@ class EditionAdmin(admin.ModelAdmin):
 
     def save_related(self, request, form, formsets, change):
         super().save_related(request, form, formsets, change)
-        # Los issues recopilados se guardan despues de la edicion: hasta aqui se sabe si es compilacion.
+        # Collected issues are saved after the edition: only now is it known whether it is a compilation.
         form.instance.sync_compilation_state()
 
     def get_queryset(self, request):
@@ -216,8 +216,8 @@ class EditionAdmin(admin.ModelAdmin):
 
     @admin.display(description="Country")
     def country(self, obj):
-        # Lee de la cache de prefetch_related("publishing__editorials") en vez de
-        # disparar una query de Editorial por cada fila de la lista.
+        # Read from the prefetch_related("publishing__editorials") cache instead of
+        # running an Editorial query for every row in the list.
         editorials = obj.publishing.editorials.all()
         editorial = editorials[0] if editorials else None
         if editorial and editorial.country:

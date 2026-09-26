@@ -1,11 +1,11 @@
-/* ---------- Lista de connectings ---------- */
+/* ---------- Connectings list ---------- */
 .connecting-card__frame {
   display: flex;
   justify-content: center;
   background-color: var(--md-surface-container-highest);
 }
 
-/* Ancho maximo calculado para que la cuadricula completa (celdas 2:3) quepa en 260px de alto. */
+/* Max width computed so the whole grid (2:3 cells) fits in 260px of height. */
 .connecting-card__mosaic {
   display: grid;
   grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
@@ -32,7 +32,7 @@
   background-color: var(--md-surface-container);
 }
 
-/* ---------- Editor: errores y snackbar ---------- */
+/* ---------- Editor: errors and snackbar ---------- */
 .editor-errors {
   display: flex;
   gap: 0.75rem;
@@ -67,7 +67,7 @@
   font-size: 0.875rem;
 }
 
-/* ---------- Editor: buscador ---------- */
+/* ---------- Editor: picker ---------- */
 .editor-picker {
   position: sticky;
   top: calc(64px + 1rem);
@@ -144,7 +144,7 @@
   font-size: 0.95rem;
 }
 
-/* ---------- Editor: portada ---------- */
+/* ---------- Editor: cover ---------- */
 .editor-cover {
   position: relative;
   width: 100%;
@@ -195,7 +195,7 @@
   background: #ba1a1a;
 }
 
-/* ---------- Editor: cuadricula ---------- */
+/* ---------- Editor: grid ---------- */
 .editor-grid {
   display: grid;
   grid-template-columns: repeat(var(--cols), minmax(0, 150px));
@@ -300,7 +300,7 @@
   }
 }
 
-/* ---------- Editor: piezas fuera de la cuadricula ---------- */
+/* ---------- Editor: pieces outside the grid ---------- */
 .editor-overflow {
   padding: 1rem;
   border-radius: 12px;
@@ -317,7 +317,7 @@
   width: 90px;
 }
 
-/* ---------- Layout de Gestion: menu lateral + contenido ---------- */
+/* ---------- Gestion layout: side menu + content ---------- */
 .manage-layout {
   display: grid;
   grid-template-columns: 240px minmax(0, 1fr);
@@ -426,7 +426,7 @@
   }
 }
 
-/* ---------- Tabla/lista de registros ---------- */
+/* ---------- Record table/list ---------- */
 .manage-table {
   padding: 0;
   overflow: hidden;
@@ -566,7 +566,7 @@
   }
 }
 
-/* ---------- Formulario de edicion ---------- */
+/* ---------- Edition form ---------- */
 .filter-input {
   border-radius: 4px;
   background-color: transparent;

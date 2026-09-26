@@ -26,7 +26,7 @@
   };
 
   const comics = new Map(); // id -> {id, title, detail, thumbnail, owned}
-  const pieces = new Map(); // "fila-columna" -> id de comic
+  const pieces = new Map(); // "row-column" -> comic id
   let rows = data.connecting.rows;
   let columns = data.connecting.columns;
   let selection = null; // {type: "comic", id} | {type: "cell", key}
@@ -47,14 +47,14 @@
     return null;
   };
 
-  // ---------- Operaciones sobre la cuadricula ----------
+  // ---------- Grid operations ----------
 
   function placeComic(comicId, targetKey) {
     const fromKey = keyOfComic(comicId);
     if (fromKey === targetKey) return;
     const occupant = pieces.get(targetKey);
     if (fromKey !== null) {
-      // El comic ya estaba colocado: se mueve e intercambia con el ocupante.
+      // The comic was already placed: it is moved and swapped with the occupant.
       if (occupant !== undefined) pieces.set(fromKey, occupant);
       else pieces.delete(fromKey);
     }
@@ -303,7 +303,7 @@
     render();
   }
 
-  // ---------- Buscador: publishing -> comics ----------
+  // ---------- Picker: publishing -> comics ----------
 
   function normalize(text) {
     return text.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
@@ -346,7 +346,7 @@
     }
   }
 
-  // ---------- Guardar ----------
+  // ---------- Save ----------
 
   function showErrors(messages) {
     el.errors.replaceChildren();
@@ -431,7 +431,7 @@
     }
   }
 
-  // ---------- Inicio ----------
+  // ---------- Init ----------
 
   function readSize(input, fallback) {
     const value = parseInt(input.value, 10);
@@ -467,7 +467,7 @@
     el.publishingSearch.addEventListener("input", renderPublishingOptions);
     el.publishingSelect.addEventListener("change", () => loadComics(el.publishingSelect.value));
 
-    // Soltar una pieza de la cuadricula en el buscador la quita.
+    // Dropping a grid piece on the picker removes it.
     makeDropTarget(el.pickerResults, (payload) => {
       if (payload.type === "cell") removePiece(payload.key);
     });

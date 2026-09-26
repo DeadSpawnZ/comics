@@ -1,7 +1,7 @@
-from comics.models import Edition  # ajusta el import al path correcto
+from comics.models import Edition  # adjust the import to the correct path
 from django.db import transaction
 
-# Opcional: Mapeo por si algún día quieres renombrar o validar
+# Optional: mapping in case you ever want to rename or validate
 VALID_PRINTINGS = {choice.value for choice in Edition.PrintingChoices}
 
 

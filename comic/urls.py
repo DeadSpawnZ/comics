@@ -44,9 +44,9 @@ urlpatterns = [
     path("gestion/api/comics/", manage.publishing_comics, name="manage_publishing_comics"),
 ]
 
-# Los estaticos los sirve WhiteNoise (ver MIDDLEWARE), en dev y en "produccion" local.
-# Media (imagenes subidas por usuarios) se sirve aqui de forma incondicional: este
-# proyecto no tiene un servidor de estaticos/objectstore aparte para eso.
+# Static files are served by WhiteNoise (see MIDDLEWARE), in dev and in local "production".
+# Media (images uploaded by users) is served here unconditionally: this project
+# has no separate static server/object store for it.
 urlpatterns += [
     re_path(r"^media/(?P<path>.*)$", serve_static, {"document_root": settings.MEDIA_ROOT}),
 ]

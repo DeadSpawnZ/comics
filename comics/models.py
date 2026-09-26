@@ -158,12 +158,12 @@ class Artist(Model):
 
 class IssueQuerySet(QuerySet):
     def delete_orphans(self):
-        """Borra los issues del queryset que ya no tienen ediciones ni estan en una compilacion."""
+        """Delete the issues in this queryset that no longer have editions and are not in a compilation."""
         return self.filter(editions__isnull=True, collected_in__isnull=True).delete()
 
     def with_first_release(self):
-        """Anota `first_release`: la fecha mas temprana de sus ediciones de 1a impresion
-        (la A y sus variantes) dentro de su serie original."""
+        """Annotate `first_release`: the earliest date among its 1st-printing editions
+        (the A cover and its variants) within its original series."""
         return self.annotate(
             first_release=Min(
                 "editions__release_date",
@@ -173,8 +173,8 @@ class IssueQuerySet(QuerySet):
 
 
 class Issue(Model):
-    """El contenido (la historia) de un numero. Sus ediciones son las impresiones fisicas:
-    variantes, reimpresiones, ediciones extranjeras o de aniversario, que pueden estar en otro publishing."""
+    """The content (the story) of an issue. Its editions are the physical printings:
+    variants, reprints, foreign or anniversary editions, which may belong to another publishing."""
 
     objects = IssueQuerySet.as_manager()
 
@@ -194,8 +194,8 @@ class Issue(Model):
 
 
 class Edition(Model):
-    """El ejemplar fisico (lo que coloquialmente se llama "comic"): portada/variante, impresion,
-    formato. Pertenece a un publishing y apunta al issue que contiene, o a varios si es compilacion."""
+    """The physical copy (what is colloquially called a "comic"): cover/variant, printing,
+    format. It belongs to a publishing and points to the issue it contains, or to several if it is a compilation."""
 
     class FormatChoices(TextChoices):
         SINGLE_ISSUE = "single_issue", _("Grapa")
@@ -266,9 +266,9 @@ class Edition(Model):
         ]
 
     def __str__(self):
-        # Se consulta a traves de la relacion (en vez de Editorial.objects.filter(...))
-        # para poder aprovechar un prefetch_related("publishing__editorials") hecho
-        # por quien llame a esta funcion y evitar N+1 al listar muchos comics.
+        # Query through the relation (instead of Editorial.objects.filter(...))
+        # so a prefetch_related("publishing__editorials") done by the caller
+        # is reused, avoiding N+1 when listing many comics.
         editorials = self.publishing.editorials.all()
         first_editorial = editorials[0] if editorials else None
         country_code = first_editorial.country.upper() if first_editorial else ""
@@ -290,12 +290,12 @@ class Edition(Model):
 
     @property
     def is_compilation(self):
-        # Las compilaciones no tienen issue propio; solo se consulta la BD en ese caso.
+        # Compilations have no issue of their own; the DB is only queried in that case.
         return self.issue_id is None and self.pk is not None and self.collected_entries.exists()
 
     def sync_compilation_state(self):
-        """Tras editar los issues recopilados: si ahora es compilacion suelta su issue
-        (y lo borra si quedo huerfano); si dejo de serlo recupera el issue por default."""
+        """After the collected issues are edited: if it is now a compilation it drops its issue
+        (and deletes it if orphaned); if it is no longer one it gets its default issue back."""
         if self.collected_entries.exists():
             if self.issue_id is None:
                 return
@@ -342,24 +342,24 @@ class Edition(Model):
         MAX_THUMB_HEIGHT = 1920
 
         try:
-            # Abrimos imagen original
+            # Open the original image
             img = Image.open(self.image)
             img_format = img.format or "JPEG"
 
-            # Establecemos nombre base
+            # Build the base name
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             base_name = f"{self.publishing.publishing_title}_{self.number}_{self.variant}_{timestamp}".replace(" ", "_")
 
-            # Convertir RGBA a RGB si es necesario
+            # Convert RGBA to RGB if needed
             if img_format == "PNG" and img.mode in ("RGBA", "LA"):
                 background = Image.new("RGB", img.size, (255, 255, 255))
-                background.paste(img, mask=img.split()[-1])  # canal alpha
+                background.paste(img, mask=img.split()[-1])  # alpha channel
                 img = background
                 img_format = "JPEG"
             elif img.mode != "RGB":
                 img = img.convert("RGB")
 
-            # === Guardar imagen original ===
+            # === Save the original image ===
             original_io = io.BytesIO()
             img.save(original_io, format="JPEG", quality=95)
             original_io.seek(0)
@@ -374,7 +374,7 @@ class Edition(Model):
                 None,
             )
 
-            # === Generar thumbnail ===
+            # === Generate the thumbnail ===
             width, height = img.size
             if width > MAX_THUMB_WIDTH or height > MAX_THUMB_HEIGHT:
                 scale = min(MAX_THUMB_WIDTH / width, MAX_THUMB_HEIGHT / height)
@@ -401,9 +401,9 @@ class Edition(Model):
             logger.exception("Error procesando imagen y thumbnail de la edicion %s", self.pk)
 
     def assign_default_issue(self):
-        """Por default una edicion pertenece al issue de su publishing y numero, y lo sigue si
-        se corrige el publishing o el numero. Si esta vinculada a mano a otro issue (edicion
-        extranjera o de aniversario) o es una compilacion, se respeta."""
+        """By default an edition belongs to the issue of its publishing and number, and follows it
+        if the publishing or number is corrected. If it is manually linked to another issue
+        (foreign or anniversary edition) or is a compilation, that is respected."""
         if self.pk and self.collected_entries.exists():
             return
         number = self.number.strip()
@@ -429,13 +429,13 @@ class Edition(Model):
 
         super(Edition, self).save(*args, **kwargs)
 
-        # Cambio de issue (automatico o vinculo manual): el anterior se borra si quedo sin ediciones.
+        # Issue change (automatic or manual link): the previous one is deleted if left without editions.
         if old_issue_id and old_issue_id != self.issue_id:
             Issue.objects.filter(pk=old_issue_id).delete_orphans()
 
 
 class CollectedIssue(Model):
-    """Issues que trae una compilacion, en orden."""
+    """Issues contained in a compilation, in order."""
 
     edition = ForeignKey(Edition, on_delete=CASCADE, related_name="collected_entries")
     issue = ForeignKey(Issue, on_delete=PROTECT, related_name="collected_entries")
@@ -463,7 +463,7 @@ class Dealer(Model):
 
 class CollectionQuerySet(QuerySet):
     def owned_by(self, user):
-        """Compras de `user` que no se han vendido (no son previous_trade de una venta)."""
+        """Purchases by `user` that have not been sold (they are not the previous_trade of a sale)."""
         selling = self.model.TradeChoices.SELLING
         sold_ids = self.model.objects.filter(
             collector=user, trade_type=selling, previous_trade__isnull=False
@@ -495,10 +495,10 @@ class Collection(Model):
                 fields=["edition", "trade_date", "amount", "trade_type", "participant"],
                 name="unique_collection_edition_date_amount_type_participant",
             ),
-            # MySQL no permite que un CHECK constraint referencie una columna
-            # auto-increment (error 3818), asi que "no puede ser su propio
-            # previous_trade" solo se puede validar en Python (ver
-            # validate_previous_trade), no a nivel de base de datos.
+            # MySQL does not allow a CHECK constraint to reference an
+            # auto-increment column (error 3818), so "cannot be its own
+            # previous_trade" can only be validated in Python (see
+            # validate_previous_trade), not at the database level.
         ]
 
     def __str__(self):
@@ -557,7 +557,7 @@ class StoryArc(Model):
 
 
 class Connecting(Model):
-    """Grupo de portadas que juntas forman una imagen mas grande."""
+    """A group of covers that together form a larger image."""
 
     name = CharField(max_length=100, unique=True)
     rows = PositiveSmallIntegerField(default=1, validators=[MinValueValidator(1)])
@@ -576,7 +576,7 @@ class Connecting(Model):
         return f"{self.rows}×{self.columns}"
 
     def clean_placements(self, placements):
-        """Valida [{"row", "column", "edition"}, ...] contra la cuadricula y devuelve tuplas (row, column, edition_id)."""
+        """Validate [{"row", "column", "edition"}, ...] against the grid and return (row, column, edition_id) tuples."""
         errors = []
         cleaned = []
         for index, placement in enumerate(placements, start=1):
@@ -604,8 +604,8 @@ class Connecting(Model):
         return cleaned
 
     def set_pieces(self, cleaned_placements):
-        """Reemplaza todas las piezas. Se borran y se insertan de nuevo porque
-        actualizarlas una por una choca con los UniqueConstraint al intercambiar."""
+        """Replace all pieces. They are deleted and inserted again because updating
+        them one by one violates the UniqueConstraints when pieces are swapped."""
         self.pieces.all().delete()
         ConnectingPiece.objects.bulk_create(
             ConnectingPiece(connecting=self, row=row, column=column, edition_id=edition_id)
@@ -613,7 +613,7 @@ class Connecting(Model):
         )
 
     def ownership_grid(self, user):
-        """Matriz rows x columns con la pieza de cada posicion (o None) y si `user` la tiene."""
+        """rows x columns matrix with the piece at each position (or None) and whether `user` owns it."""
         pieces = list(self.pieces.select_related("edition__publishing"))
         owned_edition_ids = set(
             Collection.objects.owned_by(user)
@@ -650,8 +650,8 @@ class ConnectingPiece(Model):
         return f"{self.connecting} ({self.row}, {self.column})"
 
     def clean(self):
-        # En el admin, al crear un connecting nuevo, la pieza ya trae el padre
-        # (sin guardar) con sus rows/columns, asi que se puede validar igual.
+        # In the admin, when a new connecting is created, the piece already has its
+        # (unsaved) parent with its rows/columns, so it can still be validated.
         try:
             connecting = self.connecting
         except Connecting.DoesNotExist:

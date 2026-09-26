@@ -114,7 +114,7 @@ def edition_form(request, pk=None):
     if edition and edition.issue_id and (
         edition.issue.publishing_id != edition.publishing_id or edition.issue.number != edition.number.strip()
     ):
-        selected_issue_id = edition.issue_id  # vinculo manual; si es el automatico se deja en "Automatico"
+        selected_issue_id = edition.issue_id  # manual link; if it is the default issue it is left as "Automatico"
     collected_ids = list(edition.collected_entries.values_list("issue_id", flat=True)) if edition else []
 
     form = EditionManageForm(request.POST or None, request.FILES or None, instance=edition)
@@ -165,7 +165,7 @@ def edition_form(request, pk=None):
 
 
 def _clean_content(data, content):
-    """Valida la seccion de contenido: issue individual (o automatico) o lista de issues recopilados."""
+    """Validate the content section: single issue (or automatic) or list of collected issues."""
     errors = []
     issue_id = None
     collected_ids = []
@@ -209,7 +209,7 @@ def _save_edition(form, content, issue_id, collected_ids):
         )
         edition.sync_compilation_state()
     else:
-        # Primero se quitan los issues recopilados: si no, save() la sigue tratando como compilacion.
+        # Remove the collected issues first: otherwise save() still treats it as a compilation.
         if edition.pk:
             edition.collected_entries.all().delete()
         edition.issue_id = issue_id  # None = automatico segun publishing y numero

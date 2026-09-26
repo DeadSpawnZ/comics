@@ -1,7 +1,7 @@
 /*
- * Capa visual Material 3 (tema azure-blue de Angular Material 18) sobre Bootstrap 5.3.
- * Los tokens --md-* se mapean a las variables --bs-* para que los componentes de
- * Bootstrap que siguen en uso hereden los colores en claro y oscuro.
+ * Material 3 visual layer (Angular Material 18 azure-blue theme) on top of Bootstrap 5.3.
+ * The --md-* tokens are mapped to the --bs-* variables so the Bootstrap components
+ * still in use inherit the colors in light and dark mode.
  */
 
 :root,
@@ -95,7 +95,7 @@ body {
   user-select: none;
 }
 
-/* Tipografia */
+/* Typography */
 .md-headline-small {
   font-size: 1.5rem;
   font-weight: 400;
@@ -164,7 +164,7 @@ body {
   background-color: var(--md-secondary-container);
 }
 
-/* Botones */
+/* Buttons */
 .md-btn {
   --md-btn-bg: transparent;
   --md-btn-color: var(--md-primary);
@@ -272,7 +272,7 @@ body {
   pointer-events: none;
 }
 
-/* Menu (dropdown de Bootstrap con estilo M3) */
+/* Menu (Bootstrap dropdown with M3 style) */
 .md-menu {
   --bs-dropdown-bg: var(--md-surface-container);
   --bs-dropdown-border-width: 0;
@@ -296,14 +296,14 @@ body {
   font-size: 0.875rem;
 }
 
-/* Superficies */
+/* Surfaces */
 .md-surface-card {
   background-color: var(--md-surface-container-low);
   border-radius: 16px;
   padding: 1.25rem;
 }
 
-/* Campos de formulario (outlined) */
+/* Form fields (outlined) */
 .md-field .form-control,
 .md-field .form-select {
   background-color: transparent;
@@ -343,7 +343,7 @@ body {
   color: var(--md-on-surface);
 }
 
-/* Chips de filtro */
+/* Filter chips */
 .md-chip-set {
   display: flex;
   flex-wrap: wrap;
@@ -418,7 +418,7 @@ body {
   outline-offset: 2px;
 }
 
-/* Dialogos (modal de Bootstrap con estilo M3) */
+/* Dialogs (Bootstrap modal with M3 style) */
 .md-dialog {
   --bs-modal-bg: var(--md-surface-container-high);
   --bs-modal-color: var(--md-on-surface);
@@ -476,7 +476,7 @@ body {
   margin-bottom: 0.5rem;
 }
 
-/* Paginador estilo mat-paginator */
+/* mat-paginator style paginator */
 .md-paginator {
   display: flex;
   align-items: center;
@@ -527,7 +527,7 @@ a.md-paginator__page:hover {
   color: var(--md-on-primary);
 }
 
-/* Boton de accion destructiva */
+/* Destructive action button */
 .md-btn--danger {
   --md-btn-bg: var(--md-error);
   --md-btn-color: var(--md-on-error);
@@ -539,7 +539,7 @@ a.md-paginator__page:hover {
   padding: 0 1rem;
 }
 
-/* Assist chips (etiquetas de estado) */
+/* Assist chips (status labels) */
 .md-assist-chip {
   display: inline-flex;
   align-items: center;
@@ -570,7 +570,7 @@ a.md-paginator__page:hover {
   color: var(--md-on-error-container);
 }
 
-/* Segmented button (opciones excluyentes) */
+/* Segmented button (mutually exclusive options) */
 .md-segmented {
   display: inline-flex;
   border: 1px solid var(--md-outline);

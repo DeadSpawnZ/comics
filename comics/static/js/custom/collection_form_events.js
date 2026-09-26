@@ -13,7 +13,7 @@ function filterComicsByPublishing(publishingId) {
   publishingField.addEventListener("change", function () {
     const publishingId = this.value;
 
-    // Limpiar opciones actuales
+    // Clear the current options
     comicField.innerHTML = '<option value="">---------</option>';
 
     if (publishingId) {
@@ -44,12 +44,12 @@ function filterPreviousTrade() {
   function loadPreviousTrades() {
     const comicId = comicField.value;
 
-    // previous_trade solo aplica a ventas (no se puede vender algo que aun no se poseia).
+    // previous_trade only applies to sales (you cannot sell something you did not own yet).
     if (tradeTypeField.value.toUpperCase() !== "SELLING") {
       return;
     }
 
-    // Limpiar opciones actuales
+    // Clear the current options
     previousTradeField.innerHTML = '<option value="">---------</option>';
 
     if (!comicId) {
@@ -58,7 +58,7 @@ function filterPreviousTrade() {
 
     const params = new URLSearchParams();
     if (tradeDateField.value) {
-      // Solo se ofrecen compras ocurridas en la fecha de venta o antes.
+      // Only purchases made on or before the sale date are offered.
       params.set("before", tradeDateField.value);
     }
 

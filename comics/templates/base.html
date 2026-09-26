@@ -6,8 +6,8 @@
     <title>Comi</title>
     {% load static %}
     <script>
-      // Aplica el tema guardado antes de pintar la pagina, para evitar un
-      // parpadeo claro->oscuro al cargar.
+      // Apply the saved theme before the page is painted, to avoid a
+      // light->dark flash on load.
       (function () {
         try {
           var theme = localStorage.getItem("theme");
@@ -20,7 +20,7 @@
     </script>
     <!-- Bootstrap CSS -->
     <link href="{% static 'vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
-    <!-- Roboto y Material Symbols (via CDN por ahora, sin vendorear) -->
+    <!-- Roboto and Material Symbols (via CDN for now, not vendored) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
@@ -162,7 +162,7 @@
 
     {% block extra_js %} {% endblock %}
 
-    <!-- Bootstrap JS (incluye Popper) -->
+    <!-- Bootstrap JS (includes Popper) -->
     <script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
     <script src="{% static 'js/custom/theme_toggle.js' %}"></script>
   </body>

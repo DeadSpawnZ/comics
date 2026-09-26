@@ -2,8 +2,8 @@ from django.db import migrations
 
 
 def create_issues(apps, schema_editor):
-    """Un issue por cada (publishing, numero); cada comic queda como edicion de ese issue.
-    `details` no se toca: son notas de la edicion (variante exclusiva, reimpresion), no sinopsis."""
+    """One issue per (publishing, number); each comic becomes an edition of that issue.
+    `details` is not touched: it holds edition notes (exclusive variant, reprint), not a synopsis."""
     Comic = apps.get_model("comics", "Comic")
     Issue = apps.get_model("comics", "Issue")
 

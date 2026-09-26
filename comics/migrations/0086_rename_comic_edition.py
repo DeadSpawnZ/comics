@@ -1,8 +1,8 @@
 from django.db import migrations, models
 
-# Solo renombres: tablas y columnas conservan sus datos. Los constraints cuyo nombre
-# mencionaba "comic" se quitan ANTES de renombrar los campos (RenameField no actualiza
-# los campos listados en un constraint) y se crean de nuevo al final con el nombre nuevo.
+# Renames only: tables and columns keep their data. Constraints whose name mentioned
+# "comic" are removed BEFORE renaming the fields (RenameField does not update the fields
+# listed in a constraint) and are created again at the end with the new name.
 
 
 class Migration(migrations.Migration):

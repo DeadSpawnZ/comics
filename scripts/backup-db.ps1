@@ -1,24 +1,24 @@
 <#
 .SYNOPSIS
-    Genera un respaldo de la base de datos (via Django dumpdata) dentro del
-    contenedor de la app y lo copia al equipo local.
+    Creates a database backup (via Django dumpdata) inside the app
+    container and copies it to the local machine.
 
 .DESCRIPTION
-    1. Verifica que el servicio de docker compose indicado este corriendo.
-    2. Ejecuta dump.py dentro del contenedor con un nombre de archivo fijo.
-    3. Copia el dump resultante a la carpeta local de respaldos.
-    4. Borra el archivo temporal dentro del contenedor.
-    5. Rota los respaldos locales, conservando solo los mas recientes.
+    1. Checks that the given docker compose service is running.
+    2. Runs dump.py inside the container with a fixed file name.
+    3. Copies the resulting dump to the local backups folder.
+    4. Deletes the temporary file inside the container.
+    5. Rotates the local backups, keeping only the most recent ones.
 
 .PARAMETER OutputDir
-    Carpeta local donde se guardan los respaldos. Por defecto ".\backups".
+    Local folder where backups are stored. Defaults to ".\backups".
 
 .PARAMETER Keep
-    Cuantos respaldos locales conservar (los mas antiguos se borran).
-    Usa 0 para conservarlos todos.
+    How many local backups to keep (the oldest are deleted).
+    Use 0 to keep all of them.
 
 .PARAMETER Service
-    Nombre del servicio de docker compose que corre Django. Por defecto "web".
+    Name of the docker compose service running Django. Defaults to "web".
 
 .EXAMPLE
     .\scripts\backup-db.ps1

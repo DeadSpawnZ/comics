@@ -5,7 +5,7 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /code
 
-# Dependencias de build + headers necesarios para compilar mysqlclient y Pillow
+# Build dependencies + headers needed to compile mysqlclient and Pillow
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     pkg-config \
@@ -18,12 +18,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY requirements.txt .
 
-# Instalamos en un directorio temporal
+# Install into a temporary directory
 RUN pip install --upgrade pip && \
     pip install --no-cache-dir --prefix=/install -r requirements.txt
 
 
-# 🔽 Imagen final (más ligera)
+# 🔽 Final image (lighter)
 FROM python:3.11-slim-bookworm
 
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -31,7 +31,7 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /code
 
-# Solo las librerías compartidas en tiempo de ejecución (sin -dev/headers ni build tools)
+# Only the runtime shared libraries (no -dev/headers or build tools)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libmariadb3 \
     libjpeg62-turbo \
@@ -40,7 +40,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libfreetype6 \
     && rm -rf /var/lib/apt/lists/*
 
-# Copiamos solo lo necesario del builder
+# Copy only what is needed from the builder
 COPY --from=builder /install /usr/local
 
 RUN groupadd --system app && useradd --system --gid app --home-dir /code --no-create-home app \

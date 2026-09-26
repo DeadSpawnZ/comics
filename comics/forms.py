@@ -43,7 +43,7 @@ class CollectionForm(forms.ModelForm):
             except (ValueError, TypeError):
                 pass
 
-        # EDIT: objeto existente
+        # EDIT: existing object
         elif self.instance.pk and self.instance.edition:
             publishing = self.instance.edition.publishing
             self.fields["edition"].queryset = Edition.objects.filter(
@@ -74,12 +74,12 @@ class CollectionForm(forms.ModelForm):
                 id__in=used_previous_trades_ids
             )
 
-            # Un registro no puede ser su propio previous_trade.
+            # A record cannot be its own previous_trade.
             if self.instance.pk:
                 qs = qs.exclude(pk=self.instance.pk)
 
-            # No se puede vender algo que aun no se poseia: solo se ofrecen compras
-            # ocurridas en la fecha de venta o antes.
+            # You cannot sell something you did not own yet: only purchases made
+            # on or before the sale date are offered.
             if self.instance.trade_date:
                 qs = qs.filter(trade_date__lte=self.instance.trade_date)
 
@@ -111,14 +111,14 @@ class EditionForm(forms.ModelForm):
 
 
 def publishing_label(publishing):
-    """Etiqueta corta sin consultas extra (Publishing.__str__ consulta sus editoriales)."""
+    """Short label without extra queries (Publishing.__str__ queries its editorials)."""
     year = f" ({publishing.year})" if publishing.year else ""
     return f"{publishing.publishing_title}{year} {publishing.serie} · {publishing.language.upper()}"
 
 
 class EditionManageForm(forms.ModelForm):
-    """Datos de la edicion para Gestion. El contenido (issue o issues recopilados) se
-    maneja aparte en la vista porque no son campos directos del modelo."""
+    """Edition data for Gestion. The content (issue or collected issues) is
+    handled separately in the view because they are not direct model fields."""
 
     class Meta:
         model = Edition
@@ -169,7 +169,7 @@ class EditionManageForm(forms.ModelForm):
         publishing.label_from_instance = publishing_label
         self.fields["cover_artists"].queryset = self.fields["cover_artists"].queryset.order_by("name")
 
-        # Estilo Material/Bootstrap: las etiquetas flotantes necesitan un placeholder.
+        # Material/Bootstrap style: floating labels need a placeholder.
         for field in self.fields.values():
             widget = field.widget
             if isinstance(widget, (forms.CheckboxSelectMultiple, forms.FileInput)):

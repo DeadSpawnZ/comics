@@ -1,10 +1,10 @@
-/* Panel de filtros (debajo del top app bar fijo) */
+/* Filters panel (below the sticky top app bar) */
 .filters-panel .sticky-lg-top {
   top: calc(64px + 1rem);
   z-index: 1;
 }
 
-/* Placeholders cuando no hay imagen */
+/* Placeholders when there is no image */
 .img-placeholder {
   display: flex;
   align-items: center;
@@ -30,7 +30,7 @@
   color: var(--md-on-surface-variant);
 }
 
-/* Tarjetas de comics */
+/* Comic cards */
 .card-img-container {
   position: relative;
   width: 100%;
@@ -50,7 +50,7 @@
   display: block;
 }
 
-/* Bandera de editorial, esquina superior derecha */
+/* Editorial flag, top-right corner */
 .country-flag {
   position: absolute;
   top: 6px;
@@ -66,7 +66,7 @@
   transition: opacity 0.25s ease;
 }
 
-/* Artistas firmantes, esquina superior izquierda */
+/* Signing artists, top-left corner */
 .artist-stack {
   position: absolute;
   top: 6px;
@@ -88,7 +88,7 @@
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
 }
 
-/* Overlay con info del comic al hacer hover */
+/* Overlay with the comic info on hover */
 .overlay-info {
   position: absolute;
   bottom: 0;
@@ -126,7 +126,7 @@
   opacity: 0;
 }
 
-/* Modal de detalle */
+/* Detail modal */
 .artist-photo {
   width: 60px;
   height: 60px;

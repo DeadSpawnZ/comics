@@ -5,8 +5,8 @@
 
   const normalize = (text) => text.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
-  // ---------- Selects filtrables (publishings) ----------
-  // Conserva la opcion elegida aunque no coincida con el filtro, para no perder el valor.
+  // ---------- Filterable selects (publishings) ----------
+  // Keeps the selected option even if it does not match the filter, so the value is not lost.
   document.querySelectorAll("[data-filter-select]").forEach((input) => {
     const select = document.getElementById(input.dataset.filterSelect);
     if (!select) return;
@@ -21,7 +21,7 @@
     });
   });
 
-  // ---------- Issue individual o compilacion ----------
+  // ---------- Single issue or compilation ----------
   const singlePanel = document.getElementById("content-single");
   const compilationPanel = document.getElementById("content-compilation");
   const syncContent = () => {
@@ -38,7 +38,7 @@
     return (await response.json()).results;
   }
 
-  // Issue individual: al cambiar el publishing se recargan sus issues ("Automatico" siempre queda primero).
+  // Single issue: changing the publishing reloads its issues ("Automatico" always stays first).
   const issuePublishing = document.getElementById("issue-publishing");
   const issueSelect = document.getElementById("issue-select");
   issuePublishing.addEventListener("change", async () => {
@@ -49,7 +49,7 @@
     for (const issue of issues) issueSelect.append(new Option(issue.label, issue.id));
   });
 
-  // ---------- Compilacion: lista ordenada de issues ----------
+  // ---------- Compilation: ordered list of issues ----------
   const collectedPublishing = document.getElementById("collected-publishing");
   const collectedIssue = document.getElementById("collected-issue");
   const addButton = document.getElementById("collected-add");
@@ -129,7 +129,7 @@
     renderCollected();
   });
 
-  // ---------- Vista previa de la portada ----------
+  // ---------- Cover preview ----------
   const imageInput = document.querySelector("input[type=file][name=image]");
   const preview = document.getElementById("cover-preview");
   const placeholder = document.getElementById("cover-placeholder");

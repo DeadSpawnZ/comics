@@ -43,7 +43,7 @@ def comics_view(request):
     letter = request.GET.get("letter", "A")
     selected_country = request.GET.get("country")
 
-    # Prefetch para artistas firmantes
+    # Prefetch for the signing artists
     signed_artists = Prefetch(
         "signature_set",
         queryset=Signature.objects.select_related("artist"),
@@ -84,7 +84,7 @@ def comics_view(request):
         )
     )
 
-    # "" (Todas) desactiva el filtro por letra en vez de forzar una letra.
+    # "" (Todas) disables the letter filter instead of forcing a letter.
     if letter:
         collections = collections.filter(edition__publishing__title__name__istartswith=letter)
 
@@ -126,8 +126,8 @@ def get_previous_trades(request, edition_id):
             .prefetch_related("edition__publishing__editorials")
         )
 
-        # No se puede vender algo que aun no se poseia: solo se ofrecen compras
-        # ocurridas en la fecha de venta o antes.
+        # You cannot sell something you did not own yet: only purchases made
+        # on or before the sale date are offered.
         before_date = parse_date(request.GET.get("before", ""))
         if before_date:
             trades = trades.filter(trade_date__lte=before_date)
