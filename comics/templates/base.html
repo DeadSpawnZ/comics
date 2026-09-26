@@ -70,7 +70,7 @@
             <li class="nav-item">
               <a class="nav-link md-nav-link {% if url_name|slice:':7' == 'manage_' %}active{% endif %}"
                  {% if url_name|slice:':7' == 'manage_' %}aria-current="page"{% endif %}
-                 href="{% url 'manage_connectings' %}">
+                 href="{% url 'manage_home' %}">
                 <span class="material-symbols-outlined" aria-hidden="true">dashboard_customize</span>
                 Gestión
               </a>

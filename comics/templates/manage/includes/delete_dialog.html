@@ -1,0 +1,27 @@
+<div class="modal fade md-dialog" id="deleteDialog" tabindex="-1" aria-labelledby="deleteDialogTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="post" id="deleteDialogForm">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ delete_next|default:request.get_full_path }}">
+        <div class="modal-header">
+          <h2 class="modal-title md-headline-small" id="deleteDialogTitle">¿Eliminar edición?</h2>
+        </div>
+        <div class="modal-body">
+          Se eliminará <strong id="deleteDialogName"></strong>. Esta acción no se puede deshacer.
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="md-btn md-btn--text" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="md-btn md-btn--danger">Eliminar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<script>
+  document.getElementById("deleteDialog").addEventListener("show.bs.modal", function (event) {
+    var trigger = event.relatedTarget;
+    document.getElementById("deleteDialogForm").action = trigger.dataset.deleteUrl;
+    document.getElementById("deleteDialogName").textContent = trigger.dataset.deleteName;
+  });
+</script>

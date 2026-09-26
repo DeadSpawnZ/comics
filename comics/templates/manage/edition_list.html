@@ -1,0 +1,110 @@
+{% extends 'manage/base_manage.html' %}
+
+{% block breadcrumb %}<span class="is-current">Ediciones</span>{% endblock %}
+
+{% block manage_content %}
+<div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+  <div>
+    <h1 class="md-headline-small mb-0">Ediciones</h1>
+    <span class="md-body-medium">{{ page_obj.paginator.count }} edici{{ page_obj.paginator.count|pluralize:"ón,ones" }}</span>
+  </div>
+  <a class="md-btn md-btn--filled" href="{% url 'manage_edition_new' %}?next={{ request.get_full_path|urlencode }}">
+    <span class="material-symbols-outlined" aria-hidden="true">add</span>
+    Nueva edición
+  </a>
+</div>
+
+<div class="md-surface-card manage-table">
+  <div class="manage-toolbar">
+    <div class="manage-tabs" role="tablist" aria-label="Tipo de edición">
+      {% for value, label, count in tabs %}
+        <a class="manage-tab {% if value == type_filter %}is-active{% endif %}" role="tab"
+           aria-selected="{% if value == type_filter %}true{% else %}false{% endif %}"
+           href="{% querystring tipo=value page=None %}">
+          {{ label }} <span class="manage-tab__count">{{ count }}</span>
+        </a>
+      {% endfor %}
+    </div>
+
+    <form method="get" class="manage-filters" role="search">
+      <input type="hidden" name="tipo" value="{{ type_filter }}">
+      <div class="form-floating md-field">
+        <select class="form-select" id="filter-format" name="format" onchange="this.form.submit()">
+          <option value="">Todos</option>
+          {% for value, label in format_choices %}
+            <option value="{{ value }}" {% if value == format_filter %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+        <label for="filter-format">Formato</label>
+      </div>
+      <div class="form-floating md-field">
+        <input type="search" class="form-control" id="filter-q" name="q" value="{{ query }}" placeholder="Buscar">
+        <label for="filter-q">Buscar título o número</label>
+      </div>
+      {% if query or format_filter %}
+        <a class="md-btn md-btn--text" href="{% querystring q=None format=None page=None %}">Limpiar</a>
+      {% endif %}
+    </form>
+  </div>
+
+  {% if not page_obj.object_list %}
+    <div class="text-center py-5">
+      <span class="material-symbols-outlined d-block mb-2 empty-state-icon" aria-hidden="true">search_off</span>
+      <p class="md-body-medium mb-0">No hay ediciones con estos filtros.</p>
+    </div>
+  {% else %}
+    <ul class="manage-rows">
+      {% for edition in page_obj %}
+      <li class="manage-row">
+        <div class="manage-row__thumb">
+          {% if edition.thumbnail %}
+            <img src="{{ edition.thumbnail.url }}" alt="" loading="lazy">
+          {% else %}
+            <span class="material-symbols-outlined" aria-hidden="true">image</span>
+          {% endif %}
+        </div>
+        <div class="manage-row__main">
+          <a class="manage-row__title" href="{% url 'manage_edition_edit' edition.pk %}?next={{ request.get_full_path|urlencode }}">
+            {{ edition.publishing.publishing_title }} #{{ edition.number }} {{ edition.variant }}
+          </a>
+          <div class="md-body-medium">
+            {{ edition.printing }} impresión · Serie {{ edition.publishing.serie }}{% if edition.publishing.year %} · {{ edition.publishing.year }}{% endif %} · {{ edition.publishing.language|upper }}
+          </div>
+        </div>
+        <div class="manage-row__chips">
+          <span class="md-assist-chip">{{ edition.get_format_display }}</span>
+          {% if edition.compiled_count %}
+            <span class="md-assist-chip md-assist-chip--primary">
+              <span class="material-symbols-outlined" aria-hidden="true">library_books</span>
+              Compilación · {{ edition.compiled_count }} issue{{ edition.compiled_count|pluralize }}
+            </span>
+          {% elif edition.linked_elsewhere %}
+            <span class="md-assist-chip md-assist-chip--primary" title="Vinculada a mano a otro issue">
+              <span class="material-symbols-outlined" aria-hidden="true">link</span>
+              {{ edition.issue }}
+            </span>
+          {% elif not edition.issue_id %}
+            <span class="md-assist-chip md-assist-chip--error">Sin issue</span>
+          {% endif %}
+        </div>
+        <div class="manage-row__actions">
+          <a class="md-icon-btn" href="{% url 'manage_edition_edit' edition.pk %}?next={{ request.get_full_path|urlencode }}"
+             aria-label="Editar {{ edition.publishing.publishing_title }} #{{ edition.number }} {{ edition.variant }}" title="Editar">
+            <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+          </a>
+          <button type="button" class="md-btn md-btn--danger-outlined" data-bs-toggle="modal" data-bs-target="#deleteDialog"
+                  data-delete-url="{% url 'manage_edition_delete' edition.pk %}"
+                  data-delete-name="{{ edition.publishing.publishing_title }} #{{ edition.number }} {{ edition.variant }}">
+            <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+            Eliminar
+          </button>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+</div>
+
+{% include 'includes/paginator.html' %}
+{% include 'manage/includes/delete_dialog.html' %}
+{% endblock %}

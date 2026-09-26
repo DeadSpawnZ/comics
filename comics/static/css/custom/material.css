@@ -24,6 +24,10 @@
   --md-on-surface-variant: #44474e;
   --md-outline: #74777f;
   --md-outline-variant: #c4c6d0;
+  --md-error: #ba1a1a;
+  --md-on-error: #ffffff;
+  --md-error-container: #ffdad6;
+  --md-on-error-container: #410002;
   --md-shadow: 0, 0, 0;
 }
 
@@ -46,6 +50,10 @@
   --md-on-surface-variant: #c4c6d0;
   --md-outline: #8e9099;
   --md-outline-variant: #44474e;
+  --md-error: #ffb4ab;
+  --md-on-error: #690005;
+  --md-error-container: #93000a;
+  --md-on-error-container: #ffdad6;
   --md-shadow: 0, 0, 0;
 }
 
@@ -517,4 +525,91 @@ a.md-paginator__page:hover {
 .md-paginator__page.is-current {
   background-color: var(--md-primary);
   color: var(--md-on-primary);
+}
+
+/* Boton de accion destructiva */
+.md-btn--danger {
+  --md-btn-bg: var(--md-error);
+  --md-btn-color: var(--md-on-error);
+}
+
+.md-btn--danger-outlined {
+  --md-btn-color: var(--md-error);
+  border: 1px solid var(--md-error);
+  padding: 0 1rem;
+}
+
+/* Assist chips (etiquetas de estado) */
+.md-assist-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  height: 28px;
+  padding: 0 0.625rem;
+  border: 1px solid var(--md-outline-variant);
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--md-on-surface-variant);
+  white-space: nowrap;
+}
+
+.md-assist-chip .material-symbols-outlined {
+  font-size: 1rem;
+}
+
+.md-assist-chip--primary {
+  border-color: transparent;
+  background-color: var(--md-primary-container);
+  color: var(--md-on-primary-container);
+}
+
+.md-assist-chip--error {
+  border-color: transparent;
+  background-color: var(--md-error-container);
+  color: var(--md-on-error-container);
+}
+
+/* Segmented button (opciones excluyentes) */
+.md-segmented {
+  display: inline-flex;
+  border: 1px solid var(--md-outline);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.md-segmented__option {
+  margin: 0;
+  cursor: pointer;
+}
+
+.md-segmented__option + .md-segmented__option {
+  border-left: 1px solid var(--md-outline);
+}
+
+.md-segmented__option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.md-segmented__option > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 40px;
+  padding: 0 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--md-on-surface);
+}
+
+.md-segmented__option input:checked + span {
+  background-color: var(--md-secondary-container);
+  color: var(--md-on-secondary-container);
+}
+
+.md-segmented__option input:focus-visible + span {
+  outline: 2px solid var(--md-primary);
+  outline-offset: -2px;
 }

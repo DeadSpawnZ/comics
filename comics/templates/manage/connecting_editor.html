@@ -1,13 +1,15 @@
-{% extends 'base.html' %}
+{% extends 'manage/base_manage.html' %}
 {% load static %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/custom/manage.css' %}">
+{% block breadcrumb %}
+<a href="{% url 'manage_connectings' %}">Connectings</a>
+<span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+<span class="is-current">{% if connecting %}{{ connecting.name }}{% else %}Nuevo{% endif %}</span>
 {% endblock %}
 
-{% block content %}
+{% block manage_content %}
 {% csrf_token %}
-<div class="my-4" id="connecting-editor">
+<div id="connecting-editor">
   <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
     <div class="d-flex align-items-center gap-2">
       <a class="md-icon-btn" href="{% url 'manage_connectings' %}" aria-label="Volver a connectings" title="Volver a connectings">

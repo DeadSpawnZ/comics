@@ -19,8 +19,9 @@ from django.contrib import admin
 from django.urls import path, re_path
 from django.conf import settings
 from django.views.static import serve as serve_static
+from django.views.generic import RedirectView
 from comics.views import (
-    collection, publishing, login, collectables, manage)
+    collection, publishing, login, collectables, manage, manage_editions)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -31,6 +32,12 @@ urlpatterns = [
     path("ajax/get-previous-trades/<int:edition_id>/", collection.get_previous_trades, name="get_previous_trades"),
     path("comics/", collection.comics_view, name="comics"),
     path("collectables/", collectables.collectables_view, name="collectables"),
+    path("gestion/", RedirectView.as_view(pattern_name="manage_editions"), name="manage_home"),
+    path("gestion/ediciones/", manage_editions.edition_list, name="manage_editions"),
+    path("gestion/ediciones/nueva/", manage_editions.edition_form, name="manage_edition_new"),
+    path("gestion/ediciones/<int:pk>/", manage_editions.edition_form, name="manage_edition_edit"),
+    path("gestion/ediciones/<int:pk>/eliminar/", manage_editions.edition_delete, name="manage_edition_delete"),
+    path("gestion/api/issues/", manage_editions.publishing_issues, name="manage_publishing_issues"),
     path("gestion/connectings/", manage.connecting_list, name="manage_connectings"),
     path("gestion/connectings/nuevo/", manage.connecting_editor, name="manage_connecting_new"),
     path("gestion/connectings/<int:pk>/", manage.connecting_editor, name="manage_connecting_edit"),

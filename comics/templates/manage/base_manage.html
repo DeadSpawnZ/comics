@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/custom/manage.css' %}">
+{% endblock %}
+
+{% block content %}
+{% with url_name=request.resolver_match.url_name %}
+<div class="manage-layout my-4">
+  <nav class="manage-nav" aria-label="Secciones de gestión">
+    <div class="manage-nav__title">Gestión</div>
+    <ul>
+      <li>
+        <a class="manage-nav__link {% if 'edition' in url_name %}is-active{% endif %}"
+           {% if 'edition' in url_name %}aria-current="page"{% endif %}
+           href="{% url 'manage_editions' %}">
+          <span class="material-symbols-outlined" aria-hidden="true">menu_book</span>
+          Ediciones
+        </a>
+      </li>
+      <li>
+        <a class="manage-nav__link {% if 'connecting' in url_name %}is-active{% endif %}"
+           {% if 'connecting' in url_name %}aria-current="page"{% endif %}
+           href="{% url 'manage_connectings' %}">
+          <span class="material-symbols-outlined" aria-hidden="true">grid_view</span>
+          Connectings
+        </a>
+      </li>
+    </ul>
+  </nav>
+
+  <div class="manage-content">
+    <nav class="manage-breadcrumb" aria-label="Ruta">
+      <a href="{% url 'manage_home' %}">Gestión</a>
+      <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+      {% block breadcrumb %}{% endblock %}
+    </nav>
+    {% block manage_content %}{% endblock %}
+  </div>
+</div>
+{% endwith %}
+
+{% if messages %}
+<div class="md-snackbar" id="manage-snackbar" role="status">
+  {% for message in messages %}
+    <div class="d-flex align-items-center gap-2">
+      <span class="material-symbols-outlined" aria-hidden="true">{% if message.level_tag == 'error' %}error{% else %}check_circle{% endif %}</span>
+      {{ message }}
+    </div>
+  {% endfor %}
+</div>
+<script>
+  setTimeout(function () {
+    var snackbar = document.getElementById("manage-snackbar");
+    if (snackbar) snackbar.hidden = true;
+  }, 5000);
+</script>
+{% endif %}
+{% endblock %}

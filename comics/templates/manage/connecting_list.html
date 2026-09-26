@@ -1,12 +1,9 @@
-{% extends 'base.html' %}
-{% load static %}
+{% extends 'manage/base_manage.html' %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/custom/manage.css' %}">
-{% endblock %}
+{% block breadcrumb %}<span class="is-current">Connectings</span>{% endblock %}
 
-{% block content %}
-<div class="my-4">
+{% block manage_content %}
+<div>
   <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
     <div>
       <h1 class="md-headline-small mb-0">Connectings</h1>

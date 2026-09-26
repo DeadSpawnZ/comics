@@ -1,0 +1,202 @@
+{% extends 'manage/base_manage.html' %}
+{% load static %}
+
+{% block breadcrumb %}
+<a href="{{ back_url }}">Ediciones</a>
+<span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+<span class="is-current">{% if edition %}{{ edition.publishing.publishing_title }} #{{ edition.number }} {{ edition.variant }}{% else %}Nueva{% endif %}</span>
+{% endblock %}
+
+{% block manage_content %}
+<form method="post" enctype="multipart/form-data" novalidate>
+  {% csrf_token %}
+  <input type="hidden" name="next" value="{{ back_url }}">
+
+  <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <a class="md-icon-btn" href="{{ back_url }}" aria-label="Volver a ediciones" title="Volver a ediciones">
+        <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+      </a>
+      <h1 class="md-headline-small mb-0">{% if edition %}Editar edición{% else %}Nueva edición{% endif %}</h1>
+    </div>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      {% if edition %}
+        <button type="button" class="md-btn md-btn--danger-outlined" data-bs-toggle="modal" data-bs-target="#deleteDialog"
+                data-delete-url="{% url 'manage_edition_delete' edition.pk %}"
+                data-delete-name="{{ edition.publishing.publishing_title }} #{{ edition.number }} {{ edition.variant }}">
+          <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+          Eliminar
+        </button>
+      {% endif %}
+      <button type="submit" name="save_continue" class="md-btn md-btn--tonal">Guardar y seguir editando</button>
+      <button type="submit" class="md-btn md-btn--filled">
+        <span class="material-symbols-outlined" aria-hidden="true">save</span>
+        Guardar
+      </button>
+    </div>
+  </div>
+
+  {% if form.non_field_errors or form.errors or content_errors %}
+    <div class="editor-errors mb-3" role="alert">
+      <span class="material-symbols-outlined" aria-hidden="true">error</span>
+      <ul>
+        {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+        {% for error in content_errors %}<li>{{ error }}</li>{% endfor %}
+        {% if form.errors and not form.non_field_errors %}<li>Revisa los campos marcados.</li>{% endif %}
+      </ul>
+    </div>
+  {% endif %}
+
+  <div class="row g-3">
+    <!-- Datos de la edicion -->
+    <div class="col-12 col-xl-8">
+      <div class="md-surface-card h-100">
+        <h2 class="md-title-medium mb-3">Datos de la edición</h2>
+        <div class="row g-3">
+          <div class="col-12">
+            <input type="search" class="form-control form-control-sm mb-1 filter-input" data-filter-select="{{ form.publishing.id_for_label }}"
+                   placeholder="Filtrar publishings…" aria-label="Filtrar publishings">
+            {% include 'manage/includes/field.html' with field=form.publishing %}
+          </div>
+          <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=form.number %}</div>
+          <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=form.variant %}</div>
+          <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=form.printing %}</div>
+          <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=form.format %}</div>
+          <div class="col-6 col-md-4">{% include 'manage/includes/field.html' with field=form.release_date %}</div>
+          <div class="col-6 col-md-4">{% include 'manage/includes/field.html' with field=form.cover_price %}</div>
+          <div class="col-6 col-md-2">{% include 'manage/includes/field.html' with field=form.ratio %}</div>
+          <div class="col-6 col-md-2">{% include 'manage/includes/field.html' with field=form.limited_to %}</div>
+          <div class="col-12">{% include 'manage/includes/field.html' with field=form.notes %}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Portada y artistas -->
+    <div class="col-12 col-xl-4">
+      <div class="md-surface-card h-100">
+        <h2 class="md-title-medium mb-3">Portada</h2>
+        <div class="edition-cover-preview mb-3">
+          {% if edition and edition.thumbnail %}
+            <img src="{{ edition.thumbnail.url }}" alt="Portada actual" id="cover-preview">
+          {% else %}
+            <img alt="" id="cover-preview" hidden>
+            <span class="material-symbols-outlined" aria-hidden="true" id="cover-placeholder">image</span>
+          {% endif %}
+        </div>
+        <label class="form-label md-label-large" for="{{ form.image.id_for_label }}">
+          {% if edition and edition.image %}Reemplazar portada{% else %}Subir portada{% endif %}
+        </label>
+        {{ form.image }}
+        {% for error in form.image.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+        <div class="md-body-medium mt-1 mb-3">La miniatura se genera sola al guardar.</div>
+
+        <div class="md-section-label">{{ form.cover_artists.label }}</div>
+        <div class="checkbox-list">
+          {% for checkbox in form.cover_artists %}
+            <label class="form-check">{{ checkbox.tag }} <span class="form-check-label">{{ checkbox.choice_label }}</span></label>
+          {% empty %}
+            <span class="md-body-medium">No hay artistas registrados.</span>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Contenido: issue o compilacion -->
+    <div class="col-12">
+      <div class="md-surface-card">
+        <h2 class="md-title-medium mb-1">Contenido</h2>
+        <p class="md-body-medium mb-3">¿Qué historia trae esta edición?</p>
+
+        <div class="md-segmented mb-3" role="radiogroup" aria-label="Tipo de contenido">
+          <label class="md-segmented__option">
+            <input type="radio" name="content" value="single" {% if content != 'compilation' %}checked{% endif %}>
+            <span><span class="material-symbols-outlined" aria-hidden="true">auto_stories</span> Issue individual</span>
+          </label>
+          <label class="md-segmented__option">
+            <input type="radio" name="content" value="compilation" {% if content == 'compilation' %}checked{% endif %}>
+            <span><span class="material-symbols-outlined" aria-hidden="true">library_books</span> Compilación</span>
+          </label>
+        </div>
+
+        <div id="content-single" {% if content == 'compilation' %}hidden{% endif %}>
+          <p class="md-body-medium">
+            Por default la edición es del issue de su publishing y número. Si es una edición extranjera o de aniversario
+            de un issue de otra serie, elige ese issue.
+          </p>
+          <div class="row g-3">
+            <div class="col-12 col-md-6">
+              <input type="search" class="form-control form-control-sm mb-1 filter-input" data-filter-select="issue-publishing"
+                     placeholder="Filtrar publishings…" aria-label="Filtrar publishings del issue">
+              <div class="form-floating md-field">
+                <select class="form-select" id="issue-publishing">
+                  <option value="">Elige un publishing…</option>
+                  {% for option in form.publishing.field.queryset %}
+                    <option value="{{ option.pk }}" {% if option.pk == issue_publishing_id %}selected{% endif %}>{{ option.publishing_title }}{% if option.year %} ({{ option.year }}){% endif %} {{ option.serie }} · {{ option.language|upper }}</option>
+                  {% endfor %}
+                </select>
+                <label for="issue-publishing">Publishing del issue</label>
+              </div>
+            </div>
+            <div class="col-12 col-md-6 d-flex flex-column justify-content-end">
+              <div class="form-floating md-field">
+                <select class="form-select" id="issue-select" name="issue">
+                  <option value="">Automático (según publishing y número)</option>
+                  {% for issue in issue_options %}
+                    <option value="{{ issue.pk }}" {% if issue.pk == selected_issue_id %}selected{% endif %}>{{ issue }}</option>
+                  {% endfor %}
+                </select>
+                <label for="issue-select">Issue</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="content-compilation" {% if content != 'compilation' %}hidden{% endif %}>
+          <p class="md-body-medium">Agrega los issues que recopila, en orden de lectura.</p>
+          <div class="row g-3 align-items-end">
+            <div class="col-12 col-md-5">
+              <input type="search" class="form-control form-control-sm mb-1 filter-input" data-filter-select="collected-publishing"
+                     placeholder="Filtrar publishings…" aria-label="Filtrar publishings de la compilación">
+              <div class="form-floating md-field">
+                <select class="form-select" id="collected-publishing">
+                  <option value="">Elige un publishing…</option>
+                  {% for option in form.publishing.field.queryset %}
+                    <option value="{{ option.pk }}">{{ option.publishing_title }}{% if option.year %} ({{ option.year }}){% endif %} {{ option.serie }} · {{ option.language|upper }}</option>
+                  {% endfor %}
+                </select>
+                <label for="collected-publishing">Publishing</label>
+              </div>
+            </div>
+            <div class="col-8 col-md-5">
+              <div class="form-floating md-field">
+                <select class="form-select" id="collected-issue" disabled>
+                  <option value="">Elige primero un publishing</option>
+                </select>
+                <label for="collected-issue">Issue</label>
+              </div>
+            </div>
+            <div class="col-4 col-md-2">
+              <button type="button" class="md-btn md-btn--tonal w-100" id="collected-add" disabled>
+                <span class="material-symbols-outlined" aria-hidden="true">add</span>
+                Agregar
+              </button>
+            </div>
+          </div>
+          <ol class="collected-list mt-3" id="collected-list"></ol>
+          <p class="md-body-medium mb-0" id="collected-empty">Todavía no hay issues en la compilación.</p>
+          <input type="hidden" name="collected" id="collected-input">
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+
+{% if edition %}
+  {% include 'manage/includes/delete_dialog.html' with delete_next=back_url %}
+{% endif %}
+{{ form_data|json_script:"edition-form-data" }}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/custom/edition_form.js' %}"></script>
+{% endblock %}
