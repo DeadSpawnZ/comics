@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-26 17:23-0600\n"
+"POT-Creation-Date: 2026-09-26 17:45-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -57,7 +57,8 @@ msgstr "Portada"
 msgid "Cover artists"
 msgstr "Artistas de portada"
 
-#: comics/forms.py:152 comics/templates/manage/connecting_editor.html:82
+#: comics/forms.py:152 comics/forms.py:197
+#: comics/templates/manage/connecting_editor.html:82
 #: comics/templates/manage/connecting_editor.html:83 comics/views/manage.py:26
 msgid "Notes"
 msgstr "Notas"
@@ -65,6 +66,15 @@ msgstr "Notas"
 #: comics/forms.py:162
 msgid "An edition with that publishing, number, variant and printing already exists."
 msgstr "Ya existe una edición con ese publishing, número, variante e impresión."
+
+#: comics/forms.py:197 comics/templates/manage/connecting_editor.html:64
+#: comics/templates/manage/connecting_editor.html:65 comics/views/manage.py:23
+msgid "Name"
+msgstr "Nombre"
+
+#: comics/forms.py:199
+msgid "A reading arc with that name already exists."
+msgstr "Ya existe un arco de lectura con ese nombre."
 
 #: comics/models.py:83
 msgid "English"
@@ -82,96 +92,108 @@ msgstr ""
 msgid "year"
 msgstr "año"
 
-#: comics/models.py:202
+#: comics/models.py:203
 msgid "Single issue"
 msgstr "Grapa"
 
-#: comics/models.py:203
+#: comics/models.py:204
 msgid "Prestige"
 msgstr ""
 
-#: comics/models.py:204
+#: comics/models.py:205
 msgid "TPB - Trade Paperback"
 msgstr ""
 
-#: comics/models.py:205
+#: comics/models.py:206
 msgid "HC - Hardcover"
 msgstr ""
 
-#: comics/models.py:206
+#: comics/models.py:207
 msgid "Ashcan"
 msgstr ""
 
-#: comics/models.py:207
+#: comics/models.py:208
 msgid "Digital"
 msgstr ""
 
-#: comics/models.py:208
+#: comics/models.py:209
 msgid "Magazine"
 msgstr ""
 
-#: comics/models.py:211
+#: comics/models.py:212
 msgid "1st"
 msgstr ""
 
-#: comics/models.py:212
+#: comics/models.py:213
 msgid "2nd"
 msgstr ""
 
-#: comics/models.py:213
+#: comics/models.py:214
 msgid "3rd"
 msgstr ""
 
-#: comics/models.py:214
+#: comics/models.py:215
 msgid "4th"
 msgstr ""
 
-#: comics/models.py:215
+#: comics/models.py:216
 msgid "5th"
 msgstr ""
 
-#: comics/models.py:216
+#: comics/models.py:217
 msgid "6th"
 msgstr ""
 
-#: comics/models.py:477
+#: comics/models.py:478
 msgid "Buying"
 msgstr "Compra"
 
-#: comics/models.py:478
+#: comics/models.py:479
 msgid "Selling"
 msgstr "Venta"
 
-#: comics/models.py:587
+#: comics/models.py:572 comics/views/manage_arcs.py:63
+msgid "The list of issues is not valid."
+msgstr "La lista de issues no es válida."
+
+#: comics/models.py:575
+msgid "An issue is repeated in the reading arc."
+msgstr "Un issue está repetido en el arco de lectura."
+
+#: comics/models.py:577
+msgid "One of the issues no longer exists."
+msgstr "Alguno de los issues ya no existe."
+
+#: comics/models.py:656
 #, python-format
 msgid "Piece %(index)s is not valid."
 msgstr "La pieza %(index)s no es válida."
 
-#: comics/models.py:591
+#: comics/models.py:660
 #, python-format
 msgid "Position (%(row)s, %(column)s) is outside the %(layout)s grid."
 msgstr "La posición (%(row)s, %(column)s) está fuera de la cuadrícula de %(layout)s."
 
-#: comics/models.py:599
+#: comics/models.py:668
 msgid "Two pieces are in the same position."
 msgstr "Hay dos piezas en la misma posición."
 
-#: comics/models.py:602
+#: comics/models.py:671
 msgid "A comic cannot appear twice in the same connecting."
 msgstr "Un comic no puede estar dos veces en el mismo connecting."
 
-#: comics/models.py:604
+#: comics/models.py:673
 msgid "One of the comics no longer exists."
 msgstr "Alguno de los comics ya no existe."
 
-#: comics/models.py:666
+#: comics/models.py:735
 #, python-format
 msgid "The connecting only has %(count)d row."
 msgid_plural "The connecting only has %(count)d rows."
 msgstr[0] "El connecting solo tiene %(count)d fila."
 msgstr[1] "El connecting solo tiene %(count)d filas."
 
-#: comics/models.py:670
+#: comics/models.py:739
 #, python-format
 msgid "The connecting only has %(count)d column."
 msgid_plural "The connecting only has %(count)d columns."
@@ -183,7 +205,7 @@ msgid "Open navigation"
 msgstr "Abrir navegación"
 
 #: comics/templates/base.html:77 comics/templates/manage/base_manage.html:12
-#: comics/templates/manage/base_manage.html:35
+#: comics/templates/manage/base_manage.html:43
 msgid "Management"
 msgstr "Gestión"
 
@@ -358,6 +380,133 @@ msgstr "Página siguiente"
 msgid "Last page"
 msgstr "Última página"
 
+#: comics/templates/manage/arc_form.html:5
+#: comics/templates/manage/arc_list.html:4
+#: comics/templates/manage/arc_list.html:9
+#: comics/templates/manage/base_manage.html:27
+msgid "Reading arcs"
+msgstr "Arcos de lectura"
+
+#: comics/templates/manage/arc_form.html:7
+msgctxt "reading arc"
+msgid "New"
+msgstr "Nuevo"
+
+#: comics/templates/manage/arc_form.html:17
+msgid "Back to reading arcs"
+msgstr "Volver a arcos de lectura"
+
+#: comics/templates/manage/arc_form.html:20
+msgid "Edit reading arc"
+msgstr "Editar arco de lectura"
+
+#: comics/templates/manage/arc_form.html:20
+#: comics/templates/manage/arc_list.html:14
+msgid "New reading arc"
+msgstr "Nuevo arco de lectura"
+
+#: comics/templates/manage/arc_form.html:27
+#: comics/templates/manage/edition_form.html:28
+#: comics/templates/manage/edition_list.html:100
+#: comics/templates/manage/includes/delete_dialog.html:16
+msgid "Delete"
+msgstr "Eliminar"
+
+#: comics/templates/manage/arc_form.html:30
+#: comics/templates/manage/edition_form.html:31
+msgid "Save and continue editing"
+msgstr "Guardar y seguir editando"
+
+#: comics/templates/manage/arc_form.html:33
+#: comics/templates/manage/connecting_editor.html:26
+#: comics/templates/manage/edition_form.html:34
+msgid "Save"
+msgstr "Guardar"
+
+#: comics/templates/manage/arc_form.html:44
+#: comics/templates/manage/edition_form.html:45
+msgid "Check the highlighted fields."
+msgstr "Revisa los campos marcados."
+
+#: comics/templates/manage/arc_form.html:58
+msgid "Issues in reading order"
+msgstr "Issues en orden de lectura"
+
+#: comics/templates/manage/arc_form.html:61
+#, python-format
+msgid "You own %(owned)s of %(total)s"
+msgstr "Tienes %(owned)s de %(total)s"
+
+#: comics/templates/manage/arc_form.html:66
+msgid "An issue counts as owned if you have any of its editions (any variant, printing or country) or a compilation that collects it. Ownership is refreshed after saving."
+msgstr "Un issue cuenta como tuyo si tienes cualquiera de sus ediciones (cualquier variante, impresión o país) o una compilación que lo incluya. Lo que tienes se actualiza al guardar."
+
+#: comics/templates/manage/arc_form.html:75
+#: comics/templates/manage/edition_form.html:58
+#: comics/templates/manage/edition_form.html:131
+#: comics/templates/manage/edition_form.html:161
+msgid "Filter publishings…"
+msgstr "Filtrar publishings…"
+
+#: comics/templates/manage/arc_form.html:75
+#: comics/templates/manage/connecting_editor.html:43
+#: comics/templates/manage/connecting_editor.html:44
+#: comics/templates/manage/edition_form.html:58
+msgid "Filter publishings"
+msgstr "Filtrar publishings"
+
+#: comics/templates/manage/arc_form.html:78
+#: comics/templates/manage/connecting_editor.html:48
+#: comics/templates/manage/edition_form.html:134
+#: comics/templates/manage/edition_form.html:164
+msgid "Choose a publishing…"
+msgstr "Elige un publishing…"
+
+#: comics/templates/manage/arc_form.html:89
+#: comics/templates/manage/edition_form.html:175
+msgid "Choose a publishing first"
+msgstr "Elige primero un publishing"
+
+#: comics/templates/manage/arc_form.html:97
+#: comics/templates/manage/edition_form.html:183
+msgid "Add"
+msgstr "Agregar"
+
+#: comics/templates/manage/arc_form.html:103
+msgid "There are no issues in the reading arc yet."
+msgstr "Todavía no hay issues en el arco de lectura."
+
+#: comics/templates/manage/arc_form.html:109
+msgid "Delete reading arc?"
+msgstr "¿Eliminar arco de lectura?"
+
+#: comics/templates/manage/arc_list.html:10
+#, python-format
+msgid "%(counter)s reading arc"
+msgid_plural "%(counter)s reading arcs"
+msgstr[0] "%(counter)s arco de lectura"
+msgstr[1] "%(counter)s arcos de lectura"
+
+#: comics/templates/manage/arc_list.html:21
+msgid "There are no reading arcs yet."
+msgstr "Todavía no hay arcos de lectura."
+
+#: comics/templates/manage/arc_list.html:22
+#: comics/templates/manage/connecting_list.html:23
+msgid "Create the first one"
+msgstr "Crear el primero"
+
+#: comics/templates/manage/arc_list.html:40
+#, python-format
+msgid "%(counter)s issue · you own %(owned)s"
+msgid_plural "%(counter)s issues · you own %(owned)s"
+msgstr[0] "%(counter)s issue · tienes %(owned)s"
+msgstr[1] "%(counter)s issues · tienes %(owned)s"
+
+#: comics/templates/manage/arc_list.html:43
+msgid "Progress"
+msgstr "Progreso"
+
 #: comics/templates/manage/base_manage.html:11
 msgid "Management sections"
 msgstr "Secciones de gestión"
@@ -369,7 +518,7 @@ msgstr "Secciones de gestión"
 msgid "Editions"
 msgstr "Ediciones"
 
-#: comics/templates/manage/base_manage.html:34
+#: comics/templates/manage/base_manage.html:42
 msgid "Breadcrumb"
 msgstr "Ruta"
 
@@ -387,31 +536,9 @@ msgstr "Volver a connectings"
 msgid "New connecting"
 msgstr "Nuevo connecting"
 
-#: comics/templates/manage/connecting_editor.html:26
-#: comics/templates/manage/edition_form.html:34
-msgid "Save"
-msgstr "Guardar"
-
-#: comics/templates/manage/connecting_editor.html:43
-#: comics/templates/manage/connecting_editor.html:44
-#: comics/templates/manage/edition_form.html:58
-msgid "Filter publishings"
-msgstr "Filtrar publishings"
-
-#: comics/templates/manage/connecting_editor.html:48
-#: comics/templates/manage/edition_form.html:134
-#: comics/templates/manage/edition_form.html:164
-msgid "Choose a publishing…"
-msgstr "Elige un publishing…"
-
 #: comics/templates/manage/connecting_editor.html:53
 msgid "Choose a publishing to see its comics."
 msgstr "Elige un publishing para ver sus comics."
-
-#: comics/templates/manage/connecting_editor.html:64
-#: comics/templates/manage/connecting_editor.html:65 comics/views/manage.py:23
-msgid "Name"
-msgstr "Nombre"
 
 #: comics/templates/manage/connecting_editor.html:70
 #: comics/templates/manage/connecting_editor.html:71 comics/views/manage.py:24
@@ -450,10 +577,6 @@ msgstr[1] "%(counter)s connectings"
 msgid "There are no connectings yet."
 msgstr "Todavía no hay connectings."
 
-#: comics/templates/manage/connecting_list.html:23
-msgid "Create the first one"
-msgstr "Crear el primero"
-
 #: comics/templates/manage/connecting_list.html:47
 #, python-format
 msgid "%(layout)s · %(pieces)s/%(capacity)s pieces · you own %(owned)s"
@@ -477,29 +600,9 @@ msgstr "Editar edición"
 msgid "New edition"
 msgstr "Nueva edición"
 
-#: comics/templates/manage/edition_form.html:28
-#: comics/templates/manage/edition_list.html:100
-#: comics/templates/manage/includes/delete_dialog.html:16
-msgid "Delete"
-msgstr "Eliminar"
-
-#: comics/templates/manage/edition_form.html:31
-msgid "Save and continue editing"
-msgstr "Guardar y seguir editando"
-
-#: comics/templates/manage/edition_form.html:45
-msgid "Check the highlighted fields."
-msgstr "Revisa los campos marcados."
-
 #: comics/templates/manage/edition_form.html:54
 msgid "Edition data"
 msgstr "Datos de la edición"
-
-#: comics/templates/manage/edition_form.html:58
-#: comics/templates/manage/edition_form.html:131
-#: comics/templates/manage/edition_form.html:161
-msgid "Filter publishings…"
-msgstr "Filtrar publishings…"
 
 #: comics/templates/manage/edition_form.html:80
 msgid "Current cover"
@@ -565,14 +668,6 @@ msgstr "Agrega los issues que recopila, en orden de lectura."
 #: comics/templates/manage/edition_form.html:161
 msgid "Filter the compilation publishings"
 msgstr "Filtrar publishings de la compilación"
-
-#: comics/templates/manage/edition_form.html:175
-msgid "Choose a publishing first"
-msgstr "Elige primero un publishing"
-
-#: comics/templates/manage/edition_form.html:183
-msgid "Add"
-msgstr "Agregar"
 
 #: comics/templates/manage/edition_form.html:188
 msgid "There are no issues in the compilation yet."
@@ -659,6 +754,21 @@ msgstr "Ya existe un connecting con ese nombre."
 #: comics/views/manage.py:131
 msgid "The request is not valid."
 msgstr "La solicitud no es válida."
+
+#: comics/views/manage_arcs.py:77
+#, python-format
+msgid "Reading arc created: %(arc)s"
+msgstr "Arco de lectura creado: %(arc)s"
+
+#: comics/views/manage_arcs.py:77
+#, python-format
+msgid "Reading arc saved: %(arc)s"
+msgstr "Arco de lectura guardado: %(arc)s"
+
+#: comics/views/manage_arcs.py:117
+#, python-format
+msgid "Reading arc deleted: %(arc)s"
+msgstr "Arco de lectura eliminado: %(arc)s"
 
 #: comics/views/manage_editions.py:26
 msgctxt "editions"

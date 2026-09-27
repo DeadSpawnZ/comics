@@ -159,8 +159,9 @@ class Artist(Model):
 
 class IssueQuerySet(QuerySet):
     def delete_orphans(self):
-        """Delete the issues in this queryset that no longer have editions and are not in a compilation."""
-        return self.filter(editions__isnull=True, collected_in__isnull=True).delete()
+        """Delete the issues in this queryset that no longer have editions, are not in a
+        compilation and are not part of any reading arc."""
+        return self.filter(editions__isnull=True, collected_in__isnull=True, arc_entries__isnull=True).delete()
 
     def with_first_release(self):
         """Annotate `first_release`: the earliest date among its 1st-printing editions
@@ -550,11 +551,79 @@ class Signature(Model):
         )
 
 
-class StoryArc(Model):
+class ReadingArc(Model):
+    """An ordered sequence of issues to read, possibly across different titles and publishings."""
+
     name = CharField(max_length=100, unique=True)
-    publishings = ManyToManyField(Publishing)
-    order = IntegerField()
     notes = TextField(max_length=500, blank=True)
+    issues = ManyToManyField(Issue, through="ReadingArcEntry", related_name="reading_arcs")
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+    def clean_issue_ids(self, issue_ids):
+        """Validate an ordered list of issue ids and return it as ints."""
+        try:
+            cleaned = [int(issue_id) for issue_id in issue_ids]
+        except (TypeError, ValueError):
+            raise ValidationError(gettext("The list of issues is not valid."))
+        errors = []
+        if len(cleaned) != len(set(cleaned)):
+            errors.append(gettext("An issue is repeated in the reading arc."))
+        if Issue.objects.filter(pk__in=cleaned).count() != len(set(cleaned)):
+            errors.append(gettext("One of the issues no longer exists."))
+        if errors:
+            raise ValidationError(errors)
+        return cleaned
+
+    def set_issues(self, issue_ids):
+        """Replace all entries. They are deleted and inserted again because updating them
+        one by one violates the UniqueConstraints when entries are reordered."""
+        self.entries.all().delete()
+        ReadingArcEntry.objects.bulk_create(
+            ReadingArcEntry(arc=self, issue_id=issue_id, order=order) for order, issue_id in enumerate(issue_ids, start=1)
+        )
+
+    def entries_with_ownership(self, user):
+        """Entries in reading order, each flagged with whether `user` owns the issue.
+        An issue counts as owned if the user owns any edition of it (any variant, printing
+        or country) or a compilation that collects it."""
+        entries = list(self.entries.select_related("issue__publishing"))
+        issue_ids = [entry.issue_id for entry in entries]
+        owned = Collection.objects.owned_by(user)
+        direct = set(owned.filter(edition__issue_id__in=issue_ids).values_list("edition__issue_id", flat=True))
+        collected = set(
+            owned.filter(edition__collected_entries__issue_id__in=issue_ids).values_list(
+                "edition__collected_entries__issue_id", flat=True
+            )
+        )
+        covers = {}
+        for edition in Edition.objects.filter(issue_id__in=issue_ids).exclude(thumbnail="").order_by("release_date", "id"):
+            covers.setdefault(edition.issue_id, edition.thumbnail.url)
+        for entry in entries:
+            entry.owned = entry.issue_id in direct or entry.issue_id in collected
+            entry.owned_in_compilation = entry.issue_id not in direct and entry.issue_id in collected
+            entry.cover_url = covers.get(entry.issue_id)
+        return entries
+
+
+class ReadingArcEntry(Model):
+    arc = ForeignKey(ReadingArc, on_delete=CASCADE, related_name="entries")
+    issue = ForeignKey(Issue, on_delete=PROTECT, related_name="arc_entries")
+    order = PositiveSmallIntegerField(validators=[MinValueValidator(1)])
+
+    class Meta:
+        ordering = ["order"]
+        constraints = [
+            UniqueConstraint(fields=["arc", "issue"], name="unique_reading_arc_issue"),
+            UniqueConstraint(fields=["arc", "order"], name="unique_reading_arc_order"),
+        ]
+
+    def __str__(self):
+        return f"{self.arc} #{self.order}: {self.issue}"
 
 
 class Connecting(Model):

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-26 17:22-0600\n"
+"POT-Creation-Date: 2026-09-26 17:45-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,6 +17,20 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+#: comics/static/js/custom/arc_form.js:36
+msgid "In a compilation"
+msgstr "En una compilación"
+
+#: comics/static/js/custom/arc_form.js:37
+#: comics/static/js/custom/connecting_editor.js:100
+msgid "You own it"
+msgstr "Lo tienes"
+
+#: comics/static/js/custom/arc_form.js:38
+#: comics/static/js/custom/connecting_editor.js:100
+msgid "Missing"
+msgstr "Falta"
+
 #: comics/static/js/custom/connecting_editor.js:77
 #: comics/static/js/custom/connecting_editor.js:419
 #: comics/static/js/custom/connecting_editor.js:425
@@ -24,16 +38,8 @@ msgstr ""
 msgid "Unsaved changes"
 msgstr "Cambios sin guardar"
 
-#: comics/static/js/custom/connecting_editor.js:100
-msgid "You own it"
-msgstr "Lo tienes"
-
-#: comics/static/js/custom/connecting_editor.js:100
-msgid "Missing"
-msgstr "Falta"
-
 #: comics/static/js/custom/connecting_editor.js:174
-#: comics/static/js/custom/edition_form.js:93
+#: comics/static/js/custom/issue_picker.js:80
 msgid "Remove %(name)s"
 msgstr "Quitar %(name)s"
 
@@ -66,7 +72,7 @@ msgid "Choose a publishing to see its comics."
 msgstr "Elige un publishing para ver sus comics."
 
 #: comics/static/js/custom/connecting_editor.js:342
-#: comics/static/js/custom/edition_form.js:112
+#: comics/static/js/custom/issue_picker.js:94
 msgid "Loading…"
 msgstr "Cargando…"
 
@@ -106,22 +112,22 @@ msgstr "Connecting guardado"
 msgid "Could not connect to the server."
 msgstr "No se pudo conectar con el servidor."
 
-#: comics/static/js/custom/edition_form.js:91
+#: comics/static/js/custom/issue_picker.js:78
 msgid "Move %(name)s up"
 msgstr "Subir %(name)s"
 
-#: comics/static/js/custom/edition_form.js:92
+#: comics/static/js/custom/issue_picker.js:79
 msgid "Move %(name)s down"
 msgstr "Bajar %(name)s"
 
-#: comics/static/js/custom/edition_form.js:112
+#: comics/static/js/custom/issue_picker.js:94
 msgid "Choose a publishing first"
 msgstr "Elige primero un publishing"
 
-#: comics/static/js/custom/edition_form.js:118
+#: comics/static/js/custom/issue_picker.js:100
 msgid "Choose an issue…"
 msgstr "Elige un issue…"
 
-#: comics/static/js/custom/edition_form.js:118
+#: comics/static/js/custom/issue_picker.js:100
 msgid "This publishing has no issues"
 msgstr "Este publishing no tiene issues"

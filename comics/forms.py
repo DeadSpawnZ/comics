@@ -1,7 +1,7 @@
 from django import forms
 from django.core.exceptions import NON_FIELD_ERRORS
 from django.utils.translation import gettext_lazy as _
-from .models import Collection, Edition, Publishing, Dealer
+from .models import Collection, Edition, Publishing, Dealer, ReadingArc
 
 
 class CollectionForm(forms.ModelForm):
@@ -179,6 +179,29 @@ class EditionManageForm(forms.ModelForm):
                 widget.attrs["class"] = "form-select"
             else:
                 widget.attrs.update({"class": "form-control", "placeholder": field.label})
+        self.fields["notes"].widget.attrs["style"] = "height: 90px"
+
+    def full_clean(self):
+        super().full_clean()
+        for name in self.errors:
+            if name in self.fields:
+                widget = self.fields[name].widget
+                widget.attrs["class"] = f"{widget.attrs.get('class', '')} is-invalid".strip()
+
+class ReadingArcForm(forms.ModelForm):
+    """Reading arc data for the Gestion module. The ordered issues are handled in the view."""
+
+    class Meta:
+        model = ReadingArc
+        fields = ["name", "notes"]
+        labels = {"name": _("Name"), "notes": _("Notes")}
+        widgets = {"notes": forms.Textarea(attrs={"rows": 3})}
+        error_messages = {"name": {"unique": _("A reading arc with that name already exists.")}}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs.update({"class": "form-control", "placeholder": field.label})
         self.fields["notes"].widget.attrs["style"] = "height: 90px"
 
     def full_clean(self):

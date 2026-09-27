@@ -22,6 +22,8 @@ from .models import (
     GeekCollectable,
     Connecting,
     ConnectingPiece,
+    ReadingArc,
+    ReadingArcEntry,
 )
 from .forms import CollectionForm, EditionForm
 
@@ -397,3 +399,31 @@ class ConnectingAdmin(admin.ModelAdmin):
             extra_context["owned_count"] = sum(1 for piece in pieces if piece.owned)
             extra_context["piece_total"] = len(pieces)
         return super().change_view(request, object_id, form_url, extra_context=extra_context)
+
+
+class ReadingArcEntryInline(admin.TabularInline):
+    model = ReadingArcEntry
+    extra = 0
+    fields = ["order", "issue"]
+    autocomplete_fields = ["issue"]
+
+
+@admin.register(ReadingArc)
+class ReadingArcAdmin(admin.ModelAdmin):
+    list_display = ["name", "entry_count"]
+    search_fields = ["name"]
+    fields = ["name", "notes"]
+    inlines = [ReadingArcEntryInline]
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).annotate(entry_count=Count("entries"))
+
+    @admin.display(description="Issues", ordering="entry_count")
+    def entry_count(self, obj):
+        return obj.entry_count
+
+    def save_formset(self, request, form, formset, change):
+        if formset.model is ReadingArcEntry:
+            save_formset_reinserting(formset)
+        else:
+            super().save_formset(request, form, formset, change)

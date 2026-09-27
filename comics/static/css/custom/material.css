@@ -618,3 +618,17 @@ a.md-paginator__page:hover {
 .md-menu__check {
   width: 1.35rem;
 }
+
+/* Linear progress indicator */
+.md-progress {
+  height: 4px;
+  border-radius: 999px;
+  background-color: var(--md-surface-container-highest);
+  overflow: hidden;
+}
+
+.md-progress__bar {
+  height: 100%;
+  border-radius: 999px;
+  background-color: var(--md-primary);
+}

@@ -20,6 +20,14 @@
         </a>
       </li>
       <li>
+        <a class="manage-nav__link {% if 'arc' in url_name %}is-active{% endif %}"
+           {% if 'arc' in url_name %}aria-current="page"{% endif %}
+           href="{% url 'manage_arcs' %}">
+          <span class="material-symbols-outlined" aria-hidden="true">format_list_numbered</span>
+          {% translate "Reading arcs" %}
+        </a>
+      </li>
+      <li>
         <a class="manage-nav__link {% if 'connecting' in url_name %}is-active{% endif %}"
            {% if 'connecting' in url_name %}aria-current="page"{% endif %}
            href="{% url 'manage_connectings' %}">

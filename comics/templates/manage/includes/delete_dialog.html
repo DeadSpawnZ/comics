@@ -6,7 +6,7 @@
         {% csrf_token %}
         <input type="hidden" name="next" value="{{ delete_next|default:request.get_full_path }}">
         <div class="modal-header">
-          <h2 class="modal-title md-headline-small" id="deleteDialogTitle">{% translate "Delete edition?" %}</h2>
+          <h2 class="modal-title md-headline-small" id="deleteDialogTitle">{% if delete_title %}{{ delete_title }}{% else %}{% translate "Delete edition?" %}{% endif %}</h2>
         </div>
         <div class="modal-body">
           {% blocktranslate trimmed %}<strong id="deleteDialogName"></strong> will be deleted. This action cannot be undone.{% endblocktranslate %}
