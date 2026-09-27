@@ -1,0 +1,37 @@
+{% load i18n %}
+{% comment %}
+Other editions of the same issue, grouped as regular, incentive and retailer-exclusive covers.
+Params: siblings (all the editions), groups (Edition.group_by_cover_kind(siblings); `owned` is shown when set),
+current (the edition being viewed), edit_back_url (optional: when given, each thumbnail links to its Gestión edit page).
+{% endcomment %}
+<section class="mt-3">
+  <div class="md-section-label">
+    {% blocktranslate count counter=siblings|length %}{{ counter }} other edition of this issue{% plural %}{{ counter }} other editions of this issue{% endblocktranslate %}
+  </div>
+  {% for kind, label, editions in groups %}
+    {% if groups|length > 1 %}<div class="sibling-editions__group">{{ label }} ({{ editions|length }})</div>{% endif %}
+    <div class="sibling-editions">
+      {% for sibling in editions %}
+        <div class="sibling-edition {% if sibling.owned %}is-owned{% endif %}"
+             title="{{ sibling.publishing.publishing_title }} #{{ sibling.number }} {{ sibling.variant }} · {{ sibling.get_printing_display }} · {{ sibling.publishing.get_language_display }}{% if sibling.ratio %} · {{ sibling.ratio }}{% endif %}{% if sibling.retailer_exclusive %} · {{ sibling.retailer_exclusive }}{% endif %}{% if sibling.owned %} · {% translate 'You own it' %}{% endif %}">
+          {% if sibling.thumbnail %}
+            <img src="{{ sibling.thumbnail.url }}" alt="{{ sibling.publishing.publishing_title }} #{{ sibling.number }} {{ sibling.variant }}" loading="lazy">
+          {% else %}
+            <span class="sibling-edition__placeholder material-symbols-outlined" aria-hidden="true">image</span>
+          {% endif %}
+          {% if sibling.owned %}
+            <span class="sibling-edition__badge material-symbols-outlined" aria-label="{% translate 'You own it' %}">check</span>
+          {% endif %}
+          <div class="sibling-edition__caption">
+            {{ sibling.variant|default:"—" }} ·
+            {% if kind == "incentive" %}{{ sibling.ratio }}{% elif kind == "retailer_exclusive" %}{{ sibling.retailer_exclusive }}{% else %}{{ sibling.get_printing_display }}{% endif %}{% if sibling.publishing_id != current.publishing_id %} · {{ sibling.publishing.language|upper }}{% endif %}
+          </div>
+          {% if edit_back_url %}
+            <a class="stretched-link" href="{% url 'manage_edition_edit' sibling.pk %}?next={{ edit_back_url|urlencode }}"
+               aria-label="{% blocktranslate with edition=sibling %}Edit {{ edition }}{% endblocktranslate %}"></a>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  {% endfor %}
+</section>

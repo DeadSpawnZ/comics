@@ -62,42 +62,87 @@
           <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=form.variant %}</div>
           <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=form.printing %}</div>
           <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=form.format %}</div>
-          <div class="col-6 col-md-4">{% include 'manage/includes/field.html' with field=form.release_date %}</div>
-          <div class="col-6 col-md-4">{% include 'manage/includes/field.html' with field=form.cover_price %}</div>
-          <div class="col-6 col-md-2">{% include 'manage/includes/field.html' with field=form.ratio %}</div>
-          <div class="col-6 col-md-2">{% include 'manage/includes/field.html' with field=form.limited_to %}</div>
+          <div class="col-6">{% include 'manage/includes/field.html' with field=form.release_date %}</div>
+          <div class="col-6">{% include 'manage/includes/field.html' with field=form.cover_price %}</div>
+          <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=form.ratio %}</div>
+          <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=form.limited_to %}</div>
+          <div class="col-12 col-md-6">{% include 'manage/includes/field.html' with field=form.retailer_exclusive %}</div>
+          <div class="col-12 md-body-medium mt-1">
+            {% blocktranslate trimmed %}
+              With a ratio (1:N) the cover counts as incentive. Fill in the store only for retailer-exclusive covers.
+            {% endblocktranslate %}
+          </div>
           <div class="col-12">{% include 'manage/includes/field.html' with field=form.notes %}</div>
+
+          <div class="col-12">
+            <div class="md-section-label">{{ form.cover_artists.label }}</div>
+            {% if form.cover_artists.field.queryset.exists %}
+              <div class="row g-3 align-items-center">
+                <div class="col-12 col-md-8">
+                  {# One chip per artist; its hidden checkbox is what gets submitted. Only checked ones are shown. #}
+                  <ul class="artist-list" id="artist-list">
+                    {% for checkbox in form.cover_artists %}
+                      {% with artist=checkbox.data.value.instance %}
+                      <li class="artist-list__item" data-artist-id="{{ artist.pk }}" data-artist-name="{{ artist.name }}" {% if not checkbox.data.selected %}hidden{% endif %}>
+                        <span hidden>{{ checkbox.tag }}</span>
+                        {% if artist.photo %}
+                          <img class="artist-list__photo" src="{{ artist.photo.url }}" alt="" loading="lazy">
+                        {% else %}
+                          <span class="artist-list__photo material-symbols-outlined" aria-hidden="true">person</span>
+                        {% endif %}
+                        <span class="artist-list__name">{{ artist.name }}</span>
+                        <button type="button" class="artist-list__remove" data-artist-remove
+                                aria-label="{% blocktranslate with name=artist.name %}Remove {{ name }}{% endblocktranslate %}"
+                                title="{% blocktranslate with name=artist.name %}Remove {{ name }}{% endblocktranslate %}">
+                          <span class="material-symbols-outlined" aria-hidden="true">close</span>
+                        </button>
+                      </li>
+                      {% endwith %}
+                    {% endfor %}
+                  </ul>
+                  <p class="md-body-medium mb-0" id="artist-empty" hidden>{% translate "No cover artists yet." %}</p>
+                </div>
+                <div class="col-12 col-md-4">
+                  <div class="form-floating md-field">
+                    <select class="form-select" id="artist-add">
+                      <option value="">{% translate "Choose an artist…" %}</option>
+                    </select>
+                    <label for="artist-add">{% translate "Add artist" %}</label>
+                  </div>
+                </div>
+              </div>
+            {% else %}
+              <span class="md-body-medium">{% translate "There are no artists yet." %}</span>
+            {% endif %}
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Cover and artists -->
+    <!-- Cover and other editions of the same issue -->
     <div class="col-12 col-xl-4">
       <div class="md-surface-card h-100">
         <h2 class="md-title-medium mb-3">{% translate "Cover" %}</h2>
-        <div class="edition-cover-preview mb-3">
+        {% if edition and edition.image %}{% translate "Replace cover" as cover_action %}{% else %}{% translate "Upload cover" as cover_action %}{% endif %}
+        <div class="edition-cover-preview mb-2">
           {% if edition and edition.thumbnail %}
             <img src="{{ edition.thumbnail.url }}" alt="{% translate 'Current cover' %}" id="cover-preview">
           {% else %}
             <img alt="" id="cover-preview" hidden>
             <span class="material-symbols-outlined" aria-hidden="true" id="cover-placeholder">image</span>
           {% endif %}
+          <button type="button" class="edition-cover-edit" id="cover-edit" aria-label="{{ cover_action }}" title="{{ cover_action }}">
+            <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+          </button>
         </div>
-        <label class="form-label md-label-large" for="{{ form.image.id_for_label }}">
-          {% if edition and edition.image %}{% translate "Replace cover" %}{% else %}{% translate "Upload cover" %}{% endif %}
-        </label>
-        {{ form.image }}
-        {% for error in form.image.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
-        <div class="md-body-medium mt-1 mb-3">{% translate "The thumbnail is generated automatically on save." %}</div>
+        <div hidden>{{ form.image }}</div>
+        {% for error in form.image.errors %}<div class="invalid-feedback d-block text-center">{{ error }}</div>{% endfor %}
+        <div class="md-body-medium text-center mb-1" id="cover-file-name" hidden></div>
+        <div class="md-body-medium text-center mb-3">{% translate "The thumbnail is generated automatically on save." %}</div>
 
-        <div class="md-section-label">{{ form.cover_artists.label }}</div>
-        <div class="checkbox-list">
-          {% for checkbox in form.cover_artists %}
-            <label class="form-check">{{ checkbox.tag }} <span class="form-check-label">{{ checkbox.choice_label }}</span></label>
-          {% empty %}
-            <span class="md-body-medium">{% translate "There are no artists yet." %}</span>
-          {% endfor %}
-        </div>
+        {% if sibling_editions %}
+          {% include 'includes/sibling_editions.html' with siblings=sibling_editions groups=sibling_groups current=edition edit_back_url=back_url %}
+        {% endif %}
       </div>
     </div>
 

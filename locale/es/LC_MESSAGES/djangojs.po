@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-27 13:29-0600\n"
+"POT-Creation-Date: 2026-09-27 13:58-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -117,6 +117,10 @@ msgstr "%(issue)s · issue propio"
 #: comics/static/js/custom/edition_form.js:61
 msgid "%(issue)s · own issue (will be created)"
 msgstr "%(issue)s · issue propio (se creará)"
+
+#: comics/static/js/custom/edition_form.js:109
+msgid "New cover: %(name)s (applied on save)"
+msgstr "Nueva portada: %(name)s (se aplica al guardar)"
 
 #: comics/static/js/custom/issue_picker.js:78
 msgid "Move %(name)s up"

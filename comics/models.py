@@ -241,6 +241,11 @@ class Edition(Model):
     printing = CharField(max_length=10, choices=PrintingChoices.choices, default=PrintingChoices.FIRST)
     ratio = CharField(max_length=10, blank=True, validators=ratio_validator)
     limited_to = CharField(max_length=10, blank=True, validators=limited_to_validator)
+    retailer_exclusive = CharField(
+        max_length=60,
+        blank=True,
+        help_text="Store the cover is exclusive to (retailer exclusive). Empty for regular and incentive covers.",
+    )
     cover_price = DecimalField(max_digits=8, decimal_places=2, default=0.00)
     format = CharField(max_length=20, choices=FormatChoices, default=FormatChoices.SINGLE_ISSUE)
     release_date = DateField(default=datetime.now)
@@ -289,6 +294,29 @@ class Edition(Model):
             comic_name += " [Compilation]"
 
         return comic_name
+
+    COVER_KINDS = (
+        ("regular", _("Regular covers")),
+        ("incentive", _("Incentive covers")),
+        ("retailer_exclusive", _("Retailer exclusives")),
+    )
+
+    @property
+    def cover_kind(self):
+        """Retailer exclusive if a store is set; incentive if it has a 1:N ratio; regular otherwise."""
+        if self.retailer_exclusive.strip():
+            return "retailer_exclusive"
+        if self.ratio.strip():
+            return "incentive"
+        return "regular"
+
+    @classmethod
+    def group_by_cover_kind(cls, editions):
+        """[(kind, label, editions), ...] in COVER_KINDS order, skipping empty groups."""
+        groups = {kind: [] for kind, _label in cls.COVER_KINDS}
+        for edition in editions:
+            groups[edition.cover_kind].append(edition)
+        return [(kind, label, groups[kind]) for kind, label in cls.COVER_KINDS if groups[kind]]
 
     @property
     def is_compilation(self):

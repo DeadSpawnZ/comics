@@ -154,6 +154,7 @@ class EditionAdmin(admin.ModelAdmin):
                     "printing",
                     "ratio",
                     "limited_to",
+                    "retailer_exclusive",
                     "cover_price",
                     "format",
                     "release_date",

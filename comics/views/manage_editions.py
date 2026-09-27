@@ -181,6 +181,15 @@ def edition_form(request, pk=None):
     else:
         own_option = _("Own issue (by publishing and number)")
 
+    sibling_editions = []
+    if edition and edition.issue_id:
+        sibling_editions = list(
+            Edition.objects.filter(issue_id=edition.issue_id)
+            .exclude(pk=edition.pk)
+            .select_related("publishing")
+            .order_by("release_date", "publishing__publishing_title", "number", "variant", "printing")
+        )
+
     return render(
         request,
         "manage/edition_form.html",
@@ -192,6 +201,8 @@ def edition_form(request, pk=None):
             "selected_issue_id": selected_issue_id,
             "issue_publishing_id": issue_publishing_id,
             "issue_options": issue_options,
+            "sibling_editions": sibling_editions,
+            "sibling_groups": Edition.group_by_cover_kind(sibling_editions),
             "own_option": own_option,
             "back_url": back_url,
             "form_data": {

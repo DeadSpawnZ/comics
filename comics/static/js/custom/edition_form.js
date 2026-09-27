@@ -91,17 +91,59 @@
     initial: data.collected,
   });
 
+  // ---------- Cover artists: visible list + selector to add more ----------
+  const artistList = document.getElementById("artist-list");
+  if (artistList) {
+    const artistAdd = document.getElementById("artist-add");
+    const artistEmpty = document.getElementById("artist-empty");
+    const rows = [...artistList.querySelectorAll(".artist-list__item")];
+    const checkboxOf = (row) => row.querySelector("input[type=checkbox]");
+
+    const renderArtists = () => {
+      const placeholder = artistAdd.options[0];
+      const available = rows.filter((row) => !checkboxOf(row).checked);
+      for (const row of rows) row.hidden = !checkboxOf(row).checked;
+      artistAdd.replaceChildren(
+        placeholder,
+        ...available.map((row) => new Option(row.dataset.artistName, row.dataset.artistId))
+      );
+      artistAdd.value = "";
+      artistAdd.disabled = available.length === 0;
+      artistEmpty.hidden = available.length !== rows.length;
+    };
+
+    artistAdd.addEventListener("change", () => {
+      const row = rows.find((item) => item.dataset.artistId === artistAdd.value);
+      if (row) checkboxOf(row).checked = true;
+      renderArtists();
+    });
+    artistList.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-artist-remove]");
+      if (!button) return;
+      checkboxOf(button.closest(".artist-list__item")).checked = false;
+      renderArtists();
+      artistAdd.focus();
+    });
+    renderArtists();
+  }
+
   // ---------- Cover preview ----------
   const imageInput = document.querySelector("input[type=file][name=image]");
   const preview = document.getElementById("cover-preview");
   const placeholder = document.getElementById("cover-placeholder");
+  const editButton = document.getElementById("cover-edit");
+  const fileName = document.getElementById("cover-file-name");
   if (imageInput && preview) {
+    // The file input is hidden; the pencil button on the cover opens it.
+    editButton.addEventListener("click", () => imageInput.click());
     imageInput.addEventListener("change", () => {
       const [file] = imageInput.files;
       if (!file) return;
       preview.src = URL.createObjectURL(file);
       preview.hidden = false;
       if (placeholder) placeholder.hidden = true;
+      fileName.textContent = interpolate(gettext("New cover: %(name)s (applied on save)"), { name: file.name }, true);
+      fileName.hidden = false;
     });
   }
 

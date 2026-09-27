@@ -37,6 +37,30 @@ def collectable(request, collectable_id):
         pass
 
 
+def _attach_sibling_editions(collections, user):
+    """Set `collection.sibling_editions`: the other editions of the same issue (variants, printings,
+    foreign or anniversary editions), each flagged with `owned`. Two queries for the whole page."""
+    issue_ids = {collection.edition.issue_id for collection in collections if collection.edition and collection.edition.issue_id}
+    by_issue = {}
+    if issue_ids:
+        editions = (
+            Edition.objects.filter(issue_id__in=issue_ids)
+            .select_related("publishing")
+            .order_by("release_date", "publishing__publishing_title", "number", "variant", "printing")
+        )
+        owned_ids = set(
+            Collection.objects.owned_by(user).filter(edition__issue_id__in=issue_ids).values_list("edition_id", flat=True)
+        )
+        for edition in editions:
+            edition.owned = edition.id in owned_ids
+            by_issue.setdefault(edition.issue_id, []).append(edition)
+    for collection in collections:
+        edition = collection.edition
+        siblings = by_issue.get(edition.issue_id, []) if edition else []
+        collection.sibling_editions = [sibling for sibling in siblings if sibling.id != edition.id]
+        collection.sibling_groups = Edition.group_by_cover_kind(collection.sibling_editions)
+
+
 @login_required
 def comics_view(request):
     collector = request.user
@@ -97,6 +121,7 @@ def comics_view(request):
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
     elided_page_range = page_obj.paginator.get_elided_page_range(page_obj.number, on_each_side=1, on_ends=1)
+    _attach_sibling_editions(page_obj, collector)
 
     return render(
         request,

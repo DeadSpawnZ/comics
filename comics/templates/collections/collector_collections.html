@@ -130,6 +130,10 @@
                         </span>
                       </div>
                     {% endif %}
+
+                    {% if collection.sibling_editions %}
+                      {% include 'includes/sibling_editions.html' with siblings=collection.sibling_editions groups=collection.sibling_groups current=collection.edition %}
+                    {% endif %}
                   </div>
 
                   <div class="col-md-7 d-flex flex-column gap-4">
