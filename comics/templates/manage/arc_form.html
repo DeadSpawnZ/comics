@@ -54,20 +54,7 @@
   </div>
 
   <div class="md-surface-card">
-    <div class="d-flex align-items-baseline justify-content-between flex-wrap gap-2 mb-1">
-      <h2 class="md-title-medium mb-0">{% translate "Issues in reading order" %}</h2>
-      {% if arc %}
-        <span class="md-body-medium">
-          {% blocktranslate with owned=owned_count total=total_count %}You own {{ owned }} of {{ total }}{% endblocktranslate %}
-        </span>
-      {% endif %}
-    </div>
-    <p class="md-body-medium mb-3">
-      {% blocktranslate trimmed %}
-        An issue counts as owned if you have any of its editions (any variant, printing or country)
-        or a compilation that collects it. Ownership is refreshed after saving.
-      {% endblocktranslate %}
-    </p>
+    <h2 class="md-title-medium mb-3">{% translate "Issues in reading order" %}</h2>
 
     <div class="row g-3 align-items-end">
       <div class="col-12 col-md-5">

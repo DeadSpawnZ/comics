@@ -1,4 +1,5 @@
 {% extends "admin/change_form.html" %}
+{% load i18n %}
 
 {% block extrastyle %}
 {{ block.super }}
@@ -45,50 +46,34 @@
     height: 100%;
     object-fit: cover;
   }
-  .connecting-preview__cell.is-missing img {
-    filter: grayscale(1);
-    opacity: 0.35;
-  }
-  .connecting-preview__badge {
-    position: absolute;
-    left: 4px;
-    bottom: 4px;
-    padding: 1px 6px;
-    border-radius: 999px;
-    font-size: 0.65rem;
-    font-weight: 600;
-    background: rgba(0, 0, 0, 0.7);
-    color: #fff;
-  }
-  .connecting-preview__cell.is-missing .connecting-preview__badge {
-    background: #ba2121;
-  }
 </style>
 {% endblock %}
 
 {% block after_related_objects %}
 {{ block.super }}
-{% if ownership_grid %}
+{% if preview_grid %}
 <div class="connecting-preview">
-  <h2>Vista previa</h2>
+  <h2>{% translate "Connecting preview" %}</h2>
   <p class="connecting-preview__summary">
-    Tienes {{ owned_count }} de {{ piece_total }} pieza{{ piece_total|pluralize }} configurada{{ piece_total|pluralize }}.
-    Muestra lo guardado; guarda para ver cambios.
+    {% blocktranslate trimmed count counter=piece_total %}
+      {{ counter }} piece placed. Shows what is saved; save to see changes.
+    {% plural %}
+      {{ counter }} pieces placed. Shows what is saved; save to see changes.
+    {% endblocktranslate %}
   </p>
   <div class="connecting-preview__grid" style="grid-template-columns: repeat({{ original.columns }}, minmax(0, 110px));">
-    {% for row in ownership_grid %}
+    {% for row in preview_grid %}
       {% for piece in row %}
         {% if piece %}
-          <div class="connecting-preview__cell {% if not piece.owned %}is-missing{% endif %}" title="{{ piece.edition }}">
+          <div class="connecting-preview__cell" title="{{ piece.edition }}">
             {% if piece.edition.thumbnail %}
               <img src="{{ piece.edition.thumbnail.url }}" alt="{{ piece.edition }}" loading="lazy">
             {% else %}
               {{ piece.edition.publishing.publishing_title }} #{{ piece.edition.number }}
             {% endif %}
-            <span class="connecting-preview__badge">{% if piece.owned %}Lo tienes{% else %}Falta{% endif %}</span>
           </div>
         {% else %}
-          <div class="connecting-preview__cell">Vacía</div>
+          <div class="connecting-preview__cell">{% translate "Empty" context "connecting cell" %}</div>
         {% endif %}
       {% endfor %}
     {% endfor %}

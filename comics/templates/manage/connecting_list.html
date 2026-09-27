@@ -33,7 +33,7 @@
           {% for row in card.grid %}
             {% for piece in row %}
               {% if piece and piece.edition.thumbnail %}
-                <img src="{{ piece.edition.thumbnail.url }}" alt="" loading="lazy" class="{% if not piece.owned %}is-missing{% endif %}">
+                <img src="{{ piece.edition.thumbnail.url }}" alt="" loading="lazy">
               {% else %}
                 <span class="connecting-card__empty"></span>
               {% endif %}
@@ -44,7 +44,7 @@
         <div class="p-3">
           <div class="md-title-medium text-body">{{ card.connecting.name }}</div>
           <div class="md-body-medium">
-            {% blocktranslate with layout=card.connecting.layout pieces=card.piece_count capacity=card.capacity owned=card.owned_count %}{{ layout }} · {{ pieces }}/{{ capacity }} pieces · you own {{ owned }}{% endblocktranslate %}
+            {% blocktranslate with layout=card.connecting.layout pieces=card.piece_count capacity=card.capacity %}{{ layout }} · {{ pieces }}/{{ capacity }} pieces{% endblocktranslate %}
           </div>
         </div>
       </a>

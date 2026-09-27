@@ -1,9 +1,3 @@
-/* Filters panel (below the sticky top app bar) */
-.filters-panel .sticky-lg-top {
-  top: calc(64px + 1rem);
-  z-index: 1;
-}
-
 /* Placeholders when there is no image */
 .img-placeholder {
   display: flex;
@@ -147,4 +141,174 @@
   justify-content: center;
   background-color: var(--md-surface-container-highest);
   color: var(--md-on-surface-variant);
+}
+
+/* ---------- Connecting mosaic cards ---------- */
+.connecting-card__frame {
+  display: flex;
+  justify-content: center;
+  background-color: var(--md-surface-container-highest);
+}
+
+/* Max width computed so the whole grid (2:3 cells) fits in 260px of height. */
+.connecting-card__mosaic {
+  display: grid;
+  grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+  gap: 2px;
+  padding: 2px;
+  width: 100%;
+  max-width: calc(260px * var(--cols) / (var(--rows) * 1.5));
+}
+
+.connecting-card__mosaic img,
+.connecting-card__empty {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  display: block;
+}
+
+.connecting-card__mosaic img.is-missing {
+  filter: grayscale(1);
+  opacity: 0.4;
+}
+
+.connecting-card__empty {
+  background-color: var(--md-surface-container);
+}
+
+/* ---------- Reading arc cards ---------- */
+.arc-card__covers {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  height: 140px;
+  padding: 2px;
+  overflow: hidden;
+  background-color: var(--md-surface-container-highest);
+  color: var(--md-on-surface-variant);
+}
+
+.arc-card__covers img {
+  height: 100%;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+}
+
+.arc-card__covers img.is-missing {
+  filter: grayscale(1);
+  opacity: 0.4;
+}
+
+.arc-card__covers .material-symbols-outlined {
+  font-size: 3rem;
+}
+
+/* ---------- Reading arc detail (Comics module) ---------- */
+.arc-reading-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.arc-reading-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem 1rem 0.5rem 0.5rem;
+  border-radius: 12px;
+  background-color: var(--md-surface-container-low);
+}
+
+.arc-reading-item__order {
+  min-width: 2rem;
+  text-align: center;
+  font-weight: 500;
+  color: var(--md-on-surface-variant);
+}
+
+.arc-reading-item__thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 48px;
+  aspect-ratio: 2 / 3;
+  border-radius: 4px;
+  overflow: hidden;
+  background-color: var(--md-surface-container-highest);
+  color: var(--md-on-surface-variant);
+}
+
+.arc-reading-item__thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.arc-reading-item__label {
+  flex: 1;
+  min-width: 0;
+}
+
+.arc-reading-item.is-missing .arc-reading-item__thumb img {
+  filter: grayscale(1);
+  opacity: 0.4;
+}
+
+.arc-reading-item.is-missing .arc-reading-item__label {
+  color: var(--md-on-surface-variant);
+}
+
+/* ---------- Connecting detail (Comics module) ---------- */
+/* Max width computed so the whole grid (2:3 cells) fits in 70vh. */
+.connecting-view {
+  display: grid;
+  grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+  gap: 4px;
+  margin-inline: auto;
+  max-width: min(100%, calc(70vh * var(--cols) / (var(--rows) * 1.5)));
+}
+
+.connecting-view__cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  aspect-ratio: 2 / 3;
+  overflow: hidden;
+  border-radius: 4px;
+  background-color: var(--md-surface-container-highest);
+  color: var(--md-on-surface-variant);
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.connecting-view__cell img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.connecting-view__cell.is-missing img {
+  filter: grayscale(1);
+  opacity: 0.35;
+}
+
+.connecting-view__cell--empty {
+  background-color: var(--md-surface-container);
+}
+
+.connecting-view__badge {
+  position: absolute;
+  left: 4px;
+  bottom: 4px;
+  height: 22px;
 }

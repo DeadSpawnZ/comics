@@ -53,8 +53,8 @@
         <div class="collapse navbar-collapse" id="mainNav">
           <ul class="navbar-nav gap-1 ms-lg-4 mt-2 mt-lg-0">
             <li class="nav-item">
-              <a class="nav-link md-nav-link {% if url_name == 'comics' %}active{% endif %}"
-                 {% if url_name == 'comics' %}aria-current="page"{% endif %}
+              <a class="nav-link md-nav-link {% if url_name|slice:':6' == 'comics' %}active{% endif %}"
+                 {% if url_name|slice:':6' == 'comics' %}aria-current="page"{% endif %}
                  href="{% url 'comics' %}">
                 <span class="material-symbols-outlined" aria-hidden="true">menu_book</span>
                 Comics

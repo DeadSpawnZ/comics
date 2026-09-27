@@ -29,19 +29,15 @@
     <a class="md-card arc-card d-block text-decoration-none" href="{% url 'manage_arc_edit' card.arc.pk %}">
       <div class="arc-card__covers">
         {% for entry in card.covers %}
-          <img src="{{ entry.cover_url }}" alt="" loading="lazy" class="{% if not entry.owned %}is-missing{% endif %}">
+          <img src="{{ entry.cover_url }}" alt="" loading="lazy">
         {% empty %}
           <span class="material-symbols-outlined" aria-hidden="true">auto_stories</span>
         {% endfor %}
       </div>
       <div class="p-3">
         <div class="md-title-medium text-body">{{ card.arc.name }}</div>
-        <div class="md-body-medium mb-2">
-          {% blocktranslate with owned=card.owned count counter=card.total %}{{ counter }} issue · you own {{ owned }}{% plural %}{{ counter }} issues · you own {{ owned }}{% endblocktranslate %}
-        </div>
-        <div class="md-progress" role="progressbar" aria-valuenow="{{ card.percent }}" aria-valuemin="0" aria-valuemax="100"
-             aria-label="{% translate 'Progress' %}">
-          <div class="md-progress__bar" style="width: {{ card.percent }}%"></div>
+        <div class="md-body-medium">
+          {% blocktranslate count counter=card.total %}{{ counter }} issue{% plural %}{{ counter }} issues{% endblocktranslate %}
         </div>
       </div>
     </a>

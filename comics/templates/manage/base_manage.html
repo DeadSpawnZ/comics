@@ -7,12 +7,13 @@
 
 {% block content %}
 {% with url_name=request.resolver_match.url_name %}
-<div class="manage-layout my-4">
-  <nav class="manage-nav" aria-label="{% translate 'Management sections' %}">
-    <div class="manage-nav__title">{% translate "Management" %}</div>
+<div class="md-side-layout my-4">
+  <aside class="md-side-column">
+  <nav class="md-side-nav" aria-label="{% translate 'Management sections' %}">
+    <div class="md-side-nav__title">{% translate "Management" %}</div>
     <ul>
       <li>
-        <a class="manage-nav__link {% if 'edition' in url_name %}is-active{% endif %}"
+        <a class="md-side-nav__link {% if 'edition' in url_name %}is-active{% endif %}"
            {% if 'edition' in url_name %}aria-current="page"{% endif %}
            href="{% url 'manage_editions' %}">
           <span class="material-symbols-outlined" aria-hidden="true">menu_book</span>
@@ -20,7 +21,7 @@
         </a>
       </li>
       <li>
-        <a class="manage-nav__link {% if 'arc' in url_name %}is-active{% endif %}"
+        <a class="md-side-nav__link {% if 'arc' in url_name %}is-active{% endif %}"
            {% if 'arc' in url_name %}aria-current="page"{% endif %}
            href="{% url 'manage_arcs' %}">
           <span class="material-symbols-outlined" aria-hidden="true">format_list_numbered</span>
@@ -28,7 +29,7 @@
         </a>
       </li>
       <li>
-        <a class="manage-nav__link {% if 'connecting' in url_name %}is-active{% endif %}"
+        <a class="md-side-nav__link {% if 'connecting' in url_name %}is-active{% endif %}"
            {% if 'connecting' in url_name %}aria-current="page"{% endif %}
            href="{% url 'manage_connectings' %}">
           <span class="material-symbols-outlined" aria-hidden="true">grid_view</span>
@@ -37,9 +38,10 @@
       </li>
     </ul>
   </nav>
+  </aside>
 
   <div class="manage-content">
-    <nav class="manage-breadcrumb" aria-label="{% translate 'Breadcrumb' %}">
+    <nav class="md-breadcrumb" aria-label="{% translate 'Breadcrumb' %}">
       <a href="{% url 'manage_home' %}">{% translate "Management" %}</a>
       <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
       {% block breadcrumb %}{% endblock %}

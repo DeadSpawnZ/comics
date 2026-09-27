@@ -1,0 +1,67 @@
+{% extends 'my_comics/base_comics.html' %}
+{% load i18n %}
+
+{% block breadcrumb %}
+<a href="{% url 'comics_connectings' %}">Connectings</a>
+<span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+<span class="is-current">{{ connecting.name }}</span>
+{% endblock %}
+
+{% block comics_content %}
+<div class="d-flex align-items-center gap-2 mb-3">
+  <a class="md-icon-btn" href="{% url 'comics_connectings' %}" aria-label="{% translate 'Back to connectings' %}" title="{% translate 'Back to connectings' %}">
+    <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+  </a>
+  <h1 class="md-headline-small mb-0">{{ connecting.name }}</h1>
+</div>
+
+<div class="md-surface-card mb-3">
+  {% if connecting.notes %}<p class="md-body-medium">{{ connecting.notes|linebreaksbr }}</p>{% endif %}
+  <div class="d-flex align-items-baseline justify-content-between flex-wrap gap-2 mb-2">
+    <span class="md-title-medium">{% blocktranslate with owned=owned total=total %}You own {{ owned }} of {{ total }}{% endblocktranslate %}</span>
+    <span class="md-body-medium">{{ connecting.layout }} · {{ percent }}%</span>
+  </div>
+  <div class="md-progress" role="progressbar" aria-valuenow="{{ percent }}" aria-valuemin="0" aria-valuemax="100"
+       aria-label="{% translate 'Progress' %}">
+    <div class="md-progress__bar" style="width: {{ percent }}%"></div>
+  </div>
+</div>
+
+<div class="md-surface-card mb-3">
+  <div class="connecting-view" style="--cols: {{ connecting.columns }}; --rows: {{ connecting.rows }};">
+    {% for row in grid %}
+      {% for piece in row %}
+        {% if piece %}
+          <figure class="connecting-view__cell {% if not piece.owned %}is-missing{% endif %}" title="{{ piece.edition }}">
+            {% if piece.edition.thumbnail %}
+              <img src="{{ piece.edition.thumbnail.url }}" alt="{{ piece.edition }}" loading="lazy">
+            {% else %}
+              <span class="connecting-view__text">{{ piece.edition.publishing.publishing_title }} #{{ piece.edition.number }}</span>
+            {% endif %}
+            {% if not piece.owned %}
+              <span class="connecting-view__badge md-assist-chip md-assist-chip--error">{% translate "Missing" %}</span>
+            {% endif %}
+          </figure>
+        {% else %}
+          <div class="connecting-view__cell connecting-view__cell--empty"></div>
+        {% endif %}
+      {% endfor %}
+    {% endfor %}
+  </div>
+</div>
+
+<div class="md-surface-card">
+  <h2 class="md-title-medium mb-3">{% translate "Missing pieces" %}</h2>
+  {% if missing_pieces %}
+    <ul class="md-body-medium mb-0">
+      {% for piece in missing_pieces %}
+        <li>{{ piece.edition }} <span class="text-body-secondary">({% blocktranslate with row=piece.row column=piece.column %}row {{ row }}, column {{ column }}{% endblocktranslate %})</span></li>
+      {% endfor %}
+    </ul>
+  {% elif total %}
+    <p class="md-body-medium mb-0">{% translate "You own every piece of this connecting." %}</p>
+  {% else %}
+    <p class="md-body-medium mb-0">{% translate "This connecting has no pieces yet." %}</p>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,11 +1,12 @@
-{% extends 'base.html' %} {% load static i18n %} {% block content %}
+{% extends 'my_comics/base_comics.html' %}
+{% load static i18n %}
 
-<div class="my-4">
-  <div class="row g-4">
-    <!-- FILTERS -->
-    <aside class="col-12 col-lg-3 col-xl-2">
+{% block breadcrumb_nav %}{% endblock %}
+
+{% block side_panels %}
+      <!-- FILTERS -->
       <button
-        class="md-btn md-btn--tonal w-100 d-lg-none mb-2"
+        class="md-btn md-btn--tonal w-100 d-lg-none"
         type="button"
         data-bs-toggle="collapse"
         data-bs-target="#filtersPanel"
@@ -17,7 +18,7 @@
       </button>
 
       <div class="filters-panel collapse d-lg-block" id="filtersPanel">
-        <div class="md-surface-card sticky-lg-top">
+        <div class="md-surface-card">
           <h2 class="md-title-medium mb-3 d-flex align-items-center gap-2">
             <span class="material-symbols-outlined" aria-hidden="true">tune</span>
             {% translate "Filters" %}
@@ -40,10 +41,11 @@
           {% include 'includes/letter_chips.html' %}
         </div>
       </div>
-    </aside>
+{% endblock %}
 
+{% block comics_content %}
     <!-- CONTENT -->
-    <div class="col-12 col-lg-9 col-xl-10">
+    <div>
       <div class="d-flex align-items-baseline justify-content-between mb-3 flex-wrap gap-2">
         <h1 class="md-headline-small mb-0">{% translate "My collection" %}</h1>
         <span class="md-body-medium">{% blocktranslate count counter=page_obj.paginator.count %}{{ counter }} item{% plural %}{{ counter }} items{% endblocktranslate %}</span>
@@ -58,7 +60,7 @@
 
       <div class="row g-3">
         {% for collection in page_obj %}
-        <div class="col-6 col-sm-4 col-md-3 col-lg-2">
+        <div class="col-6 col-sm-4 col-md-3 col-xl-2">
           <div class="md-card" role="button" data-bs-toggle="modal" data-bs-target="#collectionModal{{ collection.id }}">
             <div class="card-img-container">
               {% if collection.edition.thumbnail %}
@@ -186,6 +188,4 @@
 
       {% include 'includes/paginator.html' %}
     </div>
-  </div>
-</div>
 {% endblock %}

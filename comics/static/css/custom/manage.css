@@ -1,37 +1,3 @@
-/* ---------- Connectings list ---------- */
-.connecting-card__frame {
-  display: flex;
-  justify-content: center;
-  background-color: var(--md-surface-container-highest);
-}
-
-/* Max width computed so the whole grid (2:3 cells) fits in 260px of height. */
-.connecting-card__mosaic {
-  display: grid;
-  grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
-  gap: 2px;
-  padding: 2px;
-  width: 100%;
-  max-width: calc(260px * var(--cols) / (var(--rows) * 1.5));
-}
-
-.connecting-card__mosaic img,
-.connecting-card__empty {
-  width: 100%;
-  aspect-ratio: 2 / 3;
-  object-fit: cover;
-  display: block;
-}
-
-.connecting-card__mosaic img.is-missing {
-  filter: grayscale(1);
-  opacity: 0.4;
-}
-
-.connecting-card__empty {
-  background-color: var(--md-surface-container);
-}
-
 /* ---------- Editor: errors and snackbar ---------- */
 .editor-errors {
   display: flex;
@@ -162,11 +128,6 @@
   pointer-events: none;
 }
 
-.editor-cover.is-missing img {
-  filter: grayscale(1);
-  opacity: 0.5;
-}
-
 .editor-cover__placeholder {
   display: flex;
   align-items: center;
@@ -176,23 +137,6 @@
   font-size: 0.7rem;
   text-align: center;
   color: var(--md-on-surface-variant);
-}
-
-.editor-cover__badge {
-  position: absolute;
-  left: 4px;
-  bottom: 4px;
-  padding: 0 6px;
-  border-radius: 999px;
-  font-size: 0.625rem;
-  font-weight: 500;
-  line-height: 1.5;
-  background: rgba(0, 0, 0, 0.7);
-  color: #fff;
-}
-
-.editor-cover.is-missing .editor-cover__badge {
-  background: #ba1a1a;
 }
 
 /* ---------- Editor: grid ---------- */
@@ -315,115 +259,6 @@
 
 .editor-cell--overflow {
   width: 90px;
-}
-
-/* ---------- Gestion layout: side menu + content ---------- */
-.manage-layout {
-  display: grid;
-  grid-template-columns: 240px minmax(0, 1fr);
-  gap: 1.5rem;
-  align-items: start;
-}
-
-.manage-nav {
-  position: sticky;
-  top: calc(64px + 1rem);
-  padding: 1rem 0.75rem;
-  border-radius: 16px;
-  background-color: var(--md-surface-container-low);
-}
-
-.manage-nav__title {
-  padding: 0.25rem 1rem 0.75rem;
-  font-size: 1.125rem;
-  font-weight: 500;
-}
-
-.manage-nav ul {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.manage-nav__link {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  height: 48px;
-  padding: 0 1rem;
-  border-radius: 999px;
-  color: var(--md-on-surface-variant);
-  font-size: 0.875rem;
-  font-weight: 500;
-  text-decoration: none;
-  white-space: nowrap;
-}
-
-.manage-nav__link:hover {
-  background-color: rgba(var(--md-on-surface-rgb), 0.08);
-  color: var(--md-on-surface);
-}
-
-.manage-nav__link:focus-visible {
-  outline: 2px solid var(--md-primary);
-  outline-offset: -2px;
-}
-
-.manage-nav__link.is-active {
-  background-color: var(--md-secondary-container);
-  color: var(--md-on-secondary-container);
-}
-
-.manage-breadcrumb {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.25rem;
-  margin-bottom: 1rem;
-  font-size: 0.875rem;
-  color: var(--md-on-surface-variant);
-}
-
-.manage-breadcrumb a {
-  color: var(--md-on-surface-variant);
-  text-decoration: none;
-}
-
-.manage-breadcrumb a:hover {
-  color: var(--md-primary);
-  text-decoration: underline;
-}
-
-.manage-breadcrumb .material-symbols-outlined {
-  font-size: 1.1rem;
-}
-
-.manage-breadcrumb .is-current {
-  color: var(--md-on-surface);
-  font-weight: 500;
-}
-
-@media (max-width: 991.98px) {
-  .manage-layout {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .manage-nav {
-    position: static;
-    padding: 0.5rem;
-  }
-
-  .manage-nav__title {
-    display: none;
-  }
-
-  .manage-nav ul {
-    flex-direction: row;
-    overflow-x: auto;
-  }
 }
 
 /* ---------- Record table/list ---------- */
@@ -637,35 +472,7 @@
   vertical-align: middle;
 }
 
-/* ---------- Reading arcs ---------- */
-.arc-card__covers {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  height: 140px;
-  padding: 2px;
-  overflow: hidden;
-  background-color: var(--md-surface-container-highest);
-  color: var(--md-on-surface-variant);
-}
-
-.arc-card__covers img {
-  height: 100%;
-  aspect-ratio: 2 / 3;
-  object-fit: cover;
-}
-
-.arc-card__covers img.is-missing,
-.arc-entry__thumb.is-missing img {
-  filter: grayscale(1);
-  opacity: 0.4;
-}
-
-.arc-card__covers .material-symbols-outlined {
-  font-size: 3rem;
-}
-
+/* ---------- Reading arc form ---------- */
 .arc-entry {
   display: inline-flex;
   flex-wrap: wrap;

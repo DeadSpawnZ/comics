@@ -22,7 +22,7 @@ from django.conf import settings
 from django.views.static import serve as serve_static
 from django.views.generic import RedirectView
 from comics.views import (
-    collection, publishing, login, collectables, manage, manage_arcs, manage_editions)
+    collection, publishing, login, collectables, manage, manage_arcs, manage_editions, my_comics)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -34,6 +34,10 @@ urlpatterns = [
     path("ajax/get-comics/<int:publishing_id>/", publishing.get_comics_by_publishing, name="get_comics_by_publishing"),
     path("ajax/get-previous-trades/<int:edition_id>/", collection.get_previous_trades, name="get_previous_trades"),
     path("comics/", collection.comics_view, name="comics"),
+    path("comics/arcos/", my_comics.arc_list, name="comics_arcs"),
+    path("comics/arcos/<int:pk>/", my_comics.arc_detail, name="comics_arc_detail"),
+    path("comics/connectings/", my_comics.connecting_list, name="comics_connectings"),
+    path("comics/connectings/<int:pk>/", my_comics.connecting_detail, name="comics_connecting_detail"),
     path("collectables/", collectables.collectables_view, name="collectables"),
     path("gestion/", RedirectView.as_view(pattern_name="manage_editions"), name="manage_home"),
     path("gestion/ediciones/", manage_editions.edition_list, name="manage_editions"),

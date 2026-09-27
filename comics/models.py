@@ -587,11 +587,22 @@ class ReadingArc(Model):
             ReadingArcEntry(arc=self, issue_id=issue_id, order=order) for order, issue_id in enumerate(issue_ids, start=1)
         )
 
+    def entries_with_covers(self):
+        """Entries in reading order, each with the cover of its earliest edition (or None)."""
+        entries = list(self.entries.select_related("issue__publishing"))
+        covers = {}
+        editions = Edition.objects.filter(issue_id__in=[entry.issue_id for entry in entries]).exclude(thumbnail="")
+        for edition in editions.order_by("release_date", "id"):
+            covers.setdefault(edition.issue_id, edition.thumbnail.url)
+        for entry in entries:
+            entry.cover_url = covers.get(entry.issue_id)
+        return entries
+
     def entries_with_ownership(self, user):
-        """Entries in reading order, each flagged with whether `user` owns the issue.
+        """entries_with_covers() flagged with whether `user` owns each issue.
         An issue counts as owned if the user owns any edition of it (any variant, printing
         or country) or a compilation that collects it."""
-        entries = list(self.entries.select_related("issue__publishing"))
+        entries = self.entries_with_covers()
         issue_ids = [entry.issue_id for entry in entries]
         owned = Collection.objects.owned_by(user)
         direct = set(owned.filter(edition__issue_id__in=issue_ids).values_list("edition__issue_id", flat=True))
@@ -600,13 +611,9 @@ class ReadingArc(Model):
                 "edition__collected_entries__issue_id", flat=True
             )
         )
-        covers = {}
-        for edition in Edition.objects.filter(issue_id__in=issue_ids).exclude(thumbnail="").order_by("release_date", "id"):
-            covers.setdefault(edition.issue_id, edition.thumbnail.url)
         for entry in entries:
             entry.owned = entry.issue_id in direct or entry.issue_id in collected
             entry.owned_in_compilation = entry.issue_id not in direct and entry.issue_id in collected
-            entry.cover_url = covers.get(entry.issue_id)
         return entries
 
 
@@ -685,24 +692,25 @@ class Connecting(Model):
             for row, column, edition_id in cleaned_placements
         )
 
+    def grid(self):
+        """rows x columns matrix with the piece at each position (or None)."""
+        by_position = {(piece.row, piece.column): piece for piece in self.pieces.select_related("edition__publishing")}
+        return [
+            [by_position.get((row, column)) for column in range(1, self.columns + 1)]
+            for row in range(1, self.rows + 1)
+        ]
+
     def ownership_grid(self, user):
-        """rows x columns matrix with the piece at each position (or None) and whether `user` owns it."""
-        pieces = list(self.pieces.select_related("edition__publishing"))
+        """grid() with each piece flagged with whether `user` owns its edition."""
+        grid = self.grid()
+        pieces = [piece for row in grid for piece in row if piece]
         owned_edition_ids = set(
             Collection.objects.owned_by(user)
             .filter(edition_id__in=[piece.edition_id for piece in pieces])
             .values_list("edition_id", flat=True)
         )
-        by_position = {(piece.row, piece.column): piece for piece in pieces}
-        grid = []
-        for row in range(1, self.rows + 1):
-            cells = []
-            for column in range(1, self.columns + 1):
-                piece = by_position.get((row, column))
-                if piece:
-                    piece.owned = piece.edition_id in owned_edition_ids
-                cells.append(piece)
-            grid.append(cells)
+        for piece in pieces:
+            piece.owned = piece.edition_id in owned_edition_ids
         return grid
 
 

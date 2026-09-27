@@ -393,11 +393,9 @@ class ConnectingAdmin(admin.ModelAdmin):
         extra_context = extra_context or {}
         connecting = self.get_object(request, unquote(object_id))
         if connecting is not None:
-            grid = connecting.ownership_grid(request.user)
-            pieces = [cell for row in grid for cell in row if cell]
-            extra_context["ownership_grid"] = grid
-            extra_context["owned_count"] = sum(1 for piece in pieces if piece.owned)
-            extra_context["piece_total"] = len(pieces)
+            grid = connecting.grid()
+            extra_context["preview_grid"] = grid
+            extra_context["piece_total"] = sum(1 for row in grid for cell in row if cell)
         return super().change_view(request, object_id, form_url, extra_context=extra_context)
 
 

@@ -25,7 +25,7 @@
     snackbar: document.getElementById("editor-snackbar"),
   };
 
-  const comics = new Map(); // id -> {id, title, detail, thumbnail, owned}
+  const comics = new Map(); // id -> {id, title, detail, thumbnail}
   const pieces = new Map(); // "row-column" -> comic id
   let rows = data.connecting.rows;
   let columns = data.connecting.columns;
@@ -81,7 +81,7 @@
 
   function renderCover(comic) {
     const cover = document.createElement("div");
-    cover.className = "editor-cover" + (comic.owned ? "" : " is-missing");
+    cover.className = "editor-cover";
     if (comic.thumbnail) {
       const img = document.createElement("img");
       img.src = comic.thumbnail;
@@ -95,10 +95,6 @@
       placeholder.textContent = comic.title;
       cover.append(placeholder);
     }
-    const badge = document.createElement("span");
-    badge.className = "editor-cover__badge";
-    badge.textContent = comic.owned ? gettext("You own it") : gettext("Missing");
-    cover.append(badge);
     return cover;
   }
 
@@ -251,10 +247,9 @@
 
   function renderSummary() {
     const placed = [...pieces.keys()].filter(inBounds);
-    const owned = placed.filter((key) => comics.get(pieces.get(key)).owned).length;
     el.summary.textContent = interpolate(
-      gettext("%(placed)s/%(total)s cells · you own %(owned)s"),
-      { placed: placed.length, total: rows * columns, owned },
+      gettext("%(placed)s/%(total)s cells"),
+      { placed: placed.length, total: rows * columns },
       true
     );
   }

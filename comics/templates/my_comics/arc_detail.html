@@ -1,0 +1,86 @@
+{% extends 'my_comics/base_comics.html' %}
+{% load i18n %}
+
+{% block breadcrumb %}
+<a href="{% url 'comics_arcs' %}">{% translate "Reading arcs" %}</a>
+<span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+<span class="is-current">{{ arc.name }}</span>
+{% endblock %}
+
+{% block comics_content %}
+<div class="d-flex align-items-center gap-2 mb-3">
+  <a class="md-icon-btn" href="{% url 'comics_arcs' %}" aria-label="{% translate 'Back to reading arcs' %}" title="{% translate 'Back to reading arcs' %}">
+    <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+  </a>
+  <h1 class="md-headline-small mb-0">{{ arc.name }}</h1>
+</div>
+
+<div class="md-surface-card mb-3">
+  {% if arc.notes %}<p class="md-body-medium">{{ arc.notes|linebreaksbr }}</p>{% endif %}
+  <div class="d-flex align-items-baseline justify-content-between flex-wrap gap-2 mb-2">
+    <span class="md-title-medium">{% blocktranslate with owned=owned total=total %}You own {{ owned }} of {{ total }}{% endblocktranslate %}</span>
+    <span class="md-body-medium">{{ percent }}%</span>
+  </div>
+  <div class="md-progress" role="progressbar" aria-valuenow="{{ percent }}" aria-valuemin="0" aria-valuemax="100"
+       aria-label="{% translate 'Progress' %}">
+    <div class="md-progress__bar" style="width: {{ percent }}%"></div>
+  </div>
+  <p class="md-body-medium mt-3 mb-0">
+    {% blocktranslate trimmed %}
+      An issue counts as owned if you have any of its editions (any variant, printing or country)
+      or a compilation that collects it.
+    {% endblocktranslate %}
+  </p>
+</div>
+
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+  <h2 class="md-title-medium mb-0">{% translate "Issues in reading order" %}</h2>
+  <div class="md-segmented" role="group" aria-label="{% translate 'Show' %}">
+    <a class="md-segmented__option text-decoration-none" href="?show=all" {% if selected == 'all' %}aria-current="true"{% endif %}>
+      <span class="{% if selected == 'all' %}is-selected{% endif %}">{% translate "All" context "issues" %} ({{ total }})</span>
+    </a>
+    <a class="md-segmented__option text-decoration-none" href="?show=owned" {% if selected == 'owned' %}aria-current="true"{% endif %}>
+      <span class="{% if selected == 'owned' %}is-selected{% endif %}">{% translate "Owned" %} ({{ owned }})</span>
+    </a>
+    <a class="md-segmented__option text-decoration-none" href="?show=missing" {% if selected == 'missing' %}aria-current="true"{% endif %}>
+      <span class="{% if selected == 'missing' %}is-selected{% endif %}">{% translate "Missing" %} ({{ missing }})</span>
+    </a>
+  </div>
+</div>
+
+{% if not entries %}
+  <div class="md-surface-card text-center py-5">
+    <span class="material-symbols-outlined d-block mb-2 empty-state-icon" aria-hidden="true">{% if selected == 'missing' %}task_alt{% else %}search_off{% endif %}</span>
+    <p class="md-body-medium mb-0">
+      {% if selected == 'missing' %}{% translate "You own every issue of this reading arc." %}{% else %}{% translate "There are no issues to show." %}{% endif %}
+    </p>
+  </div>
+{% else %}
+  <ol class="arc-reading-list">
+    {% for entry in entries %}
+    <li class="arc-reading-item {% if not entry.owned %}is-missing{% endif %}">
+      <span class="arc-reading-item__order">{{ entry.order }}</span>
+      <span class="arc-reading-item__thumb">
+        {% if entry.cover_url %}
+          <img src="{{ entry.cover_url }}" alt="" loading="lazy">
+        {% else %}
+          <span class="material-symbols-outlined" aria-hidden="true">image</span>
+        {% endif %}
+      </span>
+      <span class="arc-reading-item__label">{{ entry.issue }}</span>
+      {% if entry.owned %}
+        <span class="md-assist-chip md-assist-chip--primary">
+          <span class="material-symbols-outlined" aria-hidden="true">{% if entry.owned_in_compilation %}library_books{% else %}check{% endif %}</span>
+          {% if entry.owned_in_compilation %}{% translate "In a compilation" %}{% else %}{% translate "You own it" %}{% endif %}
+        </span>
+      {% else %}
+        <span class="md-assist-chip md-assist-chip--error">
+          <span class="material-symbols-outlined" aria-hidden="true">close</span>
+          {% translate "Missing" %}
+        </span>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ol>
+{% endif %}
+{% endblock %}

@@ -12,7 +12,7 @@ from django.urls import reverse
 from django.utils.translation import gettext as _, gettext_lazy
 from django.views.decorators.http import require_GET
 
-from comics.models import Collection, Edition, Connecting, Publishing
+from comics.models import Edition, Connecting, Publishing
 
 
 class ConnectingForm(forms.ModelForm):
@@ -33,38 +33,27 @@ def _number_sort_key(edition):
     return (0, int(number), "") if number.isdigit() else (1, 0, number)
 
 
-def _edition_payload(edition, owned_ids):
+def _edition_payload(edition):
     return {
         "id": edition.id,
         "title": edition.publishing.publishing_title,
         "detail": f"#{edition.number} {edition.variant} · {edition.printing}".strip(),
         "thumbnail": edition.thumbnail.url if edition.thumbnail else None,
-        "owned": edition.id in owned_ids,
     }
-
-
-def _owned_edition_ids(user, edition_ids):
-    return set(
-        Collection.objects.owned_by(user).filter(edition_id__in=edition_ids).values_list("edition_id", flat=True)
-    )
 
 
 @staff_member_required
 def connecting_list(request):
     connectings = Connecting.objects.annotate(piece_count=Count("pieces")).order_by("name")
-    cards = []
-    for connecting in connectings:
-        grid = connecting.ownership_grid(request.user)
-        pieces = [cell for row in grid for cell in row if cell]
-        cards.append(
-            {
-                "connecting": connecting,
-                "grid": grid,
-                "piece_count": len(pieces),
-                "owned_count": sum(1 for piece in pieces if piece.owned),
-                "capacity": connecting.rows * connecting.columns,
-            }
-        )
+    cards = [
+        {
+            "connecting": connecting,
+            "grid": connecting.grid(),
+            "piece_count": connecting.piece_count,
+            "capacity": connecting.rows * connecting.columns,
+        }
+        for connecting in connectings
+    ]
     return render(request, "manage/connecting_list.html", {"cards": cards})
 
 
@@ -77,11 +66,9 @@ def connecting_editor(request, pk=None):
 
     pieces = []
     if connecting:
-        placed = list(connecting.pieces.select_related("edition__publishing"))
-        owned_ids = _owned_edition_ids(request.user, [piece.edition_id for piece in placed])
         pieces = [
-            {"row": piece.row, "column": piece.column, "edition": _edition_payload(piece.edition, owned_ids)}
-            for piece in placed
+            {"row": piece.row, "column": piece.column, "edition": _edition_payload(piece.edition)}
+            for piece in connecting.pieces.select_related("edition__publishing")
         ]
 
     publishings = [
@@ -174,5 +161,4 @@ def publishing_comics(request):
         Edition.objects.filter(publishing_id=publishing_id).select_related("publishing"),
         key=lambda edition: (_number_sort_key(edition), edition.variant, edition.printing),
     )
-    owned_ids = _owned_edition_ids(request.user, [edition.id for edition in editions])
-    return JsonResponse({"results": [_edition_payload(edition, owned_ids) for edition in editions]})
+    return JsonResponse({"results": [_edition_payload(edition) for edition in editions]})

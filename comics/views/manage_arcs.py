@@ -19,27 +19,18 @@ COVER_STRIP_SIZE = 8
 
 
 def _entry_payload(entry):
-    return {
-        "id": entry.issue_id,
-        "label": str(entry.issue),
-        "owned": entry.owned,
-        "ownedInCompilation": entry.owned_in_compilation,
-        "cover": entry.cover_url,
-    }
+    return {"id": entry.issue_id, "label": str(entry.issue), "cover": entry.cover_url}
 
 
 @staff_member_required
 def arc_list(request):
     cards = []
     for arc in ReadingArc.objects.all():
-        entries = arc.entries_with_ownership(request.user)
-        owned = sum(1 for entry in entries if entry.owned)
+        entries = arc.entries_with_covers()
         cards.append(
             {
                 "arc": arc,
                 "total": len(entries),
-                "owned": owned,
-                "percent": round(owned * 100 / len(entries)) if entries else 0,
                 "covers": [entry for entry in entries if entry.cover_url][:COVER_STRIP_SIZE],
             }
         )
@@ -84,9 +75,8 @@ def arc_form(request, pk=None):
         submitted = {issue.pk: issue for issue in Issue.objects.filter(pk__in=[i for i in issue_ids if isinstance(i, int)])}
         items = [{"id": pk, "label": str(submitted[pk])} for pk in issue_ids if pk in submitted]
     else:
-        items = [_entry_payload(entry) for entry in arc.entries_with_ownership(request.user)] if arc else []
+        items = [_entry_payload(entry) for entry in arc.entries_with_covers()] if arc else []
 
-    owned = sum(1 for item in items if item.get("owned"))
     return render(
         request,
         "manage/arc_form.html",
@@ -99,8 +89,6 @@ def arc_form(request, pk=None):
                 (publishing.pk, publishing_label(publishing))
                 for publishing in Publishing.objects.order_by("publishing_title", "year", "serie")
             ],
-            "owned_count": owned,
-            "total_count": len(items),
             "form_data": {"issuesUrl": reverse("manage_publishing_issues"), "issues": items},
         },
     )
