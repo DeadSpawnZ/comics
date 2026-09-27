@@ -488,6 +488,10 @@
   font-size: 0.875rem;
 }
 
+.artist-list__item--readonly {
+  padding-right: 0.875rem;
+}
+
 .artist-list__item[hidden] {
   display: none;
 }

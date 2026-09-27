@@ -2,7 +2,8 @@
 {% comment %}
 Other editions of the same issue, grouped as regular, incentive and retailer-exclusive covers.
 Params: siblings (all the editions), groups (Edition.group_by_cover_kind(siblings); `owned` is shown when set),
-current (the edition being viewed), edit_back_url (optional: when given, each thumbnail links to its Gestión edit page).
+current (the edition being viewed), link_name (optional URL name taking the edition pk, e.g. its Gestión edit page
+or its Comics detail; each thumbnail links there), back_url (optional `next` for those links).
 {% endcomment %}
 <section class="mt-3">
   <div class="md-section-label">
@@ -26,9 +27,9 @@ current (the edition being viewed), edit_back_url (optional: when given, each th
             {{ sibling.variant|default:"—" }} ·
             {% if kind == "incentive" %}{{ sibling.ratio }}{% elif kind == "retailer_exclusive" %}{{ sibling.retailer_exclusive }}{% else %}{{ sibling.get_printing_display }}{% endif %}{% if sibling.publishing_id != current.publishing_id %} · {{ sibling.publishing.language|upper }}{% endif %}
           </div>
-          {% if edit_back_url %}
-            <a class="stretched-link" href="{% url 'manage_edition_edit' sibling.pk %}?next={{ edit_back_url|urlencode }}"
-               aria-label="{% blocktranslate with edition=sibling %}Edit {{ edition }}{% endblocktranslate %}"></a>
+          {% if link_name %}
+            <a class="stretched-link" href="{% url link_name sibling.pk %}{% if back_url %}?next={{ back_url|urlencode }}{% endif %}"
+               aria-label="{{ sibling }}"></a>
           {% endif %}
         </div>
       {% endfor %}

@@ -67,6 +67,12 @@ def _issues_for_publishing(publishing_id):
 
 @staff_member_required
 def edition_list(request):
+    return render(request, "manage/edition_list.html", edition_catalog_context(request))
+
+
+def edition_catalog_context(request):
+    """Filtered, paginated edition catalog (type tabs, format, search). Shared by Gestión and
+    the read-only Comics module."""
     query = request.GET.get("q", "").strip()
     format_filter = request.GET.get("format", "")
     type_filter = request.GET.get("tipo", "")
@@ -104,18 +110,26 @@ def edition_list(request):
         for edition in page_obj:
             edition.compiled_count = compiled_counts.get(edition.id, 0)
 
-    return render(
-        request,
-        "manage/edition_list.html",
-        {
-            "page_obj": page_obj,
-            "elided_page_range": page_obj.paginator.get_elided_page_range(page_obj.number, on_each_side=1, on_ends=1),
-            "tabs": tabs,
-            "query": query,
-            "format_filter": format_filter,
-            "type_filter": type_filter,
-            "format_choices": Edition.FormatChoices.choices,
-        },
+    return {
+        "page_obj": page_obj,
+        "elided_page_range": page_obj.paginator.get_elided_page_range(page_obj.number, on_each_side=1, on_ends=1),
+        "tabs": tabs,
+        "query": query,
+        "format_filter": format_filter,
+        "type_filter": type_filter,
+        "format_choices": Edition.FormatChoices.choices,
+    }
+
+
+def sibling_editions_of(edition):
+    """Other editions of the same issue (empty for compilations)."""
+    if not edition.issue_id:
+        return []
+    return list(
+        Edition.objects.filter(issue_id=edition.issue_id)
+        .exclude(pk=edition.pk)
+        .select_related("publishing")
+        .order_by("release_date", "publishing__publishing_title", "number", "variant", "printing")
     )
 
 
@@ -181,14 +195,7 @@ def edition_form(request, pk=None):
     else:
         own_option = _("Own issue (by publishing and number)")
 
-    sibling_editions = []
-    if edition and edition.issue_id:
-        sibling_editions = list(
-            Edition.objects.filter(issue_id=edition.issue_id)
-            .exclude(pk=edition.pk)
-            .select_related("publishing")
-            .order_by("release_date", "publishing__publishing_title", "number", "variant", "printing")
-        )
+    sibling_editions = sibling_editions_of(edition) if edition else []
 
     return render(
         request,

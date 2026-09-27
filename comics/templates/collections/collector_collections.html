@@ -1,7 +1,7 @@
 {% extends 'my_comics/base_comics.html' %}
 {% load static i18n %}
 
-{% block breadcrumb_nav %}{% endblock %}
+{% block breadcrumb %}<span class="is-current">{% translate "Collection" %}</span>{% endblock %}
 
 {% block side_panels %}
       <!-- FILTERS -->
@@ -46,8 +46,8 @@
 {% block comics_content %}
     <!-- CONTENT -->
     <div>
-      <div class="d-flex align-items-baseline justify-content-between mb-3 flex-wrap gap-2">
-        <h1 class="md-headline-small mb-0">{% translate "My collection" %}</h1>
+      <div class="mb-4">
+        <h1 class="md-headline-small mb-0">{% translate "Collection" %}</h1>
         <span class="md-body-medium">{% blocktranslate count counter=page_obj.paginator.count %}{{ counter }} item{% plural %}{{ counter }} items{% endblocktranslate %}</span>
       </div>
 
@@ -132,7 +132,7 @@
                     {% endif %}
 
                     {% if collection.sibling_editions %}
-                      {% include 'includes/sibling_editions.html' with siblings=collection.sibling_editions groups=collection.sibling_groups current=collection.edition %}
+                      {% include 'includes/sibling_editions.html' with siblings=collection.sibling_editions groups=collection.sibling_groups current=collection.edition link_name="comics_edition_detail" back_url=request.get_full_path %}
                     {% endif %}
                   </div>
 

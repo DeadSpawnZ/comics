@@ -3,8 +3,10 @@ what they own and what they are missing. Editing these records belongs to Gesti√
 
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, render
+from django.urls import reverse
 
-from comics.models import Connecting, ReadingArc
+from comics.models import Collection, Connecting, Edition, ReadingArc
+from comics.views.manage_editions import _safe_next, edition_catalog_context, sibling_editions_of
 
 COVER_STRIP_SIZE = 6
 ENTRY_FILTERS = ("all", "owned", "missing")
@@ -88,3 +90,54 @@ def connecting_detail(request, pk):
     summary = _connecting_summary(get_object_or_404(Connecting, pk=pk), request.user)
     summary["missing_pieces"] = [piece for piece in summary["pieces"] if not piece.owned]
     return render(request, "my_comics/connecting_detail.html", summary)
+
+
+def _owned_counts(user, edition_ids):
+    """{edition_id: number of copies `user` owns} for the given editions."""
+    counts = {}
+    for edition_id in Collection.objects.owned_by(user).filter(edition_id__in=edition_ids).values_list("edition_id", flat=True):
+        counts[edition_id] = counts.get(edition_id, 0) + 1
+    return counts
+
+
+@login_required
+def edition_list(request):
+    """Read-only edition catalog with the same filters as Gesti√≥n, flagged with what the user owns."""
+    context = edition_catalog_context(request)
+    page_obj = context["page_obj"]
+    counts = _owned_counts(request.user, [edition.id for edition in page_obj])
+    for edition in page_obj:
+        edition.owned_count = counts.get(edition.id, 0)
+    return render(request, "my_comics/edition_list.html", context)
+
+
+@login_required
+def edition_detail(request, pk):
+    edition = get_object_or_404(Edition.objects.select_related("publishing", "issue__publishing"), pk=pk)
+    siblings = sibling_editions_of(edition)
+    owned_ids = set(_owned_counts(request.user, [edition.id] + [sibling.id for sibling in siblings]))
+    for sibling in siblings:
+        sibling.owned = sibling.id in owned_ids
+    copies = (
+        Collection.objects.owned_by(request.user)
+        .filter(edition=edition)
+        .select_related("participant")
+        .order_by("trade_date")
+    )
+    return render(
+        request,
+        "my_comics/edition_detail.html",
+        {
+            "edition": edition,
+            "back_url": _safe_next(request, reverse("comics_editions")),
+            "copies": copies,
+            "cover_artists": edition.cover_artists.order_by("name"),
+            "collected": edition.collected_entries.select_related("issue__publishing").order_by("order"),
+            "sibling_editions": siblings,
+            "sibling_groups": Edition.group_by_cover_kind(siblings),
+            "linked_elsewhere": bool(
+                edition.issue_id
+                and (edition.issue.publishing_id != edition.publishing_id or edition.issue.number != edition.number.strip())
+            ),
+        },
+    )

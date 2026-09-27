@@ -57,7 +57,7 @@
                  {% if url_name|slice:':6' == 'comics' %}aria-current="page"{% endif %}
                  href="{% url 'comics' %}">
                 <span class="material-symbols-outlined" aria-hidden="true">menu_book</span>
-                Comics
+                {% translate "My comics" %}
               </a>
             </li>
             <li class="nav-item">

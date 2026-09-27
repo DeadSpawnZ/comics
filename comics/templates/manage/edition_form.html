@@ -141,7 +141,7 @@
         <div class="md-body-medium text-center mb-3">{% translate "The thumbnail is generated automatically on save." %}</div>
 
         {% if sibling_editions %}
-          {% include 'includes/sibling_editions.html' with siblings=sibling_editions groups=sibling_groups current=edition edit_back_url=back_url %}
+          {% include 'includes/sibling_editions.html' with siblings=sibling_editions groups=sibling_groups current=edition link_name="manage_edition_edit" back_url=back_url %}
         {% endif %}
       </div>
     </div>
