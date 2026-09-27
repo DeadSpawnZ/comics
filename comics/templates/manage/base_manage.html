@@ -13,6 +13,14 @@
     <div class="md-side-nav__title">{% translate "Management" %}</div>
     <ul>
       <li>
+        <a class="md-side-nav__link {% if 'publishing' in url_name %}is-active{% endif %}"
+           {% if 'publishing' in url_name %}aria-current="page"{% endif %}
+           href="{% url 'manage_publishings' %}">
+          <span class="material-symbols-outlined" aria-hidden="true">collections_bookmark</span>
+          Publishings
+        </a>
+      </li>
+      <li>
         <a class="md-side-nav__link {% if 'edition' in url_name %}is-active{% endif %}"
            {% if 'edition' in url_name %}aria-current="page"{% endif %}
            href="{% url 'manage_editions' %}">

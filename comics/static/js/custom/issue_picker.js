@@ -7,18 +7,43 @@ window.ComiIssuePicker = (function () {
 
   // Inputs with data-filter-select="<select id>" filter that select's options as you type.
   // The selected option is kept even if it does not match, so the value is not lost.
+  // Option groups (<optgroup>) are kept; groups left without options are hidden.
   function setupFilterableSelects(root = document) {
     root.querySelectorAll("[data-filter-select]").forEach((input) => {
       const select = document.getElementById(input.dataset.filterSelect);
       if (!select) return;
-      const allOptions = [...select.options].map((option) => ({ value: option.value, text: option.text }));
+      const snapshot = (option) => ({ value: option.value, text: option.text });
+      const sections = [...select.children].map((child) =>
+        child.tagName === "OPTGROUP"
+          ? { label: child.label, options: [...child.children].map(snapshot) }
+          : { label: null, options: [snapshot(child)] }
+      );
       input.addEventListener("input", () => {
         const query = normalize(input.value.trim());
         const current = select.value;
-        const visible = allOptions.filter(
-          (option) => !option.value || option.value === current || !query || normalize(option.text).includes(query)
-        );
-        select.replaceChildren(...visible.map((o) => new Option(o.text, o.value, false, o.value === current)));
+        let selectedPlaced = false;
+        const build = (option) => {
+          // The same value may be listed in several groups: select only its first occurrence.
+          const selected = option.value === current && !selectedPlaced;
+          if (selected) selectedPlaced = true;
+          return new Option(option.text, option.value, false, selected);
+        };
+        const matches = (option) =>
+          !option.value || option.value === current || !query || normalize(option.text).includes(query);
+        const children = [];
+        for (const section of sections) {
+          const visible = section.options.filter(matches).map(build);
+          if (!visible.length) continue;
+          if (section.label === null) {
+            children.push(...visible);
+          } else {
+            const group = document.createElement("optgroup");
+            group.label = section.label;
+            group.append(...visible);
+            children.push(group);
+          }
+        }
+        select.replaceChildren(...children);
       });
     });
   }

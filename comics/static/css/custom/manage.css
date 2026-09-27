@@ -341,6 +341,11 @@
   border-bottom: 1px solid var(--md-outline-variant);
 }
 
+/* Rows without a cover thumbnail (e.g. publishings) */
+.manage-row--no-thumb {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+}
+
 .manage-row:last-child {
   border-bottom: 0;
 }
@@ -398,6 +403,15 @@
   .manage-row__actions {
     grid-column: 2;
     justify-content: flex-start;
+  }
+
+  .manage-row--no-thumb {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .manage-row--no-thumb .manage-row__chips,
+  .manage-row--no-thumb .manage-row__actions {
+    grid-column: 1;
   }
 }
 
@@ -599,4 +613,52 @@
 
 .arc-entry__thumb .material-symbols-outlined {
   font-size: 1rem;
+}
+
+/* Publishing form: editorials as selectable chips */
+.editorial-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.editorial-option {
+  position: relative;
+  margin: 0;
+  cursor: pointer;
+}
+
+.editorial-option input {
+  position: absolute;
+  opacity: 0;
+}
+
+.editorial-option span {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 0.875rem;
+  border: 1px solid var(--md-outline);
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--md-on-surface-variant);
+}
+
+.editorial-option input:checked + span {
+  border-color: transparent;
+  background-color: var(--md-secondary-container);
+  color: var(--md-on-secondary-container);
+}
+
+.editorial-option input:checked + span::before {
+  content: "check";
+  margin-right: 0.375rem;
+  font-family: "Material Symbols Outlined";
+  font-size: 1.1rem;
+}
+
+.editorial-option input:focus-visible + span {
+  outline: 2px solid var(--md-primary);
+  outline-offset: 2px;
 }

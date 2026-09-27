@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-27 13:58-0600\n"
+"POT-Creation-Date: 2026-09-27 16:08-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -25,7 +25,7 @@ msgid "Unsaved changes"
 msgstr "Cambios sin guardar"
 
 #: comics/static/js/custom/connecting_editor.js:170
-#: comics/static/js/custom/issue_picker.js:80
+#: comics/static/js/custom/issue_picker.js:105
 msgid "Remove %(name)s"
 msgstr "Quitar %(name)s"
 
@@ -58,7 +58,7 @@ msgid "Choose a publishing to see its comics."
 msgstr "Elige un publishing para ver sus comics."
 
 #: comics/static/js/custom/connecting_editor.js:337
-#: comics/static/js/custom/issue_picker.js:94
+#: comics/static/js/custom/issue_picker.js:119
 msgid "Loading…"
 msgstr "Cargando…"
 
@@ -118,26 +118,26 @@ msgstr "%(issue)s · issue propio"
 msgid "%(issue)s · own issue (will be created)"
 msgstr "%(issue)s · issue propio (se creará)"
 
-#: comics/static/js/custom/edition_form.js:109
+#: comics/static/js/custom/edition_form.js:145
 msgid "New cover: %(name)s (applied on save)"
 msgstr "Nueva portada: %(name)s (se aplica al guardar)"
 
-#: comics/static/js/custom/issue_picker.js:78
+#: comics/static/js/custom/issue_picker.js:103
 msgid "Move %(name)s up"
 msgstr "Subir %(name)s"
 
-#: comics/static/js/custom/issue_picker.js:79
+#: comics/static/js/custom/issue_picker.js:104
 msgid "Move %(name)s down"
 msgstr "Bajar %(name)s"
 
-#: comics/static/js/custom/issue_picker.js:94
+#: comics/static/js/custom/issue_picker.js:119
 msgid "Choose a publishing first"
 msgstr "Elige primero un publishing"
 
-#: comics/static/js/custom/issue_picker.js:100
+#: comics/static/js/custom/issue_picker.js:125
 msgid "Choose an issue…"
 msgstr "Elige un issue…"
 
-#: comics/static/js/custom/issue_picker.js:100
+#: comics/static/js/custom/issue_picker.js:125
 msgid "This publishing has no issues"
 msgstr "Este publishing no tiene issues"

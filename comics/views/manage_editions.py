@@ -52,6 +52,8 @@ def _own_issue_parts(form, edition):
         publishing_id, number = form.data.get("publishing"), form.data.get("number", "")
     elif edition:
         publishing_id, number = edition.publishing_id, edition.number
+    elif form.initial.get("publishing"):
+        publishing_id, number = form.initial["publishing"], ""
     else:
         return None, ""
     try:
@@ -150,7 +152,10 @@ def edition_form(request, pk=None):
         selected_issue_id = edition.issue_id  # manual link; the own issue is left as the first option
     collected_ids = list(edition.collected_entries.values_list("issue_id", flat=True)) if edition else []
 
-    form = EditionManageForm(request.POST or None, request.FILES or None, instance=edition)
+    initial = {}
+    if not edition and request.GET.get("publishing", "").isdigit():
+        initial["publishing"] = int(request.GET["publishing"])  # e.g. "New edition" from a publishing
+    form = EditionManageForm(request.POST or None, request.FILES or None, instance=edition, initial=initial)
     content_errors = []
 
     if request.method == "POST":
@@ -176,7 +181,9 @@ def edition_form(request, pk=None):
         issue_publishing_id = Issue.objects.filter(pk=selected_issue_id).values_list("publishing_id", flat=True).first()
     elif edition:
         issue_publishing_id = edition.publishing_id
-    collected = {issue.id: issue for issue in Issue.objects.filter(pk__in=collected_ids).select_related("publishing")}
+    else:
+        issue_publishing_id = _own_issue_parts(form, None)[0]
+    collected ={issue.id: issue for issue in Issue.objects.filter(pk__in=collected_ids).select_related("publishing")}
 
     # The own issue is offered only as the first option ("issue propio"), never repeated in the list.
     own_publishing_id, own_number = _own_issue_parts(form, edition)

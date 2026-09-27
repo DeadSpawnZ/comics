@@ -22,7 +22,7 @@ from django.conf import settings
 from django.views.static import serve as serve_static
 from django.views.generic import RedirectView
 from comics.views import (
-    collection, publishing, login, collectables, manage, manage_arcs, manage_editions, my_comics)
+    collection, publishing, login, collectables, manage, manage_arcs, manage_editions, manage_publishings, my_comics)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -46,7 +46,11 @@ urlpatterns = [
     path("gestion/ediciones/nueva/", manage_editions.edition_form, name="manage_edition_new"),
     path("gestion/ediciones/<int:pk>/", manage_editions.edition_form, name="manage_edition_edit"),
     path("gestion/ediciones/<int:pk>/eliminar/", manage_editions.edition_delete, name="manage_edition_delete"),
-    path("gestion/api/issues/", manage_editions.publishing_issues, name="manage_publishing_issues"),
+    path("gestion/publishings/", manage_publishings.publishing_list, name="manage_publishings"),
+    path("gestion/publishings/nuevo/", manage_publishings.publishing_form, name="manage_publishing_new"),
+    path("gestion/publishings/<int:pk>/", manage_publishings.publishing_form, name="manage_publishing_edit"),
+    path("gestion/publishings/<int:pk>/eliminar/", manage_publishings.publishing_delete, name="manage_publishing_delete"),
+    path("gestion/api/issues/",manage_editions.publishing_issues, name="manage_publishing_issues"),
     path("gestion/arcos/", manage_arcs.arc_list, name="manage_arcs"),
     path("gestion/arcos/nuevo/", manage_arcs.arc_form, name="manage_arc_new"),
     path("gestion/arcos/<int:pk>/", manage_arcs.arc_form, name="manage_arc_edit"),

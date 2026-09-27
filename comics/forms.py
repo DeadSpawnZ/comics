@@ -1,7 +1,7 @@
 from django import forms
 from django.core.exceptions import NON_FIELD_ERRORS
 from django.utils.translation import gettext_lazy as _
-from .models import Collection, Edition, Publishing, Dealer, ReadingArc
+from .models import Collection, Edition, Editorial, Publishing, Dealer, ReadingArc, Title
 
 
 class CollectionForm(forms.ModelForm):
@@ -117,6 +117,24 @@ def publishing_label(publishing):
     return f"{publishing.publishing_title}{year} {publishing.serie} · {publishing.language.upper()}"
 
 
+RECENT_PUBLISHINGS = 8
+NEWEST_PUBLISHINGS = 3
+
+
+def recent_publishings():
+    """Publishings most likely to get a new edition: the newest created ones (they are usually
+    created right before adding their editions), then those of the most recently added editions."""
+    recent = list(Publishing.objects.order_by("-id")[:NEWEST_PUBLISHINGS])
+    seen = {publishing.pk for publishing in recent}
+    for edition in Edition.objects.select_related("publishing").order_by("-id")[:200]:
+        if len(recent) >= RECENT_PUBLISHINGS:
+            break
+        if edition.publishing_id not in seen:
+            seen.add(edition.publishing_id)
+            recent.append(edition.publishing)
+    return recent
+
+
 class EditionManageForm(forms.ModelForm):
     """Edition data for Gestion. The content (issue or collected issues) is
     handled separately in the view because they are not direct model fields."""
@@ -170,6 +188,13 @@ class EditionManageForm(forms.ModelForm):
         publishing = self.fields["publishing"]
         publishing.queryset = Publishing.objects.order_by("publishing_title", "year", "serie")
         publishing.label_from_instance = publishing_label
+        if not self.instance.pk:
+            # New editions: offer the recent publishings first (they repeat in the full list).
+            publishing.widget.choices = [
+                ("", "---------"),
+                (_("Recent"), [(item.pk, publishing_label(item)) for item in recent_publishings()]),
+                (_("All publishings"), [(item.pk, publishing_label(item)) for item in publishing.queryset]),
+            ]
         self.fields["cover_artists"].queryset = self.fields["cover_artists"].queryset.order_by("name")
 
         # Material/Bootstrap style: floating labels need a placeholder.
@@ -212,3 +237,72 @@ class ReadingArcForm(forms.ModelForm):
             if name in self.fields:
                 widget = self.fields[name].widget
                 widget.attrs["class"] = f"{widget.attrs.get('class', '')} is-invalid".strip()
+
+
+class PublishingManageForm(forms.ModelForm):
+    """Publishing data for Gestión. The title (the group used by the letter filter) is typed as
+    text: an existing one is reused and a new one is created when needed."""
+
+    title_name = forms.CharField(
+        label=_("Title (group)"),
+        max_length=100,
+        required=False,
+        help_text=_("Groups publishings under a letter. Empty: the publishing title is used."),
+    )
+
+    class Meta:
+        model = Publishing
+        fields = ["publishing_title", "serie", "language", "date", "year", "editorials"]
+        labels = {
+            "publishing_title": _("Publishing title"),
+            "serie": _("Series"),
+            "language": _("Language"),
+            "date": _("Start date"),
+            "year": _("Year"),
+            "editorials": _("Editorials"),
+        }
+        help_texts = {"year": _("Empty: taken from the start date.")}
+        widgets = {
+            "date": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+            "editorials": forms.CheckboxSelectMultiple,
+        }
+        error_messages = {
+            NON_FIELD_ERRORS: {
+                "unique_together": _("A publishing with that title, year, series and language already exists."),
+            },
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance.pk and self.instance.title_id:
+            self.fields["title_name"].initial = self.instance.title.name
+        self.fields["editorials"].queryset = Editorial.objects.order_by("name")
+        self.fields["title_name"].widget.attrs["list"] = "title-options"
+        for name, field in self.fields.items():
+            widget = field.widget
+            if isinstance(widget, forms.CheckboxSelectMultiple):
+                widget.attrs["class"] = "form-check-input"
+            elif isinstance(widget, forms.Select):
+                widget.attrs["class"] = "form-select"
+            else:
+                widget.attrs.update({"class": "form-control", "placeholder": field.label})
+
+    def clean(self):
+        cleaned = super().clean()
+        # Derive the year before the unique constraint is validated.
+        if cleaned.get("publishing_title"):
+            cleaned["publishing_title"] = cleaned["publishing_title"].strip()
+        if cleaned.get("year") is None and cleaned.get("date"):
+            cleaned["year"] = cleaned["date"].year
+        return cleaned
+
+    def save(self, commit=True):
+        publishing = super().save(commit=False)
+        publishing.year = self.cleaned_data.get("year")
+        name = (self.cleaned_data.get("title_name") or "").strip() or publishing.publishing_title.strip()
+        title = Title.objects.filter(name__iexact=name).first() or Title.objects.create(name=name)
+        publishing.title = title
+        if commit:
+            publishing.save()
+            self.save_m2m()
+        return publishing
