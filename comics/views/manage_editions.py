@@ -43,7 +43,21 @@ def _safe_next(request, fallback):
 
 
 def _issue_payload(issue):
-    return {"id": issue.id, "label": str(issue)}
+    return {"id": issue.id, "label": str(issue), "number": issue.number}
+
+
+def _own_issue_parts(form, edition):
+    """Publishing id and number the edition has in the form (submitted or saved): they define its own issue."""
+    if form.is_bound:
+        publishing_id, number = form.data.get("publishing"), form.data.get("number", "")
+    elif edition:
+        publishing_id, number = edition.publishing_id, edition.number
+    else:
+        return None, ""
+    try:
+        return int(publishing_id), number.strip()
+    except (TypeError, ValueError):
+        return None, number.strip()
 
 
 def _issues_for_publishing(publishing_id):
@@ -119,7 +133,7 @@ def edition_form(request, pk=None):
     if edition and edition.issue_id and (
         edition.issue.publishing_id != edition.publishing_id or edition.issue.number != edition.number.strip()
     ):
-        selected_issue_id = edition.issue_id  # manual link; if it is the default issue it is left as "Automatico"
+        selected_issue_id = edition.issue_id  # manual link; the own issue is left as the first option
     collected_ids = list(edition.collected_entries.values_list("issue_id", flat=True)) if edition else []
 
     form = EditionManageForm(request.POST or None, request.FILES or None, instance=edition)
@@ -150,6 +164,23 @@ def edition_form(request, pk=None):
         issue_publishing_id = edition.publishing_id
     collected = {issue.id: issue for issue in Issue.objects.filter(pk__in=collected_ids).select_related("publishing")}
 
+    # The own issue is offered only as the first option ("issue propio"), never repeated in the list.
+    own_publishing_id, own_number = _own_issue_parts(form, edition)
+    own_publishing = form.fields["publishing"].queryset.filter(pk=own_publishing_id).first() if own_publishing_id else None
+    own_issue = Issue.objects.filter(publishing_id=own_publishing_id, number=own_number).first() if own_publishing else None
+    if own_issue and selected_issue_id == own_issue.pk:
+        selected_issue_id = None
+    issue_options = _issues_for_publishing(issue_publishing_id) if issue_publishing_id else []
+    if own_issue:
+        issue_options = [issue for issue in issue_options if issue.pk != own_issue.pk]
+    if own_publishing and own_number:
+        own_label = f"{own_publishing.publishing_title} #{own_number}"
+        own_option = (
+            _("%(issue)s · own issue") if own_issue else _("%(issue)s · own issue (will be created)")
+        ) % {"issue": own_label}
+    else:
+        own_option = _("Own issue (by publishing and number)")
+
     return render(
         request,
         "manage/edition_form.html",
@@ -160,10 +191,14 @@ def edition_form(request, pk=None):
             "content_errors": content_errors,
             "selected_issue_id": selected_issue_id,
             "issue_publishing_id": issue_publishing_id,
-            "issue_options": _issues_for_publishing(issue_publishing_id) if issue_publishing_id else [],
+            "issue_options": issue_options,
+            "own_option": own_option,
             "back_url": back_url,
             "form_data": {
                 "issuesUrl": reverse("manage_publishing_issues"),
+                "publishingTitles": {
+                    publishing.pk: publishing.publishing_title for publishing in form.fields["publishing"].queryset
+                },
                 "collected": [_issue_payload(collected[i]) for i in collected_ids if i in collected],
             },
         },
@@ -218,7 +253,7 @@ def _save_edition(form, content, issue_id, collected_ids):
         # Remove the collected issues first: otherwise save() still treats it as a compilation.
         if edition.pk:
             edition.collected_entries.all().delete()
-        edition.issue_id = issue_id  # None = automatico segun publishing y numero
+        edition.issue_id = issue_id  # None = own issue (by publishing and number)
         edition.save()
         form.save_m2m()
     return edition

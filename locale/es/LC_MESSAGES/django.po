@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-26 23:51-0600\n"
+"POT-Creation-Date: 2026-09-27 13:29-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -212,8 +212,11 @@ msgstr "Vista previa del connecting"
 msgid "%(counter)s piece placed. Shows what is saved; save to see changes."
 msgid_plural ""
 "%(counter)s pieces placed. Shows what is saved; save to see changes."
-msgstr[0] "%(counter)s pieza colocada. Muestra lo guardado; guarda para ver los cambios."
-msgstr[1] "%(counter)s piezas colocadas. Muestra lo guardado; guarda para ver los cambios."
+msgstr[0] ""
+"%(counter)s pieza colocada. Muestra lo guardado; guarda para ver los cambios."
+msgstr[1] ""
+"%(counter)s piezas colocadas. Muestra lo guardado; guarda para ver los "
+"cambios."
 
 #: comics/templates/admin/comics/connecting/change_form.html:76
 msgctxt "connecting cell"
@@ -675,13 +678,10 @@ msgstr "Compilación"
 
 #: comics/templates/manage/edition_form.html:123
 msgid ""
-"By default the edition belongs to the issue of its publishing and number. If "
-"it is a foreign or anniversary edition of an issue from another series, "
-"choose that issue."
-msgstr ""
-"Por default la edición es del issue de su publishing y número. Si es una "
-"edición extranjera o de aniversario de un issue de otra serie, elige ese "
-"issue."
+"By default, the edition's own issue (same publishing and number). Choose "
+"another one only if it is a foreign or anniversary edition of an issue from "
+"another series."
+msgstr "Por default, el issue propio de la edición (mismo publishing y número). Elige otro solo si es una edición extranjera o de aniversario de un issue de otra serie."
 
 #: comics/templates/manage/edition_form.html:131
 msgid "Filter the issue publishings"
@@ -690,10 +690,6 @@ msgstr "Filtrar publishings del issue"
 #: comics/templates/manage/edition_form.html:139
 msgid "Issue publishing"
 msgstr "Publishing del issue"
-
-#: comics/templates/manage/edition_form.html:145
-msgid "Automatic (by publishing and number)"
-msgstr "Automático (según publishing y número)"
 
 #: comics/templates/manage/edition_form.html:157
 msgid "Add the issues it collects, in reading order."
@@ -915,68 +911,82 @@ msgstr "Individuales"
 msgid "Compilations"
 msgstr "Compilaciones"
 
-#: comics/views/manage_editions.py:140
+#: comics/views/manage_editions.py:154
 #, python-format
 msgid "Edition created: %(edition)s"
 msgstr "Edición creada: %(edition)s"
 
-#: comics/views/manage_editions.py:140
+#: comics/views/manage_editions.py:154
 #, python-format
 msgid "Edition saved: %(edition)s"
 msgstr "Edición guardada: %(edition)s"
 
+#: comics/views/manage_editions.py:179
+#, python-format
+msgid "%(issue)s · own issue"
+msgstr "%(issue)s · issue propio"
+
+#: comics/views/manage_editions.py:179
+#, python-format
+msgid "%(issue)s · own issue (will be created)"
+msgstr "%(issue)s · issue propio (se creará)"
+
 #: comics/views/manage_editions.py:182
+msgid "Own issue (by publishing and number)"
+msgstr "Issue propio (según publishing y número)"
+
+#: comics/views/manage_editions.py:217
 msgid "The list of collected issues is not valid."
 msgstr "La lista de issues recopilados no es válida."
 
-#: comics/views/manage_editions.py:185
+#: comics/views/manage_editions.py:220
 msgid "A compilation needs at least one collected issue."
 msgstr "Una compilación necesita al menos un issue recopilado."
 
-#: comics/views/manage_editions.py:187
+#: comics/views/manage_editions.py:222
 msgid "An issue is repeated in the compilation."
 msgstr "Un issue está repetido en la compilación."
 
-#: comics/views/manage_editions.py:189
+#: comics/views/manage_editions.py:224
 msgid "One of the collected issues no longer exists."
 msgstr "Alguno de los issues recopilados ya no existe."
 
-#: comics/views/manage_editions.py:196
+#: comics/views/manage_editions.py:231
 msgid "The chosen issue is not valid."
 msgstr "El issue elegido no es válido."
 
-#: comics/views/manage_editions.py:199
+#: comics/views/manage_editions.py:234
 msgid "The chosen issue no longer exists."
 msgstr "El issue elegido ya no existe."
 
-#: comics/views/manage_editions.py:201
+#: comics/views/manage_editions.py:236
 msgid "Choose whether the edition is a single issue or a compilation."
 msgstr "Elige si la edición es un issue individual o una compilación."
 
-#: comics/views/manage_editions.py:246
+#: comics/views/manage_editions.py:281
 #, python-format
 msgid "%(count)d collection record"
 msgid_plural "%(count)d collection records"
 msgstr[0] "%(count)d registro de colección"
 msgstr[1] "%(count)d registros de colección"
 
-#: comics/views/manage_editions.py:250
+#: comics/views/manage_editions.py:285
 #, python-format
 msgid "%(count)d connecting"
 msgid_plural "%(count)d connectings"
 msgstr[0] "%(count)d connecting"
 msgstr[1] "%(count)d connectings"
 
-#: comics/views/manage_editions.py:253
+#: comics/views/manage_editions.py:288
 #, python-format
 msgid "“%(name)s” cannot be deleted: it is used in %(uses)s."
 msgstr "No se puede eliminar «%(name)s»: se usa en %(uses)s."
 
-#: comics/views/manage_editions.py:254
+#: comics/views/manage_editions.py:289
 msgid "and"
 msgstr "y"
 
-#: comics/views/manage_editions.py:257
+#: comics/views/manage_editions.py:292
 #, python-format
 msgid "Edition deleted: %(edition)s"
 msgstr "Edición eliminada: %(edition)s"

@@ -121,8 +121,8 @@
         <div id="content-single" {% if content == 'compilation' %}hidden{% endif %}>
           <p class="md-body-medium">
             {% blocktranslate trimmed %}
-              By default the edition belongs to the issue of its publishing and number. If it is a foreign or
-              anniversary edition of an issue from another series, choose that issue.
+              By default, the edition's own issue (same publishing and number). Choose another one only if it is
+              a foreign or anniversary edition of an issue from another series.
             {% endblocktranslate %}
           </p>
           <div class="row g-3">
@@ -142,7 +142,7 @@
             <div class="col-12 col-md-6 d-flex flex-column justify-content-end">
               <div class="form-floating md-field">
                 <select class="form-select" id="issue-select" name="issue">
-                  <option value="">{% translate "Automatic (by publishing and number)" %}</option>
+                  <option value="" id="own-issue-option">{{ own_option }}</option>
                   {% for issue in issue_options %}
                     <option value="{{ issue.pk }}" {% if issue.pk == selected_issue_id %}selected{% endif %}>{{ issue }}</option>
                   {% endfor %}

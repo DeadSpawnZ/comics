@@ -24,6 +24,14 @@
   color: var(--md-on-surface-variant);
 }
 
+/* Seven cards per row from xl up (Bootstrap only has 12-based columns). */
+@media (min-width: 1200px) {
+  .col-xl-seventh {
+    flex: 0 0 auto;
+    width: calc(100% / 7);
+  }
+}
+
 /* Comic cards */
 .card-img-container {
   position: relative;
