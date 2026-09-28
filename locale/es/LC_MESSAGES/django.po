@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-27 18:20-0600\n"
+"POT-Creation-Date: 2026-09-27 18:58-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -606,10 +606,10 @@ msgstr "Nuevo arco de lectura"
 #: comics/templates/manage/collection_form.html:26
 #: comics/templates/manage/collection_list.html:96
 #: comics/templates/manage/edition_form.html:28
-#: comics/templates/manage/edition_list.html:100
 #: comics/templates/manage/includes/delete_dialog.html:16
+#: comics/templates/manage/includes/edition_row.html:44
+#: comics/templates/manage/includes/publishing_row.html:35
 #: comics/templates/manage/publishing_form.html:27
-#: comics/templates/manage/publishing_list.html:81
 msgid "Delete"
 msgstr "Eliminar"
 
@@ -695,7 +695,7 @@ msgstr "Inicio"
 msgid "Collections"
 msgstr "Colecciones"
 
-#: comics/templates/manage/base_manage.html:44
+#: comics/templates/manage/base_manage.html:36
 #: comics/templates/manage/edition_form.html:5
 #: comics/templates/manage/edition_list.html:4
 #: comics/templates/manage/edition_list.html:9
@@ -765,8 +765,8 @@ msgid "No pieces match these filters."
 msgstr "Ninguna pieza coincide con estos filtros."
 
 #: comics/templates/manage/collection_list.html:90
-#: comics/templates/manage/edition_list.html:93
-#: comics/templates/manage/publishing_list.html:73
+#: comics/templates/manage/includes/edition_row.html:37
+#: comics/templates/manage/includes/publishing_row.html:27
 msgid "Edit"
 msgstr "Editar"
 
@@ -958,7 +958,7 @@ msgid "There are no issues in the compilation yet."
 msgstr "Todavía no hay issues en la compilación."
 
 #: comics/templates/manage/edition_list.html:10
-#: comics/templates/manage/publishing_list.html:61
+#: comics/templates/manage/includes/publishing_row.html:15
 #: comics/templates/my_comics/edition_list.html:14
 #, python-format
 msgid "%(counter)s edition"
@@ -987,40 +987,15 @@ msgstr "Buscar título o número"
 msgid "No editions match these filters."
 msgstr "No hay ediciones con estos filtros."
 
-#: comics/templates/manage/edition_list.html:72
-#: comics/templates/my_comics/edition_list.html:71
-#, python-format
-msgid "%(printing)s printing"
-msgstr "%(printing)s impresión"
+#: comics/templates/manage/edition_list.html:58
+msgctxt "editions"
+msgid "Recently added"
+msgstr "Agregadas recientemente"
 
-#: comics/templates/manage/edition_list.html:72
-#: comics/templates/manage/publishing_list.html:55
-#: comics/templates/my_comics/edition_list.html:71
-#, python-format
-msgid "Series %(serie)s"
-msgstr "Serie %(serie)s"
-
-#: comics/templates/manage/edition_list.html:80
-#: comics/templates/my_comics/edition_list.html:79
-#, python-format
-msgid "Compilation · %(counter)s issue"
-msgid_plural "Compilation · %(counter)s issues"
-msgstr[0] "Compilación · %(counter)s issue"
-msgstr[1] "Compilación · %(counter)s issues"
-
-#: comics/templates/manage/edition_list.html:83
-msgid "Manually linked to another issue"
-msgstr "Vinculada a mano a otro issue"
-
-#: comics/templates/manage/edition_list.html:88
-#: comics/templates/my_comics/edition_detail.html:90
-msgid "No issue"
-msgstr "Sin issue"
-
-#: comics/templates/manage/edition_list.html:93
-#, python-format
-msgid "Edit %(title)s #%(number)s %(variant)s"
-msgstr "Editar %(title)s #%(number)s %(variant)s"
+#: comics/templates/manage/edition_list.html:64
+msgctxt "editions"
+msgid "All (A–Z)"
+msgstr "Todas (A–Z)"
 
 #: comics/templates/manage/home.html:17
 #: comics/templates/manage/publishing_form.html:20
@@ -1065,6 +1040,49 @@ msgstr ""
 "Se eliminará <strong id=\"deleteDialogName\"></strong>. Esta acción no se "
 "puede deshacer."
 
+#: comics/templates/manage/includes/edition_row.html:16
+#: comics/templates/my_comics/edition_list.html:71
+#, python-format
+msgid "%(printing)s printing"
+msgstr "%(printing)s impresión"
+
+#: comics/templates/manage/includes/edition_row.html:16
+#: comics/templates/manage/includes/publishing_row.html:9
+#: comics/templates/my_comics/edition_list.html:71
+#, python-format
+msgid "Series %(serie)s"
+msgstr "Serie %(serie)s"
+
+#: comics/templates/manage/includes/edition_row.html:24
+#: comics/templates/my_comics/edition_list.html:79
+#, python-format
+msgid "Compilation · %(counter)s issue"
+msgid_plural "Compilation · %(counter)s issues"
+msgstr[0] "Compilación · %(counter)s issue"
+msgstr[1] "Compilación · %(counter)s issues"
+
+#: comics/templates/manage/includes/edition_row.html:27
+msgid "Manually linked to another issue"
+msgstr "Vinculada a mano a otro issue"
+
+#: comics/templates/manage/includes/edition_row.html:32
+#: comics/templates/my_comics/edition_detail.html:90
+msgid "No issue"
+msgstr "Sin issue"
+
+#: comics/templates/manage/includes/edition_row.html:37
+#, python-format
+msgid "Edit %(title)s #%(number)s %(variant)s"
+msgstr "Editar %(title)s #%(number)s %(variant)s"
+
+#: comics/templates/manage/includes/publishing_row.html:18
+msgid "No editions yet"
+msgstr "Sin ediciones todavía"
+
+#: comics/templates/manage/includes/publishing_row.html:23
+msgid "New edition of this publishing"
+msgstr "Nueva edición de este publishing"
+
 #: comics/templates/manage/publishing_form.html:7
 msgctxt "publishing"
 msgid "New"
@@ -1087,7 +1105,7 @@ msgid "Publishing data"
 msgstr "Datos del publishing"
 
 #: comics/templates/manage/publishing_form.html:83
-#: comics/templates/manage/publishing_list.html:92
+#: comics/templates/manage/publishing_list.html:65
 msgid "Delete publishing?"
 msgstr "¿Eliminar publishing?"
 
@@ -1097,10 +1115,6 @@ msgid "%(counter)s publishing"
 msgid_plural "%(counter)s publishings"
 msgstr[0] "%(counter)s publishing"
 msgstr[1] "%(counter)s publishings"
-
-#: comics/templates/manage/publishing_list.html:20
-msgid "Newest first"
-msgstr "Más recientes primero"
 
 #: comics/templates/manage/publishing_list.html:24
 msgctxt "languages"
@@ -1115,13 +1129,13 @@ msgstr "Buscar título"
 msgid "No publishings match these filters."
 msgstr "Ningún publishing coincide con estos filtros."
 
-#: comics/templates/manage/publishing_list.html:64
-msgid "No editions yet"
-msgstr "Sin ediciones todavía"
+#: comics/templates/manage/publishing_list.html:48
+msgid "Recently added"
+msgstr "Agregados recientemente"
 
-#: comics/templates/manage/publishing_list.html:69
-msgid "New edition of this publishing"
-msgstr "Nueva edición de este publishing"
+#: comics/templates/manage/publishing_list.html:54
+msgid "All (A–Z)"
+msgstr "Todos (A–Z)"
 
 #: comics/templates/my_comics/arc_detail.html:21
 #: comics/templates/my_comics/connecting_detail.html:21
@@ -1316,95 +1330,95 @@ msgstr "Arco de lectura guardado: %(arc)s"
 msgid "Reading arc deleted: %(arc)s"
 msgstr "Arco de lectura eliminado: %(arc)s"
 
-#: comics/views/manage_editions.py:26
+#: comics/views/manage_editions.py:27
 msgctxt "editions"
 msgid "All"
 msgstr "Todas"
 
-#: comics/views/manage_editions.py:27
+#: comics/views/manage_editions.py:28
 msgid "Single"
 msgstr "Individuales"
 
-#: comics/views/manage_editions.py:28
+#: comics/views/manage_editions.py:29
 msgid "Compilations"
 msgstr "Compilaciones"
 
-#: comics/views/manage_editions.py:173
+#: comics/views/manage_editions.py:185
 #, python-format
 msgid "Edition created: %(edition)s"
 msgstr "Edición creada: %(edition)s"
 
-#: comics/views/manage_editions.py:173
+#: comics/views/manage_editions.py:185
 #, python-format
 msgid "Edition saved: %(edition)s"
 msgstr "Edición guardada: %(edition)s"
 
-#: comics/views/manage_editions.py:200
+#: comics/views/manage_editions.py:212
 #, python-format
 msgid "%(issue)s · own issue"
 msgstr "%(issue)s · issue propio"
 
-#: comics/views/manage_editions.py:200
+#: comics/views/manage_editions.py:212
 #, python-format
 msgid "%(issue)s · own issue (will be created)"
 msgstr "%(issue)s · issue propio (se creará)"
 
-#: comics/views/manage_editions.py:203
+#: comics/views/manage_editions.py:215
 msgid "Own issue (by publishing and number)"
 msgstr "Issue propio (según publishing y número)"
 
-#: comics/views/manage_editions.py:243
+#: comics/views/manage_editions.py:255
 msgid "The list of collected issues is not valid."
 msgstr "La lista de issues recopilados no es válida."
 
-#: comics/views/manage_editions.py:246
+#: comics/views/manage_editions.py:258
 msgid "A compilation needs at least one collected issue."
 msgstr "Una compilación necesita al menos un issue recopilado."
 
-#: comics/views/manage_editions.py:248
+#: comics/views/manage_editions.py:260
 msgid "An issue is repeated in the compilation."
 msgstr "Un issue está repetido en la compilación."
 
-#: comics/views/manage_editions.py:250
+#: comics/views/manage_editions.py:262
 msgid "One of the collected issues no longer exists."
 msgstr "Alguno de los issues recopilados ya no existe."
 
-#: comics/views/manage_editions.py:257
+#: comics/views/manage_editions.py:269
 msgid "The chosen issue is not valid."
 msgstr "El issue elegido no es válido."
 
-#: comics/views/manage_editions.py:260
+#: comics/views/manage_editions.py:272
 msgid "The chosen issue no longer exists."
 msgstr "El issue elegido ya no existe."
 
-#: comics/views/manage_editions.py:262
+#: comics/views/manage_editions.py:274
 msgid "Choose whether the edition is a single issue or a compilation."
 msgstr "Elige si la edición es un issue individual o una compilación."
 
-#: comics/views/manage_editions.py:307
+#: comics/views/manage_editions.py:319
 #, python-format
 msgid "%(count)d collection record"
 msgid_plural "%(count)d collection records"
 msgstr[0] "%(count)d registro de colección"
 msgstr[1] "%(count)d registros de colección"
 
-#: comics/views/manage_editions.py:311
+#: comics/views/manage_editions.py:323
 #, python-format
 msgid "%(count)d connecting"
 msgid_plural "%(count)d connectings"
 msgstr[0] "%(count)d connecting"
 msgstr[1] "%(count)d connectings"
 
-#: comics/views/manage_editions.py:314
+#: comics/views/manage_editions.py:326
 #, python-format
 msgid "“%(name)s” cannot be deleted: it is used in %(uses)s."
 msgstr "No se puede eliminar «%(name)s»: se usa en %(uses)s."
 
-#: comics/views/manage_editions.py:315
+#: comics/views/manage_editions.py:327
 msgid "and"
 msgstr "y"
 
-#: comics/views/manage_editions.py:318
+#: comics/views/manage_editions.py:330
 #, python-format
 msgid "Edition deleted: %(edition)s"
 msgstr "Edición eliminada: %(edition)s"
@@ -1457,17 +1471,17 @@ msgstr "Hoy"
 msgid "Yesterday"
 msgstr "Ayer"
 
-#: comics/views/manage_publishings.py:62
+#: comics/views/manage_publishings.py:67
 #, python-format
 msgid "Publishing created: %(publishing)s"
 msgstr "Publishing creado: %(publishing)s"
 
-#: comics/views/manage_publishings.py:62
+#: comics/views/manage_publishings.py:67
 #, python-format
 msgid "Publishing saved: %(publishing)s"
 msgstr "Publishing guardado: %(publishing)s"
 
-#: comics/views/manage_publishings.py:97
+#: comics/views/manage_publishings.py:102
 #, python-format
 msgid ""
 "“%(name)s” cannot be deleted: it has editions or issues. Delete or move them "
@@ -1476,7 +1490,7 @@ msgstr ""
 "“%(name)s” no se puede eliminar: tiene ediciones o issues. Elimínalos o "
 "muévelos primero."
 
-#: comics/views/manage_publishings.py:100
+#: comics/views/manage_publishings.py:105
 #, python-format
 msgid "Publishing deleted: %(publishing)s"
 msgstr "Publishing eliminado: %(publishing)s"

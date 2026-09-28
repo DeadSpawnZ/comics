@@ -17,7 +17,7 @@
 
 <div class="md-surface-card manage-table">
   <div class="manage-toolbar">
-    <span class="md-body-medium align-self-center">{% translate "Newest first" %}</span>
+    <span></span>
     <form method="get" class="manage-filters" role="search">
       <div class="form-floating md-field">
         <select class="form-select" id="filter-language" name="language" onchange="this.form.submit()">
@@ -44,45 +44,18 @@
       <p class="md-body-medium mb-0">{% translate "No publishings match these filters." %}</p>
     </div>
   {% else %}
+    {% if recent %}
+      <div class="list-section-label">{% translate "Recently added" %}</div>
+      <ul class="manage-rows manage-rows--recent">
+        {% for publishing in recent %}
+        {% include 'manage/includes/publishing_row.html' %}
+        {% endfor %}
+      </ul>
+      <div class="list-section-label">{% translate "All (A–Z)" %}</div>
+    {% endif %}
     <ul class="manage-rows">
       {% for publishing in page_obj %}
-      <li class="manage-row manage-row--no-thumb">
-        <div class="manage-row__main">
-          <a class="manage-row__title" href="{% url 'manage_publishing_edit' publishing.pk %}?next={{ request.get_full_path|urlencode }}">
-            {{ publishing.publishing_title }}{% if publishing.year %} ({{ publishing.year }}){% endif %}
-          </a>
-          <div class="md-body-medium">
-            {% blocktranslate with serie=publishing.serie %}Series {{ serie }}{% endblocktranslate %} · {{ publishing.language|upper }} · {% for editorial in publishing.editorials.all %}{{ editorial.name }}{% if not forloop.last %} / {% endif %}{% empty %}—{% endfor %}
-          </div>
-        </div>
-        <div class="manage-row__chips">
-          {% if publishing.edition_count %}
-            <a class="md-assist-chip text-decoration-none" href="{% url 'manage_editions' %}?q={{ publishing.publishing_title|urlencode }}">
-              {% blocktranslate count counter=publishing.edition_count %}{{ counter }} edition{% plural %}{{ counter }} editions{% endblocktranslate %}
-            </a>
-          {% else %}
-            <span class="md-assist-chip">{% translate "No editions yet" %}</span>
-          {% endif %}
-        </div>
-        <div class="manage-row__actions">
-          <a class="md-icon-btn" href="{% url 'manage_edition_new' %}?publishing={{ publishing.pk }}&next={{ request.get_full_path|urlencode }}"
-             aria-label="{% translate 'New edition of this publishing' %}" title="{% translate 'New edition of this publishing' %}">
-            <span class="material-symbols-outlined" aria-hidden="true">library_add</span>
-          </a>
-          <a class="md-icon-btn" href="{% url 'manage_publishing_edit' publishing.pk %}?next={{ request.get_full_path|urlencode }}"
-             aria-label="{% translate 'Edit' %}" title="{% translate 'Edit' %}">
-            <span class="material-symbols-outlined" aria-hidden="true">edit</span>
-          </a>
-          {% if not publishing.edition_count %}
-            <button type="button" class="md-btn md-btn--danger-outlined" data-bs-toggle="modal" data-bs-target="#deleteDialog"
-                    data-delete-url="{% url 'manage_publishing_delete' publishing.pk %}"
-                    data-delete-name="{{ publishing.publishing_title }}{% if publishing.year %} ({{ publishing.year }}){% endif %}">
-              <span class="material-symbols-outlined" aria-hidden="true">delete</span>
-              {% translate "Delete" %}
-            </button>
-          {% endif %}
-        </div>
-      </li>
+      {% include 'manage/includes/publishing_row.html' %}
       {% endfor %}
     </ul>
   {% endif %}

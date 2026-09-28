@@ -20,6 +20,7 @@ from comics.models import CollectedIssue, Edition, Issue
 from comics.views.manage import _number_sort_key
 
 PAGE_SIZE = 25
+RECENT_COUNT = 5  # latest additions listed before the A-Z catalog
 CONTENT_SINGLE = "single"
 CONTENT_COMPILATION = "compilation"
 TYPE_TABS = [
@@ -72,6 +73,20 @@ def edition_list(request):
     return render(request, "manage/edition_list.html", edition_catalog_context(request))
 
 
+def _add_row_details(editions):
+    """Set what the list rows show: `linked_elsewhere` (issue from another series) and `compiled_count`."""
+    editions = list(editions)
+    compiled_counts = {}
+    for edition_id in CollectedIssue.objects.filter(edition__in=editions).values_list("edition_id", flat=True):
+        compiled_counts[edition_id] = compiled_counts.get(edition_id, 0) + 1
+    for edition in editions:
+        edition.linked_elsewhere = bool(
+            edition.issue_id
+            and (edition.issue.publishing_id != edition.publishing_id or edition.issue.number != edition.number.strip())
+        )
+        edition.compiled_count = compiled_counts.get(edition.id, 0)
+
+
 def edition_catalog_context(request):
     """Filtered, paginated edition catalog (type tabs, format, search). Shared by Gestión and
     the read-only Comics module."""
@@ -100,19 +115,16 @@ def edition_catalog_context(request):
     )
 
     page_obj = Paginator(editions, PAGE_SIZE).get_page(request.GET.get("page"))
-    for edition in page_obj:
-        edition.linked_elsewhere = bool(
-            edition.issue_id
-            and (edition.issue.publishing_id != edition.publishing_id or edition.issue.number != edition.number.strip())
-        )
-    if page_obj.paginator.count:
-        compiled_counts = {}
-        for edition_id in CollectedIssue.objects.filter(edition__in=list(page_obj)).values_list("edition_id", flat=True):
-            compiled_counts[edition_id] = compiled_counts.get(edition_id, 0) + 1
-        for edition in page_obj:
-            edition.compiled_count = compiled_counts.get(edition.id, 0)
+    _add_row_details(page_obj)
+
+    # The latest additions go first (only on the unfiltered first page), then the A-Z list.
+    recent = []
+    if page_obj.number == 1 and not (query or format_filter or type_filter):
+        recent = list(Edition.objects.select_related("publishing", "issue__publishing").order_by("-id")[:RECENT_COUNT])
+        _add_row_details(recent)
 
     return {
+        "recent": recent,
         "page_obj": page_obj,
         "elided_page_range": page_obj.paginator.get_elided_page_range(page_obj.number, on_each_side=1, on_ends=1),
         "tabs": tabs,

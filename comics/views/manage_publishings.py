@@ -14,7 +14,7 @@ from django.views.decorators.http import require_POST
 
 from comics.forms import PublishingManageForm, publishing_label
 from comics.models import Publishing, Title
-from comics.views.manage_editions import PAGE_SIZE, _log, _safe_next
+from comics.views.manage_editions import PAGE_SIZE, RECENT_COUNT, _log, _safe_next
 
 
 @staff_member_required
@@ -22,19 +22,24 @@ def publishing_list(request):
     query = request.GET.get("q", "").strip()
     language = request.GET.get("language", "")
 
-    publishings = Publishing.objects.annotate(edition_count=Count("edition", distinct=True)).prefetch_related("editorials")
+    all_publishings = Publishing.objects.annotate(edition_count=Count("edition", distinct=True)).prefetch_related("editorials")
+    publishings = all_publishings
     if query:
         publishings = publishings.filter(Q(publishing_title__icontains=query) | Q(title__name__icontains=query))
     if language:
         publishings = publishings.filter(language=language)
-    # Newest first: the ones just created are the ones being filled with editions.
-    publishings = publishings.order_by("-id")
+    publishings = publishings.order_by("publishing_title", "year", "serie")
 
     page_obj = Paginator(publishings, PAGE_SIZE).get_page(request.GET.get("page"))
+    # The latest additions go first (only on the unfiltered first page), then the A-Z list.
+    recent = []
+    if page_obj.number == 1 and not (query or language):
+        recent = list(all_publishings.order_by("-id")[:RECENT_COUNT])
     return render(
         request,
         "manage/publishing_list.html",
         {
+            "recent": recent,
             "page_obj": page_obj,
             "elided_page_range": page_obj.paginator.get_elided_page_range(page_obj.number, on_each_side=1, on_ends=1),
             "query": query,

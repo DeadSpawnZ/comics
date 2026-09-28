@@ -54,53 +54,18 @@
       <p class="md-body-medium mb-0">{% translate "No editions match these filters." %}</p>
     </div>
   {% else %}
+    {% if recent %}
+      <div class="list-section-label">{% translate "Recently added" context "editions" %}</div>
+      <ul class="manage-rows manage-rows--recent">
+        {% for edition in recent %}
+        {% include 'manage/includes/edition_row.html' %}
+        {% endfor %}
+      </ul>
+      <div class="list-section-label">{% translate "All (A–Z)" context "editions" %}</div>
+    {% endif %}
     <ul class="manage-rows">
       {% for edition in page_obj %}
-      <li class="manage-row">
-        <div class="manage-row__thumb">
-          {% if edition.thumbnail %}
-            <img src="{{ edition.thumbnail.url }}" alt="" loading="lazy">
-          {% else %}
-            <span class="material-symbols-outlined" aria-hidden="true">image</span>
-          {% endif %}
-        </div>
-        <div class="manage-row__main">
-          <a class="manage-row__title" href="{% url 'manage_edition_edit' edition.pk %}?next={{ request.get_full_path|urlencode }}">
-            {{ edition.publishing.publishing_title }} #{{ edition.number }} {{ edition.variant }}
-          </a>
-          <div class="md-body-medium">
-            {% blocktranslate with printing=edition.printing %}{{ printing }} printing{% endblocktranslate %} · {% blocktranslate with serie=edition.publishing.serie %}Series {{ serie }}{% endblocktranslate %}{% if edition.publishing.year %} · {{ edition.publishing.year }}{% endif %} · {{ edition.publishing.language|upper }}
-          </div>
-        </div>
-        <div class="manage-row__chips">
-          <span class="md-assist-chip">{{ edition.get_format_display }}</span>
-          {% if edition.compiled_count %}
-            <span class="md-assist-chip md-assist-chip--primary">
-              <span class="material-symbols-outlined" aria-hidden="true">library_books</span>
-              {% blocktranslate count counter=edition.compiled_count %}Compilation · {{ counter }} issue{% plural %}Compilation · {{ counter }} issues{% endblocktranslate %}
-            </span>
-          {% elif edition.linked_elsewhere %}
-            <span class="md-assist-chip md-assist-chip--primary" title="{% translate 'Manually linked to another issue' %}">
-              <span class="material-symbols-outlined" aria-hidden="true">link</span>
-              {{ edition.issue }}
-            </span>
-          {% elif not edition.issue_id %}
-            <span class="md-assist-chip md-assist-chip--error">{% translate "No issue" %}</span>
-          {% endif %}
-        </div>
-        <div class="manage-row__actions">
-          <a class="md-icon-btn" href="{% url 'manage_edition_edit' edition.pk %}?next={{ request.get_full_path|urlencode }}"
-             aria-label="{% blocktranslate with title=edition.publishing.publishing_title number=edition.number variant=edition.variant %}Edit {{ title }} #{{ number }} {{ variant }}{% endblocktranslate %}" title="{% translate 'Edit' %}">
-            <span class="material-symbols-outlined" aria-hidden="true">edit</span>
-          </a>
-          <button type="button" class="md-btn md-btn--danger-outlined" data-bs-toggle="modal" data-bs-target="#deleteDialog"
-                  data-delete-url="{% url 'manage_edition_delete' edition.pk %}"
-                  data-delete-name="{{ edition.publishing.publishing_title }} #{{ edition.number }} {{ edition.variant }}">
-            <span class="material-symbols-outlined" aria-hidden="true">delete</span>
-            {% translate "Delete" %}
-          </button>
-        </div>
-      </li>
+      {% include 'manage/includes/edition_row.html' %}
       {% endfor %}
     </ul>
   {% endif %}
