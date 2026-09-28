@@ -1,52 +1,7 @@
-// Shared widgets to pick issues: filterable publishing selects and an ordered issue list
-// (publishing -> issue -> add, reorder, remove). Used by the edition and reading arc forms.
+// Shared widget to pick issues: an ordered issue list (publishing -> issue -> add, reorder,
+// remove). Used by the edition and reading arc forms. Publishing selects are searchable via combobox.js.
 window.ComiIssuePicker = (function () {
   "use strict";
-
-  const normalize = (text) => text.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
-
-  // Inputs with data-filter-select="<select id>" filter that select's options as you type.
-  // The selected option is kept even if it does not match, so the value is not lost.
-  // Option groups (<optgroup>) are kept; groups left without options are hidden.
-  function setupFilterableSelects(root = document) {
-    root.querySelectorAll("[data-filter-select]").forEach((input) => {
-      const select = document.getElementById(input.dataset.filterSelect);
-      if (!select) return;
-      const snapshot = (option) => ({ value: option.value, text: option.text });
-      const sections = [...select.children].map((child) =>
-        child.tagName === "OPTGROUP"
-          ? { label: child.label, options: [...child.children].map(snapshot) }
-          : { label: null, options: [snapshot(child)] }
-      );
-      input.addEventListener("input", () => {
-        const query = normalize(input.value.trim());
-        const current = select.value;
-        let selectedPlaced = false;
-        const build = (option) => {
-          // The same value may be listed in several groups: select only its first occurrence.
-          const selected = option.value === current && !selectedPlaced;
-          if (selected) selectedPlaced = true;
-          return new Option(option.text, option.value, false, selected);
-        };
-        const matches = (option) =>
-          !option.value || option.value === current || !query || normalize(option.text).includes(query);
-        const children = [];
-        for (const section of sections) {
-          const visible = section.options.filter(matches).map(build);
-          if (!visible.length) continue;
-          if (section.label === null) {
-            children.push(...visible);
-          } else {
-            const group = document.createElement("optgroup");
-            group.label = section.label;
-            group.append(...visible);
-            children.push(group);
-          }
-        }
-        select.replaceChildren(...children);
-      });
-    });
-  }
 
   async function fetchIssues(issuesUrl, publishingId) {
     const response = await fetch(`${issuesUrl}?publishing=${encodeURIComponent(publishingId)}`, {
@@ -139,5 +94,5 @@ window.ComiIssuePicker = (function () {
     render();
   }
 
-  return { setupFilterableSelects, fetchIssues, orderedIssueList };
+  return { fetchIssues, orderedIssueList };
 })();

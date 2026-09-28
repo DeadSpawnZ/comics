@@ -12,7 +12,8 @@ from django.urls import reverse
 from django.utils.translation import gettext as _, gettext_lazy
 from django.views.decorators.http import require_GET
 
-from comics.models import Edition, Connecting, Publishing
+from comics.forms import publishing_choices
+from comics.models import Edition, Connecting
 
 
 class ConnectingForm(forms.ModelForm):
@@ -71,24 +72,7 @@ def connecting_editor(request, pk=None):
             for piece in connecting.pieces.select_related("edition__publishing")
         ]
 
-    publishings = [
-        {
-            "id": publishing["id"],
-            "label": " ".join(
-                part
-                for part in (
-                    publishing["publishing_title"],
-                    f"({publishing['year']})" if publishing["year"] else "",
-                    publishing["serie"],
-                    f"· {publishing['language'].upper()}",
-                )
-                if part
-            ),
-        }
-        for publishing in Publishing.objects.order_by("publishing_title", "year", "serie").values(
-            "id", "publishing_title", "year", "serie", "language"
-        )
-    ]
+    publishings = [{"id": pk, "label": label} for pk, label in publishing_choices()]
 
     editor_data = {
         "connecting": {

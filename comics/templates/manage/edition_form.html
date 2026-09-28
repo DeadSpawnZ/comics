@@ -54,8 +54,6 @@
         <h2 class="md-title-medium mb-3">{% translate "Edition data" %}</h2>
         <div class="row g-3">
           <div class="col-12">
-            <input type="search" class="form-control form-control-sm mb-1 filter-input" data-filter-select="{{ form.publishing.id_for_label }}"
-                   placeholder="{% translate 'Filter publishings…' %}" aria-label="{% translate 'Filter publishings' %}">
             {% include 'manage/includes/field.html' with field=form.publishing %}
           </div>
           <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=form.number %}</div>
@@ -172,19 +170,17 @@
           </p>
           <div class="row g-3">
             <div class="col-12 col-md-6">
-              <input type="search" class="form-control form-control-sm mb-1 filter-input" data-filter-select="issue-publishing"
-                     placeholder="{% translate 'Filter publishings…' %}" aria-label="{% translate 'Filter the issue publishings' %}">
               <div class="form-floating md-field">
-                <select class="form-select" id="issue-publishing">
+                <select class="form-select" id="issue-publishing" data-combobox>
                   <option value="">{% translate "Choose a publishing…" %}</option>
-                  {% for option in form.publishing.field.queryset %}
-                    <option value="{{ option.pk }}" {% if option.pk == issue_publishing_id %}selected{% endif %}>{{ option.publishing_title }}{% if option.year %} ({{ option.year }}){% endif %} {{ option.serie }} · {{ option.language|upper }}</option>
+                  {% for value, label in publishing_options %}
+                    <option value="{{ value }}" {% if value == issue_publishing_id %}selected{% endif %}>{{ label }}</option>
                   {% endfor %}
                 </select>
                 <label for="issue-publishing">{% translate "Issue publishing" %}</label>
               </div>
             </div>
-            <div class="col-12 col-md-6 d-flex flex-column justify-content-end">
+            <div class="col-12 col-md-6">
               <div class="form-floating md-field">
                 <select class="form-select" id="issue-select" name="issue">
                   <option value="" id="own-issue-option">{{ own_option }}</option>
@@ -202,13 +198,11 @@
           <p class="md-body-medium">{% translate "Add the issues it collects, in reading order." %}</p>
           <div class="row g-3 align-items-end">
             <div class="col-12 col-md-5">
-              <input type="search" class="form-control form-control-sm mb-1 filter-input" data-filter-select="collected-publishing"
-                     placeholder="{% translate 'Filter publishings…' %}" aria-label="{% translate 'Filter the compilation publishings' %}">
               <div class="form-floating md-field">
-                <select class="form-select" id="collected-publishing">
+                <select class="form-select" id="collected-publishing" data-combobox>
                   <option value="">{% translate "Choose a publishing…" %}</option>
-                  {% for option in form.publishing.field.queryset %}
-                    <option value="{{ option.pk }}">{{ option.publishing_title }}{% if option.year %} ({{ option.year }}){% endif %} {{ option.serie }} · {{ option.language|upper }}</option>
+                  {% for value, label in publishing_options %}
+                    <option value="{{ value }}">{{ label }}</option>
                   {% endfor %}
                 </select>
                 <label for="collected-publishing">Publishing</label>

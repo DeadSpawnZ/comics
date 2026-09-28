@@ -22,7 +22,7 @@ from django.conf import settings
 from django.views.static import serve as serve_static
 from django.views.generic import RedirectView
 from comics.views import (
-    collection, publishing, login, collectables, manage, manage_arcs, manage_editions, manage_publishings, my_comics)
+    collection, collection_entries, publishing, login, collectables, manage, manage_arcs, manage_editions, manage_publishings, my_comics)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -34,6 +34,9 @@ urlpatterns = [
     path("ajax/get-comics/<int:publishing_id>/", publishing.get_comics_by_publishing, name="get_comics_by_publishing"),
     path("ajax/get-previous-trades/<int:edition_id>/", collection.get_previous_trades, name="get_previous_trades"),
     path("comics/", collection.comics_view, name="comics"),
+    path("comics/coleccion/nueva/", collection_entries.my_piece_new, name="comics_piece_new"),
+    path("comics/api/ediciones/", collection_entries.api_editions, name="comics_api_editions"),
+    path("comics/api/compras/", collection_entries.api_purchases, name="comics_api_purchases"),
     path("comics/ediciones/", my_comics.edition_list, name="comics_editions"),
     path("comics/ediciones/<int:pk>/", my_comics.edition_detail, name="comics_edition_detail"),
     path("comics/arcos/", my_comics.arc_list, name="comics_arcs"),
@@ -46,7 +49,11 @@ urlpatterns = [
     path("gestion/ediciones/nueva/", manage_editions.edition_form, name="manage_edition_new"),
     path("gestion/ediciones/<int:pk>/", manage_editions.edition_form, name="manage_edition_edit"),
     path("gestion/ediciones/<int:pk>/eliminar/", manage_editions.edition_delete, name="manage_edition_delete"),
-    path("gestion/publishings/", manage_publishings.publishing_list, name="manage_publishings"),
+    path("gestion/colecciones/", collection_entries.collection_list, name="manage_collections"),
+    path("gestion/colecciones/nueva/", collection_entries.collection_form, name="manage_collection_new"),
+    path("gestion/colecciones/<int:pk>/", collection_entries.collection_form, name="manage_collection_edit"),
+    path("gestion/colecciones/<int:pk>/eliminar/", collection_entries.collection_delete, name="manage_collection_delete"),
+    path("gestion/publishings/",manage_publishings.publishing_list, name="manage_publishings"),
     path("gestion/publishings/nuevo/", manage_publishings.publishing_form, name="manage_publishing_new"),
     path("gestion/publishings/<int:pk>/", manage_publishings.publishing_form, name="manage_publishing_edit"),
     path("gestion/publishings/<int:pk>/eliminar/", manage_publishings.publishing_delete, name="manage_publishing_delete"),

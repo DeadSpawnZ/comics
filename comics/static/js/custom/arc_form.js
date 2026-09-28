@@ -4,8 +4,6 @@
   const data = JSON.parse(document.getElementById("arc-form-data").textContent);
   const picker = window.ComiIssuePicker;
 
-  picker.setupFilterableSelects();
-
   // Issues loaded from the server carry a cover; newly added ones only show
   // their label until the arc is saved.
   function renderLabel(item) {

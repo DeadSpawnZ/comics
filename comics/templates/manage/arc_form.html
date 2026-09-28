@@ -58,10 +58,8 @@
 
     <div class="row g-3 align-items-end">
       <div class="col-12 col-md-5">
-        <input type="search" class="form-control form-control-sm mb-1 filter-input" data-filter-select="arc-publishing"
-               placeholder="{% translate 'Filter publishings…' %}" aria-label="{% translate 'Filter publishings' %}">
         <div class="form-floating md-field">
-          <select class="form-select" id="arc-publishing">
+          <select class="form-select" id="arc-publishing" data-combobox>
             <option value="">{% translate "Choose a publishing…" %}</option>
             {% for value, label in publishings %}
               <option value="{{ value }}">{{ label }}</option>

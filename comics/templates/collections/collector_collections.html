@@ -46,9 +46,15 @@
 {% block comics_content %}
     <!-- CONTENT -->
     <div>
-      <div class="mb-4">
-        <h1 class="md-headline-small mb-0">{% translate "Collection" %}</h1>
-        <span class="md-body-medium">{% blocktranslate count counter=page_obj.paginator.count %}{{ counter }} item{% plural %}{{ counter }} items{% endblocktranslate %}</span>
+      <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+        <div>
+          <h1 class="md-headline-small mb-0">{% translate "Collection" %}</h1>
+          <span class="md-body-medium">{% blocktranslate count counter=page_obj.paginator.count %}{{ counter }} item{% plural %}{{ counter }} items{% endblocktranslate %}</span>
+        </div>
+        <a class="md-btn md-btn--filled" href="{% url 'comics_piece_new' %}">
+          <span class="material-symbols-outlined" aria-hidden="true">add</span>
+          {% translate "New piece" %}
+        </a>
       </div>
 
       {% if not page_obj.object_list %}

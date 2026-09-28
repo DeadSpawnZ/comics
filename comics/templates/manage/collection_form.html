@@ -1,0 +1,54 @@
+{% extends 'manage/base_manage.html' %}
+{% load static i18n %}
+
+{% block breadcrumb %}
+<a href="{{ back_url }}">{% translate "Collections" %}</a>
+<span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+<span class="is-current">{% if piece %}{{ piece.edition.publishing.publishing_title }} #{{ piece.edition.number }} {{ piece.edition.variant }}{% else %}{% translate "New piece" %}{% endif %}</span>
+{% endblock %}
+
+{% block manage_content %}
+<form method="post" novalidate>
+  {% csrf_token %}
+  <input type="hidden" name="next" value="{{ back_url }}">
+  <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <a class="md-icon-btn" href="{{ back_url }}" aria-label="{% translate 'Back to collections' %}" title="{% translate 'Back to collections' %}">
+        <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+      </a>
+      <h1 class="md-headline-small mb-0">{% if piece %}{% translate "Edit piece" %}{% else %}{% translate "New piece" %}{% endif %}</h1>
+    </div>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      {% if piece %}
+        <button type="button" class="md-btn md-btn--danger-outlined" data-bs-toggle="modal" data-bs-target="#deleteDialog"
+                data-delete-url="{% url 'manage_collection_delete' piece.pk %}" data-delete-name="{{ piece.edition }}">
+          <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+          {% translate "Delete" %}
+        </button>
+      {% else %}
+        <button type="submit" name="save_add_another" class="md-btn md-btn--tonal">
+          <span class="material-symbols-outlined" aria-hidden="true">library_add</span>
+          {% translate "Save and add another" %}
+        </button>
+      {% endif %}
+      <button type="submit" name="save_continue" class="md-btn md-btn--tonal">{% translate "Save and continue editing" %}</button>
+      <button type="submit" class="md-btn md-btn--filled">
+        <span class="material-symbols-outlined" aria-hidden="true">save</span>
+        {% translate "Save" %}
+      </button>
+    </div>
+  </div>
+
+  {% include 'includes/piece_fields.html' %}
+</form>
+
+{% if piece %}
+  {% translate "Delete piece?" as delete_title %}
+  {% include 'manage/includes/delete_dialog.html' with delete_next=back_url delete_title=delete_title %}
+{% endif %}
+{{ form_data|json_script:"piece-form-data" }}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/custom/piece_form.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% if messages %}
+<div class="md-snackbar" id="page-snackbar" role="status">
+  {% for message in messages %}
+    <div class="d-flex align-items-center gap-2">
+      <span class="material-symbols-outlined" aria-hidden="true">{% if message.level_tag == 'error' %}error{% else %}check_circle{% endif %}</span>
+      {{ message }}
+    </div>
+  {% endfor %}
+</div>
+<script>
+  setTimeout(function () {
+    var snackbar = document.getElementById("page-snackbar");
+    if (snackbar) snackbar.hidden = true;
+  }, 5000);
+</script>
+{% endif %}

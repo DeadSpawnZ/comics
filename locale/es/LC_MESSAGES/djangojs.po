@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-27 16:08-0600\n"
+"POT-Creation-Date: 2026-09-27 18:00-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,65 +17,70 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: comics/static/js/custom/connecting_editor.js:77
-#: comics/static/js/custom/connecting_editor.js:414
-#: comics/static/js/custom/connecting_editor.js:420
-#: comics/static/js/custom/connecting_editor.js:433
+#: comics/static/js/custom/combobox.js:109
+msgid "No matches"
+msgstr "Sin coincidencias"
+
+#: comics/static/js/custom/connecting_editor.js:76
+#: comics/static/js/custom/connecting_editor.js:405
+#: comics/static/js/custom/connecting_editor.js:411
+#: comics/static/js/custom/connecting_editor.js:424
 msgid "Unsaved changes"
 msgstr "Cambios sin guardar"
 
-#: comics/static/js/custom/connecting_editor.js:170
-#: comics/static/js/custom/issue_picker.js:105
+#: comics/static/js/custom/connecting_editor.js:169
+#: comics/static/js/custom/issue_picker.js:60
 msgid "Remove %(name)s"
 msgstr "Quitar %(name)s"
 
-#: comics/static/js/custom/connecting_editor.js:171
+#: comics/static/js/custom/connecting_editor.js:170
 msgid "Remove"
 msgstr "Quitar"
 
-#: comics/static/js/custom/connecting_editor.js:202
+#: comics/static/js/custom/connecting_editor.js:201
 msgid "Row %(row)s, column %(column)s: %(name)s"
 msgstr "Fila %(row)s, columna %(column)s: %(name)s"
 
-#: comics/static/js/custom/connecting_editor.js:209
+#: comics/static/js/custom/connecting_editor.js:208
 msgid "Row %(row)s, column %(column)s: empty"
 msgstr "Fila %(row)s, columna %(column)s: vacía"
 
-#: comics/static/js/custom/connecting_editor.js:251
+#: comics/static/js/custom/connecting_editor.js:250
 msgid "%(placed)s/%(total)s cells"
 msgstr "%(placed)s/%(total)s celdas"
 
-#: comics/static/js/custom/connecting_editor.js:280
+#: comics/static/js/custom/connecting_editor.js:279
 msgid "Already in the grid"
 msgstr "Ya está en la cuadrícula"
 
-#: comics/static/js/custom/connecting_editor.js:321
+#: comics/static/js/custom/connecting_editor.js:316
 msgid "Choose a publishing…"
 msgstr "Elige un publishing…"
 
-#: comics/static/js/custom/connecting_editor.js:334
+#: comics/static/js/custom/connecting_editor.js:325
 msgid "Choose a publishing to see its comics."
 msgstr "Elige un publishing para ver sus comics."
 
-#: comics/static/js/custom/connecting_editor.js:337
-#: comics/static/js/custom/issue_picker.js:119
+#: comics/static/js/custom/connecting_editor.js:328
+#: comics/static/js/custom/issue_picker.js:74
+#: comics/static/js/custom/piece_form.js:49
 msgid "Loading…"
 msgstr "Cargando…"
 
-#: comics/static/js/custom/connecting_editor.js:347
+#: comics/static/js/custom/connecting_editor.js:338
 msgid "Drag a cover onto the grid, or click it and then a cell."
 msgstr ""
 "Arrastra una portada a la cuadrícula o haz clic en ella y luego en una celda."
 
-#: comics/static/js/custom/connecting_editor.js:348
+#: comics/static/js/custom/connecting_editor.js:339
 msgid "This publishing has no comics."
 msgstr "Este publishing no tiene comics."
 
-#: comics/static/js/custom/connecting_editor.js:351
+#: comics/static/js/custom/connecting_editor.js:342
 msgid "The comics could not be loaded. Try again."
 msgstr "No se pudieron cargar los comics. Intenta de nuevo."
 
-#: comics/static/js/custom/connecting_editor.js:387
+#: comics/static/js/custom/connecting_editor.js:378
 msgid ""
 "There are pieces outside the grid. Place them in a cell or remove them "
 "before saving."
@@ -83,61 +88,78 @@ msgstr ""
 "Hay piezas fuera de la cuadrícula. Colócalas en una celda o quítalas antes "
 "de guardar."
 
-#: comics/static/js/custom/connecting_editor.js:404
+#: comics/static/js/custom/connecting_editor.js:395
 msgid "Saving…"
 msgstr "Guardando…"
 
-#: comics/static/js/custom/connecting_editor.js:413
+#: comics/static/js/custom/connecting_editor.js:404
 msgid ""
 "Your session expired or you do not have permission. Reload the page and log "
 "in."
 msgstr ""
 "Tu sesión expiró o no tienes permisos. Recarga la página e inicia sesión."
 
-#: comics/static/js/custom/connecting_editor.js:419
+#: comics/static/js/custom/connecting_editor.js:410
 msgid "Could not save."
 msgstr "No se pudo guardar."
 
-#: comics/static/js/custom/connecting_editor.js:430
+#: comics/static/js/custom/connecting_editor.js:421
 msgid "Connecting saved"
 msgstr "Connecting guardado"
 
-#: comics/static/js/custom/connecting_editor.js:432
+#: comics/static/js/custom/connecting_editor.js:423
 msgid "Could not connect to the server."
 msgstr "No se pudo conectar con el servidor."
 
-#: comics/static/js/custom/edition_form.js:52
+#: comics/static/js/custom/edition_form.js:50
 msgid "Own issue (by publishing and number)"
 msgstr "Issue propio (según publishing y número)"
 
-#: comics/static/js/custom/edition_form.js:61
+#: comics/static/js/custom/edition_form.js:59
 msgid "%(issue)s · own issue"
 msgstr "%(issue)s · issue propio"
 
-#: comics/static/js/custom/edition_form.js:61
+#: comics/static/js/custom/edition_form.js:59
 msgid "%(issue)s · own issue (will be created)"
 msgstr "%(issue)s · issue propio (se creará)"
 
-#: comics/static/js/custom/edition_form.js:145
+#: comics/static/js/custom/edition_form.js:143
 msgid "New cover: %(name)s (applied on save)"
 msgstr "Nueva portada: %(name)s (se aplica al guardar)"
 
-#: comics/static/js/custom/issue_picker.js:103
+#: comics/static/js/custom/issue_picker.js:58
 msgid "Move %(name)s up"
 msgstr "Subir %(name)s"
 
-#: comics/static/js/custom/issue_picker.js:104
+#: comics/static/js/custom/issue_picker.js:59
 msgid "Move %(name)s down"
 msgstr "Bajar %(name)s"
 
-#: comics/static/js/custom/issue_picker.js:119
+#: comics/static/js/custom/issue_picker.js:74
+#: comics/static/js/custom/piece_form.js:44
 msgid "Choose a publishing first"
 msgstr "Elige primero un publishing"
 
-#: comics/static/js/custom/issue_picker.js:125
+#: comics/static/js/custom/issue_picker.js:80
 msgid "Choose an issue…"
 msgstr "Elige un issue…"
 
-#: comics/static/js/custom/issue_picker.js:125
+#: comics/static/js/custom/issue_picker.js:80
 msgid "This publishing has no issues"
 msgstr "Este publishing no tiene issues"
+
+#: comics/static/js/custom/piece_form.js:37
+msgid "Choose an edition"
+msgstr "Elige una edición"
+
+#: comics/static/js/custom/piece_form.js:54
+msgid "This publishing has no editions"
+msgstr "Este publishing no tiene ediciones"
+
+#: comics/static/js/custom/piece_form.js:67
+msgid "Choose an edition first"
+msgstr "Elige primero una edición"
+
+#: comics/static/js/custom/piece_form.js:75
+msgid "No purchases of this edition to sell"
+msgstr "No hay compras de esta edición para vender"

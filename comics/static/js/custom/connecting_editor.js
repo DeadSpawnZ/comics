@@ -15,7 +15,6 @@
     summary: document.getElementById("grid-summary"),
     overflow: document.getElementById("editor-overflow"),
     overflowItems: document.getElementById("editor-overflow-items"),
-    publishingSearch: document.getElementById("publishing-search"),
     publishingSelect: document.getElementById("publishing-select"),
     pickerHint: document.getElementById("picker-hint"),
     pickerResults: document.getElementById("picker-results"),
@@ -311,20 +310,12 @@
 
   // ---------- Picker: publishing -> comics ----------
 
-  function normalize(text) {
-    return text.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
-  }
-
+  // The select is searchable through combobox.js (data-combobox); it only needs its options.
   function renderPublishingOptions() {
-    const query = normalize(el.publishingSearch.value.trim());
-    const current = el.publishingSelect.value;
-    const options = [new Option(gettext("Choose a publishing…"), "")];
-    for (const publishing of data.publishings) {
-      if (!query || normalize(publishing.label).includes(query)) {
-        options.push(new Option(publishing.label, publishing.id, false, String(publishing.id) === current));
-      }
-    }
-    el.publishingSelect.replaceChildren(...options);
+    el.publishingSelect.replaceChildren(
+      new Option(gettext("Choose a publishing…"), ""),
+      ...data.publishings.map((publishing) => new Option(publishing.label, publishing.id))
+    );
   }
 
   async function loadComics(publishingId) {
@@ -470,7 +461,6 @@
     el.name.addEventListener("input", markDirty);
     el.notes.addEventListener("input", markDirty);
 
-    el.publishingSearch.addEventListener("input", renderPublishingOptions);
     el.publishingSelect.addEventListener("change", () => loadComics(el.publishingSelect.value));
 
     // Dropping a grid piece on the picker removes it.

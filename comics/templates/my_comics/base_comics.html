@@ -9,8 +9,8 @@
     <div class="md-side-nav__title">{% translate "My comics" %}</div>
     <ul>
       <li>
-        <a class="md-side-nav__link {% if url_name == 'comics' %}is-active{% endif %}"
-           {% if url_name == 'comics' %}aria-current="page"{% endif %}
+        <a class="md-side-nav__link {% if url_name == 'comics' or url_name == 'comics_piece_new' %}is-active{% endif %}"
+           {% if url_name == 'comics' or url_name == 'comics_piece_new' %}aria-current="page"{% endif %}
            href="{% url 'comics' %}">
           <span class="material-symbols-outlined" aria-hidden="true">collections_bookmark</span>
           {% translate "Collection" %}
@@ -55,4 +55,5 @@
   </div>
 </div>
 {% endwith %}
+{% include 'includes/snackbar.html' %}
 {% endblock %}

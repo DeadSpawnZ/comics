@@ -1,5 +1,7 @@
 from django import forms
+from django.contrib.auth.models import User
 from django.core.exceptions import NON_FIELD_ERRORS
+from django.db.models import prefetch_related_objects
 from django.utils.translation import gettext_lazy as _
 from .models import Collection, Edition, Editorial, Publishing, Dealer, ReadingArc, Title
 
@@ -112,9 +114,22 @@ class EditionForm(forms.ModelForm):
 
 
 def publishing_label(publishing):
-    """Short label without extra queries (Publishing.__str__ queries its editorials)."""
+    """Label for publishing selects: title (year) series · language · editorials. The editorials
+    tell apart publishings with the same title; prefetch them (see publishing_choices) to avoid
+    one query per option."""
     year = f" ({publishing.year})" if publishing.year else ""
-    return f"{publishing.publishing_title}{year} {publishing.serie} · {publishing.language.upper()}"
+    editorials = "/".join(editorial.name for editorial in publishing.editorials.all())
+    label = f"{publishing.publishing_title}{year} {publishing.serie} · {publishing.language.upper()}"
+    return f"{label} · {editorials}" if editorials else label
+
+
+def publishings_for_select():
+    return Publishing.objects.prefetch_related("editorials").order_by("publishing_title", "year", "serie")
+
+
+def publishing_choices():
+    """[(pk, label)] of every publishing, for selects."""
+    return [(publishing.pk, publishing_label(publishing)) for publishing in publishings_for_select()]
 
 
 RECENT_PUBLISHINGS = 8
@@ -132,6 +147,7 @@ def recent_publishings():
         if edition.publishing_id not in seen:
             seen.add(edition.publishing_id)
             recent.append(edition.publishing)
+    prefetch_related_objects(recent, "editorials")
     return recent
 
 
@@ -186,8 +202,9 @@ class EditionManageForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         publishing = self.fields["publishing"]
-        publishing.queryset = Publishing.objects.order_by("publishing_title", "year", "serie")
+        publishing.queryset = publishings_for_select()
         publishing.label_from_instance = publishing_label
+        publishing.widget.attrs["data-combobox"] = ""
         if not self.instance.pk:
             # New editions: offer the recent publishings first (they repeat in the full list).
             publishing.widget.choices = [
@@ -306,3 +323,160 @@ class PublishingManageForm(forms.ModelForm):
             publishing.save()
             self.save_m2m()
         return publishing
+
+
+def edition_label(edition):
+    """Short edition label without extra queries (needs publishing selected)."""
+    variant = f" {edition.variant}" if edition.variant else ""
+    return f"#{edition.number}{variant} · {edition.get_printing_display()} · {edition.get_format_display()}"
+
+
+def purchase_label(purchase):
+    participant = f" · {purchase.participant.name}" if purchase.participant_id else ""
+    return f"{purchase.trade_date:%Y-%m-%d} · ${purchase.amount}{participant}"
+
+
+def available_purchases(collector, edition_id, before=None, current=None):
+    """Purchases of `edition_id` that `collector` still owns (not sold yet) on or before `before`:
+    the ones a sale can point to as its previous trade. `current` (the sale being edited) keeps
+    the purchase it already points to."""
+    purchases = Collection.objects.owned_by(collector).filter(
+        edition_id=edition_id, trade_type=Collection.TradeChoices.BUYING
+    )
+    if current is not None and current.previous_trade_id:
+        purchases = purchases | Collection.objects.filter(pk=current.previous_trade_id)
+    if before:
+        purchases = purchases.filter(trade_date__lte=before)
+    if current is not None and current.pk:
+        purchases = purchases.exclude(pk=current.pk)
+    return purchases.select_related("participant").order_by("trade_date", "id")
+
+
+class CollectionEntryForm(forms.ModelForm):
+    """A piece bought or sold by a collector. In Gestión the collector is chosen; in Mis comics
+    it is the signed-in user (pass `collector`). The publishing field only narrows the edition list."""
+
+    publishing = forms.ModelChoiceField(queryset=Publishing.objects.none(), required=False, label="Publishing")
+
+    class Meta:
+        model = Collection
+        fields = [
+            "collector",
+            "edition",
+            "trade_type",
+            "trade_date",
+            "amount",
+            "participant",
+            "valuation",
+            "previous_trade",
+            "notes",
+        ]
+        labels = {
+            "collector": _("Collector"),
+            "edition": _("Edition"),
+            "trade_type": _("Type"),
+            "trade_date": _("Date"),
+            "amount": _("Amount (MXN)"),
+            "participant": _("Participant"),
+            "valuation": _("Valuation"),
+            "previous_trade": _("Purchase being sold"),
+            "notes": _("Notes"),
+        }
+        widgets = {
+            "trade_date": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+            "trade_type": forms.RadioSelect,
+            "notes": forms.Textarea(attrs={"rows": 3}),
+        }
+        error_messages = {
+            NON_FIELD_ERRORS: {
+                "unique_together": _("That piece is already registered (same edition, date, amount, type and participant)."),
+            },
+        }
+
+    def __init__(self, *args, collector=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fixed_collector = collector
+        if collector is not None:
+            del self.fields["collector"]
+            self.instance.collector = collector
+        else:
+            self.fields["collector"].queryset = self.fields["collector"].queryset.order_by("username")
+
+        edition = self.fields["edition"]
+        edition.required = True
+        edition.queryset = Edition.objects.select_related("publishing")
+        edition.label_from_instance = edition_label
+        self.fields["participant"].queryset = Dealer.objects.order_by("name")
+        self.fields["participant"].widget.attrs["data-combobox"] = ""
+        self.fields["previous_trade"].queryset = Collection.objects.filter(trade_type=Collection.TradeChoices.BUYING)
+        self.fields["previous_trade"].label_from_instance = purchase_label
+
+        publishing = self.fields["publishing"]
+        publishing.queryset = publishings_for_select()
+        publishing.widget.attrs["data-combobox"] = ""
+        publishing.widget.choices = [
+            ("", "---------"),
+            (_("Recent"), [(item.pk, publishing_label(item)) for item in recent_publishings()]),
+            (_("All publishings"), [(item.pk, publishing_label(item)) for item in publishing.queryset]),
+        ]
+
+        # The edition and purchase selects only list the options of the current choice; the page
+        # reloads them (API) when the publishing, edition or date change. Validation uses the full querysets.
+        publishing_id = self._current("publishing") or (self.instance.edition.publishing_id if self.instance.edition_id else None)
+        edition_id = self._current("edition") or self.instance.edition_id
+        if publishing_id is None and edition_id:
+            publishing_id = Edition.objects.filter(pk=edition_id).values_list("publishing_id", flat=True).first()
+        if publishing_id:
+            self.initial.setdefault("publishing", publishing_id)
+        editions = Edition.objects.filter(publishing_id=publishing_id).select_related("publishing") if publishing_id else []
+        editions = sorted(editions, key=lambda item: (_number_key(item.number), item.variant, item.printing))
+        edition.widget.choices = [("", _("Choose a publishing first") if not publishing_id else "---------")] + [
+            (item.pk, edition_label(item)) for item in editions
+        ]
+        owner = collector or self._current_collector()
+        purchases = available_purchases(owner, edition_id, self._current("trade_date"), self.instance) if owner and edition_id else []
+        self.fields["previous_trade"].widget.choices = [("", "---------")] + [(item.pk, purchase_label(item)) for item in purchases]
+
+        for field in self.fields.values():
+            widget = field.widget
+            if isinstance(widget, forms.RadioSelect):
+                continue  # rendered as a segmented button
+            if isinstance(widget, forms.Select):
+                widget.attrs["class"] = "form-select"
+            else:
+                widget.attrs.update({"class": "form-control", "placeholder": field.label})
+        self.fields["notes"].widget.attrs["style"] = "height: 90px"
+
+    def _current(self, name):
+        """Submitted value (bound form) or initial value of a field."""
+        value = self.data.get(name) if self.is_bound else self.initial.get(name)
+        return value or None
+
+    def _current_collector(self):
+        value = self._current("collector") or self.instance.collector_id
+        return User.objects.filter(pk=value).first() if value else None
+
+    def clean(self):
+        cleaned = super().clean()
+        collector = self.fixed_collector or cleaned.get("collector")
+        previous = cleaned.get("previous_trade")
+        if cleaned.get("trade_type") != Collection.TradeChoices.SELLING:
+            cleaned["previous_trade"] = None
+        elif previous and collector and cleaned.get("edition"):
+            allowed = available_purchases(collector, cleaned["edition"].pk, cleaned.get("trade_date"), self.instance)
+            if not allowed.filter(pk=previous.pk).exists():
+                self.add_error(
+                    "previous_trade",
+                    _("Choose a purchase of this edition by the same collector, made on or before the sale date and not sold yet."),
+                )
+        return cleaned
+
+    def save(self, commit=True):
+        if self.fixed_collector is not None:
+            self.instance.collector = self.fixed_collector
+        return super().save(commit)
+
+
+def _number_key(number):
+    number = number.strip()
+    return (0, int(number), "") if number.isdigit() else (1, 0, number)

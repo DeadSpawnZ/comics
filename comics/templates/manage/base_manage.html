@@ -13,6 +13,14 @@
     <div class="md-side-nav__title">{% translate "Management" %}</div>
     <ul>
       <li>
+        <a class="md-side-nav__link {% if 'collection' in url_name %}is-active{% endif %}"
+           {% if 'collection' in url_name %}aria-current="page"{% endif %}
+           href="{% url 'manage_collections' %}">
+          <span class="material-symbols-outlined" aria-hidden="true">inventory_2</span>
+          {% translate "Collections" %}
+        </a>
+      </li>
+      <li>
         <a class="md-side-nav__link {% if 'publishing' in url_name %}is-active{% endif %}"
            {% if 'publishing' in url_name %}aria-current="page"{% endif %}
            href="{% url 'manage_publishings' %}">
@@ -59,20 +67,5 @@
 </div>
 {% endwith %}
 
-{% if messages %}
-<div class="md-snackbar" id="manage-snackbar" role="status">
-  {% for message in messages %}
-    <div class="d-flex align-items-center gap-2">
-      <span class="material-symbols-outlined" aria-hidden="true">{% if message.level_tag == 'error' %}error{% else %}check_circle{% endif %}</span>
-      {{ message }}
-    </div>
-  {% endfor %}
-</div>
-<script>
-  setTimeout(function () {
-    var snackbar = document.getElementById("manage-snackbar");
-    if (snackbar) snackbar.hidden = true;
-  }, 5000);
-</script>
-{% endif %}
+{% include 'includes/snackbar.html' %}
 {% endblock %}

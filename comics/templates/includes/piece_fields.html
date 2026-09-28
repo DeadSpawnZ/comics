@@ -1,0 +1,74 @@
+{% load i18n %}
+{% comment %}
+Fields of a piece (Collection record), shared by Gestión and Mis comics.
+Params: form (CollectionEntryForm), selected_edition (for the cover preview).
+{% endcomment %}
+{% if form.errors %}
+  <div class="editor-errors mb-3" role="alert">
+    <span class="material-symbols-outlined" aria-hidden="true">error</span>
+    <ul>
+      {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+      {% if not form.non_field_errors %}<li>{% translate "Check the highlighted fields." %}</li>{% endif %}
+    </ul>
+  </div>
+{% endif %}
+
+<div class="row g-3">
+  <div class="col-12 col-xl-8">
+    <div class="md-surface-card h-100">
+      <h2 class="md-title-medium mb-3">{% translate "Piece" %}</h2>
+      <div class="row g-3">
+        {% if form.collector %}
+          <div class="col-12 col-md-6">{% include 'manage/includes/field.html' with field=form.collector %}</div>
+          <div class="col-12 col-md-6"></div>
+        {% endif %}
+        <div class="col-12 col-md-7">{% include 'manage/includes/field.html' with field=form.publishing %}</div>
+        <div class="col-12 col-md-5">{% include 'manage/includes/field.html' with field=form.edition %}</div>
+
+        <div class="col-12">
+          <div class="md-segmented" role="radiogroup" aria-label="{{ form.trade_type.label }}">
+            {% for radio in form.trade_type %}
+              <label class="md-segmented__option">
+                {{ radio.tag }}
+                <span>
+                  <span class="material-symbols-outlined" aria-hidden="true">{% if radio.data.value == 'selling' %}sell{% else %}shopping_bag{% endif %}</span>
+                  {{ radio.choice_label }}
+                </span>
+              </label>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=form.trade_date %}</div>
+        <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=form.amount %}</div>
+        <div class="col-8 col-md-4">{% include 'manage/includes/field.html' with field=form.participant %}</div>
+        <div class="col-4 col-md-2">{% include 'manage/includes/field.html' with field=form.valuation %}</div>
+
+        <div class="col-12" id="previous-trade-panel" {% if form.trade_type.value != 'selling' %}hidden{% endif %}>
+          {% include 'manage/includes/field.html' with field=form.previous_trade %}
+          <div class="md-body-medium mt-1">
+            {% blocktranslate trimmed %}
+              The copy you are selling. Once linked, it no longer counts as yours. Only copies of this edition
+              bought on or before the sale date are listed.
+            {% endblocktranslate %}
+          </div>
+        </div>
+
+        <div class="col-12">{% include 'manage/includes/field.html' with field=form.notes %}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-xl-4">
+    <div class="md-surface-card h-100">
+      <h2 class="md-title-medium mb-3">{% translate "Cover" %}</h2>
+      <div class="edition-cover-preview mb-2">
+        <img id="piece-cover" alt="" {% if selected_edition.thumbnail %}src="{{ selected_edition.thumbnail.url }}"{% else %}hidden{% endif %}>
+        <span class="material-symbols-outlined" aria-hidden="true" id="piece-cover-placeholder" {% if selected_edition.thumbnail %}hidden{% endif %}>image</span>
+      </div>
+      <div class="md-body-medium text-center" id="piece-cover-title">
+        {% if selected_edition %}{{ selected_edition.publishing.publishing_title }} #{{ selected_edition.number }} {{ selected_edition.variant }}{% else %}{% translate "Choose an edition" %}{% endif %}
+      </div>
+    </div>
+  </div>
+</div>

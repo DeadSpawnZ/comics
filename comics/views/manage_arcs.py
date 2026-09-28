@@ -11,8 +11,8 @@ from django.urls import reverse
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 
-from comics.forms import ReadingArcForm, publishing_label
-from comics.models import Issue, Publishing, ReadingArc
+from comics.forms import ReadingArcForm, publishing_choices
+from comics.models import Issue, ReadingArc
 from comics.views.manage_editions import _log, _safe_next
 
 COVER_STRIP_SIZE = 8
@@ -85,10 +85,7 @@ def arc_form(request, pk=None):
             "form": form,
             "issue_errors": issue_errors,
             "back_url": back_url,
-            "publishings": [
-                (publishing.pk, publishing_label(publishing))
-                for publishing in Publishing.objects.order_by("publishing_title", "year", "serie")
-            ],
+            "publishings": publishing_choices(),
             "form_data": {"issuesUrl": reverse("manage_publishing_issues"), "issues": items},
         },
     )

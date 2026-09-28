@@ -755,3 +755,101 @@ a.md-paginator__page:hover {
     overflow-x: auto;
   }
 }
+
+/* Searchable select (combobox.js): one text field + filtered option list */
+.md-combobox {
+  position: relative;
+}
+
+.md-combobox__input {
+  cursor: text;
+  text-overflow: ellipsis;
+}
+
+.md-combobox__list {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 320px;
+  margin: 0;
+  padding: 0.25rem 0;
+  overflow-y: auto;
+  list-style: none;
+  border-radius: 8px;
+  background-color: var(--md-surface-container);
+  color: var(--md-on-surface);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.md-combobox__group {
+  padding: 0.5rem 1rem 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--md-primary);
+}
+
+.md-combobox__option {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.md-combobox__option[aria-selected="true"] {
+  font-weight: 500;
+  color: var(--md-on-secondary-container);
+  background-color: var(--md-secondary-container);
+}
+
+.md-combobox__option.is-active,
+.md-combobox__option:hover {
+  background-color: rgba(var(--md-on-surface-rgb), 0.08);
+}
+
+.md-combobox__option[aria-selected="true"].is-active {
+  background-color: var(--md-secondary-container);
+  box-shadow: inset 0 0 0 2px var(--md-primary);
+}
+
+.md-combobox__empty {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  color: var(--md-on-surface-variant);
+}
+
+/* Form error box and snackbar (shared by Gestión and Mis comics) */
+.editor-errors {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  background-color: #ffdad6;
+  color: #410002;
+}
+
+:root[data-bs-theme="dark"] .editor-errors {
+  background-color: #93000a;
+  color: #ffdad6;
+}
+
+.editor-errors ul {
+  margin: 0;
+  padding-left: 1rem;
+}
+
+.md-snackbar {
+  position: fixed;
+  left: 50%;
+  bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  z-index: 1080;
+  padding: 0.875rem 1rem;
+  min-width: 240px;
+  border-radius: 4px;
+  background-color: var(--md-on-surface);
+  color: var(--md-surface);
+  box-shadow: var(--md-elevation-3);
+  font-size: 0.875rem;
+}

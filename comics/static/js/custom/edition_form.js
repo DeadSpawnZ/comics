@@ -4,8 +4,6 @@
   const data = JSON.parse(document.getElementById("edition-form-data").textContent);
   const picker = window.ComiIssuePicker;
 
-  picker.setupFilterableSelects();
-
   // ---------- Single issue or compilation ----------
   const singlePanel = document.getElementById("content-single");
   const compilationPanel = document.getElementById("content-compilation");

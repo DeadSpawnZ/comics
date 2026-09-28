@@ -1,4 +1,6 @@
+from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_GET
 from django.contrib.auth.models import User
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, render
@@ -137,6 +139,9 @@ def comics_view(request):
     )
 
 
+# Used only by the admin collection form (collection_form_events.js): staff only.
+@staff_member_required
+@require_GET
 def get_previous_trades(request, edition_id):
     try:
         used_previous_trades_ids = (

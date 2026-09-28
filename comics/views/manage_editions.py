@@ -15,7 +15,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext as _, gettext_lazy, ngettext, pgettext_lazy
 from django.views.decorators.http import require_GET, require_POST
 
-from comics.forms import EditionManageForm
+from comics.forms import EditionManageForm, publishing_choices
 from comics.models import CollectedIssue, Edition, Issue
 from comics.views.manage import _number_sort_key
 
@@ -215,6 +215,7 @@ def edition_form(request, pk=None):
             "selected_issue_id": selected_issue_id,
             "issue_publishing_id": issue_publishing_id,
             "issue_options": issue_options,
+            "publishing_options": publishing_choices(),
             "sibling_editions": sibling_editions,
             "sibling_groups": Edition.group_by_cover_kind(sibling_editions),
             "own_option": own_option,
