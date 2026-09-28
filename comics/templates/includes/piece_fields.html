@@ -3,7 +3,7 @@
 Fields of a piece (Collection record), shared by Gestión and Mis comics.
 Params: form (CollectionEntryForm), selected_edition (for the cover preview).
 {% endcomment %}
-{% if form.errors %}
+{% if form.errors or signatures.total_error_count %}
   <div class="editor-errors mb-3" role="alert">
     <span class="material-symbols-outlined" aria-hidden="true">error</span>
     <ul>
@@ -14,8 +14,8 @@ Params: form (CollectionEntryForm), selected_edition (for the cover preview).
 {% endif %}
 
 <div class="row g-3">
-  <div class="col-12 col-xl-8">
-    <div class="md-surface-card h-100">
+  <div class="col-12 col-xl-8 d-flex flex-column gap-3">
+    <div class="md-surface-card">
       <h2 class="md-title-medium mb-3">{% translate "Piece" %}</h2>
       <div class="row g-3">
         {% if form.collector %}
@@ -57,6 +57,8 @@ Params: form (CollectionEntryForm), selected_edition (for the cover preview).
         <div class="col-12">{% include 'manage/includes/field.html' with field=form.notes %}</div>
       </div>
     </div>
+
+    {% include 'includes/signature_formset.html' with formset=signatures %}
   </div>
 
   <div class="col-12 col-xl-4">

@@ -696,3 +696,19 @@
   background-color: var(--md-surface-container-low);
   border-bottom: 1px solid var(--md-outline-variant);
 }
+
+/* Piece form: signature rows */
+.signature-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.signature-row {
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--md-outline-variant);
+}
+
+.signature-row:first-child {
+  border-top: 0;
+}

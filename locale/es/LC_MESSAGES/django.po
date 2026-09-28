@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-27 19:12-0600\n"
+"POT-Creation-Date: 2026-09-27 20:43-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -57,7 +57,7 @@ msgstr "Limitada a"
 msgid "Retailer exclusive (store)"
 msgstr "Exclusiva de tienda (nombre de la tienda)"
 
-#: comics/forms.py:186 comics/templates/includes/piece_fields.html:64
+#: comics/forms.py:186 comics/templates/includes/piece_fields.html:66
 #: comics/templates/manage/edition_form.html:123
 #: comics/templates/my_comics/edition_detail.html:129
 msgid "Cover"
@@ -158,7 +158,8 @@ msgstr "Edición"
 msgid "Type"
 msgstr "Tipo"
 
-#: comics/forms.py:377 comics/templates/collectables/collectables.html:70
+#: comics/forms.py:377 comics/forms.py:492
+#: comics/templates/collectables/collectables.html:70
 #: comics/templates/collections/collector_collections.html:150
 #: comics/templates/my_comics/edition_detail.html:102
 msgid "Date"
@@ -205,6 +206,22 @@ msgid ""
 msgstr ""
 "Elige una compra de esta edición del mismo coleccionista, hecha en o antes "
 "de la fecha de venta y que no se haya vendido."
+
+#: comics/forms.py:491 comics/views/manage_home.py:46
+msgid "Artist"
+msgstr "Artista"
+
+#: comics/forms.py:493
+msgid "Price (MXN)"
+msgstr "Precio (MXN)"
+
+#: comics/forms.py:494
+msgid "COA"
+msgstr "COA"
+
+#: comics/forms.py:506
+msgid "Certificate of authenticity"
+msgstr "Certificado de autenticidad"
 
 #: comics/models.py:83
 msgid "English"
@@ -500,6 +517,7 @@ msgid "Release"
 msgstr "Lanzamiento"
 
 #: comics/templates/collections/collector_collections.html:170
+#: comics/templates/includes/signature_formset.html:8
 msgid "Signatures"
 msgstr "Firmas"
 
@@ -557,7 +575,7 @@ msgstr ""
 "La copia que vendes. Al vincularla deja de contar como tuya. Solo se listan "
 "copias de esta edición compradas en o antes de la fecha de venta."
 
-#: comics/templates/includes/piece_fields.html:70
+#: comics/templates/includes/piece_fields.html:72
 msgid "Choose an edition"
 msgstr "Elige una edición"
 
@@ -574,6 +592,18 @@ msgstr[1] "%(counter)s ediciones más de este issue"
 #: comics/templates/my_comics/edition_list.html:85
 msgid "You own it"
 msgstr "Lo tienes"
+
+#: comics/templates/includes/signature_formset.html:11
+msgid "Add signature"
+msgstr "Agregar firma"
+
+#: comics/templates/includes/signature_formset.html:17
+msgid "This piece has no signatures."
+msgstr "Esta pieza no tiene firmas."
+
+#: comics/templates/includes/signature_row.html:15
+msgid "Remove signature"
+msgstr "Quitar firma"
 
 #: comics/templates/manage/arc_form.html:5
 #: comics/templates/manage/arc_list.html:4
@@ -1289,34 +1319,34 @@ msgstr "Ver"
 msgid "Back to the collection"
 msgstr "Volver a la colección"
 
-#: comics/views/collection_entries.py:50
+#: comics/views/collection_entries.py:64
 #, python-format
 msgid "Piece added: %(piece)s"
 msgstr "Pieza agregada: %(piece)s"
 
-#: comics/views/collection_entries.py:50
+#: comics/views/collection_entries.py:64
 #, python-format
 msgid "Piece saved: %(piece)s"
 msgstr "Pieza guardada: %(piece)s"
 
-#: comics/views/collection_entries.py:148
+#: comics/views/collection_entries.py:164
 msgid "All"
 msgstr "Todas"
 
-#: comics/views/collection_entries.py:148
+#: comics/views/collection_entries.py:164
 msgid "Purchases"
 msgstr "Compras"
 
-#: comics/views/collection_entries.py:148
+#: comics/views/collection_entries.py:164
 msgid "Sales"
 msgstr "Ventas"
 
-#: comics/views/collection_entries.py:209
+#: comics/views/collection_entries.py:226
 #, python-format
 msgid "“%(name)s” cannot be deleted: it has signatures registered."
 msgstr "“%(name)s” no se puede eliminar: tiene firmas registradas."
 
-#: comics/views/collection_entries.py:211
+#: comics/views/collection_entries.py:228
 #, python-format
 msgid "Piece deleted: %(piece)s"
 msgstr "Pieza eliminada: %(piece)s"
@@ -1456,10 +1486,6 @@ msgstr "Arco de lectura"
 #: comics/views/manage_home.py:43
 msgid "Title"
 msgstr "Título"
-
-#: comics/views/manage_home.py:46
-msgid "Artist"
-msgstr "Artista"
 
 #: comics/views/manage_home.py:47
 msgid "Signature"

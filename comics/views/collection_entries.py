@@ -19,7 +19,14 @@ from django.utils.dateparse import parse_date
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_GET, require_POST
 
-from comics.forms import CollectionEntryForm, _number_key, available_purchases, edition_label, purchase_label
+from comics.forms import (
+    CollectionEntryForm,
+    SignatureFormSet,
+    _number_key,
+    available_purchases,
+    edition_label,
+    purchase_label,
+)
 from comics.models import Collection, Edition
 from comics.views.manage_editions import PAGE_SIZE, RECENT_COUNT, _log, _safe_next
 
@@ -37,11 +44,18 @@ def _carry_over_query(form):
     return urlencode(values)
 
 
-def _save_entry(request, form, created):
-    """Save the form; on success log it and return the piece, otherwise add the error to the form."""
+def _signature_formset(request, form):
+    return SignatureFormSet(request.POST or None, instance=form.instance, prefix="signatures")
+
+
+def _save_entry(request, form, signatures, created):
+    """Save the piece and its signatures together; on success log it and return the piece,
+    otherwise add the error to the form."""
     try:
         with transaction.atomic():
             piece = form.save()
+            signatures.instance = piece
+            signatures.save()
     except ValidationError as exc:
         form.add_error(None, exc)
         return None
@@ -52,11 +66,12 @@ def _save_entry(request, form, created):
     return piece
 
 
-def _form_context(form, piece):
+def _form_context(form, signatures, piece):
     selected = form["edition"].value()
     edition = Edition.objects.filter(pk=selected).first() if selected else None
     return {
         "form": form,
+        "signatures": signatures,
         "piece": piece,
         "selected_edition": edition,
         "form_data": {
@@ -119,8 +134,9 @@ def api_purchases(request):
 @login_required
 def my_piece_new(request):
     form = CollectionEntryForm(request.POST or None, collector=request.user, initial=_carried_initial(request))
-    if request.method == "POST" and form.is_valid():
-        piece = _save_entry(request, form, created=True)
+    signatures = _signature_formset(request, form)
+    if request.method == "POST" and all([form.is_valid(), signatures.is_valid()]):
+        piece = _save_entry(request, form, signatures, created=True)
         if piece:
             if "save_add_another" in request.POST:
                 return redirect(f"{reverse('comics_piece_new')}?{_carry_over_query(form)}")
@@ -128,7 +144,7 @@ def my_piece_new(request):
             title = piece.edition.publishing.title
             letter = (title.name if title else piece.edition.publishing.publishing_title)[:1].upper()
             return redirect(f"{reverse('comics')}?{urlencode({'letter': letter})}")
-    return render(request, "my_comics/piece_form.html", _form_context(form, None))
+    return render(request, "my_comics/piece_form.html", _form_context(form, signatures, None))
 
 
 # ---------- Gestión: pieces of every collector ----------
@@ -181,8 +197,9 @@ def collection_form(request, pk=None):
     back_url = _safe_next(request, reverse("manage_collections"))
     initial = {} if piece else {"collector": request.user.pk, **_carried_initial(request)}
     form = CollectionEntryForm(request.POST or None, instance=piece, initial=initial)
-    if request.method == "POST" and form.is_valid():
-        saved = _save_entry(request, form, created=piece is None)
+    signatures = _signature_formset(request, form)
+    if request.method == "POST" and all([form.is_valid(), signatures.is_valid()]):
+        saved = _save_entry(request, form, signatures, created=piece is None)
         if saved:
             if "save_add_another" in request.POST:
                 query = _carry_over_query(form)
@@ -190,7 +207,7 @@ def collection_form(request, pk=None):
             if "save_continue" in request.POST:
                 return redirect(f"{reverse('manage_collection_edit', args=[saved.pk])}?{urlencode({'next': back_url})}")
             return redirect(back_url)
-    context = _form_context(form, piece)
+    context = _form_context(form, signatures, piece)
     context["back_url"] = back_url
     return render(request, "manage/collection_form.html", context)
 

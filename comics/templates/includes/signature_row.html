@@ -1,0 +1,20 @@
+{% load i18n %}
+<div class="signature-row row g-2 align-items-center" {% if row.DELETE.value %}hidden{% endif %}>
+  {{ row.id }}
+  <span hidden>{{ row.DELETE }}</span>
+  <div class="col-12 col-md-5">{% include 'manage/includes/field.html' with field=row.artist %}</div>
+  <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=row.date %}</div>
+  <div class="col-6 col-md-2">{% include 'manage/includes/field.html' with field=row.price %}</div>
+  <div class="col-8 col-md-1">
+    <label class="form-check m-0 d-flex align-items-center gap-2" title="{{ row.has_coa.help_text }}">
+      {{ row.has_coa }} <span class="form-check-label">{{ row.has_coa.label }}</span>
+    </label>
+  </div>
+  <div class="col-4 col-md-1 text-end">
+    <button type="button" class="md-icon-btn" data-signature-remove
+            aria-label="{% translate 'Remove signature' %}" title="{% translate 'Remove signature' %}">
+      <span class="material-symbols-outlined" aria-hidden="true">close</span>
+    </button>
+  </div>
+  {% for error in row.non_field_errors %}<div class="col-12 invalid-feedback d-block">{{ error }}</div>{% endfor %}
+</div>

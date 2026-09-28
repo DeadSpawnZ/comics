@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from django.core.exceptions import NON_FIELD_ERRORS
 from django.db.models import prefetch_related_objects
 from django.utils.translation import gettext_lazy as _
-from .models import Collection, Edition, Editorial, Publishing, Dealer, ReadingArc, Title
+from .models import Collection, Edition, Editorial, Publishing, Dealer, ReadingArc, Signature, Title
 
 
 class CollectionForm(forms.ModelForm):
@@ -479,3 +479,33 @@ class CollectionEntryForm(forms.ModelForm):
 def _number_key(number):
     number = number.strip()
     return (0, int(number), "") if number.isdigit() else (1, 0, number)
+
+
+class SignatureForm(forms.ModelForm):
+    """One signature of a piece (artist, date, price, certificate)."""
+
+    class Meta:
+        model = Signature
+        fields = ["artist", "date", "price", "has_coa"]
+        labels = {
+            "artist": _("Artist"),
+            "date": _("Date"),
+            "price": _("Price (MXN)"),
+            "has_coa": _("COA"),
+        }
+        widgets = {"date": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d")}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        artist = self.fields["artist"]
+        artist.queryset = artist.queryset.order_by("name")
+        artist.widget.attrs.update({"class": "form-select", "data-combobox": ""})
+        self.fields["date"].widget.attrs.update({"class": "form-control", "placeholder": self.fields["date"].label})
+        self.fields["price"].widget.attrs.update({"class": "form-control", "placeholder": self.fields["price"].label})
+        self.fields["has_coa"].widget.attrs["class"] = "form-check-input"
+        self.fields["has_coa"].help_text = _("Certificate of authenticity")
+
+
+SignatureFormSet = forms.inlineformset_factory(
+    Collection, Signature, form=SignatureForm, fk_name="collectable", extra=0, can_delete=True
+)
