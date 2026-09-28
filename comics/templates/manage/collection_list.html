@@ -54,49 +54,18 @@
       <p class="md-body-medium mb-0">{% translate "No pieces match these filters." %}</p>
     </div>
   {% else %}
+    {% if recent %}
+      <div class="list-section-label">{% translate "Recently added" context "pieces" %}</div>
+      <ul class="manage-rows manage-rows--recent">
+        {% for piece in recent %}
+        {% include 'manage/includes/collection_row.html' %}
+        {% endfor %}
+      </ul>
+      <div class="list-section-label">{% translate "All (A–Z)" context "pieces" %}</div>
+    {% endif %}
     <ul class="manage-rows">
       {% for piece in page_obj %}
-      <li class="manage-row">
-        <div class="manage-row__thumb">
-          {% if piece.edition.thumbnail %}
-            <img src="{{ piece.edition.thumbnail.url }}" alt="" loading="lazy">
-          {% else %}
-            <span class="material-symbols-outlined" aria-hidden="true">image</span>
-          {% endif %}
-        </div>
-        <div class="manage-row__main">
-          <a class="manage-row__title" href="{% url 'manage_collection_edit' piece.pk %}?next={{ request.get_full_path|urlencode }}">
-            {{ piece.edition.publishing.publishing_title }} #{{ piece.edition.number }} {{ piece.edition.variant }}
-          </a>
-          <div class="md-body-medium">
-            {{ piece.trade_date }} · ${{ piece.amount }} MXN · {{ piece.participant|default:"—" }} · {{ piece.collector.username }}
-          </div>
-        </div>
-        <div class="manage-row__chips">
-          {% if piece.trade_type == 'selling' %}
-            <span class="md-assist-chip md-assist-chip--error">
-              <span class="material-symbols-outlined" aria-hidden="true">sell</span>
-              {{ piece.get_trade_type_display }}
-            </span>
-          {% else %}
-            <span class="md-assist-chip md-assist-chip--primary">
-              <span class="material-symbols-outlined" aria-hidden="true">shopping_bag</span>
-              {{ piece.get_trade_type_display }}
-            </span>
-          {% endif %}
-        </div>
-        <div class="manage-row__actions">
-          <a class="md-icon-btn" href="{% url 'manage_collection_edit' piece.pk %}?next={{ request.get_full_path|urlencode }}"
-             aria-label="{% translate 'Edit' %}" title="{% translate 'Edit' %}">
-            <span class="material-symbols-outlined" aria-hidden="true">edit</span>
-          </a>
-          <button type="button" class="md-btn md-btn--danger-outlined" data-bs-toggle="modal" data-bs-target="#deleteDialog"
-                  data-delete-url="{% url 'manage_collection_delete' piece.pk %}" data-delete-name="{{ piece.edition }}">
-            <span class="material-symbols-outlined" aria-hidden="true">delete</span>
-            {% translate "Delete" %}
-          </button>
-        </div>
-      </li>
+      {% include 'manage/includes/collection_row.html' %}
       {% endfor %}
     </ul>
   {% endif %}

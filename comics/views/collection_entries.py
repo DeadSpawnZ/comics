@@ -21,7 +21,7 @@ from django.views.decorators.http import require_GET, require_POST
 
 from comics.forms import CollectionEntryForm, _number_key, available_purchases, edition_label, purchase_label
 from comics.models import Collection, Edition
-from comics.views.manage_editions import PAGE_SIZE, _log, _safe_next
+from comics.views.manage_editions import PAGE_SIZE, RECENT_COUNT, _log, _safe_next
 
 # Values carried over by "Save and add another" (a batch bought the same day from the same person).
 CARRY_OVER = ("publishing", "trade_date", "trade_type", "participant", "collector")
@@ -147,15 +147,23 @@ def collection_list(request):
         base = base.filter(collector_id=collector_filter)
     labels = {"all": _("All"), "buying": _("Purchases"), "selling": _("Sales")}
     tabs = [(value, labels[key], (base.filter(trade_type=value) if value else base).count()) for value, key in TYPE_TABS]
-    pieces = (base.filter(trade_type=type_filter) if type_filter else base).select_related(
-        "collector", "participant", "edition__publishing"
-    ).order_by("-trade_date", "-id")
+    related = ("collector", "participant", "edition__publishing")
+    pieces = (
+        (base.filter(trade_type=type_filter) if type_filter else base)
+        .select_related(*related)
+        .order_by("edition__publishing__publishing_title", "edition__publishing__year", "edition__number", "edition__variant", "trade_date")
+    )
 
     page_obj = Paginator(pieces, PAGE_SIZE).get_page(request.GET.get("page"))
+    # The latest additions go first (only on the unfiltered first page), then the A-Z list.
+    recent = []
+    if page_obj.number == 1 and not (query or collector_filter or type_filter):
+        recent = list(Collection.objects.select_related(*related).order_by("-id")[:RECENT_COUNT])
     return render(
         request,
         "manage/collection_list.html",
         {
+            "recent": recent,
             "page_obj": page_obj,
             "elided_page_range": page_obj.paginator.get_elided_page_range(page_obj.number, on_each_side=1, on_ends=1),
             "tabs": tabs,

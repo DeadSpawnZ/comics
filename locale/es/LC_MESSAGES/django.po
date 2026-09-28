@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-27 19:07-0600\n"
+"POT-Creation-Date: 2026-09-27 19:12-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -608,8 +608,8 @@ msgstr "Nuevo arco de lectura"
 
 #: comics/templates/manage/arc_form.html:27
 #: comics/templates/manage/collection_form.html:26
-#: comics/templates/manage/collection_list.html:96
 #: comics/templates/manage/edition_form.html:28
+#: comics/templates/manage/includes/collection_row.html:40
 #: comics/templates/manage/includes/delete_dialog.html:16
 #: comics/templates/manage/includes/edition_row.html:44
 #: comics/templates/manage/includes/publishing_row.html:35
@@ -730,7 +730,7 @@ msgid "Save and add another"
 msgstr "Guardar y agregar otra"
 
 #: comics/templates/manage/collection_form.html:46
-#: comics/templates/manage/collection_list.html:106
+#: comics/templates/manage/collection_list.html:75
 msgid "Delete piece?"
 msgstr "¿Eliminar pieza?"
 
@@ -768,11 +768,15 @@ msgstr "Limpiar"
 msgid "No pieces match these filters."
 msgstr "Ninguna pieza coincide con estos filtros."
 
-#: comics/templates/manage/collection_list.html:90
-#: comics/templates/manage/includes/edition_row.html:37
-#: comics/templates/manage/includes/publishing_row.html:27
-msgid "Edit"
-msgstr "Editar"
+#: comics/templates/manage/collection_list.html:58
+msgctxt "pieces"
+msgid "Recently added"
+msgstr "Agregadas recientemente"
+
+#: comics/templates/manage/collection_list.html:64
+msgctxt "pieces"
+msgid "All (A–Z)"
+msgstr "Todas (A–Z)"
 
 #: comics/templates/manage/connecting_editor.html:7
 msgctxt "connecting"
@@ -1031,6 +1035,12 @@ msgstr "Se abre en el admin"
 #: comics/templates/manage/home.html:85
 msgid "No changes match these filters."
 msgstr "Ningún cambio coincide con estos filtros."
+
+#: comics/templates/manage/includes/collection_row.html:34
+#: comics/templates/manage/includes/edition_row.html:37
+#: comics/templates/manage/includes/publishing_row.html:27
+msgid "Edit"
+msgstr "Editar"
 
 #: comics/templates/manage/includes/delete_dialog.html:9
 msgid "Delete edition?"
@@ -1301,12 +1311,12 @@ msgstr "Compras"
 msgid "Sales"
 msgstr "Ventas"
 
-#: comics/views/collection_entries.py:201
+#: comics/views/collection_entries.py:209
 #, python-format
 msgid "“%(name)s” cannot be deleted: it has signatures registered."
 msgstr "“%(name)s” no se puede eliminar: tiene firmas registradas."
 
-#: comics/views/collection_entries.py:203
+#: comics/views/collection_entries.py:211
 #, python-format
 msgid "Piece deleted: %(piece)s"
 msgstr "Pieza eliminada: %(piece)s"
