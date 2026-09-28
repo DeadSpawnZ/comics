@@ -1,0 +1,103 @@
+{% extends 'manage/base_manage.html' %}
+{% load static i18n %}
+
+{% block breadcrumb %}
+<a href="{{ back_url }}">{% translate "Reading arcs" %}</a>
+<span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+<span class="is-current">{% if arc %}{{ arc.name }}{% else %}{% translate "New" context "reading arc" %}{% endif %}</span>
+{% endblock %}
+
+{% block manage_content %}
+<form method="post" novalidate>
+  {% csrf_token %}
+  <input type="hidden" name="next" value="{{ back_url }}">
+
+  <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <a class="md-icon-btn" href="{{ back_url }}" aria-label="{% translate 'Back to reading arcs' %}" title="{% translate 'Back to reading arcs' %}">
+        <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+      </a>
+      <h1 class="md-headline-small mb-0">{% if arc %}{% translate "Edit reading arc" %}{% else %}{% translate "New reading arc" %}{% endif %}</h1>
+    </div>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      {% if arc %}
+        <button type="button" class="md-btn md-btn--danger-outlined" data-bs-toggle="modal" data-bs-target="#deleteDialog"
+                data-delete-url="{% url 'manage_arc_delete' arc.pk %}" data-delete-name="{{ arc.name }}">
+          <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+          {% translate "Delete" %}
+        </button>
+      {% endif %}
+      <button type="submit" name="save_continue" class="md-btn md-btn--tonal">{% translate "Save and continue editing" %}</button>
+      <button type="submit" class="md-btn md-btn--filled">
+        <span class="material-symbols-outlined" aria-hidden="true">save</span>
+        {% translate "Save" %}
+      </button>
+    </div>
+  </div>
+
+  {% if form.errors or issue_errors %}
+    <div class="editor-errors mb-3" role="alert">
+      <span class="material-symbols-outlined" aria-hidden="true">error</span>
+      <ul>
+        {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+        {% for error in issue_errors %}<li>{{ error }}</li>{% endfor %}
+        {% if form.errors and not form.non_field_errors %}<li>{% translate "Check the highlighted fields." %}</li>{% endif %}
+      </ul>
+    </div>
+  {% endif %}
+
+  <div class="md-surface-card mb-3">
+    <div class="row g-3">
+      <div class="col-12">{% include 'manage/includes/field.html' with field=form.name %}</div>
+      <div class="col-12">{% include 'manage/includes/field.html' with field=form.notes %}</div>
+    </div>
+  </div>
+
+  <div class="md-surface-card">
+    <h2 class="md-title-medium mb-3">{% translate "Issues in reading order" %}</h2>
+
+    <div class="row g-3 align-items-end">
+      <div class="col-12 col-md-5">
+        <div class="form-floating md-field">
+          <select class="form-select" id="arc-publishing" data-combobox>
+            <option value="">{% translate "Choose a publishing…" %}</option>
+            {% for value, label in publishings %}
+              <option value="{{ value }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+          <label for="arc-publishing">Publishing</label>
+        </div>
+      </div>
+      <div class="col-8 col-md-5">
+        <div class="form-floating md-field">
+          <select class="form-select" id="arc-issue" disabled>
+            <option value="">{% translate "Choose a publishing first" %}</option>
+          </select>
+          <label for="arc-issue">Issue</label>
+        </div>
+      </div>
+      <div class="col-4 col-md-2">
+        <button type="button" class="md-btn md-btn--tonal w-100" id="arc-add" disabled>
+          <span class="material-symbols-outlined" aria-hidden="true">add</span>
+          {% translate "Add" %}
+        </button>
+      </div>
+    </div>
+
+    <ol class="collected-list mt-3" id="arc-list"></ol>
+    <p class="md-body-medium mb-0" id="arc-empty">{% translate "There are no issues in the reading arc yet." %}</p>
+    <input type="hidden" name="issues" id="arc-input">
+  </div>
+</form>
+
+{% if arc %}
+  {% translate "Delete reading arc?" as delete_title %}
+  {% include 'manage/includes/delete_dialog.html' with delete_next=back_url delete_title=delete_title %}
+{% endif %}
+{{ form_data|json_script:"arc-form-data" }}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/custom/issue_picker.js' %}"></script>
+<script src="{% static 'js/custom/arc_form.js' %}"></script>
+{% endblock %}

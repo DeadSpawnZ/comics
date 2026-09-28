@@ -1,0 +1,91 @@
+{% extends 'manage/base_manage.html' %}
+{% load i18n %}
+
+{% block breadcrumb %}<span class="is-current">{% translate "Home" %}</span>{% endblock %}
+
+{% block manage_content %}
+<div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+  <h1 class="md-headline-small mb-0">{% translate "Management" %}</h1>
+  <div class="d-flex gap-2 flex-wrap">
+    <a class="md-btn md-btn--filled" href="{% url 'manage_collection_new' %}?next={{ request.path|urlencode }}">
+      <span class="material-symbols-outlined" aria-hidden="true">add</span>{% translate "New piece" %}
+    </a>
+    <a class="md-btn md-btn--tonal" href="{% url 'manage_edition_new' %}?next={{ request.path|urlencode }}">
+      <span class="material-symbols-outlined" aria-hidden="true">add</span>{% translate "New edition" %}
+    </a>
+    <a class="md-btn md-btn--tonal" href="{% url 'manage_publishing_new' %}?next={{ request.path|urlencode }}">
+      <span class="material-symbols-outlined" aria-hidden="true">add</span>{% translate "New publishing" %}
+    </a>
+  </div>
+</div>
+
+<div class="home-stats mb-4">
+  {% for label, count, url_name, icon in stats %}
+    <a class="home-stat" href="{% url url_name %}">
+      <span class="material-symbols-outlined" aria-hidden="true">{{ icon }}</span>
+      <span class="home-stat__count">{{ count }}</span>
+      <span class="home-stat__label">{{ label }}</span>
+    </a>
+  {% endfor %}
+</div>
+
+<div class="md-surface-card manage-table">
+  <div class="manage-toolbar">
+    <div class="manage-tabs" role="tablist" aria-label="{% translate 'Object type' %}">
+      {% for value, label in type_filters %}
+        <a class="manage-tab {% if value == type_filter %}is-active{% endif %}" role="tab"
+           aria-selected="{% if value == type_filter %}true{% else %}false{% endif %}"
+           href="{% querystring tipo=value page=None %}">{{ label }}</a>
+      {% endfor %}
+    </div>
+    <form method="get" class="manage-filters">
+      <input type="hidden" name="tipo" value="{{ type_filter }}">
+      <div class="form-floating md-field">
+        <select class="form-select" id="filter-user" name="usuario" onchange="this.form.submit()">
+          <option value="">{% translate "All" context "users" %}</option>
+          {% for user_option in users %}
+            <option value="{{ user_option.pk }}" {% if user_option.pk|stringformat:"s" == user_filter %}selected{% endif %}>{{ user_option.username }}</option>
+          {% endfor %}
+        </select>
+        <label for="filter-user">{% translate "User" %}</label>
+      </div>
+    </form>
+  </div>
+
+  <h2 class="visually-hidden">{% translate "Recent changes" %}</h2>
+  {% for day in days %}
+    <div class="history-day">{% if day.label %}{{ day.label }}{% else %}{{ day.date|date:"l" }}, {{ day.date|date:"DATE_FORMAT" }}{% endif %}</div>
+    <ul class="history-list">
+      {% for entry in day.entries %}
+        <li class="history-entry">
+          <span class="history-entry__icon {{ entry.css }} material-symbols-outlined" aria-label="{{ entry.verb }}" title="{{ entry.verb }}">{{ entry.icon }}</span>
+          <div class="history-entry__main">
+            <div class="history-entry__title">
+              {% if entry.link %}
+                <a href="{{ entry.link }}">{{ entry.object_repr }}</a>
+                {% if entry.in_admin %}<span class="material-symbols-outlined history-entry__external" title="{% translate 'Opens in the admin' %}" aria-label="{% translate 'Opens in the admin' %}">open_in_new</span>{% endif %}
+              {% else %}
+                <span>{{ entry.object_repr }}</span>
+              {% endif %}
+            </div>
+            <div class="md-body-medium">
+              {{ entry.verb }} · {{ entry.type_label }}{% with message=entry.get_change_message %}{% if message %} · {{ message }}{% endif %}{% endwith %}
+            </div>
+          </div>
+          <div class="history-entry__meta md-body-medium" title="{{ entry.action_time|date:'DATETIME_FORMAT' }}">
+            <span>{{ entry.user.username }}</span>
+            <span>{{ entry.action_time|date:"H:i" }}</span>
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  {% empty %}
+    <div class="text-center py-5">
+      <span class="material-symbols-outlined d-block mb-2 empty-state-icon" aria-hidden="true">history</span>
+      <p class="md-body-medium mb-0">{% translate "No changes match these filters." %}</p>
+    </div>
+  {% endfor %}
+</div>
+
+{% include 'includes/paginator.html' %}
+{% endblock %}

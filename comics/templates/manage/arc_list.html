@@ -1,0 +1,47 @@
+{% extends 'manage/base_manage.html' %}
+{% load i18n %}
+
+{% block breadcrumb %}<span class="is-current">{% translate "Reading arcs" %}</span>{% endblock %}
+
+{% block manage_content %}
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+  <div>
+    <h1 class="md-headline-small mb-0">{% translate "Reading arcs" %}</h1>
+    <span class="md-body-medium">{% blocktranslate count counter=cards|length %}{{ counter }} reading arc{% plural %}{{ counter }} reading arcs{% endblocktranslate %}</span>
+  </div>
+  <a class="md-btn md-btn--filled" href="{% url 'manage_arc_new' %}">
+    <span class="material-symbols-outlined" aria-hidden="true">add</span>
+    {% translate "New reading arc" %}
+  </a>
+</div>
+
+{% if not cards %}
+  <div class="md-surface-card text-center py-5">
+    <span class="material-symbols-outlined d-block mb-2 empty-state-icon" aria-hidden="true">format_list_numbered</span>
+    <p class="md-body-medium mb-3">{% translate "There are no reading arcs yet." %}</p>
+    <a class="md-btn md-btn--tonal" href="{% url 'manage_arc_new' %}">{% translate "Create the first one" %}</a>
+  </div>
+{% endif %}
+
+<div class="row g-3">
+  {% for card in cards %}
+  <div class="col-12 col-md-6 col-xl-4">
+    <a class="md-card arc-card d-block text-decoration-none" href="{% url 'manage_arc_edit' card.arc.pk %}">
+      <div class="arc-card__covers">
+        {% for entry in card.covers %}
+          <img src="{{ entry.cover_url }}" alt="" loading="lazy">
+        {% empty %}
+          <span class="material-symbols-outlined" aria-hidden="true">auto_stories</span>
+        {% endfor %}
+      </div>
+      <div class="p-3">
+        <div class="md-title-medium text-body">{{ card.arc.name }}</div>
+        <div class="md-body-medium">
+          {% blocktranslate count counter=card.total %}{{ counter }} issue{% plural %}{{ counter }} issues{% endblocktranslate %}
+        </div>
+      </div>
+    </a>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

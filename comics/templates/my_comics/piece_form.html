@@ -1,0 +1,45 @@
+{% extends 'my_comics/base_comics.html' %}
+{% load static i18n %}
+
+{% block extra_css %}
+{# Form and cover styles are shared with Gestión. #}
+<link rel="stylesheet" href="{% static 'css/custom/manage.css' %}">
+{% endblock %}
+
+{% block breadcrumb %}
+<a href="{% url 'comics' %}">{% translate "Collection" %}</a>
+<span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+<span class="is-current">{% translate "New piece" %}</span>
+{% endblock %}
+
+{% block comics_content %}
+<form method="post" novalidate>
+  {% csrf_token %}
+  <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <a class="md-icon-btn" href="{% url 'comics' %}" aria-label="{% translate 'Back to the collection' %}" title="{% translate 'Back to the collection' %}">
+        <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+      </a>
+      <h1 class="md-headline-small mb-0">{% translate "New piece" %}</h1>
+    </div>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <button type="submit" name="save_add_another" class="md-btn md-btn--tonal">
+        <span class="material-symbols-outlined" aria-hidden="true">library_add</span>
+        {% translate "Save and add another" %}
+      </button>
+      <button type="submit" class="md-btn md-btn--filled">
+        <span class="material-symbols-outlined" aria-hidden="true">save</span>
+        {% translate "Save" %}
+      </button>
+    </div>
+  </div>
+
+  {% include 'includes/piece_fields.html' %}
+</form>
+{{ form_data|json_script:"piece-form-data" }}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/custom/piece_form.js' %}"></script>
+<script src="{% static 'js/custom/signature_formset.js' %}"></script>
+{% endblock %}

@@ -1,11 +1,13 @@
 import io
 import datetime
+import logging
 from PIL import Image
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from datetime import datetime
 from django.contrib.auth.models import User
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
+from django.utils.translation import gettext, ngettext
 from django.utils.translation import gettext_lazy as _
 from django.utils.timezone import now
 from django.db.models import (
@@ -24,8 +26,17 @@ from django.db.models import (
     DecimalField,
     BooleanField,
     ImageField,
+    UniqueConstraint,
+    PositiveSmallIntegerField,
+    CASCADE,
+    Q,
+    F,
+    Min,
+    QuerySet,
 )
 from .helper import generate_image_jpge
+
+logger = logging.getLogger(__name__)
 
 # Create your models here.
 
@@ -86,6 +97,14 @@ class Publishing(Model):
         null=True,
     )
 
+    class Meta:
+        constraints = [
+            UniqueConstraint(
+                fields=["publishing_title", "year", "serie", "language"],
+                name="unique_publishing_title_year_serie_language",
+            ),
+        ]
+
     def __str__(self):
         editorials = Editorial.objects.filter(publishing=self)
         editorials = [editorial.name for editorial in editorials]
@@ -120,8 +139,7 @@ class Publishing(Model):
         if hasattr(self, "id"):
             coincidences = coincidences.exclude(id=self.id)
         if coincidences.exists():
-            msg = "Duplicated publishing"
-            raise Exception(msg)
+            raise ValidationError("Duplicated publishing")
 
     def save(self, *args, **kwargs):
         self.process_year()
@@ -139,9 +157,50 @@ class Artist(Model):
         return self.name
 
 
-class Comic(Model):  # This is an Edition of an Issue
+class IssueQuerySet(QuerySet):
+    def delete_orphans(self):
+        """Delete the issues in this queryset that no longer have editions, are not in a
+        compilation and are not part of any reading arc."""
+        return self.filter(editions__isnull=True, collected_in__isnull=True, arc_entries__isnull=True).delete()
+
+    def with_first_release(self):
+        """Annotate `first_release`: the earliest date among its 1st-printing editions
+        (the A cover and its variants) within its original series."""
+        return self.annotate(
+            first_release=Min(
+                "editions__release_date",
+                filter=Q(editions__printing=Edition.PrintingChoices.FIRST, editions__publishing=F("publishing")),
+            )
+        )
+
+
+class Issue(Model):
+    """The content (the story) of an issue. Its editions are the physical printings:
+    variants, reprints, foreign or anniversary editions, which may belong to another publishing."""
+
+    objects = IssueQuerySet.as_manager()
+
+    publishing = ForeignKey(Publishing, on_delete=PROTECT, related_name="issues", help_text="Serie original")
+    number = CharField(max_length=5)
+    synopsis = TextField(blank=True)
+    creators = ManyToManyField(Artist, blank=True, related_name="issues")
+
+    class Meta:
+        ordering = ["publishing__publishing_title", "number"]
+        constraints = [
+            UniqueConstraint(fields=["publishing", "number"], name="unique_issue_publishing_number"),
+        ]
+
+    def __str__(self):
+        return f"{self.publishing.publishing_title} #{self.number}"
+
+
+class Edition(Model):
+    """The physical copy (what is colloquially called a "comic"): cover/variant, printing,
+    format. It belongs to a publishing and points to the issue it contains, or to several if it is a compilation."""
+
     class FormatChoices(TextChoices):
-        SINGLE_ISSUE = "single_issue", _("Grapa")
+        SINGLE_ISSUE = "single_issue", _("Single issue")
         PRESTIGE = "prestige", _("Prestige")
         TRADE_PAPERBACK = "trade_paperback", _("TPB - Trade Paperback")
         HARDCOVER = "hardcover", _("HC - Hardcover")
@@ -182,24 +241,42 @@ class Comic(Model):  # This is an Edition of an Issue
     printing = CharField(max_length=10, choices=PrintingChoices.choices, default=PrintingChoices.FIRST)
     ratio = CharField(max_length=10, blank=True, validators=ratio_validator)
     limited_to = CharField(max_length=10, blank=True, validators=limited_to_validator)
+    retailer_exclusive = CharField(
+        max_length=60,
+        blank=True,
+        help_text="Store the cover is exclusive to (retailer exclusive). Empty for regular and incentive covers.",
+    )
     cover_price = DecimalField(max_digits=8, decimal_places=2, default=0.00)
     format = CharField(max_length=20, choices=FormatChoices, default=FormatChoices.SINGLE_ISSUE)
     release_date = DateField(default=datetime.now)
     image = ImageField(upload_to="images/originals/", null=True, blank=True)
     thumbnail = ImageField(upload_to="images/thumbnails/", null=True, blank=True)
-    details = TextField(max_length=500, blank=True)
-    artists = ManyToManyField(Artist, blank=True)
-    is_compilation = BooleanField(default=False)
-    compiled_issues = ManyToManyField(
-        "self",
-        symmetrical=False,
-        related_name="included_in",
+    notes = TextField(max_length=500, blank=True)
+    cover_artists = ManyToManyField(Artist, blank=True, related_name="covers")
+    issue = ForeignKey(
+        Issue,
+        on_delete=PROTECT,
+        null=True,
         blank=True,
-        help_text="Individual issues that are compiled in this comic, if any.",
+        related_name="editions",
+        help_text="Se asigna solo segun publishing y numero. Cambialo si es una edicion "
+        "extranjera o de aniversario de un issue de otra serie. Vacio en compilaciones.",
     )
+    collected_issues = ManyToManyField(Issue, through="CollectedIssue", blank=True, related_name="collected_in")
+
+    class Meta:
+        constraints = [
+            UniqueConstraint(
+                fields=["publishing", "number", "variant", "printing"],
+                name="unique_edition_publishing_number_variant_printing",
+            ),
+        ]
 
     def __str__(self):
-        editorials = Editorial.objects.filter(publishing=self.publishing)
+        # Query through the relation (instead of Editorial.objects.filter(...))
+        # so a prefetch_related("publishing__editorials") done by the caller
+        # is reused, avoiding N+1 when listing many comics.
+        editorials = self.publishing.editorials.all()
         first_editorial = editorials[0] if editorials else None
         country_code = first_editorial.country.upper() if first_editorial else ""
 
@@ -218,9 +295,51 @@ class Comic(Model):  # This is an Edition of an Issue
 
         return comic_name
 
+    COVER_KINDS = (
+        ("regular", _("Regular covers")),
+        ("incentive", _("Incentive covers")),
+        ("retailer_exclusive", _("Retailer exclusives")),
+    )
+
+    @property
+    def cover_kind(self):
+        """Retailer exclusive if a store is set; incentive if it has a 1:N ratio; regular otherwise."""
+        if self.retailer_exclusive.strip():
+            return "retailer_exclusive"
+        if self.ratio.strip():
+            return "incentive"
+        return "regular"
+
+    @classmethod
+    def group_by_cover_kind(cls, editions):
+        """[(kind, label, editions), ...] in COVER_KINDS order, skipping empty groups."""
+        groups = {kind: [] for kind, _label in cls.COVER_KINDS}
+        for edition in editions:
+            groups[edition.cover_kind].append(edition)
+        return [(kind, label, groups[kind]) for kind, label in cls.COVER_KINDS if groups[kind]]
+
+    @property
+    def is_compilation(self):
+        # Compilations have no issue of their own; the DB is only queried in that case.
+        return self.issue_id is None and self.pk is not None and self.collected_entries.exists()
+
+    def sync_compilation_state(self):
+        """After the collected issues are edited: if it is now a compilation it drops its issue
+        (and deletes it if orphaned); if it is no longer one it gets its default issue back."""
+        if self.collected_entries.exists():
+            if self.issue_id is None:
+                return
+            previous_id = self.issue_id
+            Edition.objects.filter(pk=self.pk).update(issue=None)
+            self.issue = None
+            Issue.objects.filter(pk=previous_id).delete_orphans()
+        elif self.issue_id is None:
+            self.issue, _ = Issue.objects.get_or_create(publishing_id=self.publishing_id, number=self.number.strip())
+            Edition.objects.filter(pk=self.pk).update(issue=self.issue)
+
     def validate_duplicate(self):
         coincidences = (
-            Comic.objects.filter(publishing__publishing_title__exact=self.publishing.publishing_title)
+            Edition.objects.filter(publishing__publishing_title__exact=self.publishing.publishing_title)
             .filter(number=self.number)
             .filter(variant=self.variant)
             .filter(publishing__serie__exact=self.publishing.serie)
@@ -232,23 +351,11 @@ class Comic(Model):  # This is an Edition of an Issue
             coincidences = coincidences.exclude(id=self.id)
 
         current_publishing_str = str(self.publishing).strip()
-        for comic in coincidences:
-            if str(comic.publishing).strip() == current_publishing_str:
-                msg = "Duplicated comic"
-                raise Exception(msg)
-
-    def validate_compilation(self):
-        if not self.is_compilation and not self.publishing:
-            raise ValidationError("Non-compilation comics must have a publishing.")
-
-        if self.is_compilation and self.publishing:
-            raise ValidationError("Compilation comics should not have a publishing.")
-
-        if self.is_compilation and self.compiled_issues.count() == 0:
-            raise ValidationError("Compilation comics must include at least one compiled issue.")
+        for edition in coincidences:
+            if str(edition.publishing).strip() == current_publishing_str:
+                raise ValidationError("Duplicated comic")
 
     def validate(self):
-        self.validate_compilation()
         self.validate_duplicate()
 
     def process_variant(self):
@@ -256,33 +363,33 @@ class Comic(Model):  # This is an Edition of an Issue
 
     def process_image(self) -> None:
         if self.pk:
-            old_instance = Comic.objects.get(pk=self.pk)
+            old_instance = Edition.objects.get(pk=self.pk)
             if self.image == old_instance.image:
-                print("Image not changed, skipping processing.")
+                logger.debug("Imagen sin cambios en la edicion %s; no se reprocesa.", self.pk)
                 return
 
         MAX_THUMB_WIDTH = 1080
         MAX_THUMB_HEIGHT = 1920
 
         try:
-            # Abrimos imagen original
+            # Open the original image
             img = Image.open(self.image)
             img_format = img.format or "JPEG"
 
-            # Establecemos nombre base
+            # Build the base name
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             base_name = f"{self.publishing.publishing_title}_{self.number}_{self.variant}_{timestamp}".replace(" ", "_")
 
-            # Convertir RGBA a RGB si es necesario
+            # Convert RGBA to RGB if needed
             if img_format == "PNG" and img.mode in ("RGBA", "LA"):
                 background = Image.new("RGB", img.size, (255, 255, 255))
-                background.paste(img, mask=img.split()[-1])  # canal alpha
+                background.paste(img, mask=img.split()[-1])  # alpha channel
                 img = background
                 img_format = "JPEG"
             elif img.mode != "RGB":
                 img = img.convert("RGB")
 
-            # === Guardar imagen original ===
+            # === Save the original image ===
             original_io = io.BytesIO()
             img.save(original_io, format="JPEG", quality=95)
             original_io.seek(0)
@@ -297,7 +404,7 @@ class Comic(Model):  # This is an Edition of an Issue
                 None,
             )
 
-            # === Generar thumbnail ===
+            # === Generate the thumbnail ===
             width, height = img.size
             if width > MAX_THUMB_WIDTH or height > MAX_THUMB_HEIGHT:
                 scale = min(MAX_THUMB_WIDTH / width, MAX_THUMB_HEIGHT / height)
@@ -320,15 +427,56 @@ class Comic(Model):  # This is an Edition of an Issue
                 None,
             )
 
-        except Exception as e:
-            print(f"Error procesando imagen y thumbnail: {e}")
+        except Exception:
+            logger.exception("Error procesando imagen y thumbnail de la edicion %s", self.pk)
+
+    def assign_default_issue(self):
+        """By default an edition belongs to the issue of its publishing and number, and follows it
+        if the publishing or number is corrected. If it is manually linked to another issue
+        (foreign or anniversary edition) or is a compilation, that is respected."""
+        if self.pk and self.collected_entries.exists():
+            return
+        number = self.number.strip()
+        if self.issue_id:
+            if self.issue.publishing_id == self.publishing_id and self.issue.number == number:
+                return
+            old = Edition.objects.filter(pk=self.pk).values("publishing_id", "number").first() if self.pk else None
+            follows_own_series = (
+                old is not None
+                and self.issue.publishing_id == old["publishing_id"]
+                and self.issue.number == old["number"].strip()
+            )
+            if not follows_own_series:
+                return
+        self.issue, _ = Issue.objects.get_or_create(publishing_id=self.publishing_id, number=number)
 
     def save(self, *args, **kwargs):
         self.process_variant()
         self.validate()
         self.process_image()
+        old_issue_id = Edition.objects.filter(pk=self.pk).values_list("issue_id", flat=True).first() if self.pk else None
+        self.assign_default_issue()
 
-        super(Comic, self).save(*args, **kwargs)
+        super(Edition, self).save(*args, **kwargs)
+
+        # Issue change (automatic or manual link): the previous one is deleted if left without editions.
+        if old_issue_id and old_issue_id != self.issue_id:
+            Issue.objects.filter(pk=old_issue_id).delete_orphans()
+
+
+class CollectedIssue(Model):
+    """Issues contained in a compilation, in order."""
+
+    edition = ForeignKey(Edition, on_delete=CASCADE, related_name="collected_entries")
+    issue = ForeignKey(Issue, on_delete=PROTECT, related_name="collected_entries")
+    order = PositiveSmallIntegerField(validators=[MinValueValidator(1)])
+
+    class Meta:
+        ordering = ["order"]
+        constraints = [
+            UniqueConstraint(fields=["edition", "issue"], name="unique_collected_issue"),
+            UniqueConstraint(fields=["edition", "order"], name="unique_collected_order"),
+        ]
 
 
 class Dealer(Model):
@@ -343,13 +491,25 @@ class Dealer(Model):
         return self.name
 
 
+class CollectionQuerySet(QuerySet):
+    def owned_by(self, user):
+        """Purchases by `user` that have not been sold (they are not the previous_trade of a sale)."""
+        selling = self.model.TradeChoices.SELLING
+        sold_ids = self.model.objects.filter(
+            collector=user, trade_type=selling, previous_trade__isnull=False
+        ).values_list("previous_trade_id", flat=True)
+        return self.filter(collector=user).exclude(Q(trade_type=selling) | Q(id__in=sold_ids))
+
+
 class Collection(Model):
     class TradeChoices(TextChoices):
         BUYING = "buying", _("Buying")
         SELLING = "selling", _("Selling")
 
+    objects = CollectionQuerySet.as_manager()
+
     collector = ForeignKey(User, on_delete=PROTECT)
-    comic = ForeignKey(Comic, on_delete=PROTECT, null=True)
+    edition = ForeignKey(Edition, on_delete=PROTECT, null=True)
     amount = DecimalField(max_digits=8, decimal_places=2, default=0.00)
     trade_date = DateField(default=datetime.now)
     trade_type = CharField(max_length=50, choices=TradeChoices.choices, default=TradeChoices.BUYING)
@@ -359,12 +519,28 @@ class Collection(Model):
     previous_trade = ForeignKey("self", on_delete=SET_NULL, null=True, blank=True, related_name="next_trades")
     notes = TextField(max_length=500, blank=True)
 
+    class Meta:
+        constraints = [
+            UniqueConstraint(
+                fields=["edition", "trade_date", "amount", "trade_type", "participant"],
+                name="unique_collection_edition_date_amount_type_participant",
+            ),
+            # MySQL does not allow a CHECK constraint to reference an
+            # auto-increment column (error 3818), so "cannot be its own
+            # previous_trade" can only be validated in Python (see
+            # validate_previous_trade), not at the database level.
+        ]
+
     def __str__(self):
-        return self.comic.__str__()
+        return self.edition.__str__()
+
+    def validate_previous_trade(self):
+        if self.pk and self.previous_trade_id == self.pk:
+            raise ValidationError("A collection can't be its own previous trade.")
 
     def validate_duplicate(self):
         coincidences = (
-            Collection.objects.filter(comic__publishing__publishing_title__exact=self.comic.publishing.publishing_title)
+            Collection.objects.filter(edition__publishing__publishing_title__exact=self.edition.publishing.publishing_title)
             .filter(trade_date=self.trade_date)
             .filter(amount=self.amount)
             .filter(trade_type=self.trade_type)
@@ -374,13 +550,13 @@ class Collection(Model):
         if hasattr(self, "id"):
             coincidences = coincidences.exclude(id=self.id)
 
-        current_comic_str = str(self.comic).strip()
+        current_edition_str = str(self.edition).strip()
         for collectable in coincidences:
-            if str(collectable.comic).strip() == current_comic_str:
-                msg = "Duplicated collectable"
-                raise Exception(msg)
+            if str(collectable.edition).strip() == current_edition_str:
+                raise ValidationError("Duplicated collectable")
 
     def save(self, *args, **kwargs):
+        self.validate_previous_trade()
         self.validate_duplicate()
 
         super(Collection, self).save(*args, **kwargs)
@@ -397,17 +573,211 @@ class Signature(Model):
         return (
             self.collectable.collector.__str__()
             + " - "
-            + self.collectable.comic.__str__()
+            + self.collectable.edition.__str__()
             + " - "
             + self.artist.__str__()
         )
 
 
-class StoryArc(Model):
+class ReadingArc(Model):
+    """An ordered sequence of issues to read, possibly across different titles and publishings."""
+
     name = CharField(max_length=100, unique=True)
-    publishings = ManyToManyField(Publishing)
-    order = IntegerField()
     notes = TextField(max_length=500, blank=True)
+    issues = ManyToManyField(Issue, through="ReadingArcEntry", related_name="reading_arcs")
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+    def clean_issue_ids(self, issue_ids):
+        """Validate an ordered list of issue ids and return it as ints."""
+        try:
+            cleaned = [int(issue_id) for issue_id in issue_ids]
+        except (TypeError, ValueError):
+            raise ValidationError(gettext("The list of issues is not valid."))
+        errors = []
+        if len(cleaned) != len(set(cleaned)):
+            errors.append(gettext("An issue is repeated in the reading arc."))
+        if Issue.objects.filter(pk__in=cleaned).count() != len(set(cleaned)):
+            errors.append(gettext("One of the issues no longer exists."))
+        if errors:
+            raise ValidationError(errors)
+        return cleaned
+
+    def set_issues(self, issue_ids):
+        """Replace all entries. They are deleted and inserted again because updating them
+        one by one violates the UniqueConstraints when entries are reordered."""
+        self.entries.all().delete()
+        ReadingArcEntry.objects.bulk_create(
+            ReadingArcEntry(arc=self, issue_id=issue_id, order=order) for order, issue_id in enumerate(issue_ids, start=1)
+        )
+
+    def entries_with_covers(self):
+        """Entries in reading order, each with the cover of its earliest edition (or None)."""
+        entries = list(self.entries.select_related("issue__publishing"))
+        covers = {}
+        editions = Edition.objects.filter(issue_id__in=[entry.issue_id for entry in entries]).exclude(thumbnail="")
+        for edition in editions.order_by("release_date", "id"):
+            covers.setdefault(edition.issue_id, edition.thumbnail.url)
+        for entry in entries:
+            entry.cover_url = covers.get(entry.issue_id)
+        return entries
+
+    def entries_with_ownership(self, user):
+        """entries_with_covers() flagged with whether `user` owns each issue.
+        An issue counts as owned if the user owns any edition of it (any variant, printing
+        or country) or a compilation that collects it."""
+        entries = self.entries_with_covers()
+        issue_ids = [entry.issue_id for entry in entries]
+        owned = Collection.objects.owned_by(user)
+        direct = set(owned.filter(edition__issue_id__in=issue_ids).values_list("edition__issue_id", flat=True))
+        collected = set(
+            owned.filter(edition__collected_entries__issue_id__in=issue_ids).values_list(
+                "edition__collected_entries__issue_id", flat=True
+            )
+        )
+        for entry in entries:
+            entry.owned = entry.issue_id in direct or entry.issue_id in collected
+            entry.owned_in_compilation = entry.issue_id not in direct and entry.issue_id in collected
+        return entries
+
+
+class ReadingArcEntry(Model):
+    arc = ForeignKey(ReadingArc, on_delete=CASCADE, related_name="entries")
+    issue = ForeignKey(Issue, on_delete=PROTECT, related_name="arc_entries")
+    order = PositiveSmallIntegerField(validators=[MinValueValidator(1)])
+
+    class Meta:
+        ordering = ["order"]
+        constraints = [
+            UniqueConstraint(fields=["arc", "issue"], name="unique_reading_arc_issue"),
+            UniqueConstraint(fields=["arc", "order"], name="unique_reading_arc_order"),
+        ]
+
+    def __str__(self):
+        return f"{self.arc} #{self.order}: {self.issue}"
+
+
+class Connecting(Model):
+    """A group of covers that together form a larger image."""
+
+    name = CharField(max_length=100, unique=True)
+    rows = PositiveSmallIntegerField(default=1, validators=[MinValueValidator(1)])
+    columns = PositiveSmallIntegerField(validators=[MinValueValidator(1)])
+    notes = TextField(max_length=500, blank=True)
+    editions = ManyToManyField(Edition, through="ConnectingPiece", related_name="connectings")
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def layout(self):
+        return f"{self.rows}×{self.columns}"
+
+    def clean_placements(self, placements):
+        """Validate [{"row", "column", "edition"}, ...] against the grid and return (row, column, edition_id) tuples."""
+        errors = []
+        cleaned = []
+        for index, placement in enumerate(placements, start=1):
+            try:
+                row, column, edition_id = (int(placement[key]) for key in ("row", "column", "edition"))
+            except (KeyError, TypeError, ValueError):
+                errors.append(gettext("Piece %(index)s is not valid.") % {"index": index})
+                continue
+            if not (1 <= row <= self.rows and 1 <= column <= self.columns):
+                errors.append(
+                    gettext("Position (%(row)s, %(column)s) is outside the %(layout)s grid.")
+                    % {"row": row, "column": column, "layout": self.layout}
+                )
+                continue
+            cleaned.append((row, column, edition_id))
+
+        positions = [(row, column) for row, column, _ in cleaned]
+        if len(positions) != len(set(positions)):
+            errors.append(gettext("Two pieces are in the same position."))
+        edition_ids = [edition_id for _, _, edition_id in cleaned]
+        if len(edition_ids) != len(set(edition_ids)):
+            errors.append(gettext("A comic cannot appear twice in the same connecting."))
+        if Edition.objects.filter(id__in=edition_ids).count() != len(set(edition_ids)):
+            errors.append(gettext("One of the comics no longer exists."))
+
+        if errors:
+            raise ValidationError(errors)
+        return cleaned
+
+    def set_pieces(self, cleaned_placements):
+        """Replace all pieces. They are deleted and inserted again because updating
+        them one by one violates the UniqueConstraints when pieces are swapped."""
+        self.pieces.all().delete()
+        ConnectingPiece.objects.bulk_create(
+            ConnectingPiece(connecting=self, row=row, column=column, edition_id=edition_id)
+            for row, column, edition_id in cleaned_placements
+        )
+
+    def grid(self):
+        """rows x columns matrix with the piece at each position (or None)."""
+        by_position = {(piece.row, piece.column): piece for piece in self.pieces.select_related("edition__publishing")}
+        return [
+            [by_position.get((row, column)) for column in range(1, self.columns + 1)]
+            for row in range(1, self.rows + 1)
+        ]
+
+    def ownership_grid(self, user):
+        """grid() with each piece flagged with whether `user` owns its edition."""
+        grid = self.grid()
+        pieces = [piece for row in grid for piece in row if piece]
+        owned_edition_ids = set(
+            Collection.objects.owned_by(user)
+            .filter(edition_id__in=[piece.edition_id for piece in pieces])
+            .values_list("edition_id", flat=True)
+        )
+        for piece in pieces:
+            piece.owned = piece.edition_id in owned_edition_ids
+        return grid
+
+
+class ConnectingPiece(Model):
+    connecting = ForeignKey(Connecting, on_delete=CASCADE, related_name="pieces")
+    edition = ForeignKey(Edition, on_delete=PROTECT, related_name="connecting_pieces")
+    row = PositiveSmallIntegerField(default=1, validators=[MinValueValidator(1)], help_text="1 = fila de arriba")
+    column = PositiveSmallIntegerField(validators=[MinValueValidator(1)], help_text="1 = columna izquierda")
+
+    class Meta:
+        ordering = ["row", "column"]
+        constraints = [
+            UniqueConstraint(fields=["connecting", "row", "column"], name="unique_connecting_position"),
+            UniqueConstraint(fields=["connecting", "edition"], name="unique_connecting_edition"),
+        ]
+
+    def __str__(self):
+        return f"{self.connecting} ({self.row}, {self.column})"
+
+    def clean(self):
+        # In the admin, when a new connecting is created, the piece already has its
+        # (unsaved) parent with its rows/columns, so it can still be validated.
+        try:
+            connecting = self.connecting
+        except Connecting.DoesNotExist:
+            return
+        errors = {}
+        if self.row and self.row > connecting.rows:
+            errors["row"] = ngettext(
+                "The connecting only has %(count)d row.", "The connecting only has %(count)d rows.", connecting.rows
+            ) % {"count": connecting.rows}
+        if self.column and self.column > connecting.columns:
+            errors["column"] = ngettext(
+                "The connecting only has %(count)d column.",
+                "The connecting only has %(count)d columns.",
+                connecting.columns,
+            ) % {"count": connecting.columns}
+        if errors:
+            raise ValidationError(errors)
 
 
 class GeekCollectable(Model):

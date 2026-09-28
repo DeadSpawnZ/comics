@@ -1,109 +1,203 @@
 <!DOCTYPE html>
-<html lang="es">
+{% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+<html lang="{{ LANGUAGE_CODE }}">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Mi Proyecto Django</title>
+    <title>Comi</title>
     {% load static %}
+    <script>
+      // Apply the saved theme before the page is painted, to avoid a
+      // light->dark flash on load.
+      (function () {
+        try {
+          var theme = localStorage.getItem("theme");
+          if (!theme) {
+            theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+          }
+          document.documentElement.setAttribute("data-bs-theme", theme);
+        } catch (e) {}
+      })();
+    </script>
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{% static 'vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+    <!-- Roboto and Material Symbols (via CDN for now, not vendored) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0..1,0&display=block" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/custom/material.css' %}">
     <link rel="stylesheet" href="{% static 'css/custom/collections.css' %}">
+    {% block extra_css %}{% endblock %}
   </head>
   <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    {% with url_name=request.resolver_match.url_name %}
+    <nav class="navbar navbar-expand-lg md-top-app-bar sticky-top">
       <div class="container-fluid">
-        <a class="navbar-brand" href="#">Comi</a>
+        <a class="navbar-brand" href="{% url 'comics' %}">
+          <span class="material-symbols-outlined" aria-hidden="true">auto_stories</span>
+          Comi
+        </a>
         <button
-          class="navbar-toggler"
+          class="md-icon-btn d-lg-none"
           type="button"
           data-bs-toggle="collapse"
-          data-bs-target="#navbarNavDropdown"
-          aria-controls="navbarNavDropdown"
+          data-bs-target="#mainNav"
+          aria-controls="mainNav"
           aria-expanded="false"
-          aria-label="Toggle navigation"
+          aria-label="{% translate 'Open navigation' %}"
         >
-          <span class="navbar-toggler-icon"></span>
+          <span class="material-symbols-outlined" aria-hidden="true">menu</span>
         </button>
-        <div class="collapse navbar-collapse" id="navbarNavDropdown">
-          <ul class="navbar-nav">
+        <div class="collapse navbar-collapse" id="mainNav">
+          <ul class="navbar-nav gap-1 ms-lg-4 mt-2 mt-lg-0">
             <li class="nav-item">
-              <a class="nav-link active" aria-current="page" href="/comics">Comics</a>
+              <a class="nav-link md-nav-link {% if url_name|slice:':6' == 'comics' %}active{% endif %}"
+                 {% if url_name|slice:':6' == 'comics' %}aria-current="page"{% endif %}
+                 href="{% url 'comics' %}">
+                <span class="material-symbols-outlined" aria-hidden="true">menu_book</span>
+                {% translate "My comics" %}
+              </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link active" href="/collectables">Collectables</a>
+              <a class="nav-link md-nav-link {% if url_name == 'collectables' %}active{% endif %}"
+                 {% if url_name == 'collectables' %}aria-current="page"{% endif %}
+                 href="{% url 'collectables' %}">
+                <span class="material-symbols-outlined" aria-hidden="true">toys</span>
+                Collectables
+              </a>
             </li>
+            {% if user.is_staff %}
             <li class="nav-item">
-              <a class="nav-link" href="#">Pricing</a>
+              <a class="nav-link md-nav-link {% if url_name|slice:':7' == 'manage_' %}active{% endif %}"
+                 {% if url_name|slice:':7' == 'manage_' %}aria-current="page"{% endif %}
+                 href="{% url 'manage_home' %}">
+                <span class="material-symbols-outlined" aria-hidden="true">dashboard_customize</span>
+                {% translate "Management" %}
+              </a>
             </li>
-            <li class="nav-item dropdown">
-              <a
-                class="nav-link dropdown-toggle"
-                href="#"
-                id="navbarDropdownMenuLink"
-                role="button"
+            {% endif %}
+          </ul>
+          <div class="d-flex align-items-center gap-1 ms-auto mt-2 mt-lg-0">
+            <button
+              id="theme-toggle"
+              type="button"
+              class="md-icon-btn"
+              aria-label="{% translate 'Toggle light/dark theme' %}"
+              title="{% translate 'Toggle light/dark theme' %}"
+            >
+              <span class="material-symbols-outlined" id="theme-toggle-icon" aria-hidden="true">dark_mode</span>
+            </button>
+
+            {% get_available_languages as AVAILABLE_LANGUAGES %}
+            {% get_language_info_list for AVAILABLE_LANGUAGES as languages %}
+            <div class="dropdown">
+              <button
+                class="md-icon-btn"
+                type="button"
                 data-bs-toggle="dropdown"
                 aria-expanded="false"
+                aria-label="{% translate 'Change language' %}"
+                title="{% translate 'Change language' %}"
               >
-                Dropdown link
-              </a>
-              <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-                <li><a class="dropdown-item" href="#">Action</a></li>
-                <li><a class="dropdown-item" href="#">Another action</a></li>
-                <li><a class="dropdown-item" href="#">Something else here</a></li>
+                <span class="material-symbols-outlined" aria-hidden="true">translate</span>
+              </button>
+              <form method="post" action="{% url 'set_language' %}" class="dropdown-menu dropdown-menu-end md-menu">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <h6 class="dropdown-header">{% translate "Language" %}</h6>
+                {% for language in languages %}
+                  <button type="submit" name="language" value="{{ language.code }}" class="dropdown-item"
+                          lang="{{ language.code }}" {% if language.code == LANGUAGE_CODE %}aria-current="true"{% endif %}>
+                    <span class="material-symbols-outlined md-menu__check" aria-hidden="true">{% if language.code == LANGUAGE_CODE %}check{% endif %}</span>
+                    {{ language.name_local|capfirst }}
+                  </button>
+                {% endfor %}
+              </form>
+            </div>
+
+            {% if user.is_authenticated %}
+            <div class="dropdown">
+              <button
+                class="md-icon-btn"
+                type="button"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+                aria-label="{% blocktranslate with username=user.username %}Account of {{ username }}{% endblocktranslate %}"
+                title="{{ user.username }}"
+              >
+                <span class="material-symbols-outlined" aria-hidden="true">account_circle</span>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end md-menu">
+                <li><h6 class="dropdown-header">{{ user.username }}</h6></li>
+                {% if user.is_staff %}
+                <li>
+                  <a class="dropdown-item" href="{% url 'admin:index' %}">
+                    <span class="material-symbols-outlined" aria-hidden="true">admin_panel_settings</span>
+                    {% translate "Administration" %}
+                  </a>
+                </li>
+                {% endif %}
+                <li>
+                  <a class="dropdown-item" href="{% url 'logout' %}">
+                    <span class="material-symbols-outlined" aria-hidden="true">logout</span>
+                    {% translate "Log out" %}
+                  </a>
+                </li>
               </ul>
-            </li>
-          </ul>
-          <ul class="navbar-nav ms-auto">
-            <li class="nav-item">
-              {% if user.is_authenticated %}
-              <a class="nav-link active" aria-current="page" href="{% url 'logout' %}">
-                <i class="fa fa-user-circle" aria-hidden="true"></i> {{ user.username }}
-              </a>
-              {% else %}
-              <a class="nav-link active" aria-current="page" href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">
-                <i class="fa fa-user-circle" aria-hidden="true"></i> Log In
-              </a>
-              {% endif %}
-            </li>
-          </ul>
+            </div>
+            {% else %}
+            <button type="button" class="md-btn md-btn--filled" data-bs-toggle="modal" data-bs-target="#loginDialog">
+              <span class="material-symbols-outlined" aria-hidden="true">login</span>
+              {% translate "Log in" %}
+            </button>
+            {% endif %}
+          </div>
         </div>
       </div>
     </nav>
-    <!--Modal login-->
-    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-      <div class="modal-dialog">
+    {% endwith %}
+
+    {% if not user.is_authenticated %}
+    <div class="modal fade md-dialog" id="loginDialog" tabindex="-1" aria-labelledby="loginDialogTitle" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="exampleModalLabel">Login</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
           <form method="post" action="{% url 'login' %}">
             {% csrf_token %}
-          <div class="modal-body">
-              <div class="mb-3">
-                <label for="recipient-name" class="col-form-label">Username:</label>
-                <input type="text" class="form-control" name="username">
+            <div class="modal-header">
+              <h2 class="modal-title md-headline-small" id="loginDialogTitle">{% translate "Log in" %}</h2>
+            </div>
+            <div class="modal-body d-flex flex-column gap-3">
+              <div class="form-floating md-field">
+                <input type="text" class="form-control" id="loginUsername" name="username" placeholder="{% translate 'Username' %}" autocomplete="username" required>
+                <label for="loginUsername">{% translate "Username" %}</label>
               </div>
-              <div class="mb-3">
-                <label for="message-text" class="col-form-label">Password</label>
-                <input type="password" class="form-control" name="password">
+              <div class="form-floating md-field">
+                <input type="password" class="form-control" id="loginPassword" name="password" placeholder="{% translate 'Password' %}" autocomplete="current-password" required>
+                <label for="loginPassword">{% translate "Password" %}</label>
               </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            <button type="submit" class="btn btn-primary">Send message</button>
-          </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="md-btn md-btn--text" data-bs-dismiss="modal">{% translate "Cancel" %}</button>
+              <button type="submit" class="md-btn md-btn--filled">{% translate "Sign in" %}</button>
+            </div>
           </form>
         </div>
       </div>
     </div>
+    {% endif %}
 
-    <div class="container">{% block content %} {% endblock %}</div>
+    <main class="container-fluid">{% block content %} {% endblock %}</main>
 
+    <!-- Translation catalog for JavaScript (provides gettext/interpolate) -->
+    <script src="{% url 'javascript-catalog' %}"></script>
+    <script src="{% static 'js/custom/combobox.js' %}"></script>
+    <script src="{% static 'js/custom/multiselect.js' %}"></script>
     {% block extra_js %} {% endblock %}
 
-
-    <!-- Bootstrap JS (incluye Popper) -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Bootstrap JS (includes Popper) -->
+    <script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'js/custom/theme_toggle.js' %}"></script>
   </body>
 </html>

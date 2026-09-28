@@ -1,0 +1,83 @@
+{% extends "admin/change_form.html" %}
+{% load i18n %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+  .connecting-preview {
+    margin: 20px 0;
+    padding: 16px;
+    border: 1px solid var(--hairline-color);
+    border-radius: 8px;
+    background: var(--darkened-bg);
+  }
+  .connecting-preview h2 {
+    margin: 0 0 4px;
+    font-size: 1rem;
+  }
+  .connecting-preview__summary {
+    color: var(--body-quiet-color);
+    margin: 0 0 12px;
+  }
+  .connecting-preview__grid {
+    display: grid;
+    gap: 6px;
+    max-width: 100%;
+  }
+  .connecting-preview__cell {
+    position: relative;
+    aspect-ratio: 2 / 3;
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--body-bg);
+    border: 1px dashed var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    color: var(--body-quiet-color);
+    text-align: center;
+    padding: 4px;
+  }
+  .connecting-preview__cell img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+</style>
+{% endblock %}
+
+{% block after_related_objects %}
+{{ block.super }}
+{% if preview_grid %}
+<div class="connecting-preview">
+  <h2>{% translate "Connecting preview" %}</h2>
+  <p class="connecting-preview__summary">
+    {% blocktranslate trimmed count counter=piece_total %}
+      {{ counter }} piece placed. Shows what is saved; save to see changes.
+    {% plural %}
+      {{ counter }} pieces placed. Shows what is saved; save to see changes.
+    {% endblocktranslate %}
+  </p>
+  <div class="connecting-preview__grid" style="grid-template-columns: repeat({{ original.columns }}, minmax(0, 110px));">
+    {% for row in preview_grid %}
+      {% for piece in row %}
+        {% if piece %}
+          <div class="connecting-preview__cell" title="{{ piece.edition }}">
+            {% if piece.edition.thumbnail %}
+              <img src="{{ piece.edition.thumbnail.url }}" alt="{{ piece.edition }}" loading="lazy">
+            {% else %}
+              {{ piece.edition.publishing.publishing_title }} #{{ piece.edition.number }}
+            {% endif %}
+          </div>
+        {% else %}
+          <div class="connecting-preview__cell">{% translate "Empty" context "connecting cell" %}</div>
+        {% endif %}
+      {% endfor %}
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

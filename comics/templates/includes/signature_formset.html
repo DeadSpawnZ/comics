@@ -1,0 +1,26 @@
+{% load i18n %}
+{% comment %}
+Signatures of a piece (inline formset, prefix "signatures"). Rows are added from the empty-form
+template and removed by checking their DELETE box (see signature_formset.js).
+{% endcomment %}
+<div class="md-surface-card" id="signatures">
+  <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+    <h2 class="md-title-medium mb-0">{% translate "Signatures" %}</h2>
+    <button type="button" class="md-btn md-btn--tonal" id="signature-add">
+      <span class="material-symbols-outlined" aria-hidden="true">draw</span>
+      {% translate "Add signature" %}
+    </button>
+  </div>
+  {{ formset.management_form }}
+  {% for error in formset.non_form_errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+
+  <p class="md-body-medium mb-0" id="signature-empty" {% if formset.forms %}hidden{% endif %}>{% translate "This piece has no signatures." %}</p>
+  <div class="signature-rows" id="signature-rows">
+    {% for signature_form in formset %}
+      {% include 'includes/signature_row.html' with row=signature_form %}
+    {% endfor %}
+  </div>
+  <template id="signature-template">
+    {% include 'includes/signature_row.html' with row=formset.empty_form %}
+  </template>
+</div>

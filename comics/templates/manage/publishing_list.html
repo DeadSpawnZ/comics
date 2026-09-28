@@ -1,0 +1,67 @@
+{% extends 'manage/base_manage.html' %}
+{% load i18n %}
+
+{% block breadcrumb %}<span class="is-current">Publishings</span>{% endblock %}
+
+{% block manage_content %}
+<div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+  <div>
+    <h1 class="md-headline-small mb-0">Publishings</h1>
+    <span class="md-body-medium">{% blocktranslate count counter=page_obj.paginator.count %}{{ counter }} publishing{% plural %}{{ counter }} publishings{% endblocktranslate %}</span>
+  </div>
+  <a class="md-btn md-btn--filled" href="{% url 'manage_publishing_new' %}?next={{ request.get_full_path|urlencode }}">
+    <span class="material-symbols-outlined" aria-hidden="true">add</span>
+    {% translate "New publishing" %}
+  </a>
+</div>
+
+<div class="md-surface-card manage-table">
+  <div class="manage-toolbar">
+    <span></span>
+    <form method="get" class="manage-filters" role="search">
+      <div class="form-floating md-field">
+        <select class="form-select" id="filter-language" name="language" onchange="this.form.submit()">
+          <option value="">{% translate "All" context "languages" %}</option>
+          {% for value, label in language_choices %}
+            <option value="{{ value }}" {% if value == language %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+        <label for="filter-language">{% translate "Language" %}</label>
+      </div>
+      <div class="form-floating md-field">
+        <input type="search" class="form-control" id="filter-q" name="q" value="{{ query }}" placeholder="{% translate 'Search' %}">
+        <label for="filter-q">{% translate "Search title" %}</label>
+      </div>
+      {% if query or language %}
+        <a class="md-btn md-btn--text" href="{% querystring q=None language=None page=None %}">{% translate "Clear" %}</a>
+      {% endif %}
+    </form>
+  </div>
+
+  {% if not page_obj.object_list %}
+    <div class="text-center py-5">
+      <span class="material-symbols-outlined d-block mb-2 empty-state-icon" aria-hidden="true">search_off</span>
+      <p class="md-body-medium mb-0">{% translate "No publishings match these filters." %}</p>
+    </div>
+  {% else %}
+    {% if recent %}
+      <div class="list-section-label">{% translate "Recently added" %}</div>
+      <ul class="manage-rows manage-rows--recent">
+        {% for publishing in recent %}
+        {% include 'manage/includes/publishing_row.html' %}
+        {% endfor %}
+      </ul>
+      <div class="list-section-label">{% translate "All (A–Z)" %}</div>
+    {% endif %}
+    <ul class="manage-rows">
+      {% for publishing in page_obj %}
+      {% include 'manage/includes/publishing_row.html' %}
+      {% endfor %}
+    </ul>
+  {% endif %}
+</div>
+
+{% include 'includes/paginator.html' %}
+{% translate "Delete publishing?" as delete_title %}
+{% include 'manage/includes/delete_dialog.html' with delete_title=delete_title %}
+{% endblock %}

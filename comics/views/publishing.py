@@ -4,10 +4,15 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.template import loader
 from django.urls import reverse
 from django.contrib.auth import authenticate
+from django.contrib.admin.views.decorators import staff_member_required
+from django.views.decorators.http import require_GET
 
-from comics.models import Publishing, Comic
+from comics.models import Publishing, Edition
 
 
+# Used only by the admin (fill_release_date.js): staff only.
+@staff_member_required
+@require_GET
 def get_publishing_date(request, publishing_id):
     try:
         publishing = Publishing.objects.get(id=publishing_id)
@@ -16,12 +21,15 @@ def get_publishing_date(request, publishing_id):
         return JsonResponse({"date": None})
 
 
+# Used only by the admin collection form (collection_form_events.js): staff only.
+@staff_member_required
+@require_GET
 def get_comics_by_publishing(request, publishing_id):
     try:
-        comics = Comic.objects.filter(publishing_id=publishing_id).order_by("number", "variant")
-        data = [{"id": comic.id, "text": str(comic)} for comic in comics]
+        editions = Edition.objects.filter(publishing_id=publishing_id).order_by("number", "variant")
+        data = [{"id": edition.id, "text": str(edition)} for edition in editions]
         return JsonResponse({"results": data})
-    except Comic.DoesNotExist:
+    except Edition.DoesNotExist:
         return JsonResponse({"results": []})
     except Exception as e:
         return JsonResponse({"error": str(e)})

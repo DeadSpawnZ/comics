@@ -1,0 +1,44 @@
+{% extends 'my_comics/base_comics.html' %}
+{% load i18n %}
+
+{% block breadcrumb %}<span class="is-current">{% translate "Reading arcs" %}</span>{% endblock %}
+
+{% block comics_content %}
+<div class="mb-4">
+  <h1 class="md-headline-small mb-0">{% translate "Reading arcs" %}</h1>
+  <span class="md-body-medium">{% blocktranslate count counter=cards|length %}{{ counter }} reading arc{% plural %}{{ counter }} reading arcs{% endblocktranslate %}</span>
+</div>
+
+{% if not cards %}
+  <div class="md-surface-card text-center py-5">
+    <span class="material-symbols-outlined d-block mb-2 empty-state-icon" aria-hidden="true">format_list_numbered</span>
+    <p class="md-body-medium mb-0">{% translate "There are no reading arcs yet." %}</p>
+  </div>
+{% endif %}
+
+<div class="row g-3">
+  {% for card in cards %}
+  <div class="col-12 col-md-6 col-xl-4">
+    <a class="md-card arc-card d-block text-decoration-none" href="{% url 'comics_arc_detail' card.arc.pk %}">
+      <div class="arc-card__covers">
+        {% for entry in card.covers %}
+          <img src="{{ entry.cover_url }}" alt="" loading="lazy" class="{% if not entry.owned %}is-missing{% endif %}">
+        {% empty %}
+          <span class="material-symbols-outlined" aria-hidden="true">auto_stories</span>
+        {% endfor %}
+      </div>
+      <div class="p-3">
+        <div class="md-title-medium text-body">{{ card.arc.name }}</div>
+        <div class="md-body-medium mb-2">
+          {% blocktranslate with owned=card.owned count counter=card.total %}{{ counter }} issue · you own {{ owned }}{% plural %}{{ counter }} issues · you own {{ owned }}{% endblocktranslate %}
+        </div>
+        <div class="md-progress" role="progressbar" aria-valuenow="{{ card.percent }}" aria-valuemin="0" aria-valuemax="100"
+             aria-label="{% translate 'Progress' %}">
+          <div class="md-progress__bar" style="width: {{ card.percent }}%"></div>
+        </div>
+      </div>
+    </a>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

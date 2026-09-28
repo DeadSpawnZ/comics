@@ -1,0 +1,143 @@
+{% extends 'my_comics/base_comics.html' %}
+{% load static i18n %}
+
+{% block extra_css %}
+{# Cover and artist chip styles are shared with the Gestión edition form. #}
+<link rel="stylesheet" href="{% static 'css/custom/manage.css' %}">
+{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ back_url }}">{% translate "Editions" %}</a>
+<span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+<span class="is-current">{{ edition.publishing.publishing_title }} #{{ edition.number }} {{ edition.variant }}</span>
+{% endblock %}
+
+{% block comics_content %}
+<div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+  <div class="d-flex align-items-center gap-2">
+    <a class="md-icon-btn" href="{{ back_url }}" aria-label="{% translate 'Back to editions' %}" title="{% translate 'Back to editions' %}">
+      <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+    </a>
+    <h1 class="md-headline-small mb-0">{{ edition.publishing.publishing_title }} #{{ edition.number }} {{ edition.variant }}</h1>
+  </div>
+  {% if user.is_staff %}
+    <a class="md-btn md-btn--tonal" href="{% url 'manage_edition_edit' edition.pk %}?next={{ request.get_full_path|urlencode }}">
+      <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+      {% translate "Edit in Management" %}
+    </a>
+  {% endif %}
+</div>
+
+<div class="row g-3">
+  <div class="col-12 col-xl-8 d-flex flex-column gap-3">
+    <!-- Edition data -->
+    <div class="md-surface-card">
+      <h2 class="md-title-medium mb-3">{% translate "Edition data" %}</h2>
+      <dl class="md-list">
+        <dt>Publishing</dt><dd>{{ edition.publishing.publishing_title }}{% if edition.publishing.year %} ({{ edition.publishing.year }}){% endif %} {{ edition.publishing.serie }} · {{ edition.publishing.language|upper }}</dd>
+        <dt>{% translate "Number" %}</dt><dd>#{{ edition.number }}</dd>
+        <dt>{% translate "Variant" %}</dt><dd>{{ edition.variant|default:"—" }}</dd>
+        <dt>{% translate "Printing" %}</dt><dd>{{ edition.get_printing_display }}</dd>
+        <dt>{% translate "Format" %}</dt><dd>{{ edition.get_format_display }}</dd>
+        <dt>{% translate "Release date" %}</dt><dd>{{ edition.release_date }}</dd>
+        <dt>{% translate "Cover price" %}</dt><dd>${{ edition.cover_price }}</dd>
+        {% if edition.ratio %}<dt>Ratio</dt><dd>{{ edition.ratio }} · {% translate "Incentive cover" %}</dd>{% endif %}
+        {% if edition.limited_to %}<dt>{% translate "Limited to" %}</dt><dd>{{ edition.limited_to }}</dd>{% endif %}
+        {% if edition.retailer_exclusive %}<dt>{% translate "Retailer exclusive" %}</dt><dd>{{ edition.retailer_exclusive }}</dd>{% endif %}
+        {% if edition.notes %}<dt>{% translate "Notes" %}</dt><dd>{{ edition.notes|linebreaksbr }}</dd>{% endif %}
+      </dl>
+
+      <div class="md-section-label mt-3">{% translate "Cover artists" %}</div>
+      {% if cover_artists %}
+        <ul class="artist-list">
+          {% for artist in cover_artists %}
+            <li class="artist-list__item artist-list__item--readonly">
+              {% if artist.photo %}
+                <img class="artist-list__photo" src="{{ artist.photo.url }}" alt="" loading="lazy">
+              {% else %}
+                <span class="artist-list__photo material-symbols-outlined" aria-hidden="true">person</span>
+              {% endif %}
+              <span class="artist-list__name">{{ artist.name }}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="md-body-medium mb-0">{% translate "No cover artists yet." %}</p>
+      {% endif %}
+    </div>
+
+    <!-- Content: issue or compilation -->
+    <div class="md-surface-card">
+      <h2 class="md-title-medium mb-3">{% translate "Content" %}</h2>
+      {% if collected %}
+        <p class="md-body-medium">{% blocktranslate count counter=collected|length %}Compilation of {{ counter }} issue, in reading order:{% plural %}Compilation of {{ counter }} issues, in reading order:{% endblocktranslate %}</p>
+        <ol class="mb-0">
+          {% for entry in collected %}<li>{{ entry.issue }}</li>{% endfor %}
+        </ol>
+      {% elif edition.issue %}
+        <p class="md-body-medium mb-0">
+          {{ edition.issue }}
+          {% if linked_elsewhere %}
+            <span class="md-assist-chip md-assist-chip--primary ms-1">
+              <span class="material-symbols-outlined" aria-hidden="true">link</span>
+              {% translate "Issue from another series" %}
+            </span>
+          {% else %}
+            <span class="md-assist-chip ms-1">{% translate "Own issue" %}</span>
+          {% endif %}
+        </p>
+      {% else %}
+        <p class="md-body-medium mb-0">{% translate "No issue" %}</p>
+      {% endif %}
+    </div>
+
+    <!-- The user's copies -->
+    <div class="md-surface-card">
+      <h2 class="md-title-medium mb-3">{% translate "In your collection" %}</h2>
+      {% if copies %}
+        <div class="table-responsive">
+          <table class="table table-sm align-middle mb-0 md-body-medium">
+            <thead>
+              <tr>
+                <th scope="col">{% translate "Date" %}</th>
+                <th scope="col">{% translate "Amount paid" %}</th>
+                <th scope="col">{% translate "Participant" %}</th>
+                <th scope="col">{% translate "Valuation" %}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for copy in copies %}
+                <tr>
+                  <td>{{ copy.trade_date }}</td>
+                  <td>${{ copy.amount }} MXN</td>
+                  <td>{{ copy.participant|default:"—" }}</td>
+                  <td>{{ copy.valuation }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="md-body-medium mb-0">{% translate "You don't own this edition." %}</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Cover and other editions of the same issue -->
+  <div class="col-12 col-xl-4">
+    <div class="md-surface-card h-100">
+      <h2 class="md-title-medium mb-3">{% translate "Cover" %}</h2>
+      <div class="edition-cover-preview">
+        {% if edition.thumbnail %}
+          <img src="{{ edition.thumbnail.url }}" alt="{{ edition.publishing.publishing_title }} #{{ edition.number }} {{ edition.variant }}">
+        {% else %}
+          <span class="material-symbols-outlined" aria-hidden="true">image</span>
+        {% endif %}
+      </div>
+      {% if sibling_editions %}
+        {% include 'includes/sibling_editions.html' with siblings=sibling_editions groups=sibling_groups current=edition link_name="comics_edition_detail" back_url=back_url %}
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

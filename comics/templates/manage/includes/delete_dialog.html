@@ -1,0 +1,28 @@
+{% load i18n %}
+<div class="modal fade md-dialog" id="deleteDialog" tabindex="-1" aria-labelledby="deleteDialogTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="post" id="deleteDialogForm">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ delete_next|default:request.get_full_path }}">
+        <div class="modal-header">
+          <h2 class="modal-title md-headline-small" id="deleteDialogTitle">{% if delete_title %}{{ delete_title }}{% else %}{% translate "Delete edition?" %}{% endif %}</h2>
+        </div>
+        <div class="modal-body">
+          {% blocktranslate trimmed %}<strong id="deleteDialogName"></strong> will be deleted. This action cannot be undone.{% endblocktranslate %}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="md-btn md-btn--text" data-bs-dismiss="modal">{% translate "Cancel" %}</button>
+          <button type="submit" class="md-btn md-btn--danger">{% translate "Delete" %}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<script>
+  document.getElementById("deleteDialog").addEventListener("show.bs.modal", function (event) {
+    var trigger = event.relatedTarget;
+    document.getElementById("deleteDialogForm").action = trigger.dataset.deleteUrl;
+    document.getElementById("deleteDialogName").textContent = trigger.dataset.deleteName;
+  });
+</script>

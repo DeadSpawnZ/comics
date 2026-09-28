@@ -1,0 +1,245 @@
+{% extends 'manage/base_manage.html' %}
+{% load static i18n %}
+
+{% block breadcrumb %}
+<a href="{{ back_url }}">{% translate "Editions" %}</a>
+<span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+<span class="is-current">{% if edition %}{{ edition.publishing.publishing_title }} #{{ edition.number }} {{ edition.variant }}{% else %}{% translate "New" context "edition" %}{% endif %}</span>
+{% endblock %}
+
+{% block manage_content %}
+<form method="post" enctype="multipart/form-data" novalidate>
+  {% csrf_token %}
+  <input type="hidden" name="next" value="{{ back_url }}">
+
+  <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <a class="md-icon-btn" href="{{ back_url }}" aria-label="{% translate 'Back to editions' %}" title="{% translate 'Back to editions' %}">
+        <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+      </a>
+      <h1 class="md-headline-small mb-0">{% if edition %}{% translate "Edit edition" %}{% else %}{% translate "New edition" %}{% endif %}</h1>
+    </div>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      {% if edition %}
+        <button type="button" class="md-btn md-btn--danger-outlined" data-bs-toggle="modal" data-bs-target="#deleteDialog"
+                data-delete-url="{% url 'manage_edition_delete' edition.pk %}"
+                data-delete-name="{{ edition.publishing.publishing_title }} #{{ edition.number }} {{ edition.variant }}">
+          <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+          {% translate "Delete" %}
+        </button>
+      {% endif %}
+      <button type="submit" name="save_continue" class="md-btn md-btn--tonal">{% translate "Save and continue editing" %}</button>
+      <button type="submit" class="md-btn md-btn--filled">
+        <span class="material-symbols-outlined" aria-hidden="true">save</span>
+        {% translate "Save" %}
+      </button>
+    </div>
+  </div>
+
+  {% if form.non_field_errors or form.errors or content_errors %}
+    <div class="editor-errors mb-3" role="alert">
+      <span class="material-symbols-outlined" aria-hidden="true">error</span>
+      <ul>
+        {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+        {% for error in content_errors %}<li>{{ error }}</li>{% endfor %}
+        {% if form.errors and not form.non_field_errors %}<li>{% translate "Check the highlighted fields." %}</li>{% endif %}
+      </ul>
+    </div>
+  {% endif %}
+
+  <div class="row g-3">
+    <!-- Edition data -->
+    <div class="col-12 col-xl-8">
+      <div class="md-surface-card h-100">
+        <h2 class="md-title-medium mb-3">{% translate "Edition data" %}</h2>
+        <div class="row g-3">
+          <div class="col-12">
+            {% include 'manage/includes/field.html' with field=form.publishing %}
+          </div>
+          <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=form.number %}</div>
+          <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=form.variant %}</div>
+          <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=form.printing %}</div>
+          <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=form.format %}</div>
+          <div class="col-6">{% include 'manage/includes/field.html' with field=form.release_date %}</div>
+          <div class="col-6">{% include 'manage/includes/field.html' with field=form.cover_price %}</div>
+          <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=form.ratio %}</div>
+          <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=form.limited_to %}</div>
+          <div class="col-12 col-md-6">{% include 'manage/includes/field.html' with field=form.retailer_exclusive %}</div>
+          <div class="col-12 md-body-medium mt-1">
+            {% blocktranslate trimmed %}
+              With a ratio (1:N) the cover counts as incentive. Fill in the store only for retailer-exclusive covers.
+            {% endblocktranslate %}
+          </div>
+          <div class="col-12">{% include 'manage/includes/field.html' with field=form.notes %}</div>
+
+          <div class="col-12">
+            <div class="md-section-label">{{ form.cover_artists.label }}</div>
+            {% if form.cover_artists.field.queryset.exists %}
+              <div class="row g-3 align-items-center">
+                <div class="col-12 col-md-8">
+                  {# One chip per artist; its hidden checkbox is what gets submitted. Only checked ones are shown. #}
+                  <ul class="artist-list" id="artist-list">
+                    {% for checkbox in form.cover_artists %}
+                      {% with artist=checkbox.data.value.instance %}
+                      <li class="artist-list__item" data-artist-id="{{ artist.pk }}" data-artist-name="{{ artist.name }}" {% if not checkbox.data.selected %}hidden{% endif %}>
+                        <span hidden>{{ checkbox.tag }}</span>
+                        {% if artist.photo %}
+                          <img class="artist-list__photo" src="{{ artist.photo.url }}" alt="" loading="lazy">
+                        {% else %}
+                          <span class="artist-list__photo material-symbols-outlined" aria-hidden="true">person</span>
+                        {% endif %}
+                        <span class="artist-list__name">{{ artist.name }}</span>
+                        <button type="button" class="artist-list__remove" data-artist-remove
+                                aria-label="{% blocktranslate with name=artist.name %}Remove {{ name }}{% endblocktranslate %}"
+                                title="{% blocktranslate with name=artist.name %}Remove {{ name }}{% endblocktranslate %}">
+                          <span class="material-symbols-outlined" aria-hidden="true">close</span>
+                        </button>
+                      </li>
+                      {% endwith %}
+                    {% endfor %}
+                  </ul>
+                  <p class="md-body-medium mb-0" id="artist-empty" hidden>{% translate "No cover artists yet." %}</p>
+                </div>
+                <div class="col-12 col-md-4">
+                  <div class="form-floating md-field">
+                    <select class="form-select" id="artist-add">
+                      <option value="">{% translate "Choose an artist…" %}</option>
+                    </select>
+                    <label for="artist-add">{% translate "Add artist" %}</label>
+                  </div>
+                </div>
+              </div>
+            {% else %}
+              <span class="md-body-medium">{% translate "There are no artists yet." %}</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cover and other editions of the same issue -->
+    <div class="col-12 col-xl-4">
+      <div class="md-surface-card h-100">
+        <h2 class="md-title-medium mb-3">{% translate "Cover" %}</h2>
+        {% if edition and edition.image %}{% translate "Replace cover" as cover_action %}{% else %}{% translate "Upload cover" as cover_action %}{% endif %}
+        <div class="edition-cover-preview mb-2">
+          {% if edition and edition.thumbnail %}
+            <img src="{{ edition.thumbnail.url }}" alt="{% translate 'Current cover' %}" id="cover-preview">
+          {% else %}
+            <img alt="" id="cover-preview" hidden>
+            <span class="material-symbols-outlined" aria-hidden="true" id="cover-placeholder">image</span>
+          {% endif %}
+          <button type="button" class="edition-cover-edit" id="cover-edit" aria-label="{{ cover_action }}" title="{{ cover_action }}">
+            <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+          </button>
+        </div>
+        <div hidden>{{ form.image }}</div>
+        {% for error in form.image.errors %}<div class="invalid-feedback d-block text-center">{{ error }}</div>{% endfor %}
+        <div class="md-body-medium text-center mb-1" id="cover-file-name" hidden></div>
+        <div class="md-body-medium text-center mb-3">{% translate "The thumbnail is generated automatically on save." %}</div>
+
+        {% if sibling_editions %}
+          {% include 'includes/sibling_editions.html' with siblings=sibling_editions groups=sibling_groups current=edition link_name="manage_edition_edit" back_url=back_url %}
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Content: issue or compilation -->
+    <div class="col-12">
+      <div class="md-surface-card">
+        <h2 class="md-title-medium mb-1">{% translate "Content" %}</h2>
+        <p class="md-body-medium mb-3">{% translate "Which story does this edition contain?" %}</p>
+
+        <div class="md-segmented mb-3" role="radiogroup" aria-label="{% translate 'Content type' %}">
+          <label class="md-segmented__option">
+            <input type="radio" name="content" value="single" {% if content != 'compilation' %}checked{% endif %}>
+            <span><span class="material-symbols-outlined" aria-hidden="true">auto_stories</span> {% translate "Single issue" context "content type" %}</span>
+          </label>
+          <label class="md-segmented__option">
+            <input type="radio" name="content" value="compilation" {% if content == 'compilation' %}checked{% endif %}>
+            <span><span class="material-symbols-outlined" aria-hidden="true">library_books</span> {% translate "Compilation" %}</span>
+          </label>
+        </div>
+
+        <div id="content-single" {% if content == 'compilation' %}hidden{% endif %}>
+          <p class="md-body-medium">
+            {% blocktranslate trimmed %}
+              By default, the edition's own issue (same publishing and number). Choose another one only if it is
+              a foreign or anniversary edition of an issue from another series.
+            {% endblocktranslate %}
+          </p>
+          <div class="row g-3">
+            <div class="col-12 col-md-6">
+              <div class="form-floating md-field">
+                <select class="form-select" id="issue-publishing" data-combobox>
+                  <option value="">{% translate "Choose a publishing…" %}</option>
+                  {% for value, label in publishing_options %}
+                    <option value="{{ value }}" {% if value == issue_publishing_id %}selected{% endif %}>{{ label }}</option>
+                  {% endfor %}
+                </select>
+                <label for="issue-publishing">{% translate "Issue publishing" %}</label>
+              </div>
+            </div>
+            <div class="col-12 col-md-6">
+              <div class="form-floating md-field">
+                <select class="form-select" id="issue-select" name="issue">
+                  <option value="" id="own-issue-option">{{ own_option }}</option>
+                  {% for issue in issue_options %}
+                    <option value="{{ issue.pk }}" {% if issue.pk == selected_issue_id %}selected{% endif %}>{{ issue }}</option>
+                  {% endfor %}
+                </select>
+                <label for="issue-select">Issue</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="content-compilation" {% if content != 'compilation' %}hidden{% endif %}>
+          <p class="md-body-medium">{% translate "Add the issues it collects, in reading order." %}</p>
+          <div class="row g-3 align-items-end">
+            <div class="col-12 col-md-5">
+              <div class="form-floating md-field">
+                <select class="form-select" id="collected-publishing" data-combobox>
+                  <option value="">{% translate "Choose a publishing…" %}</option>
+                  {% for value, label in publishing_options %}
+                    <option value="{{ value }}">{{ label }}</option>
+                  {% endfor %}
+                </select>
+                <label for="collected-publishing">Publishing</label>
+              </div>
+            </div>
+            <div class="col-8 col-md-5">
+              <div class="form-floating md-field">
+                <select class="form-select" id="collected-issue" disabled>
+                  <option value="">{% translate "Choose a publishing first" %}</option>
+                </select>
+                <label for="collected-issue">Issue</label>
+              </div>
+            </div>
+            <div class="col-4 col-md-2">
+              <button type="button" class="md-btn md-btn--tonal w-100" id="collected-add" disabled>
+                <span class="material-symbols-outlined" aria-hidden="true">add</span>
+                {% translate "Add" %}
+              </button>
+            </div>
+          </div>
+          <ol class="collected-list mt-3" id="collected-list"></ol>
+          <p class="md-body-medium mb-0" id="collected-empty">{% translate "There are no issues in the compilation yet." %}</p>
+          <input type="hidden" name="collected" id="collected-input">
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+
+{% if edition %}
+  {% include 'manage/includes/delete_dialog.html' with delete_next=back_url %}
+{% endif %}
+{{ form_data|json_script:"edition-form-data" }}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/custom/issue_picker.js' %}"></script>
+<script src="{% static 'js/custom/edition_form.js' %}"></script>
+<script src="{% static 'js/custom/force_uppercase_variant.js' %}"></script>
+{% endblock %}

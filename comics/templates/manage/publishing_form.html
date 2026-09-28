@@ -1,0 +1,82 @@
+{% extends 'manage/base_manage.html' %}
+{% load i18n %}
+
+{% block breadcrumb %}
+<a href="{{ back_url }}">Publishings</a>
+<span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+<span class="is-current">{% if publishing %}{{ publishing.publishing_title }}{% else %}{% translate "New" context "publishing" %}{% endif %}</span>
+{% endblock %}
+
+{% block manage_content %}
+<form method="post" novalidate>
+  {% csrf_token %}
+  <input type="hidden" name="next" value="{{ back_url }}">
+
+  <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <a class="md-icon-btn" href="{{ back_url }}" aria-label="{% translate 'Back to publishings' %}" title="{% translate 'Back to publishings' %}">
+        <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+      </a>
+      <h1 class="md-headline-small mb-0">{% if publishing %}{% translate "Edit publishing" %}{% else %}{% translate "New publishing" %}{% endif %}</h1>
+    </div>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      {% if publishing and not edition_count %}
+        <button type="button" class="md-btn md-btn--danger-outlined" data-bs-toggle="modal" data-bs-target="#deleteDialog"
+                data-delete-url="{% url 'manage_publishing_delete' publishing.pk %}" data-delete-name="{{ publishing.publishing_title }}">
+          <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+          {% translate "Delete" %}
+        </button>
+      {% endif %}
+      <button type="submit" name="save_continue" class="md-btn md-btn--tonal">{% translate "Save and continue editing" %}</button>
+      <button type="submit" name="save_add_edition" class="md-btn md-btn--tonal">
+        <span class="material-symbols-outlined" aria-hidden="true">library_add</span>
+        {% translate "Save and add edition" %}
+      </button>
+      <button type="submit" class="md-btn md-btn--filled">
+        <span class="material-symbols-outlined" aria-hidden="true">save</span>
+        {% translate "Save" %}
+      </button>
+    </div>
+  </div>
+
+  {% if form.errors %}
+    <div class="editor-errors mb-3" role="alert">
+      <span class="material-symbols-outlined" aria-hidden="true">error</span>
+      <ul>
+        {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+        {% if not form.non_field_errors %}<li>{% translate "Check the highlighted fields." %}</li>{% endif %}
+      </ul>
+    </div>
+  {% endif %}
+
+  <div class="md-surface-card">
+    <h2 class="md-title-medium mb-3">{% translate "Publishing data" %}</h2>
+    <div class="row g-3">
+      <div class="col-12 col-md-8">{% include 'manage/includes/field.html' with field=form.publishing_title %}</div>
+      <div class="col-12 col-md-4">
+        {% include 'manage/includes/field.html' with field=form.title_name %}
+        <datalist id="title-options">
+          {% for name in title_options %}<option value="{{ name }}">{% endfor %}
+        </datalist>
+      </div>
+      <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=form.serie %}</div>
+      <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=form.language %}</div>
+      <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=form.date %}</div>
+      <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=form.year %}</div>
+      <div class="col-12 md-body-medium">
+        {{ form.title_name.help_text }} {{ form.year.help_text }}
+      </div>
+      <div class="col-12">
+        <label class="md-section-label d-block" for="{{ form.editorials.id_for_label }}">{{ form.editorials.label }}</label>
+        {{ form.editorials }}
+        {% for error in form.editorials.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+      </div>
+    </div>
+  </div>
+</form>
+
+{% if publishing and not edition_count %}
+  {% translate "Delete publishing?" as delete_title %}
+  {% include 'manage/includes/delete_dialog.html' with delete_next=back_url delete_title=delete_title %}
+{% endif %}
+{% endblock %}

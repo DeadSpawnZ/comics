@@ -7,6 +7,11 @@ services:
     ports:
       - "3306:3306"
     env_file: mysql.env
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   web:
     build: .
@@ -16,14 +21,13 @@ services:
       - media_volume:/code/media
     ports:
       - "8080:8000"
+    env_file: mysql.env
     environment:
       - DATABASE_HOST=db
-      - MYSQL_DATABASE=comic
-      - MYSQL_USER=root
-      - MYSQL_PASSWORD=1234
       - MYSQL_PORT=3306
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
 volumes:
   mysql_volume:

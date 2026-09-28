@@ -1,17 +1,17 @@
 #!/bin/bash
 
-# Asumiendo que estás en el root del proyecto Django
+# Assuming you are at the root of the Django project
 USED_FILES="used_images.txt"
 
-# Carpeta base donde están tus imágenes
+# Base folder where your images are
 MEDIA_ROOT="./media"
 
-# Busca todas las imágenes JPG en las carpetas de imágenes
+# Find all JPG images in the image folders
 find "$MEDIA_ROOT/images/originals" "$MEDIA_ROOT/images/thumbnails" -type f \( -iname '*.jpg' -o -iname '*.jpeg' \) | while read -r file; do
-    # Convertimos a ruta absoluta
+    # Convert to an absolute path
     abs_path="$(realpath "$file")"
 
-    # Verificamos si el archivo está en la lista
+    # Check whether the file is in the list
     if ! grep -Fxq "$abs_path" "$USED_FILES"; then
         echo "Eliminando: $abs_path"
         rm "$abs_path"

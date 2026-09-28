@@ -1,0 +1,50 @@
+{% extends 'my_comics/base_comics.html' %}
+{% load i18n %}
+
+{% block breadcrumb %}<span class="is-current">Connectings</span>{% endblock %}
+
+{% block comics_content %}
+<div class="mb-4">
+  <h1 class="md-headline-small mb-0">Connectings</h1>
+  <span class="md-body-medium">{% blocktranslate count counter=cards|length %}{{ counter }} connecting{% plural %}{{ counter }} connectings{% endblocktranslate %}</span>
+</div>
+
+{% if not cards %}
+  <div class="md-surface-card text-center py-5">
+    <span class="material-symbols-outlined d-block mb-2 empty-state-icon" aria-hidden="true">grid_view</span>
+    <p class="md-body-medium mb-0">{% translate "There are no connectings yet." %}</p>
+  </div>
+{% endif %}
+
+<div class="row g-3">
+  {% for card in cards %}
+  <div class="col-12 col-md-6 col-xl-4">
+    <a class="md-card connecting-card d-block text-decoration-none" href="{% url 'comics_connecting_detail' card.connecting.pk %}">
+      <div class="connecting-card__frame">
+      <div class="connecting-card__mosaic" style="--cols: {{ card.connecting.columns }}; --rows: {{ card.connecting.rows }};">
+        {% for row in card.grid %}
+          {% for piece in row %}
+            {% if piece and piece.edition.thumbnail %}
+              <img src="{{ piece.edition.thumbnail.url }}" alt="" loading="lazy" class="{% if not piece.owned %}is-missing{% endif %}">
+            {% else %}
+              <span class="connecting-card__empty"></span>
+            {% endif %}
+          {% endfor %}
+        {% endfor %}
+      </div>
+      </div>
+      <div class="p-3">
+        <div class="md-title-medium text-body">{{ card.connecting.name }}</div>
+        <div class="md-body-medium mb-2">
+          {% blocktranslate with layout=card.connecting.layout owned=card.owned total=card.total %}{{ layout }} · you own {{ owned }} of {{ total }}{% endblocktranslate %}
+        </div>
+        <div class="md-progress" role="progressbar" aria-valuenow="{{ card.percent }}" aria-valuemin="0" aria-valuemax="100"
+             aria-label="{% translate 'Progress' %}">
+          <div class="md-progress__bar" style="width: {{ card.percent }}%"></div>
+        </div>
+      </div>
+    </a>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

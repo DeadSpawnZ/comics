@@ -1,8 +1,25 @@
 #!/usr/bin/env python
-"""Django's command-line utility for administrative tasks."""
+"""Create a database backup (dumpdata).
+
+Usage:
+    python dump.py [output_path.json]
+
+If no path is given, "dump-<timestamp>.json" is created in the
+current directory. Tables that Django regenerates by itself
+(contenttypes, permissions, sessions and the admin log) are excluded
+because they are the most common cause of integrity errors when the
+dump is restored with `loaddata` in another environment.
+"""
 import os
 import sys
 from datetime import datetime
+
+EXCLUDED_MODELS = [
+    "contenttypes",
+    "auth.permission",
+    "admin.logentry",
+    "sessions.session",
+]
 
 
 def main():
@@ -16,17 +33,18 @@ def main():
             "forget to activate a virtual environment?"
         ) from exc
 
-    now = datetime.now()
-    timestamp = datetime.timestamp(now)
-    output_filename = f"dump-{timestamp}.json"
-    lista = [
-        "manage.py",
-        "dumpdata",
-        "-o",
-        output_filename,
-        "--indent=4",
-    ]
-    execute_from_command_line(lista)
+    if len(sys.argv) > 1:
+        output_filename = sys.argv[1]
+    else:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        output_filename = f"dump-{timestamp}.json"
+
+    argv = ["manage.py", "dumpdata", "-o", output_filename, "--indent=4"]
+    for model in EXCLUDED_MODELS:
+        argv += ["--exclude", model]
+
+    execute_from_command_line(argv)
+    print(output_filename)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,77 @@
+{% extends 'manage/base_manage.html' %}
+{% load i18n %}
+
+{% block breadcrumb %}<span class="is-current">{% translate "Collections" %}</span>{% endblock %}
+
+{% block manage_content %}
+<div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+  <div>
+    <h1 class="md-headline-small mb-0">{% translate "Collections" %}</h1>
+    <span class="md-body-medium">{% blocktranslate count counter=page_obj.paginator.count %}{{ counter }} piece{% plural %}{{ counter }} pieces{% endblocktranslate %}</span>
+  </div>
+  <a class="md-btn md-btn--filled" href="{% url 'manage_collection_new' %}?next={{ request.get_full_path|urlencode }}">
+    <span class="material-symbols-outlined" aria-hidden="true">add</span>
+    {% translate "New piece" %}
+  </a>
+</div>
+
+<div class="md-surface-card manage-table">
+  <div class="manage-toolbar">
+    <div class="manage-tabs" role="tablist" aria-label="{% translate 'Type' %}">
+      {% for value, label, count in tabs %}
+        <a class="manage-tab {% if value == type_filter %}is-active{% endif %}" role="tab"
+           aria-selected="{% if value == type_filter %}true{% else %}false{% endif %}"
+           href="{% querystring tipo=value page=None %}">
+          {{ label }} <span class="manage-tab__count">{{ count }}</span>
+        </a>
+      {% endfor %}
+    </div>
+
+    <form method="get" class="manage-filters" role="search">
+      <input type="hidden" name="tipo" value="{{ type_filter }}">
+      <div class="form-floating md-field">
+        <select class="form-select" id="filter-collector" name="collector" onchange="this.form.submit()">
+          <option value="">{% translate "All" context "collectors" %}</option>
+          {% for collector in collectors %}
+            <option value="{{ collector.pk }}" {% if collector.pk|stringformat:"s" == collector_filter %}selected{% endif %}>{{ collector.username }}</option>
+          {% endfor %}
+        </select>
+        <label for="filter-collector">{% translate "Collector" %}</label>
+      </div>
+      <div class="form-floating md-field">
+        <input type="search" class="form-control" id="filter-q" name="q" value="{{ query }}" placeholder="{% translate 'Search' %}">
+        <label for="filter-q">{% translate "Search title or participant" %}</label>
+      </div>
+      {% if query or collector_filter %}
+        <a class="md-btn md-btn--text" href="{% querystring q=None collector=None page=None %}">{% translate "Clear" %}</a>
+      {% endif %}
+    </form>
+  </div>
+
+  {% if not page_obj.object_list %}
+    <div class="text-center py-5">
+      <span class="material-symbols-outlined d-block mb-2 empty-state-icon" aria-hidden="true">search_off</span>
+      <p class="md-body-medium mb-0">{% translate "No pieces match these filters." %}</p>
+    </div>
+  {% else %}
+    {% if recent %}
+      <div class="list-section-label">{% translate "Recently added" context "pieces" %}</div>
+      <ul class="manage-rows manage-rows--recent">
+        {% for piece in recent %}
+        {% include 'manage/includes/collection_row.html' %}
+        {% endfor %}
+      </ul>
+      <div class="list-section-label">{% translate "All (A–Z)" context "pieces" %}</div>
+    {% endif %}
+    <ul class="manage-rows">
+      {% for piece in page_obj %}
+      {% include 'manage/includes/collection_row.html' %}
+      {% endfor %}
+    </ul>
+  {% endif %}
+</div>
+
+{% include 'includes/paginator.html' %}
+{% translate "Delete piece?" as delete_title %}
+{% include 'manage/includes/delete_dialog.html' with delete_title=delete_title %}
+{% endblock %}

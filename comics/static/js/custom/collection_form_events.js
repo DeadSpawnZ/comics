@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 function filterComicsByPublishing(publishingId) {
   const publishingField = document.getElementById("id_publishing");
-  const comicField = document.getElementById("id_comic");
+  const comicField = document.getElementById("id_edition");
 
   if (!(publishingField && comicField)) {
     return;
@@ -13,7 +13,7 @@ function filterComicsByPublishing(publishingId) {
   publishingField.addEventListener("change", function () {
     const publishingId = this.value;
 
-    // Limpiar opciones actuales
+    // Clear the current options
     comicField.innerHTML = '<option value="">---------</option>';
 
     if (publishingId) {
@@ -32,38 +32,53 @@ function filterComicsByPublishing(publishingId) {
 }
 
 function filterPreviousTrade() {
-  const comicField = document.getElementById("id_comic");
+  const comicField = document.getElementById("id_edition");
   const previousTradeField = document.getElementById("id_previous_trade");
   const tradeTypeField = document.getElementById("id_trade_type");
+  const tradeDateField = document.getElementById("id_trade_date");
 
-  if (!(comicField && previousTradeField && tradeTypeField)) {
+  if (!(comicField && previousTradeField && tradeTypeField && tradeDateField)) {
     return;
   }
-  comicField.addEventListener("change", function () {
-    const comicId = this.value;
 
-    if (tradeTypeField.value == "BUYING") {
-      console.log("Trade type is BUYING; skipping previous trade filter.");
+  function loadPreviousTrades() {
+    const comicId = comicField.value;
+
+    // previous_trade only applies to sales (you cannot sell something you did not own yet).
+    if (tradeTypeField.value.toUpperCase() !== "SELLING") {
       return;
     }
-    // Limpiar opciones actuales
+
+    // Clear the current options
     previousTradeField.innerHTML = '<option value="">---------</option>';
 
-    if (comicId) {
-      fetch(`/ajax/get-previous-trades/${comicId}/`)
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.error) {
-            console.error("Error fetching previous trades:", data.error);
-            return;
-          }
-          data.results.forEach(function (trade) {
-            const option = document.createElement("option");
-            option.value = trade.id;
-            option.text = trade.text;
-            previousTradeField.appendChild(option);
-          });
-        });
+    if (!comicId) {
+      return;
     }
-  });
+
+    const params = new URLSearchParams();
+    if (tradeDateField.value) {
+      // Only purchases made on or before the sale date are offered.
+      params.set("before", tradeDateField.value);
+    }
+
+    fetch(`/ajax/get-previous-trades/${comicId}/?${params.toString()}`)
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.error) {
+          console.error("Error fetching previous trades:", data.error);
+          return;
+        }
+        data.results.forEach(function (trade) {
+          const option = document.createElement("option");
+          option.value = trade.id;
+          option.text = trade.text;
+          previousTradeField.appendChild(option);
+        });
+      });
+  }
+
+  comicField.addEventListener("change", loadPreviousTrades);
+  tradeDateField.addEventListener("change", loadPreviousTrades);
+  tradeTypeField.addEventListener("change", loadPreviousTrades);
 }

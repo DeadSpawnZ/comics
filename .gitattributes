@@ -1,0 +1,3 @@
+# Store and check out text files with LF endings on every OS (the app runs on Linux in Docker).
+# Git detects binary files (images, etc.) automatically and leaves them untouched.
+* text=auto eol=lf
