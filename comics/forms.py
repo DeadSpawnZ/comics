@@ -281,7 +281,7 @@ class PublishingManageForm(forms.ModelForm):
         help_texts = {"year": _("Empty: taken from the start date.")}
         widgets = {
             "date": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
-            "editorials": forms.CheckboxSelectMultiple,
+            "editorials": forms.SelectMultiple(attrs={"data-multiselect": ""}),
         }
         error_messages = {
             NON_FIELD_ERRORS: {
@@ -295,11 +295,10 @@ class PublishingManageForm(forms.ModelForm):
             self.fields["title_name"].initial = self.instance.title.name
         self.fields["editorials"].queryset = Editorial.objects.order_by("name")
         self.fields["title_name"].widget.attrs["list"] = "title-options"
+        self.fields["editorials"].widget.attrs["data-placeholder"] = _("Search an editorial…")
         for name, field in self.fields.items():
             widget = field.widget
-            if isinstance(widget, forms.CheckboxSelectMultiple):
-                widget.attrs["class"] = "form-check-input"
-            elif isinstance(widget, forms.Select):
+            if isinstance(widget, forms.Select):
                 widget.attrs["class"] = "form-select"
             else:
                 widget.attrs.update({"class": "form-control", "placeholder": field.label})

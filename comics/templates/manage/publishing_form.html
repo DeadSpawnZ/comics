@@ -67,12 +67,8 @@
         {{ form.title_name.help_text }} {{ form.year.help_text }}
       </div>
       <div class="col-12">
-        <div class="md-section-label">{{ form.editorials.label }}</div>
-        <div class="editorial-options">
-          {% for checkbox in form.editorials %}
-            <label class="editorial-option">{{ checkbox.tag }} <span>{{ checkbox.choice_label }}</span></label>
-          {% endfor %}
-        </div>
+        <label class="md-section-label d-block" for="{{ form.editorials.id_for_label }}">{{ form.editorials.label }}</label>
+        {{ form.editorials }}
         {% for error in form.editorials.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
       </div>
     </div>

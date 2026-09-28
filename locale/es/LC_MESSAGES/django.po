@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-27 18:58-0600\n"
+"POT-Creation-Date: 2026-09-27 19:07-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -67,7 +67,7 @@ msgstr "Portada"
 msgid "Cover artists"
 msgstr "Artistas de portada"
 
-#: comics/forms.py:188 comics/forms.py:241 comics/forms.py:383
+#: comics/forms.py:188 comics/forms.py:241 comics/forms.py:382
 #: comics/templates/manage/connecting_editor.html:78
 #: comics/templates/manage/connecting_editor.html:79
 #: comics/templates/my_comics/edition_detail.html:47 comics/views/manage.py:27
@@ -80,11 +80,11 @@ msgid ""
 msgstr ""
 "Ya existe una edición con ese publishing, número, variante e impresión."
 
-#: comics/forms.py:212 comics/forms.py:419
+#: comics/forms.py:212 comics/forms.py:418
 msgid "Recent"
 msgstr "Recientes"
 
-#: comics/forms.py:213 comics/forms.py:420
+#: comics/forms.py:213 comics/forms.py:419
 msgid "All publishings"
 msgstr "Todos los publishings"
 
@@ -140,48 +140,52 @@ msgstr "Vacío: se toma de la fecha de inicio."
 msgid "A publishing with that title, year, series and language already exists."
 msgstr "Ya existe un publishing con ese título, año, serie e idioma."
 
-#: comics/forms.py:375 comics/templates/manage/collection_list.html:39
+#: comics/forms.py:298
+msgid "Search an editorial…"
+msgstr "Busca una editorial…"
+
+#: comics/forms.py:374 comics/templates/manage/collection_list.html:39
 msgid "Collector"
 msgstr "Coleccionista"
 
-#: comics/forms.py:376 comics/views/manage_home.py:38
+#: comics/forms.py:375 comics/views/manage_home.py:38
 msgid "Edition"
 msgstr "Edición"
 
-#: comics/forms.py:377
+#: comics/forms.py:376
 #: comics/templates/collections/collector_collections.html:151
 #: comics/templates/manage/collection_list.html:20
 msgid "Type"
 msgstr "Tipo"
 
-#: comics/forms.py:378 comics/templates/collectables/collectables.html:70
+#: comics/forms.py:377 comics/templates/collectables/collectables.html:70
 #: comics/templates/collections/collector_collections.html:150
 #: comics/templates/my_comics/edition_detail.html:102
 msgid "Date"
 msgstr "Fecha"
 
-#: comics/forms.py:379
+#: comics/forms.py:378
 msgid "Amount (MXN)"
 msgstr "Monto (MXN)"
 
-#: comics/forms.py:380 comics/templates/collectables/collectables.html:71
+#: comics/forms.py:379 comics/templates/collectables/collectables.html:71
 #: comics/templates/collections/collector_collections.html:152
 #: comics/templates/my_comics/edition_detail.html:104
 #: comics/views/manage_home.py:44
 msgid "Participant"
 msgstr "Participante"
 
-#: comics/forms.py:381
+#: comics/forms.py:380
 #: comics/templates/collections/collector_collections.html:153
 #: comics/templates/my_comics/edition_detail.html:105
 msgid "Valuation"
 msgstr "Valuación"
 
-#: comics/forms.py:382
+#: comics/forms.py:381
 msgid "Purchase being sold"
 msgstr "Compra que se vende"
 
-#: comics/forms.py:392
+#: comics/forms.py:391
 msgid ""
 "That piece is already registered (same edition, date, amount, type and "
 "participant)."
@@ -189,12 +193,12 @@ msgstr ""
 "Esa pieza ya está registrada (misma edición, fecha, monto, tipo y "
 "participante)."
 
-#: comics/forms.py:433 comics/templates/manage/arc_form.html:74
+#: comics/forms.py:432 comics/templates/manage/arc_form.html:74
 #: comics/templates/manage/edition_form.html:214
 msgid "Choose a publishing first"
 msgstr "Elige primero un publishing"
 
-#: comics/forms.py:470
+#: comics/forms.py:469
 msgid ""
 "Choose a purchase of this edition by the same collector, made on or before "
 "the sale date and not sold yet."
@@ -1104,7 +1108,7 @@ msgstr "Guardar y agregar edición"
 msgid "Publishing data"
 msgstr "Datos del publishing"
 
-#: comics/templates/manage/publishing_form.html:83
+#: comics/templates/manage/publishing_form.html:79
 #: comics/templates/manage/publishing_list.html:65
 msgid "Delete publishing?"
 msgstr "¿Eliminar publishing?"
