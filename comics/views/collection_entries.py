@@ -100,7 +100,7 @@ def api_editions(request):
                 {
                     "id": edition.pk,
                     "label": edition_label(edition),
-                    "title": f"{edition.publishing.publishing_title} #{edition.number} {edition.variant}".strip(),
+                    "title": edition.short_name,
                     "thumbnail": edition.thumbnail.url if edition.thumbnail else None,
                     "coverPrice": str(edition.cover_price),
                 }

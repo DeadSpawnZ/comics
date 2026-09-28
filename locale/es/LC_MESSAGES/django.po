@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-27 20:43-0600\n"
+"POT-Creation-Date: 2026-09-27 22:41-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,21 +17,21 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: comics/forms.py:177
+#: comics/forms.py:178
 #: comics/templates/collections/collector_collections.html:160
 #: comics/templates/my_comics/edition_detail.html:38
 msgid "Number"
 msgstr "Número"
 
-#: comics/forms.py:178 comics/templates/my_comics/edition_detail.html:39
+#: comics/forms.py:179 comics/templates/my_comics/edition_detail.html:39
 msgid "Variant"
 msgstr "Variante"
 
-#: comics/forms.py:179 comics/templates/my_comics/edition_detail.html:40
+#: comics/forms.py:180 comics/templates/my_comics/edition_detail.html:40
 msgid "Printing"
 msgstr "Impresión"
 
-#: comics/forms.py:180
+#: comics/forms.py:181
 #: comics/templates/collections/collector_collections.html:164
 #: comics/templates/manage/edition_list.html:39
 #: comics/templates/my_comics/edition_detail.html:41
@@ -39,154 +39,158 @@ msgstr "Impresión"
 msgid "Format"
 msgstr "Formato"
 
-#: comics/forms.py:181 comics/templates/my_comics/edition_detail.html:42
+#: comics/forms.py:182 comics/templates/my_comics/edition_detail.html:42
 msgid "Release date"
 msgstr "Fecha de lanzamiento"
 
-#: comics/forms.py:182
+#: comics/forms.py:183
 #: comics/templates/collections/collector_collections.html:161
 #: comics/templates/my_comics/edition_detail.html:43
 msgid "Cover price"
 msgstr "Precio de portada"
 
-#: comics/forms.py:184 comics/templates/my_comics/edition_detail.html:45
+#: comics/forms.py:185 comics/templates/my_comics/edition_detail.html:45
 msgid "Limited to"
 msgstr "Limitada a"
 
-#: comics/forms.py:185
-msgid "Retailer exclusive (store)"
-msgstr "Exclusiva de tienda (nombre de la tienda)"
+#: comics/forms.py:186
+msgid "Store (exclusive)"
+msgstr "Tienda (exclusiva)"
 
-#: comics/forms.py:186 comics/templates/includes/piece_fields.html:66
-#: comics/templates/manage/edition_form.html:123
-#: comics/templates/my_comics/edition_detail.html:129
+#: comics/forms.py:187
+msgid "Event (exclusive)"
+msgstr "Evento (exclusiva)"
+
+#: comics/forms.py:188 comics/templates/includes/piece_fields.html:66
+#: comics/templates/manage/edition_form.html:130
+#: comics/templates/my_comics/edition_detail.html:130
 msgid "Cover"
 msgstr "Portada"
 
-#: comics/forms.py:187 comics/templates/my_comics/edition_detail.html:50
+#: comics/forms.py:189 comics/templates/my_comics/edition_detail.html:51
 msgid "Cover artists"
 msgstr "Artistas de portada"
 
-#: comics/forms.py:188 comics/forms.py:241 comics/forms.py:382
+#: comics/forms.py:190 comics/forms.py:248 comics/forms.py:389
 #: comics/templates/manage/connecting_editor.html:78
 #: comics/templates/manage/connecting_editor.html:79
-#: comics/templates/my_comics/edition_detail.html:47 comics/views/manage.py:27
+#: comics/templates/my_comics/edition_detail.html:48 comics/views/manage.py:27
 msgid "Notes"
 msgstr "Notas"
 
-#: comics/forms.py:198
+#: comics/forms.py:201
 msgid ""
-"An edition with that publishing, number, variant and printing already exists."
-msgstr ""
-"Ya existe una edición con ese publishing, número, variante e impresión."
+"An edition with that publishing, number, variant, printing, event and store "
+"already exists."
+msgstr "Ya existe una edición con ese publishing, número, variante, impresión, evento y tienda."
 
-#: comics/forms.py:212 comics/forms.py:418
+#: comics/forms.py:219 comics/forms.py:425
 msgid "Recent"
 msgstr "Recientes"
 
-#: comics/forms.py:213 comics/forms.py:419
+#: comics/forms.py:220 comics/forms.py:426
 msgid "All publishings"
 msgstr "Todos los publishings"
 
-#: comics/forms.py:241 comics/templates/manage/connecting_editor.html:60
+#: comics/forms.py:248 comics/templates/manage/connecting_editor.html:60
 #: comics/templates/manage/connecting_editor.html:61 comics/views/manage.py:24
 msgid "Name"
 msgstr "Nombre"
 
-#: comics/forms.py:243
+#: comics/forms.py:250
 msgid "A reading arc with that name already exists."
 msgstr "Ya existe un arco de lectura con ese nombre."
 
-#: comics/forms.py:264
+#: comics/forms.py:271
 msgid "Title (group)"
 msgstr "Título (grupo)"
 
-#: comics/forms.py:267
+#: comics/forms.py:274
 msgid "Groups publishings under a letter. Empty: the publishing title is used."
 msgstr ""
 "Agrupa publishings bajo una letra. Vacío: se usa el título del publishing."
 
-#: comics/forms.py:274
+#: comics/forms.py:281
 msgid "Publishing title"
 msgstr "Título del publishing"
 
-#: comics/forms.py:275
+#: comics/forms.py:282
 msgid "Series"
 msgstr "Serie"
 
-#: comics/forms.py:276 comics/templates/base.html:109
+#: comics/forms.py:283 comics/templates/base.html:109
 #: comics/templates/collections/collector_collections.html:163
 #: comics/templates/manage/publishing_list.html:29
 msgid "Language"
 msgstr "Idioma"
 
-#: comics/forms.py:277
+#: comics/forms.py:284
 msgid "Start date"
 msgstr "Fecha de inicio"
 
-#: comics/forms.py:278
+#: comics/forms.py:285
 msgid "Year"
 msgstr "Año"
 
-#: comics/forms.py:279
+#: comics/forms.py:286
 msgid "Editorials"
 msgstr "Editoriales"
 
-#: comics/forms.py:281
+#: comics/forms.py:288
 msgid "Empty: taken from the start date."
 msgstr "Vacío: se toma de la fecha de inicio."
 
-#: comics/forms.py:288
+#: comics/forms.py:295
 msgid "A publishing with that title, year, series and language already exists."
 msgstr "Ya existe un publishing con ese título, año, serie e idioma."
 
-#: comics/forms.py:298
+#: comics/forms.py:305
 msgid "Search an editorial…"
 msgstr "Busca una editorial…"
 
-#: comics/forms.py:374 comics/templates/manage/collection_list.html:39
+#: comics/forms.py:381 comics/templates/manage/collection_list.html:39
 msgid "Collector"
 msgstr "Coleccionista"
 
-#: comics/forms.py:375 comics/views/manage_home.py:38
+#: comics/forms.py:382 comics/views/manage_home.py:38
 msgid "Edition"
 msgstr "Edición"
 
-#: comics/forms.py:376
+#: comics/forms.py:383
 #: comics/templates/collections/collector_collections.html:151
 #: comics/templates/manage/collection_list.html:20
 msgid "Type"
 msgstr "Tipo"
 
-#: comics/forms.py:377 comics/forms.py:492
+#: comics/forms.py:384 comics/forms.py:499
 #: comics/templates/collectables/collectables.html:70
 #: comics/templates/collections/collector_collections.html:150
-#: comics/templates/my_comics/edition_detail.html:102
+#: comics/templates/my_comics/edition_detail.html:103
 msgid "Date"
 msgstr "Fecha"
 
-#: comics/forms.py:378
+#: comics/forms.py:385
 msgid "Amount (MXN)"
 msgstr "Monto (MXN)"
 
-#: comics/forms.py:379 comics/templates/collectables/collectables.html:71
+#: comics/forms.py:386 comics/templates/collectables/collectables.html:71
 #: comics/templates/collections/collector_collections.html:152
-#: comics/templates/my_comics/edition_detail.html:104
+#: comics/templates/my_comics/edition_detail.html:105
 #: comics/views/manage_home.py:44
 msgid "Participant"
 msgstr "Participante"
 
-#: comics/forms.py:380
+#: comics/forms.py:387
 #: comics/templates/collections/collector_collections.html:153
-#: comics/templates/my_comics/edition_detail.html:105
+#: comics/templates/my_comics/edition_detail.html:106
 msgid "Valuation"
 msgstr "Valuación"
 
-#: comics/forms.py:381
+#: comics/forms.py:388
 msgid "Purchase being sold"
 msgstr "Compra que se vende"
 
-#: comics/forms.py:391
+#: comics/forms.py:398
 msgid ""
 "That piece is already registered (same edition, date, amount, type and "
 "participant)."
@@ -194,12 +198,12 @@ msgstr ""
 "Esa pieza ya está registrada (misma edición, fecha, monto, tipo y "
 "participante)."
 
-#: comics/forms.py:432 comics/templates/manage/arc_form.html:74
-#: comics/templates/manage/edition_form.html:214
+#: comics/forms.py:439 comics/templates/manage/arc_form.html:74
+#: comics/templates/manage/edition_form.html:221
 msgid "Choose a publishing first"
 msgstr "Elige primero un publishing"
 
-#: comics/forms.py:469
+#: comics/forms.py:476
 msgid ""
 "Choose a purchase of this edition by the same collector, made on or before "
 "the sale date and not sold yet."
@@ -207,19 +211,19 @@ msgstr ""
 "Elige una compra de esta edición del mismo coleccionista, hecha en o antes "
 "de la fecha de venta y que no se haya vendido."
 
-#: comics/forms.py:491 comics/views/manage_home.py:46
+#: comics/forms.py:498 comics/views/manage_home.py:46
 msgid "Artist"
 msgstr "Artista"
 
-#: comics/forms.py:493
+#: comics/forms.py:500
 msgid "Price (MXN)"
 msgstr "Precio (MXN)"
 
-#: comics/forms.py:494
+#: comics/forms.py:501
 msgid "COA"
 msgstr "COA"
 
-#: comics/forms.py:506
+#: comics/forms.py:513
 msgid "Certificate of authenticity"
 msgstr "Certificado de autenticidad"
 
@@ -291,69 +295,73 @@ msgstr ""
 msgid "6th"
 msgstr ""
 
-#: comics/models.py:299
+#: comics/models.py:305
 msgid "Regular covers"
 msgstr "Portadas regulares"
 
-#: comics/models.py:300
+#: comics/models.py:306
 msgid "Incentive covers"
 msgstr "Portadas incentivas"
 
-#: comics/models.py:301
+#: comics/models.py:307
 msgid "Retailer exclusives"
 msgstr "Exclusivas de tienda"
 
-#: comics/models.py:506
+#: comics/models.py:308
+msgid "Event exclusives"
+msgstr "Exclusivas de evento"
+
+#: comics/models.py:532
 msgid "Buying"
 msgstr "Compra"
 
-#: comics/models.py:507
+#: comics/models.py:533
 msgid "Selling"
 msgstr "Venta"
 
-#: comics/models.py:600 comics/views/manage_arcs.py:54
+#: comics/models.py:626 comics/views/manage_arcs.py:54
 msgid "The list of issues is not valid."
 msgstr "La lista de issues no es válida."
 
-#: comics/models.py:603
+#: comics/models.py:629
 msgid "An issue is repeated in the reading arc."
 msgstr "Un issue está repetido en el arco de lectura."
 
-#: comics/models.py:605
+#: comics/models.py:631
 msgid "One of the issues no longer exists."
 msgstr "Alguno de los issues ya no existe."
 
-#: comics/models.py:691
+#: comics/models.py:717
 #, python-format
 msgid "Piece %(index)s is not valid."
 msgstr "La pieza %(index)s no es válida."
 
-#: comics/models.py:695
+#: comics/models.py:721
 #, python-format
 msgid "Position (%(row)s, %(column)s) is outside the %(layout)s grid."
 msgstr ""
 "La posición (%(row)s, %(column)s) está fuera de la cuadrícula de %(layout)s."
 
-#: comics/models.py:703
+#: comics/models.py:729
 msgid "Two pieces are in the same position."
 msgstr "Hay dos piezas en la misma posición."
 
-#: comics/models.py:706
+#: comics/models.py:732
 msgid "A comic cannot appear twice in the same connecting."
 msgstr "Un comic no puede estar dos veces en el mismo connecting."
 
-#: comics/models.py:708
+#: comics/models.py:734
 msgid "One of the comics no longer exists."
 msgstr "Alguno de los comics ya no existe."
 
-#: comics/models.py:771
+#: comics/models.py:797
 #, python-format
 msgid "The connecting only has %(count)d row."
 msgid_plural "The connecting only has %(count)d rows."
 msgstr[0] "El connecting solo tiene %(count)d fila."
 msgstr[1] "El connecting solo tiene %(count)d filas."
 
-#: comics/models.py:775
+#: comics/models.py:801
 #, python-format
 msgid "The connecting only has %(count)d column."
 msgid_plural "The connecting only has %(count)d columns."
@@ -508,7 +516,7 @@ msgid "No collections match these filters."
 msgstr "No se encontraron colecciones con estos filtros."
 
 #: comics/templates/collections/collector_collections.html:149
-#: comics/templates/my_comics/edition_detail.html:103
+#: comics/templates/my_comics/edition_detail.html:104
 msgid "Amount paid"
 msgstr "Monto pagado"
 
@@ -670,13 +678,13 @@ msgstr "Issues en orden de lectura"
 
 #: comics/templates/manage/arc_form.html:63
 #: comics/templates/manage/connecting_editor.html:44
-#: comics/templates/manage/edition_form.html:175
-#: comics/templates/manage/edition_form.html:203
+#: comics/templates/manage/edition_form.html:182
+#: comics/templates/manage/edition_form.html:210
 msgid "Choose a publishing…"
 msgstr "Elige un publishing…"
 
 #: comics/templates/manage/arc_form.html:82
-#: comics/templates/manage/edition_form.html:222
+#: comics/templates/manage/edition_form.html:229
 msgid "Add"
 msgstr "Agregar"
 
@@ -904,76 +912,80 @@ msgstr "Nueva edición"
 msgid "Edition data"
 msgstr "Datos de la edición"
 
-#: comics/templates/manage/edition_form.html:69
+#: comics/templates/manage/edition_form.html:72
 msgid ""
-"With a ratio (1:N) the cover counts as incentive. Fill in the store only for "
-"retailer-exclusive covers."
+"With a ratio (1:N) the cover counts as incentive. Fill in the event and/or "
+"the store only for exclusive covers; the variant is optional for them."
 msgstr ""
-"Con ratio (1:N) la portada cuenta como incentiva. Llena la tienda solo en "
-"portadas exclusivas de tienda."
+"Con ratio (1:N) la portada cuenta como incentiva. Llena el evento y/o la "
+"tienda solo en portadas exclusivas; en ellas la variante es opcional."
 
-#: comics/templates/manage/edition_form.html:93
-#: comics/templates/manage/edition_form.html:94
+#: comics/templates/manage/edition_form.html:77
+msgid "Shown as:"
+msgstr "Se mostrará como:"
+
+#: comics/templates/manage/edition_form.html:100
+#: comics/templates/manage/edition_form.html:101
 #, python-format
 msgid "Remove %(name)s"
 msgstr "Quitar a %(name)s"
 
-#: comics/templates/manage/edition_form.html:101
-#: comics/templates/my_comics/edition_detail.html:65
+#: comics/templates/manage/edition_form.html:108
+#: comics/templates/my_comics/edition_detail.html:66
 msgid "No cover artists yet."
 msgstr "Todavía no hay artistas de portada."
 
-#: comics/templates/manage/edition_form.html:106
+#: comics/templates/manage/edition_form.html:113
 msgid "Choose an artist…"
 msgstr "Elige un artista…"
 
-#: comics/templates/manage/edition_form.html:108
+#: comics/templates/manage/edition_form.html:115
 msgid "Add artist"
 msgstr "Agregar artista"
 
-#: comics/templates/manage/edition_form.html:113
+#: comics/templates/manage/edition_form.html:120
 msgid "There are no artists yet."
 msgstr "No hay artistas registrados."
 
-#: comics/templates/manage/edition_form.html:124
+#: comics/templates/manage/edition_form.html:131
 msgid "Replace cover"
 msgstr "Reemplazar portada"
 
-#: comics/templates/manage/edition_form.html:124
+#: comics/templates/manage/edition_form.html:131
 msgid "Upload cover"
 msgstr "Subir portada"
 
-#: comics/templates/manage/edition_form.html:127
+#: comics/templates/manage/edition_form.html:134
 msgid "Current cover"
 msgstr "Portada actual"
 
-#: comics/templates/manage/edition_form.html:139
+#: comics/templates/manage/edition_form.html:146
 msgid "The thumbnail is generated automatically on save."
 msgstr "La miniatura se genera sola al guardar."
 
-#: comics/templates/manage/edition_form.html:150
-#: comics/templates/my_comics/edition_detail.html:71
+#: comics/templates/manage/edition_form.html:157
+#: comics/templates/my_comics/edition_detail.html:72
 msgid "Content"
 msgstr "Contenido"
 
-#: comics/templates/manage/edition_form.html:151
+#: comics/templates/manage/edition_form.html:158
 msgid "Which story does this edition contain?"
 msgstr "¿Qué historia trae esta edición?"
 
-#: comics/templates/manage/edition_form.html:153
+#: comics/templates/manage/edition_form.html:160
 msgid "Content type"
 msgstr "Tipo de contenido"
 
-#: comics/templates/manage/edition_form.html:156
+#: comics/templates/manage/edition_form.html:163
 msgctxt "content type"
 msgid "Single issue"
 msgstr "Issue individual"
 
-#: comics/templates/manage/edition_form.html:160
+#: comics/templates/manage/edition_form.html:167
 msgid "Compilation"
 msgstr "Compilación"
 
-#: comics/templates/manage/edition_form.html:166
+#: comics/templates/manage/edition_form.html:173
 msgid ""
 "By default, the edition's own issue (same publishing and number). Choose "
 "another one only if it is a foreign or anniversary edition of an issue from "
@@ -983,15 +995,15 @@ msgstr ""
 "Elige otro solo si es una edición extranjera o de aniversario de un issue de "
 "otra serie."
 
-#: comics/templates/manage/edition_form.html:180
+#: comics/templates/manage/edition_form.html:187
 msgid "Issue publishing"
 msgstr "Publishing del issue"
 
-#: comics/templates/manage/edition_form.html:198
+#: comics/templates/manage/edition_form.html:205
 msgid "Add the issues it collects, in reading order."
 msgstr "Agrega los issues que recopila, en orden de lectura."
 
-#: comics/templates/manage/edition_form.html:227
+#: comics/templates/manage/edition_form.html:234
 msgid "There are no issues in the compilation yet."
 msgstr "Todavía no hay issues en la compilación."
 
@@ -1110,7 +1122,7 @@ msgid "Manually linked to another issue"
 msgstr "Vinculada a mano a otro issue"
 
 #: comics/templates/manage/includes/edition_row.html:32
-#: comics/templates/my_comics/edition_detail.html:90
+#: comics/templates/my_comics/edition_detail.html:91
 msgid "No issue"
 msgstr "Sin issue"
 
@@ -1275,29 +1287,33 @@ msgid "Incentive cover"
 msgstr "Portada incentiva"
 
 #: comics/templates/my_comics/edition_detail.html:46
+msgid "Event exclusive"
+msgstr "Exclusiva de evento"
+
+#: comics/templates/my_comics/edition_detail.html:47
 msgid "Retailer exclusive"
 msgstr "Exclusiva de tienda"
 
-#: comics/templates/my_comics/edition_detail.html:73
+#: comics/templates/my_comics/edition_detail.html:74
 #, python-format
 msgid "Compilation of %(counter)s issue, in reading order:"
 msgid_plural "Compilation of %(counter)s issues, in reading order:"
 msgstr[0] "Compilación de %(counter)s issue, en orden de lectura:"
 msgstr[1] "Compilación de %(counter)s issues, en orden de lectura:"
 
-#: comics/templates/my_comics/edition_detail.html:83
+#: comics/templates/my_comics/edition_detail.html:84
 msgid "Issue from another series"
 msgstr "Issue de otra serie"
 
-#: comics/templates/my_comics/edition_detail.html:86
+#: comics/templates/my_comics/edition_detail.html:87
 msgid "Own issue"
 msgstr "Issue propio"
 
-#: comics/templates/my_comics/edition_detail.html:96
+#: comics/templates/my_comics/edition_detail.html:97
 msgid "In your collection"
 msgstr "En tu colección"
 
-#: comics/templates/my_comics/edition_detail.html:121
+#: comics/templates/my_comics/edition_detail.html:122
 msgid "You don't own this edition."
 msgstr "No tienes esta edición."
 
@@ -1387,82 +1403,82 @@ msgstr "Individuales"
 msgid "Compilations"
 msgstr "Compilaciones"
 
-#: comics/views/manage_editions.py:185
+#: comics/views/manage_editions.py:195
 #, python-format
 msgid "Edition created: %(edition)s"
 msgstr "Edición creada: %(edition)s"
 
-#: comics/views/manage_editions.py:185
+#: comics/views/manage_editions.py:195
 #, python-format
 msgid "Edition saved: %(edition)s"
 msgstr "Edición guardada: %(edition)s"
 
-#: comics/views/manage_editions.py:212
+#: comics/views/manage_editions.py:222
 #, python-format
 msgid "%(issue)s · own issue"
 msgstr "%(issue)s · issue propio"
 
-#: comics/views/manage_editions.py:212
+#: comics/views/manage_editions.py:222
 #, python-format
 msgid "%(issue)s · own issue (will be created)"
 msgstr "%(issue)s · issue propio (se creará)"
 
-#: comics/views/manage_editions.py:215
+#: comics/views/manage_editions.py:225
 msgid "Own issue (by publishing and number)"
 msgstr "Issue propio (según publishing y número)"
 
-#: comics/views/manage_editions.py:255
+#: comics/views/manage_editions.py:267
 msgid "The list of collected issues is not valid."
 msgstr "La lista de issues recopilados no es válida."
 
-#: comics/views/manage_editions.py:258
+#: comics/views/manage_editions.py:270
 msgid "A compilation needs at least one collected issue."
 msgstr "Una compilación necesita al menos un issue recopilado."
 
-#: comics/views/manage_editions.py:260
+#: comics/views/manage_editions.py:272
 msgid "An issue is repeated in the compilation."
 msgstr "Un issue está repetido en la compilación."
 
-#: comics/views/manage_editions.py:262
+#: comics/views/manage_editions.py:274
 msgid "One of the collected issues no longer exists."
 msgstr "Alguno de los issues recopilados ya no existe."
 
-#: comics/views/manage_editions.py:269
+#: comics/views/manage_editions.py:281
 msgid "The chosen issue is not valid."
 msgstr "El issue elegido no es válido."
 
-#: comics/views/manage_editions.py:272
+#: comics/views/manage_editions.py:284
 msgid "The chosen issue no longer exists."
 msgstr "El issue elegido ya no existe."
 
-#: comics/views/manage_editions.py:274
+#: comics/views/manage_editions.py:286
 msgid "Choose whether the edition is a single issue or a compilation."
 msgstr "Elige si la edición es un issue individual o una compilación."
 
-#: comics/views/manage_editions.py:319
+#: comics/views/manage_editions.py:331
 #, python-format
 msgid "%(count)d collection record"
 msgid_plural "%(count)d collection records"
 msgstr[0] "%(count)d registro de colección"
 msgstr[1] "%(count)d registros de colección"
 
-#: comics/views/manage_editions.py:323
+#: comics/views/manage_editions.py:335
 #, python-format
 msgid "%(count)d connecting"
 msgid_plural "%(count)d connectings"
 msgstr[0] "%(count)d connecting"
 msgstr[1] "%(count)d connectings"
 
-#: comics/views/manage_editions.py:326
+#: comics/views/manage_editions.py:338
 #, python-format
 msgid "“%(name)s” cannot be deleted: it is used in %(uses)s."
 msgstr "No se puede eliminar «%(name)s»: se usa en %(uses)s."
 
-#: comics/views/manage_editions.py:327
+#: comics/views/manage_editions.py:339
 msgid "and"
 msgstr "y"
 
-#: comics/views/manage_editions.py:330
+#: comics/views/manage_editions.py:342
 #, python-format
 msgid "Edition deleted: %(edition)s"
 msgstr "Edición eliminada: %(edition)s"

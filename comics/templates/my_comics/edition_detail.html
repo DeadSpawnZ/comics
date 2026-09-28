@@ -9,7 +9,7 @@
 {% block breadcrumb %}
 <a href="{{ back_url }}">{% translate "Editions" %}</a>
 <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
-<span class="is-current">{{ edition.publishing.publishing_title }} #{{ edition.number }} {{ edition.variant }}</span>
+<span class="is-current">{{ edition.short_name }}</span>
 {% endblock %}
 
 {% block comics_content %}
@@ -18,7 +18,7 @@
     <a class="md-icon-btn" href="{{ back_url }}" aria-label="{% translate 'Back to editions' %}" title="{% translate 'Back to editions' %}">
       <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
     </a>
-    <h1 class="md-headline-small mb-0">{{ edition.publishing.publishing_title }} #{{ edition.number }} {{ edition.variant }}</h1>
+    <h1 class="md-headline-small mb-0">{{ edition.short_name }}</h1>
   </div>
   {% if user.is_staff %}
     <a class="md-btn md-btn--tonal" href="{% url 'manage_edition_edit' edition.pk %}?next={{ request.get_full_path|urlencode }}">
@@ -43,6 +43,7 @@
         <dt>{% translate "Cover price" %}</dt><dd>${{ edition.cover_price }}</dd>
         {% if edition.ratio %}<dt>Ratio</dt><dd>{{ edition.ratio }} · {% translate "Incentive cover" %}</dd>{% endif %}
         {% if edition.limited_to %}<dt>{% translate "Limited to" %}</dt><dd>{{ edition.limited_to }}</dd>{% endif %}
+        {% if edition.event_exclusive %}<dt>{% translate "Event exclusive" %}</dt><dd>{{ edition.event_exclusive }}</dd>{% endif %}
         {% if edition.retailer_exclusive %}<dt>{% translate "Retailer exclusive" %}</dt><dd>{{ edition.retailer_exclusive }}</dd>{% endif %}
         {% if edition.notes %}<dt>{% translate "Notes" %}</dt><dd>{{ edition.notes|linebreaksbr }}</dd>{% endif %}
       </dl>
@@ -129,7 +130,7 @@
       <h2 class="md-title-medium mb-3">{% translate "Cover" %}</h2>
       <div class="edition-cover-preview">
         {% if edition.thumbnail %}
-          <img src="{{ edition.thumbnail.url }}" alt="{{ edition.publishing.publishing_title }} #{{ edition.number }} {{ edition.variant }}">
+          <img src="{{ edition.thumbnail.url }}" alt="{{ edition.short_name }}">
         {% else %}
           <span class="material-symbols-outlined" aria-hidden="true">image</span>
         {% endif %}

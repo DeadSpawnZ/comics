@@ -38,7 +38,7 @@ def _edition_payload(edition):
     return {
         "id": edition.id,
         "title": edition.publishing.publishing_title,
-        "detail": f"#{edition.number} {edition.variant} · {edition.printing}".strip(),
+        "detail": f"#{edition.number} {edition.variant_label} · {edition.printing}".strip(),
         "thumbnail": edition.thumbnail.url if edition.thumbnail else None,
     }
 

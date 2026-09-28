@@ -246,6 +246,11 @@ class Edition(Model):
         blank=True,
         help_text="Store the cover is exclusive to (retailer exclusive). Empty for regular and incentive covers.",
     )
+    event_exclusive = CharField(
+        max_length=60,
+        blank=True,
+        help_text="Event the cover is exclusive to (e.g. SDCC 2025). It can also have a store and a variant.",
+    )
     cover_price = DecimalField(max_digits=8, decimal_places=2, default=0.00)
     format = CharField(max_length=20, choices=FormatChoices, default=FormatChoices.SINGLE_ISSUE)
     release_date = DateField(default=datetime.now)
@@ -267,8 +272,9 @@ class Edition(Model):
     class Meta:
         constraints = [
             UniqueConstraint(
-                fields=["publishing", "number", "variant", "printing"],
-                name="unique_edition_publishing_number_variant_printing",
+                # Event and store are part of the identity: two exclusives may share the variant letter (or have none).
+                fields=["publishing", "number", "variant", "printing", "retailer_exclusive", "event_exclusive"],
+                name="unique_edition_publishing_number_variant_printing_exclusives",
             ),
         ]
 
@@ -283,7 +289,7 @@ class Edition(Model):
         comic_name = """{publishing_title} #{number} {variant} {serie} {printing} {country}-{language} {year}""".format(
             publishing_title=self.publishing.publishing_title,
             number=str(self.number),
-            variant=self.variant,
+            variant=self.variant_label,
             serie=self.publishing.serie,
             printing=self.printing,
             country=country_code,
@@ -299,11 +305,27 @@ class Edition(Model):
         ("regular", _("Regular covers")),
         ("incentive", _("Incentive covers")),
         ("retailer_exclusive", _("Retailer exclusives")),
+        ("event_exclusive", _("Event exclusives")),
     )
 
     @property
+    def variant_label(self):
+        """How the cover is named: "event · store · variant", leaving out the empty parts
+        (e.g. "SDCC 2025 · Unknown Comics · B")."""
+        parts = (self.event_exclusive, self.retailer_exclusive, self.variant)
+        return " · ".join(part.strip() for part in parts if part and part.strip())
+
+    @property
+    def short_name(self):
+        """Title, number and cover, e.g. "Spawn #1 SDCC 2025 · B"."""
+        return f"{self.publishing.publishing_title} #{self.number} {self.variant_label}".strip()
+
+    @property
     def cover_kind(self):
-        """Retailer exclusive if a store is set; incentive if it has a 1:N ratio; regular otherwise."""
+        """Event exclusive if an event is set (even with a store); retailer exclusive if a store is
+        set; incentive if it has a 1:N ratio; regular otherwise."""
+        if self.event_exclusive.strip():
+            return "event_exclusive"
         if self.retailer_exclusive.strip():
             return "retailer_exclusive"
         if self.ratio.strip():
@@ -342,6 +364,8 @@ class Edition(Model):
             Edition.objects.filter(publishing__publishing_title__exact=self.publishing.publishing_title)
             .filter(number=self.number)
             .filter(variant=self.variant)
+            .filter(retailer_exclusive=self.retailer_exclusive)
+            .filter(event_exclusive=self.event_exclusive)
             .filter(publishing__serie__exact=self.publishing.serie)
             .filter(printing=self.printing)
             .filter(publishing__year__exact=self.publishing.year)
@@ -360,6 +384,8 @@ class Edition(Model):
 
     def process_variant(self):
         self.variant = self.variant.upper().strip()
+        self.retailer_exclusive = self.retailer_exclusive.strip()
+        self.event_exclusive = self.event_exclusive.strip()
 
     def process_image(self) -> None:
         if self.pk:

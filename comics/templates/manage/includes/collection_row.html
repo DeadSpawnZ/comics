@@ -10,7 +10,7 @@
   </div>
   <div class="manage-row__main">
     <a class="manage-row__title" href="{% url 'manage_collection_edit' piece.pk %}?next={{ request.get_full_path|urlencode }}">
-      {{ piece.edition.publishing.publishing_title }} #{{ piece.edition.number }} {{ piece.edition.variant }}
+      {{ piece.edition.short_name }}
     </a>
     <div class="md-body-medium">
       {{ piece.trade_date }} · ${{ piece.amount }} MXN · {{ piece.participant|default:"—" }} · {{ piece.collector.username }}

@@ -73,6 +73,11 @@ def edition_list(request):
     return render(request, "manage/edition_list.html", edition_catalog_context(request))
 
 
+def _distinct_values(field):
+    """Non-empty values already used in an Edition text field, sorted (for datalist suggestions)."""
+    return Edition.objects.exclude(**{field: ""}).order_by(field).values_list(field, flat=True).distinct()
+
+
 def _add_row_details(editions):
     """Set what the list rows show: `linked_elsewhere` (issue from another series) and `compiled_count`."""
     editions = list(editions)
@@ -98,7 +103,12 @@ def edition_catalog_context(request):
         is_compilation_flag=Exists(CollectedIssue.objects.filter(edition=OuterRef("pk")))
     )
     if query:
-        base = base.filter(Q(publishing__publishing_title__icontains=query) | Q(number__iexact=query))
+        base = base.filter(
+            Q(publishing__publishing_title__icontains=query)
+            | Q(number__iexact=query)
+            | Q(event_exclusive__icontains=query)
+            | Q(retailer_exclusive__icontains=query)
+        )
     if format_filter:
         base = base.filter(format=format_filter)
 
@@ -228,6 +238,8 @@ def edition_form(request, pk=None):
             "issue_publishing_id": issue_publishing_id,
             "issue_options": issue_options,
             "publishing_options": publishing_choices(),
+            "event_options": _distinct_values("event_exclusive"),
+            "retailer_options": _distinct_values("retailer_exclusive"),
             "sibling_editions": sibling_editions,
             "sibling_groups": Edition.group_by_cover_kind(sibling_editions),
             "own_option": own_option,

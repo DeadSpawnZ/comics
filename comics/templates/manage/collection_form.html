@@ -4,7 +4,7 @@
 {% block breadcrumb %}
 <a href="{{ back_url }}">{% translate "Collections" %}</a>
 <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
-<span class="is-current">{% if piece %}{{ piece.edition.publishing.publishing_title }} #{{ piece.edition.number }} {{ piece.edition.variant }}{% else %}{% translate "New piece" %}{% endif %}</span>
+<span class="is-current">{% if piece %}{{ piece.edition.short_name }}{% else %}{% translate "New piece" %}{% endif %}</span>
 {% endblock %}
 
 {% block manage_content %}

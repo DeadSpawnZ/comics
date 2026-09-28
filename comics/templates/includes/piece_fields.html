@@ -69,7 +69,7 @@ Params: form (CollectionEntryForm), selected_edition (for the cover preview).
         <span class="material-symbols-outlined" aria-hidden="true" id="piece-cover-placeholder" {% if selected_edition.thumbnail %}hidden{% endif %}>image</span>
       </div>
       <div class="md-body-medium text-center" id="piece-cover-title">
-        {% if selected_edition %}{{ selected_edition.publishing.publishing_title }} #{{ selected_edition.number }} {{ selected_edition.variant }}{% else %}{% translate "Choose an edition" %}{% endif %}
+        {% if selected_edition %}{{ selected_edition.short_name }}{% else %}{% translate "Choose an edition" %}{% endif %}
       </div>
     </div>
   </div>

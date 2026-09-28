@@ -168,6 +168,7 @@ class EditionManageForm(forms.ModelForm):
             "ratio",
             "limited_to",
             "retailer_exclusive",
+            "event_exclusive",
             "image",
             "cover_artists",
             "notes",
@@ -182,7 +183,8 @@ class EditionManageForm(forms.ModelForm):
             "cover_price": _("Cover price"),
             "ratio": "Ratio",
             "limited_to": _("Limited to"),
-            "retailer_exclusive": _("Retailer exclusive (store)"),
+            "retailer_exclusive": _("Store (exclusive)"),
+            "event_exclusive": _("Event (exclusive)"),
             "image": _("Cover"),
             "cover_artists": _("Cover artists"),
             "notes": _("Notes"),
@@ -195,7 +197,9 @@ class EditionManageForm(forms.ModelForm):
         }
         error_messages = {
             NON_FIELD_ERRORS: {
-                "unique_together": _("An edition with that publishing, number, variant and printing already exists."),
+                "unique_together": _(
+                    "An edition with that publishing, number, variant, printing, event and store already exists."
+                ),
             },
         }
 
@@ -205,6 +209,9 @@ class EditionManageForm(forms.ModelForm):
         publishing.queryset = publishings_for_select()
         publishing.label_from_instance = publishing_label
         publishing.widget.attrs["data-combobox"] = ""
+        # Suggest the events and stores already used, so they are typed the same way.
+        self.fields["event_exclusive"].widget.attrs["list"] = "event-options"
+        self.fields["retailer_exclusive"].widget.attrs["list"] = "retailer-options"
         if not self.instance.pk:
             # New editions: offer the recent publishings first (they repeat in the full list).
             publishing.widget.choices = [
@@ -326,7 +333,7 @@ class PublishingManageForm(forms.ModelForm):
 
 def edition_label(edition):
     """Short edition label without extra queries (needs publishing selected)."""
-    variant = f" {edition.variant}" if edition.variant else ""
+    variant = f" {edition.variant_label}" if edition.variant_label else ""
     return f"#{edition.number}{variant} · {edition.get_printing_display()} · {edition.get_format_display()}"
 
 
