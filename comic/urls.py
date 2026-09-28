@@ -20,9 +20,8 @@ from django.urls import include, path, re_path
 from django.views.i18n import JavaScriptCatalog
 from django.conf import settings
 from django.views.static import serve as serve_static
-from django.views.generic import RedirectView
 from comics.views import (
-    collection, collection_entries, publishing, login, collectables, manage, manage_arcs, manage_editions, manage_publishings, my_comics)
+    collection, collection_entries, publishing, login, collectables, manage, manage_arcs, manage_editions, manage_home, manage_publishings, my_comics)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -44,7 +43,7 @@ urlpatterns = [
     path("comics/connectings/", my_comics.connecting_list, name="comics_connectings"),
     path("comics/connectings/<int:pk>/", my_comics.connecting_detail, name="comics_connecting_detail"),
     path("collectables/", collectables.collectables_view, name="collectables"),
-    path("gestion/", RedirectView.as_view(pattern_name="manage_editions"), name="manage_home"),
+    path("gestion/", manage_home.manage_home, name="manage_home"),
     path("gestion/ediciones/", manage_editions.edition_list, name="manage_editions"),
     path("gestion/ediciones/nueva/", manage_editions.edition_form, name="manage_edition_new"),
     path("gestion/ediciones/<int:pk>/", manage_editions.edition_form, name="manage_edition_edit"),

@@ -13,6 +13,14 @@
     <div class="md-side-nav__title">{% translate "Management" %}</div>
     <ul>
       <li>
+        <a class="md-side-nav__link {% if url_name == 'manage_home' %}is-active{% endif %}"
+           {% if url_name == 'manage_home' %}aria-current="page"{% endif %}
+           href="{% url 'manage_home' %}">
+          <span class="material-symbols-outlined" aria-hidden="true">home</span>
+          {% translate "Home" %}
+        </a>
+      </li>
+      <li>
         <a class="md-side-nav__link {% if 'collection' in url_name %}is-active{% endif %}"
            {% if 'collection' in url_name %}aria-current="page"{% endif %}
            href="{% url 'manage_collections' %}">

@@ -622,3 +622,118 @@
   outline: 2px solid var(--md-primary);
   outline-offset: 2px;
 }
+
+/* ---------- Gestión home: counts and change history ---------- */
+.home-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.75rem;
+}
+
+.home-stat {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 0.75rem;
+  align-items: center;
+  padding: 0.875rem 1rem;
+  border-radius: 16px;
+  background-color: var(--md-surface-container-low);
+  color: var(--md-on-surface);
+  text-decoration: none;
+}
+
+.home-stat:hover {
+  background-color: var(--md-surface-container);
+}
+
+.home-stat .material-symbols-outlined {
+  grid-row: span 2;
+  font-size: 1.75rem;
+  color: var(--md-primary);
+}
+
+.home-stat__count {
+  font-size: 1.375rem;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.home-stat__label {
+  font-size: 0.8125rem;
+  color: var(--md-on-surface-variant);
+}
+
+.history-day {
+  padding: 0.75rem 1.25rem 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--md-primary);
+}
+
+.history-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.history-entry {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.5rem 1.25rem;
+  border-bottom: 1px solid var(--md-outline-variant);
+}
+
+.history-entry__icon {
+  font-size: 1.375rem;
+}
+
+.history-entry__icon.is-addition {
+  color: #1e7a3a;
+}
+
+.history-entry__icon.is-change {
+  color: var(--md-primary);
+}
+
+.history-entry__icon.is-deletion {
+  color: var(--md-error);
+}
+
+:root[data-bs-theme="dark"] .history-entry__icon.is-addition {
+  color: #7fd99a;
+}
+
+.history-entry__title {
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-entry__title a {
+  color: var(--md-on-surface);
+  text-decoration: none;
+}
+
+.history-entry__title a:hover {
+  color: var(--md-primary);
+  text-decoration: underline;
+}
+
+.history-entry__external {
+  font-size: 1rem;
+  vertical-align: middle;
+  color: var(--md-on-surface-variant);
+}
+
+.history-entry__meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  white-space: nowrap;
+}
