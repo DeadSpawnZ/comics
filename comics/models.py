@@ -310,14 +310,14 @@ class Edition(Model):
 
     @property
     def variant_label(self):
-        """How the cover is named: "event · store · variant", leaving out the empty parts
-        (e.g. "SDCC 2025 · Unknown Comics · B")."""
+        """How the cover is named: "event store variant", leaving out the empty parts
+        (e.g. "SDCC 2025 Unknown Comics B")."""
         parts = (self.event_exclusive, self.retailer_exclusive, self.variant)
-        return " · ".join(part.strip() for part in parts if part and part.strip())
+        return " ".join(part.strip() for part in parts if part and part.strip())
 
     @property
     def short_name(self):
-        """Title, number and cover, e.g. "Spawn #1 SDCC 2025 · B"."""
+        """Title, number and cover, e.g. "Spawn #1 SDCC 2025 B"."""
         return f"{self.publishing.publishing_title} #{self.number} {self.variant_label}".strip()
 
     @property
