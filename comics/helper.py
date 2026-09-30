@@ -1,10 +1,11 @@
 import io
 
+from django.core.files import File
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from PIL import Image
 
 
-def generate_image_jpge(base_name, image) -> InMemoryUploadedFile:
+def generate_image_jpge(base_name: str, image: File | None) -> InMemoryUploadedFile | None:
     if not image:
         return
 

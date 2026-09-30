@@ -7,7 +7,7 @@ VALID_PRINTINGS = {choice.value for choice in Edition.PrintingChoices}
 
 
 @transaction.atomic
-def populate_comic_printing_field():
+def populate_comic_printing_field() -> None:
     comics = Edition.objects.select_related("publishing__printing").all()
     updated = 0
     skipped = 0

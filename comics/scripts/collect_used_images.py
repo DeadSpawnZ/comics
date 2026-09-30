@@ -4,7 +4,7 @@ from pathlib import Path
 from comics.models import Edition
 
 
-def collect_used_image_paths(output_file="used_images.txt"):
+def collect_used_image_paths(output_file: str = "used_images.txt") -> None:
     used_files = set()
 
     for edition in Edition.objects.all():
