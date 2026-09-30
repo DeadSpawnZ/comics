@@ -536,7 +536,7 @@ class Collection(Model):
         SELLING = "selling", _("Selling")
 
     collector = ForeignKey(User, on_delete=PROTECT)
-    edition = ForeignKey(Edition, on_delete=PROTECT, null=True)
+    edition = ForeignKey(Edition, on_delete=PROTECT)
     amount = DecimalField(max_digits=8, decimal_places=2, default=0.00)
     trade_date = DateField(default=datetime.now)
     trade_type = CharField(max_length=50, choices=TradeChoices.choices, default=TradeChoices.BUYING)

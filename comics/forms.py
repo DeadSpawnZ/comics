@@ -53,7 +53,7 @@ class CollectionForm(forms.ModelForm):
                 pass
 
         # EDIT: existing object
-        elif self.instance.pk and self.instance.edition:
+        elif self.instance.pk:
             publishing = self.instance.edition.publishing
             self.fields["edition"].queryset = Edition.objects.filter(publishing=publishing).order_by(
                 "number", "variant"
@@ -68,8 +68,8 @@ class CollectionForm(forms.ModelForm):
         if self.instance.previous_trade:
             self.initial["previous_trade"] = self.instance.previous_trade
 
-        if self.instance.edition:
-            edition_id = self.instance.edition.id
+        if self.instance.edition_id:
+            edition_id = self.instance.edition_id
             used_previous_trades_ids = (
                 Collection.objects.filter(edition_id=edition_id)
                 .exclude(previous_trade=None)
@@ -444,7 +444,6 @@ class CollectionEntryForm(forms.ModelForm):
             self.fields["collector"].queryset = self.fields["collector"].queryset.order_by("username")
 
         edition = self.fields["edition"]
-        edition.required = True
         edition.queryset = Edition.objects.select_related("publishing")
         edition.label_from_instance = edition_label
         self.fields["participant"].queryset = Dealer.objects.order_by("name")

@@ -46,9 +46,7 @@ def collectable(request: HttpRequest, collectable_id: int) -> HttpResponse | Non
 def _attach_sibling_editions(collections: Sequence[Collection], user: User) -> None:
     """Set `collection.sibling_editions`: the other editions of the same issue (variants, printings,
     foreign or anniversary editions), each flagged with `owned`. Two queries for the whole page."""
-    issue_ids = {
-        collection.edition.issue_id for collection in collections if collection.edition and collection.edition.issue_id
-    }
+    issue_ids = {collection.edition.issue_id for collection in collections if collection.edition.issue_id}
     by_issue = {}
     if issue_ids:
         editions = (
@@ -66,7 +64,7 @@ def _attach_sibling_editions(collections: Sequence[Collection], user: User) -> N
             by_issue.setdefault(edition.issue_id, []).append(edition)
     for collection in collections:
         edition = collection.edition
-        siblings = by_issue.get(edition.issue_id, []) if edition else []
+        siblings = by_issue.get(edition.issue_id, [])
         collection.sibling_editions = [sibling for sibling in siblings if sibling.id != edition.id]
         collection.sibling_groups = Edition.group_by_cover_kind(collection.sibling_editions)
 
