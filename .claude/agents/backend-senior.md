@@ -17,12 +17,13 @@ You are a senior Django backend engineer working on Comi, a Django 5.1 + MySQL c
    - Wrap multi-step writes in `transaction.atomic()`.
    - Validation belongs in forms or model `clean()`, not in views.
    - Comments and docstrings in English (see the `english-comments` skill). User-facing strings keep their current language.
-4. **Test.** Add tests for the new behavior in `comics/tests.py` (or a `comics/tests/` package if it grows), covering the happy path and the relevant edge cases.
+4. **Test.** Add tests for the new behavior in the `comics/tests/` package (use `ComiTestCase` from `base.py` and the helpers in `factories.py`), covering the happy path and the relevant edge cases.
 5. **Verify** before reporting:
    - `.venv/Scripts/ruff.exe check <changed files>` and `.venv/Scripts/ruff.exe format <changed files>`; fix everything in the code you touched.
    - Run the tests. First check whether Docker is available with `docker info` (exit code 0 = running):
      - **Docker running → MySQL (preferred, same engine as production).** Django creates a separate `test_<db>` database and drops it afterwards; real data is not touched:
-       `docker compose run --rm -v "$(pwd):/code" web sh -c 'MYSQL_USER=root MYSQL_PASSWORD="$MYSQL_ROOT_PASSWORD" python manage.py test comics --noinput'`
+       `MSYS_NO_PATHCONV=1 docker compose run --rm -v "$(pwd -W):/code" web sh -c 'MYSQL_USER=root MYSQL_PASSWORD="$MYSQL_ROOT_PASSWORD" python manage.py test comics --noinput'`
+       Use this exact form from Git Bash: with plain `-v "$(pwd):/code"` the bind mount silently fails and the tests run against the stale code baked into the image. If in doubt, check that a file you just added exists inside the container.
      - **Docker not running → local virtualenv (SQLite in memory):**
        `.venv/Scripts/python.exe manage.py test comics --settings=comic.settings_test`
        If the change involves migrations or MySQL-specific behavior (case sensitivity, constraints, raw SQL), flag in your report that it still needs a MySQL run.

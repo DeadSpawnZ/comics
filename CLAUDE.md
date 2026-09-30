@@ -7,6 +7,7 @@
 
 - There is no system Python. A `uv`-managed virtualenv lives in `.venv/` (Python 3.11, same as the Dockerfile) with `requirements-dev.txt` installed.
 - Tests: if Docker is running (`docker info`), run them in Docker against MySQL; otherwise fall back to `.venv/Scripts/python.exe manage.py test comics --settings=comic.settings_test` (SQLite in memory). The MySQL run stays authoritative for migrations and DB-specific behavior.
+- Docker from Git Bash: mounting the working tree needs `MSYS_NO_PATHCONV=1` and a Windows path, e.g. `MSYS_NO_PATHCONV=1 docker compose run --rm -v "$(pwd -W):/code" web sh -c 'MYSQL_USER=root MYSQL_PASSWORD="$MYSQL_ROOT_PASSWORD" python manage.py test comics --noinput'`. Plain `-v "$(pwd):/code"` silently mounts nothing, so the command runs the stale code baked into the image. The same applies to container paths in other commands (e.g. `docker compose exec db rm /tmp/x`).
 - New dependencies go pinned into `requirements.txt` (runtime) or `requirements-dev.txt` (dev/test), then `uv pip install --python .venv/Scripts/python.exe -r requirements-dev.txt`.
 
 ## Backend feature workflow
