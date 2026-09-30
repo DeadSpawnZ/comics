@@ -17,7 +17,7 @@ from django.db.models import (
 )
 from django.db.models.functions import Cast
 from django.http import HttpRequest, HttpResponse, JsonResponse
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import render
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_GET
 
@@ -25,23 +25,6 @@ from comics.helper import parse_date_or_none
 from comics.models import Collection, Edition, Editorial, Signature
 
 PAGE_LIMIT = 30
-
-
-def collectable(request: HttpRequest, collectable_id: int) -> HttpResponse | None:
-    collectable_obj = get_object_or_404(Collection, pk=collectable_id)
-    try:
-        # selected_choice = collectable.choice_set.get(pk=request.POST["choice"])
-        return render(
-            request,
-            "collection.html",
-            {
-                "collectable": collectable_obj,
-                "error_message": "You didn't select a choice.",
-            },
-        )
-    except Exception as ex:
-        print(str(ex))
-        pass
 
 
 def _attach_sibling_editions(collections: Sequence[Collection], user: User) -> None:
