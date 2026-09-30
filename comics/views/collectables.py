@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import Q
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 
 from comics.models import GeekCollectable
@@ -9,7 +12,7 @@ PAGE_LIMIT = 30
 
 
 @login_required
-def collectables_view(request):
+def collectables_view(request: HttpRequest) -> HttpResponse:
     letter = request.GET.get("letter")
     search = request.GET.get("search")
 

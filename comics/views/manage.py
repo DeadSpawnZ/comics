@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import json
+from typing import Any
 
 from django import forms
 from django.contrib.admin.models import ADDITION, CHANGE, LogEntry
@@ -6,7 +9,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Count
-from django.http import JsonResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils.translation import gettext as _
@@ -14,7 +17,7 @@ from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_GET
 
 from comics.forms import publishing_choices
-from comics.models import Connecting, Edition
+from comics.models import Connecting, Edition, Issue
 
 
 class ConnectingForm(forms.ModelForm):
@@ -30,12 +33,12 @@ class ConnectingForm(forms.ModelForm):
         error_messages = {"name": {"unique": gettext_lazy("A connecting with that name already exists.")}}
 
 
-def _number_sort_key(edition):
+def _number_sort_key(edition: Edition | Issue) -> tuple[int, int, str]:
     number = edition.number.strip()
     return (0, int(number), "") if number.isdigit() else (1, 0, number)
 
 
-def _edition_payload(edition):
+def _edition_payload(edition: Edition) -> dict[str, Any]:
     return {
         "id": edition.id,
         "title": edition.publishing.publishing_title,
@@ -45,7 +48,7 @@ def _edition_payload(edition):
 
 
 @staff_member_required
-def connecting_list(request):
+def connecting_list(request: HttpRequest) -> HttpResponse:
     connectings = Connecting.objects.annotate(piece_count=Count("pieces")).order_by("name")
     cards = [
         {
@@ -60,7 +63,7 @@ def connecting_list(request):
 
 
 @staff_member_required
-def connecting_editor(request, pk=None):
+def connecting_editor(request: HttpRequest, pk: int | None = None) -> HttpResponse:
     connecting = get_object_or_404(Connecting, pk=pk) if pk else None
 
     if request.method == "POST":
@@ -96,7 +99,7 @@ def connecting_editor(request, pk=None):
     )
 
 
-def _save_connecting(request, connecting):
+def _save_connecting(request: HttpRequest, connecting: Connecting | None) -> JsonResponse:
     try:
         payload = json.loads(request.body)
     except ValueError:
@@ -136,7 +139,7 @@ def _save_connecting(request, connecting):
 
 @staff_member_required
 @require_GET
-def publishing_comics(request):
+def publishing_comics(request: HttpRequest) -> JsonResponse:
     try:
         publishing_id = int(request.GET.get("publishing", ""))
     except ValueError:

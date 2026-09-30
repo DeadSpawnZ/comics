@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from urllib.parse import urlencode
 
 from django.contrib import messages
@@ -7,6 +9,7 @@ from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Count, ProtectedError, Q
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.translation import gettext as _
@@ -18,7 +21,7 @@ from comics.views.manage_editions import PAGE_SIZE, RECENT_COUNT, _log, _safe_ne
 
 
 @staff_member_required
-def publishing_list(request):
+def publishing_list(request: HttpRequest) -> HttpResponse:
     query = request.GET.get("q", "").strip()
     language = request.GET.get("language", "")
 
@@ -52,7 +55,7 @@ def publishing_list(request):
 
 
 @staff_member_required
-def publishing_form(request, pk=None):
+def publishing_form(request: HttpRequest, pk: int | None = None) -> HttpResponse:
     publishing = get_object_or_404(Publishing, pk=pk) if pk else None
     back_url = _safe_next(request, reverse("manage_publishings"))
     form = PublishingManageForm(request.POST or None, instance=publishing)
@@ -95,7 +98,7 @@ def publishing_form(request, pk=None):
 
 @staff_member_required
 @require_POST
-def publishing_delete(request, pk):
+def publishing_delete(request: HttpRequest, pk: int) -> HttpResponseRedirect:
     publishing = get_object_or_404(Publishing, pk=pk)
     label = publishing_label(publishing)
     back_url = _safe_next(request, reverse("manage_publishings"))

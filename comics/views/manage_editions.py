@@ -1,4 +1,8 @@
+from __future__ import annotations
+
 import json
+from collections.abc import Iterable
+from typing import Any
 from urllib.parse import urlencode
 
 from django.contrib import messages
@@ -7,8 +11,8 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db import transaction
-from django.db.models import Exists, OuterRef, ProtectedError, Q
-from django.http import JsonResponse
+from django.db.models import Exists, Model, OuterRef, ProtectedError, Q, QuerySet
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonResponse, QueryDict
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -31,24 +35,24 @@ TYPE_TABS = [
 ]
 
 
-def _log(request, edition, flag, message):
+def _log(request: HttpRequest, edition: Model, flag: int, message: str) -> None:
     LogEntry.objects.log_actions(
         user_id=request.user.pk, queryset=[edition], action_flag=flag, change_message=message, single_object=True
     )
 
 
-def _safe_next(request, fallback):
+def _safe_next(request: HttpRequest, fallback: str) -> str:
     target = request.POST.get("next") or request.GET.get("next")
     if target and url_has_allowed_host_and_scheme(target, allowed_hosts={request.get_host()}):
         return target
     return fallback
 
 
-def _issue_payload(issue):
+def _issue_payload(issue: Issue) -> dict[str, Any]:
     return {"id": issue.id, "label": str(issue), "number": issue.number}
 
 
-def _own_issue_parts(form, edition):
+def _own_issue_parts(form: EditionManageForm, edition: Edition | None) -> tuple[int | None, str]:
     """Publishing id and number the edition has in the form (submitted or saved): they define its own issue."""
     if form.is_bound:
         publishing_id, number = form.data.get("publishing"), form.data.get("number", "")
@@ -64,22 +68,22 @@ def _own_issue_parts(form, edition):
         return None, number.strip()
 
 
-def _issues_for_publishing(publishing_id):
+def _issues_for_publishing(publishing_id: int) -> list[Issue]:
     issues = Issue.objects.filter(publishing_id=publishing_id).select_related("publishing")
     return sorted(issues, key=_number_sort_key)
 
 
 @staff_member_required
-def edition_list(request):
+def edition_list(request: HttpRequest) -> HttpResponse:
     return render(request, "manage/edition_list.html", edition_catalog_context(request))
 
 
-def _distinct_values(field):
+def _distinct_values(field: str) -> QuerySet[Edition, str]:
     """Non-empty values already used in an Edition text field, sorted (for datalist suggestions)."""
     return Edition.objects.exclude(**{field: ""}).order_by(field).values_list(field, flat=True).distinct()
 
 
-def _add_row_details(editions):
+def _add_row_details(editions: Iterable[Edition]) -> None:
     """Set what the list rows show: `linked_elsewhere` (issue from another series) and `compiled_count`."""
     editions = list(editions)
     compiled_counts = {}
@@ -93,7 +97,7 @@ def _add_row_details(editions):
         edition.compiled_count = compiled_counts.get(edition.id, 0)
 
 
-def edition_catalog_context(request):
+def edition_catalog_context(request: HttpRequest) -> dict[str, Any]:
     """Filtered, paginated edition catalog (type tabs, format, search). Shared by Gestión and
     the read-only Comics module."""
     query = request.GET.get("q", "").strip()
@@ -144,7 +148,7 @@ def edition_catalog_context(request):
     }
 
 
-def sibling_editions_of(edition):
+def sibling_editions_of(edition: Edition) -> list[Edition]:
     """Other editions of the same issue (empty for compilations)."""
     if not edition.issue_id:
         return []
@@ -157,7 +161,7 @@ def sibling_editions_of(edition):
 
 
 @staff_member_required
-def edition_form(request, pk=None):
+def edition_form(request: HttpRequest, pk: int | None = None) -> HttpResponse:
     edition = get_object_or_404(Edition.objects.select_related("issue__publishing"), pk=pk) if pk else None
     list_url = reverse("manage_editions")
     back_url = _safe_next(request, list_url)
@@ -262,7 +266,7 @@ def edition_form(request, pk=None):
     )
 
 
-def _clean_content(data, content):
+def _clean_content(data: QueryDict, content: str) -> tuple[int | None, list[int], list[str]]:
     """Validate the content section: single issue (or automatic) or list of collected issues."""
     errors = []
     issue_id = None
@@ -295,7 +299,7 @@ def _clean_content(data, content):
 
 
 @transaction.atomic
-def _save_edition(form, content, issue_id, collected_ids):
+def _save_edition(form: EditionManageForm, content: str, issue_id: int | None, collected_ids: list[int]) -> Edition:
     edition = form.save(commit=False)
     if content == CONTENT_COMPILATION:
         edition.save()
@@ -318,7 +322,7 @@ def _save_edition(form, content, issue_id, collected_ids):
 
 @staff_member_required
 @require_POST
-def edition_delete(request, pk):
+def edition_delete(request: HttpRequest, pk: int) -> HttpResponseRedirect:
     edition = get_object_or_404(Edition, pk=pk)
     label = str(edition)
     issue_id = edition.issue_id
@@ -352,7 +356,7 @@ def edition_delete(request, pk):
 
 @staff_member_required
 @require_GET
-def publishing_issues(request):
+def publishing_issues(request: HttpRequest) -> JsonResponse:
     try:
         publishing_id = int(request.GET.get("publishing", ""))
     except ValueError:

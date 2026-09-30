@@ -1,5 +1,10 @@
+from __future__ import annotations
+
+from collections.abc import Sequence
+
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.core.paginator import Paginator
 from django.db.models import (
     Case,
@@ -11,7 +16,7 @@ from django.db.models import (
     When,
 )
 from django.db.models.functions import Cast
-from django.http import JsonResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.utils.dateparse import parse_date
 from django.views.decorators.http import require_GET
@@ -21,7 +26,7 @@ from comics.models import Collection, Edition, Editorial, Signature
 PAGE_LIMIT = 30
 
 
-def collectable(request, collectable_id):
+def collectable(request: HttpRequest, collectable_id: int) -> HttpResponse | None:
     collectable_obj = get_object_or_404(Collection, pk=collectable_id)
     try:
         # selected_choice = collectable.choice_set.get(pk=request.POST["choice"])
@@ -38,7 +43,7 @@ def collectable(request, collectable_id):
         pass
 
 
-def _attach_sibling_editions(collections, user):
+def _attach_sibling_editions(collections: Sequence[Collection], user: User) -> None:
     """Set `collection.sibling_editions`: the other editions of the same issue (variants, printings,
     foreign or anniversary editions), each flagged with `owned`. Two queries for the whole page."""
     issue_ids = {
@@ -67,7 +72,7 @@ def _attach_sibling_editions(collections, user):
 
 
 @login_required
-def comics_view(request):
+def comics_view(request: HttpRequest) -> HttpResponse:
     collector = request.user
     letter = request.GET.get("letter", "A")
     selected_country = request.GET.get("country")
@@ -141,7 +146,7 @@ def comics_view(request):
 # Used only by the admin collection form (collection_form_events.js): staff only.
 @staff_member_required
 @require_GET
-def get_previous_trades(request, edition_id):
+def get_previous_trades(request: HttpRequest, edition_id: int) -> JsonResponse:
     try:
         used_previous_trades_ids = (
             Collection.objects.filter(edition_id=edition_id)
