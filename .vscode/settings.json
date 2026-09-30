@@ -1,6 +1,7 @@
 {
     "editor.formatOnSave": true,
     "prettier.printWidth": 120,
+    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
     "[python]": {
         "editor.defaultFormatter": "charliermarsh.ruff",
         "editor.codeActionsOnSave": {
