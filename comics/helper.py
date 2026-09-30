@@ -1,8 +1,28 @@
+import datetime
 import io
 
 from django.core.files import File
 from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.utils.dateparse import parse_date
 from PIL import Image
+
+
+def parse_id_or_none(value: object) -> int | None:
+    """Parse a primary key from user input (or a model instance); None when it is empty or not a number."""
+    value = getattr(value, "pk", value)
+    try:
+        return int(value) if value not in (None, "") else None
+    except (TypeError, ValueError):
+        return None
+
+
+def parse_date_or_none(value: str | None) -> datetime.date | None:
+    """Parse a YYYY-MM-DD date from user input; None when it is empty, malformed or impossible
+    (parse_date returns None for a bad format but raises ValueError for e.g. 2024-02-30)."""
+    try:
+        return parse_date(value) if value else None
+    except ValueError:
+        return None
 
 
 def generate_image_jpge(base_name: str, image: File | None) -> InMemoryUploadedFile | None:

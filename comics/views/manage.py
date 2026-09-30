@@ -103,6 +103,9 @@ def _save_connecting(request: HttpRequest, connecting: Connecting | None) -> Jso
     try:
         payload = json.loads(request.body)
     except ValueError:
+        payload = None
+    # Valid JSON is not enough: it must be an object whose "pieces" (if any) is a list.
+    if not isinstance(payload, dict) or not isinstance(payload.get("pieces") or [], list):
         return JsonResponse({"errors": [_("The request is not valid.")]}, status=400)
 
     form = ConnectingForm(payload, instance=connecting)

@@ -19,7 +19,6 @@ from django.forms.models import BaseInlineFormSet
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.utils.dateparse import parse_date
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_GET, require_POST
 
@@ -31,6 +30,7 @@ from comics.forms import (
     edition_label,
     purchase_label,
 )
+from comics.helper import parse_date_or_none, parse_id_or_none
 from comics.models import Collection, Edition
 from comics.views.manage_editions import PAGE_SIZE, RECENT_COUNT, _log, _safe_next
 
@@ -73,7 +73,8 @@ def _save_entry(
 
 
 def _form_context(form: CollectionEntryForm, signatures: BaseInlineFormSet, piece: Collection | None) -> dict[str, Any]:
-    selected = form["edition"].value()
+    # The submitted value may be malformed; the form reports that, here it only means "no edition".
+    selected = parse_id_or_none(form["edition"].value())
     edition = Edition.objects.filter(pk=selected).first() if selected else None
     return {
         "form": form,
@@ -130,7 +131,7 @@ def api_purchases(request: HttpRequest) -> JsonResponse:
     current = None
     if request.GET.get("current", "").isdigit():
         current = Collection.objects.filter(pk=request.GET["current"], collector=collector).first()
-    purchases = available_purchases(collector, edition_id, parse_date(request.GET.get("before", "")), current)
+    purchases = available_purchases(collector, edition_id, parse_date_or_none(request.GET.get("before")), current)
     return JsonResponse({"results": [{"id": item.pk, "label": purchase_label(item)} for item in purchases]})
 
 

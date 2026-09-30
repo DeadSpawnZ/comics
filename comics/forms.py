@@ -9,6 +9,7 @@ from django.core.exceptions import NON_FIELD_ERRORS
 from django.db.models import QuerySet, prefetch_related_objects
 from django.utils.translation import gettext_lazy as _
 
+from .helper import parse_date_or_none, parse_id_or_none
 from .models import Collection, Dealer, Edition, Editorial, Publishing, ReadingArc, Signature, Title
 
 
@@ -372,8 +373,8 @@ def purchase_label(purchase: Collection) -> str:
 
 def available_purchases(
     collector: User,
-    edition_id: int | str,
-    before: datetime.date | str | None = None,
+    edition_id: int,
+    before: datetime.date | None = None,
     current: Collection | None = None,
 ) -> QuerySet[Collection]:
     """Purchases of `edition_id` that `collector` still owns (not sold yet) on or before `before`:
@@ -462,10 +463,10 @@ class CollectionEntryForm(forms.ModelForm):
 
         # The edition and purchase selects only list the options of the current choice; the page
         # reloads them (API) when the publishing, edition or date change. Validation uses the full querysets.
-        publishing_id = self._current("publishing") or (
+        publishing_id = self._current_id("publishing") or (
             self.instance.edition.publishing_id if self.instance.edition_id else None
         )
-        edition_id = self._current("edition") or self.instance.edition_id
+        edition_id = self._current_id("edition") or self.instance.edition_id
         if publishing_id is None and edition_id:
             publishing_id = Edition.objects.filter(pk=edition_id).values_list("publishing_id", flat=True).first()
         if publishing_id:
@@ -479,7 +480,7 @@ class CollectionEntryForm(forms.ModelForm):
         ]
         owner = collector or self._current_collector()
         purchases = (
-            available_purchases(owner, edition_id, self._current("trade_date"), self.instance)
+            available_purchases(owner, edition_id, self._current_date("trade_date"), self.instance)
             if owner and edition_id
             else []
         )
@@ -502,8 +503,20 @@ class CollectionEntryForm(forms.ModelForm):
         value = self.data.get(name) if self.is_bound else self.initial.get(name)
         return value or None
 
+    def _current_id(self, name: str) -> int | None:
+        """Current value of a choice field as an id; None if it is missing or not a valid id. A malformed
+        submission then narrows nothing here, and the field validation reports it."""
+        return parse_id_or_none(self._current(name))
+
+    def _current_date(self, name: str) -> datetime.date | None:
+        """Current value of a date field; None if it is missing or not a valid date."""
+        value = self._current(name)
+        if isinstance(value, datetime.date):
+            return value
+        return parse_date_or_none(str(value)) if value else None
+
     def _current_collector(self) -> User | None:
-        value = self._current("collector") or self.instance.collector_id
+        value = self._current_id("collector") or self.instance.collector_id
         return User.objects.filter(pk=value).first() if value else None
 
     def clean(self) -> dict[str, Any]:

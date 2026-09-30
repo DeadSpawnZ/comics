@@ -80,11 +80,11 @@ def arc_form(request: HttpRequest, pk: int | None = None) -> HttpResponse:
                     return redirect(f"{reverse('manage_arc_edit', args=[saved.pk])}?{urlencode({'next': back_url})}")
                 return redirect(back_url)
 
-        # Keep what the user submitted when the form is shown again with errors.
-        submitted = {
-            issue.pk: issue for issue in Issue.objects.filter(pk__in=[i for i in issue_ids if isinstance(i, int)])
-        }
-        items = [{"id": pk, "label": str(submitted[pk])} for pk in issue_ids if pk in submitted]
+        # Keep what the user submitted when the form is shown again with errors. Only real ids are
+        # kept: the list comes from the client and may hold anything (strings, lists, objects).
+        submitted_ids = [i for i in issue_ids if isinstance(i, int) and not isinstance(i, bool)]
+        submitted = {issue.pk: issue for issue in Issue.objects.filter(pk__in=submitted_ids)}
+        items = [{"id": pk, "label": str(submitted[pk])} for pk in submitted_ids if pk in submitted]
     else:
         items = [_entry_payload(entry) for entry in arc.entries_with_covers()] if arc else []
 
