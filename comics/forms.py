@@ -1,7 +1,12 @@
+from __future__ import annotations
+
+import datetime
+from typing import Any
+
 from django import forms
 from django.contrib.auth.models import User
 from django.core.exceptions import NON_FIELD_ERRORS
-from django.db.models import prefetch_related_objects
+from django.db.models import QuerySet, prefetch_related_objects
 from django.utils.translation import gettext_lazy as _
 
 from .models import Collection, Dealer, Edition, Editorial, Publishing, ReadingArc, Signature, Title
@@ -30,14 +35,14 @@ class CollectionForm(forms.ModelForm):
         help_text="Select a publishing to filter comics",
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
         self.filter_editions_by_publishing()
         self.fields["participant"].queryset = Dealer.objects.all().order_by("name")
         self.filter_previous_trade()
 
-    def filter_editions_by_publishing(self):
+    def filter_editions_by_publishing(self) -> None:
         if "publishing" in self.data:
             try:
                 publishing_id = int(self.data.get("publishing"))
@@ -55,7 +60,7 @@ class CollectionForm(forms.ModelForm):
             )
             self.initial["publishing"] = publishing
 
-    def filter_previous_trade(self):
+    def filter_previous_trade(self) -> None:
         # if not self.instance.pk:
         #     self.fields["previous_trade"].queryset = Edition.objects.none()
         #     return
@@ -105,7 +110,7 @@ class EditionForm(forms.ModelForm):
         model = Edition
         fields = "__all__"
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.fields["publishing"].queryset = Publishing.objects.order_by(
             "publishing_title",
@@ -114,7 +119,7 @@ class EditionForm(forms.ModelForm):
         )
 
 
-def publishing_label(publishing):
+def publishing_label(publishing: Publishing) -> str:
     """Label for publishing selects: title (year) series · language · editorials. The editorials
     tell apart publishings with the same title; prefetch them (see publishing_choices) to avoid
     one query per option."""
@@ -124,11 +129,11 @@ def publishing_label(publishing):
     return f"{label} · {editorials}" if editorials else label
 
 
-def publishings_for_select():
+def publishings_for_select() -> QuerySet[Publishing]:
     return Publishing.objects.prefetch_related("editorials").order_by("publishing_title", "year", "serie")
 
 
-def publishing_choices():
+def publishing_choices() -> list[tuple[int, str]]:
     """[(pk, label)] of every publishing, for selects."""
     return [(publishing.pk, publishing_label(publishing)) for publishing in publishings_for_select()]
 
@@ -137,7 +142,7 @@ RECENT_PUBLISHINGS = 8
 NEWEST_PUBLISHINGS = 3
 
 
-def recent_publishings():
+def recent_publishings() -> list[Publishing]:
     """Publishings most likely to get a new edition: the newest created ones (they are usually
     created right before adding their editions), then those of the most recently added editions."""
     recent = list(Publishing.objects.order_by("-id")[:NEWEST_PUBLISHINGS])
@@ -204,7 +209,7 @@ class EditionManageForm(forms.ModelForm):
             },
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         publishing = self.fields["publishing"]
         publishing.queryset = publishings_for_select()
@@ -235,7 +240,7 @@ class EditionManageForm(forms.ModelForm):
                 widget.attrs.update({"class": "form-control", "placeholder": field.label})
         self.fields["notes"].widget.attrs["style"] = "height: 90px"
 
-    def full_clean(self):
+    def full_clean(self) -> None:
         super().full_clean()
         for name in self.errors:
             if name in self.fields:
@@ -253,13 +258,13 @@ class ReadingArcForm(forms.ModelForm):
         widgets = {"notes": forms.Textarea(attrs={"rows": 3})}
         error_messages = {"name": {"unique": _("A reading arc with that name already exists.")}}
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
             field.widget.attrs.update({"class": "form-control", "placeholder": field.label})
         self.fields["notes"].widget.attrs["style"] = "height: 90px"
 
-    def full_clean(self):
+    def full_clean(self) -> None:
         super().full_clean()
         for name in self.errors:
             if name in self.fields:
@@ -300,7 +305,7 @@ class PublishingManageForm(forms.ModelForm):
             },
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         if self.instance.pk and self.instance.title_id:
             self.fields["title_name"].initial = self.instance.title.name
@@ -314,7 +319,7 @@ class PublishingManageForm(forms.ModelForm):
             else:
                 widget.attrs.update({"class": "form-control", "placeholder": field.label})
 
-    def clean(self):
+    def clean(self) -> dict[str, Any]:
         cleaned = super().clean()
         # Derive the year before the unique constraint is validated.
         if cleaned.get("publishing_title"):
@@ -323,7 +328,7 @@ class PublishingManageForm(forms.ModelForm):
             cleaned["year"] = cleaned["date"].year
         return cleaned
 
-    def save(self, commit=True):
+    def save(self, commit: bool = True) -> Publishing:
         publishing = super().save(commit=False)
         publishing.year = self.cleaned_data.get("year")
         name = (self.cleaned_data.get("title_name") or "").strip() or publishing.publishing_title.strip()
@@ -335,18 +340,23 @@ class PublishingManageForm(forms.ModelForm):
         return publishing
 
 
-def edition_label(edition):
+def edition_label(edition: Edition) -> str:
     """Short edition label without extra queries (needs publishing selected)."""
     variant = f" {edition.variant_label}" if edition.variant_label else ""
     return f"#{edition.number}{variant} · {edition.get_printing_display()} · {edition.get_format_display()}"
 
 
-def purchase_label(purchase):
+def purchase_label(purchase: Collection) -> str:
     participant = f" · {purchase.participant.name}" if purchase.participant_id else ""
     return f"{purchase.trade_date:%Y-%m-%d} · ${purchase.amount}{participant}"
 
 
-def available_purchases(collector, edition_id, before=None, current=None):
+def available_purchases(
+    collector: User,
+    edition_id: int | str,
+    before: datetime.date | str | None = None,
+    current: Collection | None = None,
+) -> QuerySet[Collection]:
     """Purchases of `edition_id` that `collector` still owns (not sold yet) on or before `before`:
     the ones a sale can point to as its previous trade. `current` (the sale being edited) keeps
     the purchase it already points to."""
@@ -405,7 +415,7 @@ class CollectionEntryForm(forms.ModelForm):
             },
         }
 
-    def __init__(self, *args, collector=None, **kwargs):
+    def __init__(self, *args: Any, collector: User | None = None, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.fixed_collector = collector
         if collector is not None:
@@ -469,16 +479,16 @@ class CollectionEntryForm(forms.ModelForm):
                 widget.attrs.update({"class": "form-control", "placeholder": field.label})
         self.fields["notes"].widget.attrs["style"] = "height: 90px"
 
-    def _current(self, name):
+    def _current(self, name: str) -> Any:
         """Submitted value (bound form) or initial value of a field."""
         value = self.data.get(name) if self.is_bound else self.initial.get(name)
         return value or None
 
-    def _current_collector(self):
+    def _current_collector(self) -> User | None:
         value = self._current("collector") or self.instance.collector_id
         return User.objects.filter(pk=value).first() if value else None
 
-    def clean(self):
+    def clean(self) -> dict[str, Any]:
         cleaned = super().clean()
         collector = self.fixed_collector or cleaned.get("collector")
         previous = cleaned.get("previous_trade")
@@ -495,13 +505,13 @@ class CollectionEntryForm(forms.ModelForm):
                 )
         return cleaned
 
-    def save(self, commit=True):
+    def save(self, commit: bool = True) -> Collection:
         if self.fixed_collector is not None:
             self.instance.collector = self.fixed_collector
         return super().save(commit)
 
 
-def _number_key(number):
+def _number_key(number: str) -> tuple[int, int, str]:
     number = number.strip()
     return (0, int(number), "") if number.isdigit() else (1, 0, number)
 
@@ -520,7 +530,7 @@ class SignatureForm(forms.ModelForm):
         }
         widgets = {"date": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d")}
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         artist = self.fields["artist"]
         artist.queryset = artist.queryset.order_by("name")
