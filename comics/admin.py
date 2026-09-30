@@ -7,8 +7,6 @@ from django.urls import path
 from django.utils.html import format_html
 
 from .forms import CollectionForm, EditionForm
-
-# Register your models here.
 from .models import (
     Artist,
     CollectedIssue,
@@ -49,7 +47,7 @@ admin.site.register(Signature)
 
 
 @admin.register(Dealer)
-class TitleAdmin(admin.ModelAdmin):
+class DealerAdmin(admin.ModelAdmin):
     list_display = ["name"]
     search_fields = ["name"]
 
