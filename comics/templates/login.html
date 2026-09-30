@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% block content %}
+
+<div class="my-4">
+  <div class="md-surface-card text-center py-5">
+    <span class="material-symbols-outlined d-block mb-2 empty-state-icon" aria-hidden="true">lock</span>
+    {% if login_failed %}
+      <p class="md-body-medium mb-2" role="alert">{% translate "Your username and password didn't match." %}</p>
+    {% endif %}
+    <p class="md-body-medium mb-3">{% translate "Log in to continue." %}</p>
+    <button type="button" class="md-btn md-btn--filled" data-bs-toggle="modal" data-bs-target="#loginDialog">
+      {% translate "Log in" %}
+    </button>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // This page only exists to sign in: open the login dialog (from base.html) right away.
+  document.addEventListener("DOMContentLoaded", function () {
+    const dialog = document.getElementById("loginDialog");
+    if (dialog) {
+      bootstrap.Modal.getOrCreateInstance(dialog).show();
+    }
+  });
+</script>
+{% endblock %}

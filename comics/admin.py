@@ -11,6 +11,7 @@ from django.forms import ModelForm
 from django.forms.models import BaseModelFormSet
 from django.http import HttpRequest, HttpResponse
 from django.template.response import TemplateResponse
+from django.templatetags.static import static
 from django.urls import URLPattern, path
 from django.utils.html import format_html
 from django.utils.safestring import SafeString
@@ -139,6 +140,10 @@ class CollectedIssueInline(admin.TabularInline):
     verbose_name = "issue recopilado"
     verbose_name_plural = "Compilación: issues que recopila (déjalo vacío si no es compilación)"
 
+    def get_queryset(self, request: HttpRequest) -> QuerySet[CollectedIssue]:
+        # Each row shows its issue (and its publishing) in the autocomplete and in __str__.
+        return super().get_queryset(request).select_related("issue__publishing")
+
 
 @admin.register(Edition)
 class EditionAdmin(admin.ModelAdmin):
@@ -234,7 +239,7 @@ class EditionAdmin(admin.ModelAdmin):
         editorials = obj.publishing.editorials.all()
         editorial = editorials[0] if editorials else None
         if editorial and editorial.country:
-            icon_url = f"/static/images/{editorial.country}.png"
+            icon_url = static(f"images/{editorial.country}.png")
             return format_html('<img src="{}" style="width:18px">', icon_url)
         return "-"
 

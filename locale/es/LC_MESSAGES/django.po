@@ -1551,6 +1551,14 @@ msgstr ""
 msgid "Publishing deleted: %(publishing)s"
 msgstr "Publishing eliminado: %(publishing)s"
 
+#: comics/templates/login.html:9
+msgid "Your username and password didn't match."
+msgstr "El usuario y la contraseña no coinciden."
+
+#: comics/templates/login.html:11
+msgid "Log in to continue."
+msgstr "Inicia sesión para continuar."
+
 #: comics/views/collection.py:176
 msgid "Unknown"
 msgstr "Desconocido"

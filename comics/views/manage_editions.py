@@ -42,8 +42,11 @@ def _log(request: HttpRequest, edition: Model, flag: int, message: str) -> None:
 
 
 def _safe_next(request: HttpRequest, fallback: str) -> str:
+    """The `next` URL (POST or GET) when it stays on this site, else `fallback`."""
     target = request.POST.get("next") or request.GET.get("next")
-    if target and url_has_allowed_host_and_scheme(target, allowed_hosts={request.get_host()}):
+    if target and url_has_allowed_host_and_scheme(
+        target, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+    ):
         return target
     return fallback
 

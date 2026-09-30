@@ -25,19 +25,17 @@ def parse_date_or_none(value: str | None) -> datetime.date | None:
         return None
 
 
-def generate_image_jpge(base_name: str, image: File | None) -> InMemoryUploadedFile | None:
+def generate_image_jpeg(base_name: str, image: File | None) -> InMemoryUploadedFile | None:
     if not image:
         return
 
     img = Image.open(image)
-    img_format = img.format or "JPEG"
 
-    # Covert RGBA to RGB if necessary
-    if img_format == "PNG" and img.mode in ("RGBA", "LA"):
+    # Convert RGBA to RGB if necessary
+    if img.format == "PNG" and img.mode in ("RGBA", "LA"):
         background = Image.new("RGB", img.size, (255, 255, 255))
         background.paste(img, mask=img.split()[-1])
         img = background
-        img_format = "JPEG"
     elif img.mode != "RGB":
         img = img.convert("RGB")
 

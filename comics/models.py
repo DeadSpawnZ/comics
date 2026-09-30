@@ -37,7 +37,7 @@ from django.utils.translation import gettext, ngettext
 from django.utils.translation import gettext_lazy as _
 from PIL import Image
 
-from .helper import generate_image_jpge
+from .helper import generate_image_jpeg
 
 logger = logging.getLogger(__name__)
 
@@ -832,6 +832,6 @@ class GeekCollectable(Model):
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             base_name = f"{self.name}_{timestamp}".replace(" ", "_")
 
-            self.image = generate_image_jpge(base_name, self.image)
+            self.image = generate_image_jpeg(base_name, self.image)
         except Exception as e:
             raise e
