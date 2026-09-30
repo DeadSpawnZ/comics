@@ -1,5 +1,10 @@
 {
     "editor.formatOnSave": true,
     "prettier.printWidth": 120,
-    "editor.defaultFormatter": "ms-python.black-formatter"
+    "[python]": {
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.codeActionsOnSave": {
+            "source.organizeImports.ruff": "explicit"
+        }
+    }
 }
