@@ -68,6 +68,47 @@ Si aparece un error de integridad de datos al restaurar, limpia las tablas exist
 docker compose exec web python manage.py flush
 ```
 
+## Respaldo completo en SQL (`mysqldump`)
+
+El respaldo JSON de arriba solo contiene los datos de Django. Para una copia exacta de toda la base (tablas, índices, restricciones e historial del admin) usa `mysqldump`. Es el respaldo que se saca antes de aplicar una migración y se guarda en `backups/` con el nombre `comic-<fecha>.sql`.
+
+Los comandos funcionan igual en PowerShell y en bash. El archivo se genera **dentro** del contenedor `db` y luego se copia con `docker compose cp`, porque redirigir con `>` en PowerShell 5.1 guarda el archivo en UTF-16 y lo corrompe.
+
+### Sacar el respaldo
+
+```powershell
+docker compose exec db sh -c 'mysqldump -uroot -p"$MYSQL_ROOT_PASSWORD" --single-transaction --routines --triggers "$MYSQL_DATABASE" > /tmp/backup.sql'
+docker compose cp db:/tmp/backup.sql .\backups\comic-<fecha>.sql
+docker compose exec db rm /tmp/backup.sql
+```
+
+`--single-transaction` toma una copia consistente sin detener la app. Para confirmar que el respaldo no quedó incompleto, la última línea del archivo debe decir `-- Dump completed`.
+
+### Restaurar el respaldo
+
+> **Atención:** restaurar **reemplaza toda la base actual** con el contenido del respaldo (cada tabla se borra y se vuelve a crear). Lo que se haya registrado después de sacar ese respaldo se pierde. Saca un respaldo nuevo antes de restaurar por si necesitas volver atrás.
+
+```powershell
+docker compose stop web
+docker compose cp .\backups\comic-<fecha>.sql db:/tmp/restore.sql
+docker compose exec db sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" < /tmp/restore.sql && rm /tmp/restore.sql'
+docker compose run --rm web python manage.py migrate
+docker compose start web
+```
+
+- Detener `web` evita que alguien guarde cambios a mitad de la restauración.
+- `migrate` aplica las migraciones del código que sean más nuevas que el respaldo. Si el respaldo ya las tenía, no hace nada.
+
+### Probar un respaldo sin tocar la base real
+
+La base `comic_refactor` vive en el mismo contenedor `db` y sirve para ensayar. Para cargar ahí un respaldo, cambia `"$MYSQL_DATABASE"` por `comic_refactor` en el comando de restauración (no hace falta detener `web`). La primera línea la crea si todavía no existe:
+
+```powershell
+docker compose exec db sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -e "CREATE DATABASE IF NOT EXISTS comic_refactor CHARACTER SET utf8mb4"'
+docker compose cp .\backups\comic-<fecha>.sql db:/tmp/restore.sql
+docker compose exec db sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" comic_refactor < /tmp/restore.sql && rm /tmp/restore.sql'
+```
+
 ## Correr localmente con configuración de producción
 
 Por defecto (`docker compose up`) el proyecto corre en modo desarrollo: `DEBUG=True`, `runserver` con autoreload y `ALLOWED_HOSTS=*`. Para levantar el mismo stack pero con la configuración que usarías en producción (`DEBUG=False`, `ALLOWED_HOSTS` restringido, gunicorn en vez de `runserver`), usa el archivo de override `docker-compose.prod.yaml`:
