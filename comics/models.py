@@ -1,7 +1,11 @@
+from __future__ import annotations
+
 import datetime
 import io
 import logging
+from collections.abc import Iterable
 from datetime import datetime
+from typing import Any, Self
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
@@ -29,6 +33,7 @@ from django.db.models import (
     TextField,
     UniqueConstraint,
 )
+from django.utils.functional import Promise
 from django.utils.translation import gettext, ngettext
 from django.utils.translation import gettext_lazy as _
 from PIL import Image
@@ -52,30 +57,30 @@ class Editorial(Model):
     country = CharField(max_length=3, choices=CountryAbbr)
     # titles = ManyToManyField(Person, through="Membership")
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
 
 class Title(Model):
     name = CharField(max_length=100, unique=True)
 
-    def process_name(self):
+    def process_name(self) -> None:
         self.name = self.name.strip()
 
-    def save(self, *args, **kwargs):
+    def save(self, *args: Any, **kwargs: Any) -> None:
         self.process_name()
         super().save(*args, **kwargs)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
 
-def current_year():
+def current_year() -> int:
     return datetime.now().year
 
 
 class Publishing(Model):
-    def max_value_current_year(value):
+    def max_value_current_year(value: int) -> None:
         return MaxValueValidator(current_year())(value)
 
     class LangAbbr(TextChoices):
@@ -104,7 +109,7 @@ class Publishing(Model):
             ),
         ]
 
-    def __str__(self):
+    def __str__(self) -> str:
         editorials = Editorial.objects.filter(publishing=self)
         editorials = [editorial.name for editorial in editorials]
         return (
@@ -120,14 +125,14 @@ class Publishing(Model):
             + "]"
         )
 
-    def process_year(self):
+    def process_year(self) -> None:
         if self.date and self.year is None:
             self.year = self.date.year
 
-    def process_publishing_title(self):
+    def process_publishing_title(self) -> None:
         self.publishing_title = self.publishing_title.strip()
 
-    def validate_duplicates(self):
+    def validate_duplicates(self) -> None:
         coincidences = (
             Publishing.objects.filter(publishing_title=self.publishing_title)
             .filter(year=self.year)
@@ -140,7 +145,7 @@ class Publishing(Model):
         if coincidences.exists():
             raise ValidationError("Duplicated publishing")
 
-    def save(self, *args, **kwargs):
+    def save(self, *args: Any, **kwargs: Any) -> None:
         self.process_year()
         self.process_publishing_title()
 
@@ -152,17 +157,17 @@ class Artist(Model):
     name = CharField(max_length=100, unique=True)
     photo = ImageField(upload_to="artists/photos/", null=True, blank=True)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
 
 class IssueQuerySet(QuerySet):
-    def delete_orphans(self):
+    def delete_orphans(self) -> tuple[int, dict[str, int]]:
         """Delete the issues in this queryset that no longer have editions, are not in a
         compilation and are not part of any reading arc."""
         return self.filter(editions__isnull=True, collected_in__isnull=True, arc_entries__isnull=True).delete()
 
-    def with_first_release(self):
+    def with_first_release(self) -> Self:
         """Annotate `first_release`: the earliest date among its 1st-printing editions
         (the A cover and its variants) within its original series."""
         return self.annotate(
@@ -190,7 +195,7 @@ class Issue(Model):
             UniqueConstraint(fields=["publishing", "number"], name="unique_issue_publishing_number"),
         ]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.publishing.publishing_title} #{self.number}"
 
 
@@ -274,7 +279,7 @@ class Edition(Model):
             ),
         ]
 
-    def __str__(self):
+    def __str__(self) -> str:
         # Query through the relation (instead of Editorial.objects.filter(...))
         # so a prefetch_related("publishing__editorials") done by the caller
         # is reused, avoiding N+1 when listing many comics.
@@ -296,19 +301,19 @@ class Edition(Model):
     )
 
     @property
-    def variant_label(self):
+    def variant_label(self) -> str:
         """How the cover is named: "event store variant", leaving out the empty parts
         (e.g. "SDCC 2025 Unknown Comics B")."""
         parts = (self.event_exclusive, self.retailer_exclusive, self.variant)
         return " ".join(part.strip() for part in parts if part and part.strip())
 
     @property
-    def short_name(self):
+    def short_name(self) -> str:
         """Title, number and cover, e.g. "Spawn #1 SDCC 2025 B"."""
         return f"{self.publishing.publishing_title} #{self.number} {self.variant_label}".strip()
 
     @property
-    def cover_kind(self):
+    def cover_kind(self) -> str:
         """Event exclusive if an event is set (even with a store); retailer exclusive if a store is
         set; incentive if it has a 1:N ratio; regular otherwise."""
         if self.event_exclusive.strip():
@@ -320,7 +325,7 @@ class Edition(Model):
         return "regular"
 
     @classmethod
-    def group_by_cover_kind(cls, editions):
+    def group_by_cover_kind(cls, editions: Iterable[Edition]) -> list[tuple[str, Promise, list[Edition]]]:
         """[(kind, label, editions), ...] in COVER_KINDS order, skipping empty groups."""
         groups = {kind: [] for kind, _label in cls.COVER_KINDS}
         for edition in editions:
@@ -328,11 +333,11 @@ class Edition(Model):
         return [(kind, label, groups[kind]) for kind, label in cls.COVER_KINDS if groups[kind]]
 
     @property
-    def is_compilation(self):
+    def is_compilation(self) -> bool:
         # Compilations have no issue of their own; the DB is only queried in that case.
         return self.issue_id is None and self.pk is not None and self.collected_entries.exists()
 
-    def sync_compilation_state(self):
+    def sync_compilation_state(self) -> None:
         """After the collected issues are edited: if it is now a compilation it drops its issue
         (and deletes it if orphaned); if it is no longer one it gets its default issue back."""
         if self.collected_entries.exists():
@@ -346,7 +351,7 @@ class Edition(Model):
             self.issue, _ = Issue.objects.get_or_create(publishing_id=self.publishing_id, number=self.number.strip())
             Edition.objects.filter(pk=self.pk).update(issue=self.issue)
 
-    def validate_duplicate(self):
+    def validate_duplicate(self) -> None:
         coincidences = (
             Edition.objects.filter(publishing__publishing_title__exact=self.publishing.publishing_title)
             .filter(number=self.number)
@@ -366,10 +371,10 @@ class Edition(Model):
             if str(edition.publishing).strip() == current_publishing_str:
                 raise ValidationError("Duplicated comic")
 
-    def validate(self):
+    def validate(self) -> None:
         self.validate_duplicate()
 
-    def process_variant(self):
+    def process_variant(self) -> None:
         self.variant = self.variant.upper().strip()
         self.retailer_exclusive = self.retailer_exclusive.strip()
         self.event_exclusive = self.event_exclusive.strip()
@@ -443,7 +448,7 @@ class Edition(Model):
         except Exception:
             logger.exception("Error procesando imagen y thumbnail de la edicion %s", self.pk)
 
-    def assign_default_issue(self):
+    def assign_default_issue(self) -> None:
         """By default an edition belongs to the issue of its publishing and number, and follows it
         if the publishing or number is corrected. If it is manually linked to another issue
         (foreign or anniversary edition) or is a compilation, that is respected."""
@@ -463,7 +468,7 @@ class Edition(Model):
                 return
         self.issue, _ = Issue.objects.get_or_create(publishing_id=self.publishing_id, number=number)
 
-    def save(self, *args, **kwargs):
+    def save(self, *args: Any, **kwargs: Any) -> None:
         self.process_variant()
         self.validate()
         self.process_image()
@@ -502,12 +507,12 @@ class Dealer(Model):
     class Meta:
         ordering = ["name"]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
 
 class CollectionQuerySet(QuerySet):
-    def owned_by(self, user):
+    def owned_by(self, user: User) -> Self:
         """Purchases by `user` that have not been sold (they are not the previous_trade of a sale)."""
         selling = self.model.TradeChoices.SELLING
         sold_ids = self.model.objects.filter(
@@ -546,14 +551,14 @@ class Collection(Model):
             # validate_previous_trade), not at the database level.
         ]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.edition.__str__()
 
-    def validate_previous_trade(self):
+    def validate_previous_trade(self) -> None:
         if self.pk and self.previous_trade_id == self.pk:
             raise ValidationError("A collection can't be its own previous trade.")
 
-    def validate_duplicate(self):
+    def validate_duplicate(self) -> None:
         coincidences = (
             Collection.objects.filter(
                 edition__publishing__publishing_title__exact=self.edition.publishing.publishing_title
@@ -572,7 +577,7 @@ class Collection(Model):
             if str(collectable.edition).strip() == current_edition_str:
                 raise ValidationError("Duplicated collectable")
 
-    def save(self, *args, **kwargs):
+    def save(self, *args: Any, **kwargs: Any) -> None:
         self.validate_previous_trade()
         self.validate_duplicate()
 
@@ -586,7 +591,7 @@ class Signature(Model):
     price = DecimalField(max_digits=6, decimal_places=2, default=0.00)
     has_coa = BooleanField(default=False)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (
             self.collectable.collector.__str__()
             + " - "
@@ -606,10 +611,10 @@ class ReadingArc(Model):
     class Meta:
         ordering = ["name"]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
-    def clean_issue_ids(self, issue_ids):
+    def clean_issue_ids(self, issue_ids: Iterable[Any]) -> list[int]:
         """Validate an ordered list of issue ids and return it as ints."""
         try:
             cleaned = [int(issue_id) for issue_id in issue_ids]
@@ -624,7 +629,7 @@ class ReadingArc(Model):
             raise ValidationError(errors)
         return cleaned
 
-    def set_issues(self, issue_ids):
+    def set_issues(self, issue_ids: Iterable[int]) -> None:
         """Replace all entries. They are deleted and inserted again because updating them
         one by one violates the UniqueConstraints when entries are reordered."""
         self.entries.all().delete()
@@ -633,7 +638,7 @@ class ReadingArc(Model):
             for order, issue_id in enumerate(issue_ids, start=1)
         )
 
-    def entries_with_covers(self):
+    def entries_with_covers(self) -> list[ReadingArcEntry]:
         """Entries in reading order, each with the cover of its earliest edition (or None)."""
         entries = list(self.entries.select_related("issue__publishing"))
         covers = {}
@@ -644,7 +649,7 @@ class ReadingArc(Model):
             entry.cover_url = covers.get(entry.issue_id)
         return entries
 
-    def entries_with_ownership(self, user):
+    def entries_with_ownership(self, user: User) -> list[ReadingArcEntry]:
         """entries_with_covers() flagged with whether `user` owns each issue.
         An issue counts as owned if the user owns any edition of it (any variant, printing
         or country) or a compilation that collects it."""
@@ -675,7 +680,7 @@ class ReadingArcEntry(Model):
             UniqueConstraint(fields=["arc", "order"], name="unique_reading_arc_order"),
         ]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.arc} #{self.order}: {self.issue}"
 
 
@@ -691,14 +696,14 @@ class Connecting(Model):
     class Meta:
         ordering = ["name"]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
     @property
-    def layout(self):
+    def layout(self) -> str:
         return f"{self.rows}×{self.columns}"
 
-    def clean_placements(self, placements):
+    def clean_placements(self, placements: Iterable[Any]) -> list[tuple[int, int, int]]:
         """Validate [{"row", "column", "edition"}, ...] against the grid and return (row, column, edition_id) tuples."""
         errors = []
         cleaned = []
@@ -729,7 +734,7 @@ class Connecting(Model):
             raise ValidationError(errors)
         return cleaned
 
-    def set_pieces(self, cleaned_placements):
+    def set_pieces(self, cleaned_placements: Iterable[tuple[int, int, int]]) -> None:
         """Replace all pieces. They are deleted and inserted again because updating
         them one by one violates the UniqueConstraints when pieces are swapped."""
         self.pieces.all().delete()
@@ -738,14 +743,14 @@ class Connecting(Model):
             for row, column, edition_id in cleaned_placements
         )
 
-    def grid(self):
+    def grid(self) -> list[list[ConnectingPiece | None]]:
         """rows x columns matrix with the piece at each position (or None)."""
         by_position = {(piece.row, piece.column): piece for piece in self.pieces.select_related("edition__publishing")}
         return [
             [by_position.get((row, column)) for column in range(1, self.columns + 1)] for row in range(1, self.rows + 1)
         ]
 
-    def ownership_grid(self, user):
+    def ownership_grid(self, user: User) -> list[list[ConnectingPiece | None]]:
         """grid() with each piece flagged with whether `user` owns its edition."""
         grid = self.grid()
         pieces = [piece for row in grid for piece in row if piece]
@@ -772,10 +777,10 @@ class ConnectingPiece(Model):
             UniqueConstraint(fields=["connecting", "edition"], name="unique_connecting_edition"),
         ]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.connecting} ({self.row}, {self.column})"
 
-    def clean(self):
+    def clean(self) -> None:
         # In the admin, when a new connecting is created, the piece already has its
         # (unsaved) parent with its rows/columns, so it can still be validated.
         try:
@@ -805,10 +810,10 @@ class GeekCollectable(Model):
     participant = ForeignKey(Dealer, on_delete=PROTECT, default=1)
     image = ImageField(upload_to="collectables/", null=True, blank=True)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
-    def process_image(self):
+    def process_image(self) -> None:
         try:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             base_name = f"{self.name}_{timestamp}".replace(" ", "_")
@@ -817,7 +822,7 @@ class GeekCollectable(Model):
         except Exception as e:
             raise e
 
-    def save(self, *args, **kwargs):
+    def save(self, *args: Any, **kwargs: Any) -> None:
         self.process_image()
 
         super().save(*args, **kwargs)
