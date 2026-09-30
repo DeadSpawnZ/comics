@@ -108,7 +108,26 @@ class CollectionForm(forms.ModelForm):
 class EditionForm(forms.ModelForm):
     class Meta:
         model = Edition
-        fields = "__all__"
+        # Same fields and order that "__all__" produced (every editable Edition field, M2M last).
+        fields = [
+            "publishing",
+            "number",
+            "variant",
+            "printing",
+            "ratio",
+            "limited_to",
+            "retailer_exclusive",
+            "event_exclusive",
+            "cover_price",
+            "format",
+            "release_date",
+            "image",
+            "thumbnail",
+            "notes",
+            "cover_artists",
+            "issue",
+            "collected_issues",
+        ]
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
@@ -312,7 +331,7 @@ class PublishingManageForm(forms.ModelForm):
         self.fields["editorials"].queryset = Editorial.objects.order_by("name")
         self.fields["title_name"].widget.attrs["list"] = "title-options"
         self.fields["editorials"].widget.attrs["data-placeholder"] = _("Search an editorial…")
-        for name, field in self.fields.items():
+        for _name, field in self.fields.items():
             widget = field.widget
             if isinstance(widget, forms.Select):
                 widget.attrs["class"] = "form-select"
@@ -500,7 +519,8 @@ class CollectionEntryForm(forms.ModelForm):
                 self.add_error(
                     "previous_trade",
                     _(
-                        "Choose a purchase of this edition by the same collector, made on or before the sale date and not sold yet."
+                        "Choose a purchase of this edition by the same collector, "
+                        "made on or before the sale date and not sold yet."
                     ),
                 )
         return cleaned

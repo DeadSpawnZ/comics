@@ -160,16 +160,14 @@ def sibling_editions_of(edition: Edition) -> list[Edition]:
     )
 
 
+# Complex (C901) but untested: kept as is until tests cover it, then split it.
 @staff_member_required
-def edition_form(request: HttpRequest, pk: int | None = None) -> HttpResponse:
+def edition_form(request: HttpRequest, pk: int | None = None) -> HttpResponse:  # noqa: C901
     edition = get_object_or_404(Edition.objects.select_related("issue__publishing"), pk=pk) if pk else None
     list_url = reverse("manage_editions")
     back_url = _safe_next(request, list_url)
 
-    if edition and edition.collected_entries.exists():
-        content = CONTENT_COMPILATION
-    else:
-        content = CONTENT_SINGLE
+    content = CONTENT_COMPILATION if edition and edition.collected_entries.exists() else CONTENT_SINGLE
     selected_issue_id = None
     if (
         edition
@@ -266,7 +264,8 @@ def edition_form(request: HttpRequest, pk: int | None = None) -> HttpResponse:
     )
 
 
-def _clean_content(data: QueryDict, content: str) -> tuple[int | None, list[int], list[str]]:
+# Complex (C901) but untested: kept as is until tests cover it, then split it.
+def _clean_content(data: QueryDict, content: str) -> tuple[int | None, list[int], list[str]]:  # noqa: C901
     """Validate the content section: single issue (or automatic) or list of collected issues."""
     errors = []
     issue_id = None

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import datetime
 import io
 import logging
 from collections.abc import Iterable
@@ -64,15 +63,15 @@ class Editorial(Model):
 class Title(Model):
     name = CharField(max_length=100, unique=True)
 
-    def process_name(self) -> None:
-        self.name = self.name.strip()
+    def __str__(self) -> str:
+        return self.name
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         self.process_name()
         super().save(*args, **kwargs)
 
-    def __str__(self) -> str:
-        return self.name
+    def process_name(self) -> None:
+        self.name = self.name.strip()
 
 
 def current_year() -> int:
@@ -80,7 +79,11 @@ def current_year() -> int:
 
 
 class Publishing(Model):
-    def max_value_current_year(value: int) -> None:
+    # Validator of `year`. It must be a plain function defined in the class body before that field,
+    # and keep its name and signature: migrations reference it as
+    # comics.models.Publishing.max_value_current_year. Being a method above the fields is what the
+    # DJ012 (model member order) and N805 (no `self`) noqa markers in this class are about.
+    def max_value_current_year(value: int) -> None:  # noqa: N805
         return MaxValueValidator(current_year())(value)
 
     class LangAbbr(TextChoices):
@@ -88,7 +91,7 @@ class Publishing(Model):
         ES = "es", _("Spanish")
         DE = "de", _("German")
 
-    title = ForeignKey(Title, on_delete=PROTECT, null=True)
+    title = ForeignKey(Title, on_delete=PROTECT, null=True)  # noqa: DJ012
     publishing_title = CharField(max_length=100)
     serie = CharField(max_length=20, default="1st")
     language = CharField(max_length=5, choices=LangAbbr.choices, default=LangAbbr.EN)
@@ -101,7 +104,7 @@ class Publishing(Model):
         null=True,
     )
 
-    class Meta:
+    class Meta:  # noqa: DJ012
         constraints = [
             UniqueConstraint(
                 fields=["publishing_title", "year", "serie", "language"],
@@ -109,7 +112,7 @@ class Publishing(Model):
             ),
         ]
 
-    def __str__(self) -> str:
+    def __str__(self) -> str:  # noqa: DJ012
         editorials = Editorial.objects.filter(publishing=self)
         editorials = [editorial.name for editorial in editorials]
         return (
@@ -124,6 +127,13 @@ class Publishing(Model):
             + "/".join(editorials)
             + "]"
         )
+
+    def save(self, *args: Any, **kwargs: Any) -> None:  # noqa: DJ012
+        self.process_year()
+        self.process_publishing_title()
+
+        self.validate_duplicates()
+        super().save(*args, **kwargs)
 
     def process_year(self) -> None:
         if self.date and self.year is None:
@@ -144,13 +154,6 @@ class Publishing(Model):
             coincidences = coincidences.exclude(id=self.id)
         if coincidences.exists():
             raise ValidationError("Duplicated publishing")
-
-    def save(self, *args: Any, **kwargs: Any) -> None:
-        self.process_year()
-        self.process_publishing_title()
-
-        self.validate_duplicates()
-        super().save(*args, **kwargs)
 
 
 class Artist(Model):
@@ -182,12 +185,12 @@ class Issue(Model):
     """The content (the story) of an issue. Its editions are the physical printings:
     variants, reprints, foreign or anniversary editions, which may belong to another publishing."""
 
-    objects = IssueQuerySet.as_manager()
-
     publishing = ForeignKey(Publishing, on_delete=PROTECT, related_name="issues", help_text="Serie original")
     number = CharField(max_length=5)
     synopsis = TextField(blank=True)
     creators = ManyToManyField(Artist, blank=True, related_name="issues")
+
+    objects = IssueQuerySet.as_manager()
 
     class Meta:
         ordering = ["publishing__publishing_title", "number"]
@@ -287,11 +290,29 @@ class Edition(Model):
         first_editorial = editorials[0] if editorials else None
         country_code = first_editorial.country.upper() if first_editorial else ""
 
-        comic_name = f"""{self.publishing.publishing_title} #{str(self.number)} {self.variant_label} {self.publishing.serie} {self.printing} {country_code}-{self.publishing.language.upper()} {str(self.publishing.year)}"""
+        comic_name = (
+            f"{self.publishing.publishing_title} #{self.number} {self.variant_label} {self.publishing.serie} "
+            f"{self.printing} {country_code}-{self.publishing.language.upper()} {self.publishing.year}"
+        )
         if self.is_compilation:
             comic_name += " [Compilation]"
 
         return comic_name
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        self.process_variant()
+        self.validate()
+        self.process_image()
+        old_issue_id = (
+            Edition.objects.filter(pk=self.pk).values_list("issue_id", flat=True).first() if self.pk else None
+        )
+        self.assign_default_issue()
+
+        super().save(*args, **kwargs)
+
+        # Issue change (automatic or manual link): the previous one is deleted if left without editions.
+        if old_issue_id and old_issue_id != self.issue_id:
+            Issue.objects.filter(pk=old_issue_id).delete_orphans()
 
     COVER_KINDS = (
         ("regular", _("Regular covers")),
@@ -386,8 +407,8 @@ class Edition(Model):
                 logger.debug("Imagen sin cambios en la edicion %s; no se reprocesa.", self.pk)
                 return
 
-        MAX_THUMB_WIDTH = 1080
-        MAX_THUMB_HEIGHT = 1920
+        max_thumb_width = 1080
+        max_thumb_height = 1920
 
         try:
             # Open the original image
@@ -424,8 +445,8 @@ class Edition(Model):
 
             # === Generate the thumbnail ===
             width, height = img.size
-            if width > MAX_THUMB_WIDTH or height > MAX_THUMB_HEIGHT:
-                scale = min(MAX_THUMB_WIDTH / width, MAX_THUMB_HEIGHT / height)
+            if width > max_thumb_width or height > max_thumb_height:
+                scale = min(max_thumb_width / width, max_thumb_height / height)
                 thumb_size = (int(width * scale), int(height * scale))
                 thumb_img = img.resize(thumb_size, Image.Resampling.LANCZOS)
             else:
@@ -468,21 +489,6 @@ class Edition(Model):
                 return
         self.issue, _ = Issue.objects.get_or_create(publishing_id=self.publishing_id, number=number)
 
-    def save(self, *args: Any, **kwargs: Any) -> None:
-        self.process_variant()
-        self.validate()
-        self.process_image()
-        old_issue_id = (
-            Edition.objects.filter(pk=self.pk).values_list("issue_id", flat=True).first() if self.pk else None
-        )
-        self.assign_default_issue()
-
-        super().save(*args, **kwargs)
-
-        # Issue change (automatic or manual link): the previous one is deleted if left without editions.
-        if old_issue_id and old_issue_id != self.issue_id:
-            Issue.objects.filter(pk=old_issue_id).delete_orphans()
-
 
 class CollectedIssue(Model):
     """Issues contained in a compilation, in order."""
@@ -497,6 +503,9 @@ class CollectedIssue(Model):
             UniqueConstraint(fields=["edition", "issue"], name="unique_collected_issue"),
             UniqueConstraint(fields=["edition", "order"], name="unique_collected_order"),
         ]
+
+    def __str__(self) -> str:
+        return f"{self.edition.short_name} #{self.order}: {self.issue}"
 
 
 class Dealer(Model):
@@ -526,8 +535,6 @@ class Collection(Model):
         BUYING = "buying", _("Buying")
         SELLING = "selling", _("Selling")
 
-    objects = CollectionQuerySet.as_manager()
-
     collector = ForeignKey(User, on_delete=PROTECT)
     edition = ForeignKey(Edition, on_delete=PROTECT, null=True)
     amount = DecimalField(max_digits=8, decimal_places=2, default=0.00)
@@ -538,6 +545,8 @@ class Collection(Model):
     signatures = ManyToManyField(Artist, blank=True, through="Signature")
     previous_trade = ForeignKey("self", on_delete=SET_NULL, null=True, blank=True, related_name="next_trades")
     notes = TextField(max_length=500, blank=True)
+
+    objects = CollectionQuerySet.as_manager()
 
     class Meta:
         constraints = [
@@ -553,6 +562,12 @@ class Collection(Model):
 
     def __str__(self) -> str:
         return self.edition.__str__()
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        self.validate_previous_trade()
+        self.validate_duplicate()
+
+        super().save(*args, **kwargs)
 
     def validate_previous_trade(self) -> None:
         if self.pk and self.previous_trade_id == self.pk:
@@ -576,12 +591,6 @@ class Collection(Model):
         for collectable in coincidences:
             if str(collectable.edition).strip() == current_edition_str:
                 raise ValidationError("Duplicated collectable")
-
-    def save(self, *args: Any, **kwargs: Any) -> None:
-        self.validate_previous_trade()
-        self.validate_duplicate()
-
-        super().save(*args, **kwargs)
 
 
 class Signature(Model):
@@ -618,8 +627,8 @@ class ReadingArc(Model):
         """Validate an ordered list of issue ids and return it as ints."""
         try:
             cleaned = [int(issue_id) for issue_id in issue_ids]
-        except (TypeError, ValueError):
-            raise ValidationError(gettext("The list of issues is not valid."))
+        except (TypeError, ValueError) as err:
+            raise ValidationError(gettext("The list of issues is not valid.")) from err
         errors = []
         if len(cleaned) != len(set(cleaned)):
             errors.append(gettext("An issue is repeated in the reading arc."))
@@ -813,6 +822,11 @@ class GeekCollectable(Model):
     def __str__(self) -> str:
         return self.name
 
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        self.process_image()
+
+        super().save(*args, **kwargs)
+
     def process_image(self) -> None:
         try:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -821,8 +835,3 @@ class GeekCollectable(Model):
             self.image = generate_image_jpge(base_name, self.image)
         except Exception as e:
             raise e
-
-    def save(self, *args: Any, **kwargs: Any) -> None:
-        self.process_image()
-
-        super().save(*args, **kwargs)
