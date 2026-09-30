@@ -828,10 +828,13 @@ class GeekCollectable(Model):
         super().save(*args, **kwargs)
 
     def process_image(self) -> None:
-        try:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            base_name = f"{self.name}_{timestamp}".replace(" ", "_")
+        """Convert a newly uploaded image to JPEG. An image that did not change was already converted
+        when it was uploaded, so it is left as is (same rule as Edition.process_image)."""
+        if self.pk:
+            old_image = GeekCollectable.objects.filter(pk=self.pk).values_list("image", flat=True).first()
+            if self.image == old_image:
+                return
 
-            self.image = generate_image_jpeg(base_name, self.image)
-        except Exception as e:
-            raise e
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        base_name = f"{self.name}_{timestamp}".replace(" ", "_")
+        self.image = generate_image_jpeg(base_name, self.image)
