@@ -1,10 +1,19 @@
+from __future__ import annotations
+
+import datetime
+from typing import Any
+
 from django.contrib import admin
 from django.contrib.admin.utils import unquote
-from django.db.models import Count, Sum
+from django.db.models import Count, QuerySet, Sum
 from django.db.models.functions import TruncMonth
+from django.forms import ModelForm
+from django.forms.models import BaseModelFormSet
+from django.http import HttpRequest, HttpResponse
 from django.template.response import TemplateResponse
-from django.urls import path
+from django.urls import URLPattern, path
 from django.utils.html import format_html
+from django.utils.safestring import SafeString
 
 from .forms import CollectionForm, EditionForm
 from .models import (
@@ -26,7 +35,7 @@ from .models import (
 )
 
 
-def save_formset_reinserting(formset):
+def save_formset_reinserting(formset: BaseModelFormSet) -> None:
     """Save an inline whose rows have UniqueConstraints (position, order, etc.).
     Swapping values between rows violates the constraints if rows are updated one by
     one (MySQL checks every UPDATE and does not support deferred constraints), so the
@@ -72,11 +81,11 @@ class PublishingAdmin(admin.ModelAdmin):
     search_fields = ["publishing_title"]
     filter_horizontal = ("editorials",)
 
-    def get_queryset(self, request):
+    def get_queryset(self, request: HttpRequest) -> QuerySet[Publishing]:
         qs = super().get_queryset(request)
         return qs.prefetch_related("editorials")
 
-    def get_editorials(self, obj):
+    def get_editorials(self, obj: Publishing) -> str:
         return " / ".join(e.name for e in obj.editorials.all())
 
     get_editorials.short_description = "Editorials"
@@ -95,7 +104,7 @@ class EditionInline(admin.TabularInline):
     fields = ["publishing", "number", "variant", "printing", "format", "release_date"]
     readonly_fields = fields
 
-    def has_add_permission(self, request, obj=None):
+    def has_add_permission(self, request: HttpRequest, obj: Issue | None = None) -> bool:
         return False
 
 
@@ -110,15 +119,15 @@ class IssueAdmin(admin.ModelAdmin):
     fields = ["publishing", "number", "synopsis", "creators"]
     inlines = [EditionInline]
 
-    def get_queryset(self, request):
+    def get_queryset(self, request: HttpRequest) -> QuerySet[Issue]:
         return super().get_queryset(request).with_first_release().annotate(edition_count=Count("editions"))
 
     @admin.display(description="Ediciones", ordering="edition_count")
-    def edition_count(self, obj):
+    def edition_count(self, obj: Issue) -> int:
         return obj.edition_count
 
     @admin.display(description="1.ª impresión", ordering="first_release")
-    def first_release(self, obj):
+    def first_release(self, obj: Issue) -> datetime.date | str:
         return obj.first_release or "-"
 
 
@@ -184,40 +193,42 @@ class EditionAdmin(admin.ModelAdmin):
     readonly_fields = ["country", "thumbnail_preview"]
     list_select_related = ("publishing",)  # Optimize queries by selecting related publishing
 
-    def save_formset(self, request, form, formset, change):
+    def save_formset(self, request: HttpRequest, form: ModelForm, formset: BaseModelFormSet, change: bool) -> None:
         if formset.model is CollectedIssue:
             save_formset_reinserting(formset)
         else:
             super().save_formset(request, form, formset, change)
 
-    def save_related(self, request, form, formsets, change):
+    def save_related(
+        self, request: HttpRequest, form: ModelForm, formsets: list[BaseModelFormSet], change: bool
+    ) -> None:
         super().save_related(request, form, formsets, change)
         # Collected issues are saved after the edition: only now is it known whether it is a compilation.
         form.instance.sync_compilation_state()
 
-    def get_queryset(self, request):
+    def get_queryset(self, request: HttpRequest) -> QuerySet[Edition]:
         qs = super().get_queryset(request)
         return qs.prefetch_related("publishing__editorials")
 
-    def _from_publishing(self, obj, attr):
+    def _from_publishing(self, obj: Edition, attr: str) -> Any:
         return getattr(obj.publishing, attr, None)
 
     @admin.display(ordering="publishing__publishing_title", description="comic")
-    def get_comic(self, obj):
+    def get_comic(self, obj: Edition) -> str | None:
         return self._from_publishing(obj, "publishing_title")
 
     @admin.display(ordering="publishing__serie", description="serie")
-    def get_serie(self, obj):
+    def get_serie(self, obj: Edition) -> str | None:
         return self._from_publishing(obj, "serie")
 
     @admin.display(description="release date")
-    def get_release_date(self, obj):
+    def get_release_date(self, obj: Edition) -> str:
         if obj.release_date:
             return obj.release_date.strftime("%b %Y")
         return "-"
 
     @admin.display(description="Country")
-    def country(self, obj):
+    def country(self, obj: Edition) -> str:
         # Read from the prefetch_related("publishing__editorials") cache instead of
         # running an Editorial query for every row in the list.
         editorials = obj.publishing.editorials.all()
@@ -228,7 +239,7 @@ class EditionAdmin(admin.ModelAdmin):
         return "-"
 
     @admin.display(description="Thumbnail Preview")
-    def thumbnail_preview(self, obj):
+    def thumbnail_preview(self, obj: Edition) -> SafeString:
         if obj.thumbnail and obj.thumbnail.url:
             return format_html('<img id="thumb-preview" src="{}" style="max-height: 200px;" />', obj.thumbnail.url)
         return format_html('<img id="thumb-preview" style="max-height: 200px; display:none;" />')
@@ -282,52 +293,52 @@ class CollectionAdmin(admin.ModelAdmin):
     search_fields = ["edition__publishing__publishing_title"]
     list_filter = ["participant"]
 
-    def _from_edition(self, obj, attr):
+    def _from_edition(self, obj: Collection, attr: str) -> Any:
         return getattr(obj.edition, attr, None)
 
-    def _from_publishing(self, obj, attr):
+    def _from_publishing(self, obj: Collection, attr: str) -> Any:
         return getattr(obj.edition.publishing, attr, None)
 
     @admin.display(ordering="edition__publishing__publishing_title", description="Publishing Title")
-    def get_publishing_title(self, obj):
+    def get_publishing_title(self, obj: Collection) -> str | None:
         return self._from_publishing(obj, "publishing_title")
 
     @admin.display(ordering="edition__number", description="number")
-    def get_number(self, obj):
+    def get_number(self, obj: Collection) -> str | None:
         return self._from_edition(obj, "number")
 
     @admin.display(ordering="edition__variant", description="variant")
-    def get_variant(self, obj):
+    def get_variant(self, obj: Collection) -> str | None:
         return self._from_edition(obj, "variant")
 
     @admin.display(ordering="edition__format", description="format")
-    def get_format(self, obj):
+    def get_format(self, obj: Collection) -> str:
         return obj.edition.get_format_display()
 
     @admin.display(ordering="trade_date", description="acquisition")
-    def get_acquisition(self, obj):
+    def get_acquisition(self, obj: Collection) -> str:
         return obj.trade_date.strftime("%d %B %Y / %A")
 
     @admin.display(ordering="edition__publishing__serie", description="serie")
-    def get_serie(self, obj):
+    def get_serie(self, obj: Collection) -> str | None:
         return self._from_publishing(obj, "serie")
 
     @admin.display(description="Trade type", ordering="trade_type")
-    def trade_type_colored(self, obj):
+    def trade_type_colored(self, obj: Collection) -> str:
         if obj.trade_type == Collection.TradeChoices.SELLING and obj.previous_trade is None:
             return format_html(
                 '<span style="color: purple; font-weight: bold;">{}</span>', obj.get_trade_type_display()
             )
         return obj.get_trade_type_display()
 
-    def get_urls(self):
+    def get_urls(self) -> list[URLPattern]:
         urls = super().get_urls()
         custom_urls = [
             path("stats/", self.admin_site.admin_view(self.stats_view), name="collection-stats"),
         ]
         return custom_urls + urls
 
-    def stats_view(self, request):
+    def stats_view(self, request: HttpRequest) -> TemplateResponse:
         excluded_ids = Collection.objects.exclude(previous_trade=None).values_list("previous_trade_id", flat=True)
         data = (
             Collection.objects.filter(trade_type=Collection.TradeChoices.BUYING)
@@ -374,24 +385,26 @@ class ConnectingAdmin(admin.ModelAdmin):
     fields = ["name", "rows", "columns", "notes"]
     inlines = [ConnectingPieceInline]
 
-    def get_queryset(self, request):
+    def get_queryset(self, request: HttpRequest) -> QuerySet[Connecting]:
         return super().get_queryset(request).annotate(piece_count=Count("pieces"))
 
     @admin.display(description="Disposición")
-    def layout(self, obj):
+    def layout(self, obj: Connecting) -> str:
         return obj.layout
 
     @admin.display(description="Piezas", ordering="piece_count")
-    def piece_count(self, obj):
+    def piece_count(self, obj: Connecting) -> str:
         return f"{obj.piece_count} / {obj.rows * obj.columns}"
 
-    def save_formset(self, request, form, formset, change):
+    def save_formset(self, request: HttpRequest, form: ModelForm, formset: BaseModelFormSet, change: bool) -> None:
         if formset.model is ConnectingPiece:
             save_formset_reinserting(formset)
         else:
             super().save_formset(request, form, formset, change)
 
-    def change_view(self, request, object_id, form_url="", extra_context=None):
+    def change_view(
+        self, request: HttpRequest, object_id: str, form_url: str = "", extra_context: dict[str, Any] | None = None
+    ) -> HttpResponse:
         extra_context = extra_context or {}
         connecting = self.get_object(request, unquote(object_id))
         if connecting is not None:
@@ -415,14 +428,14 @@ class ReadingArcAdmin(admin.ModelAdmin):
     fields = ["name", "notes"]
     inlines = [ReadingArcEntryInline]
 
-    def get_queryset(self, request):
+    def get_queryset(self, request: HttpRequest) -> QuerySet[ReadingArc]:
         return super().get_queryset(request).annotate(entry_count=Count("entries"))
 
     @admin.display(description="Issues", ordering="entry_count")
-    def entry_count(self, obj):
+    def entry_count(self, obj: ReadingArc) -> int:
         return obj.entry_count
 
-    def save_formset(self, request, form, formset, change):
+    def save_formset(self, request: HttpRequest, form: ModelForm, formset: BaseModelFormSet, change: bool) -> None:
         if formset.model is ReadingArcEntry:
             save_formset_reinserting(formset)
         else:
