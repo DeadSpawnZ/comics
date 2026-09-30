@@ -18,9 +18,10 @@ from django.db.models import (
 from django.db.models.functions import Cast
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
-from django.utils.dateparse import parse_date
+from django.utils.translation import gettext as _
 from django.views.decorators.http import require_GET
 
+from comics.helper import parse_date_or_none
 from comics.models import Collection, Edition, Editorial, Signature
 
 PAGE_LIMIT = 30
@@ -145,38 +146,39 @@ def comics_view(request: HttpRequest) -> HttpResponse:
 @staff_member_required
 @require_GET
 def get_previous_trades(request: HttpRequest, edition_id: int) -> JsonResponse:
-    try:
-        used_previous_trades_ids = (
-            Collection.objects.filter(edition_id=edition_id)
-            .exclude(previous_trade=None)
-            .values_list("previous_trade_id", flat=True)
-        )
-        trades = (
-            Collection.objects.filter(edition_id=edition_id, trade_type=Collection.TradeChoices.BUYING)
-            .exclude(id__in=used_previous_trades_ids)
-            .select_related("edition__publishing", "participant")
-            .prefetch_related("edition__publishing__editorials")
-        )
+    used_previous_trades_ids = (
+        Collection.objects.filter(edition_id=edition_id)
+        .exclude(previous_trade=None)
+        .values_list("previous_trade_id", flat=True)
+    )
+    trades = (
+        Collection.objects.filter(edition_id=edition_id, trade_type=Collection.TradeChoices.BUYING)
+        .exclude(id__in=used_previous_trades_ids)
+        .select_related("edition__publishing", "participant")
+        .prefetch_related("edition__publishing__editorials")
+    )
 
-        # You cannot sell something you did not own yet: only purchases made
-        # on or before the sale date are offered.
-        before_date = parse_date(request.GET.get("before", ""))
-        if before_date:
-            trades = trades.filter(trade_date__lte=before_date)
+    # You cannot sell something you did not own yet: only purchases made
+    # on or before the sale date are offered.
+    before_date = parse_date_or_none(request.GET.get("before"))
+    if before_date:
+        trades = trades.filter(trade_date__lte=before_date)
 
-        trades = trades.order_by(
-            "edition__publishing__publishing_title",
-            "edition__number",
-            "edition__variant",
-            "trade_date",
-        )
+    trades = trades.order_by(
+        "edition__publishing__publishing_title",
+        "edition__number",
+        "edition__variant",
+        "trade_date",
+    )
 
-        data = [
-            {"id": trade.id, "text": f"{trade.edition} || {trade.trade_date} || {trade.participant.name}"}
-            for trade in trades
-        ]
-        return JsonResponse({"results": data})
-    except Collection.DoesNotExist:
-        return JsonResponse({"results": []})
-    except Exception as e:
-        return JsonResponse({"error": str(e)})
+    # The participant is optional (unknown or not recorded). The label is translated outside the
+    # f-string: makemessages cannot see gettext calls inside f-string expressions.
+    unknown = _("Unknown")
+    data = [
+        {
+            "id": trade.id,
+            "text": f"{trade.edition} || {trade.trade_date} || {trade.participant.name if trade.participant else unknown}",
+        }
+        for trade in trades
+    ]
+    return JsonResponse({"results": data})

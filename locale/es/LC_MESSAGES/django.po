@@ -1550,3 +1550,7 @@ msgstr ""
 #, python-format
 msgid "Publishing deleted: %(publishing)s"
 msgstr "Publishing eliminado: %(publishing)s"
+
+#: comics/views/collection.py:176
+msgid "Unknown"
+msgstr "Desconocido"

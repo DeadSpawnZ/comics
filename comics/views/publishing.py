@@ -22,11 +22,14 @@ def get_publishing_date(request: HttpRequest, publishing_id: int) -> JsonRespons
 @staff_member_required
 @require_GET
 def get_comics_by_publishing(request: HttpRequest, publishing_id: int) -> JsonResponse:
-    try:
-        editions = Edition.objects.filter(publishing_id=publishing_id).order_by("number", "variant")
-        data = [{"id": edition.id, "text": str(edition)} for edition in editions]
-        return JsonResponse({"results": data})
-    except Edition.DoesNotExist:
-        return JsonResponse({"results": []})
-    except Exception as e:
-        return JsonResponse({"error": str(e)})
+    # JSON 404 (not the HTML page): the script parses every response as JSON.
+    if not Publishing.objects.filter(pk=publishing_id).exists():
+        return JsonResponse({"results": []}, status=404)
+    editions = (
+        Edition.objects.filter(publishing_id=publishing_id)
+        .select_related("publishing")
+        .prefetch_related("publishing__editorials")
+        .order_by("number", "variant")
+    )
+    data = [{"id": edition.id, "text": str(edition)} for edition in editions]
+    return JsonResponse({"results": data})
