@@ -165,6 +165,7 @@
         <div class="modal-content">
           <form method="post" action="{% url 'login' %}">
             {% csrf_token %}
+            {% if login_next %}<input type="hidden" name="next" value="{{ login_next }}">{% endif %}
             <div class="modal-header">
               <h2 class="modal-title md-headline-small" id="loginDialogTitle">{% translate "Log in" %}</h2>
             </div>

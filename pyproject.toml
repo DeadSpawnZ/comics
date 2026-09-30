@@ -1,0 +1,32 @@
+[tool.ruff]
+# Matches the Python version in the Dockerfile.
+target-version = "py311"
+# Matches the existing code style (lines were written at ~120 columns).
+line-length = 120
+extend-exclude = ["migrations", "media", "backups", "staticfiles"]
+
+[tool.ruff.lint]
+select = [
+    "F",    # pyflakes: real errors (unused imports, undefined names)
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "I",    # isort: import ordering
+    "B",    # flake8-bugbear: subtle bugs
+    "UP",   # pyupgrade: modern Python syntax
+    "DJ",   # flake8-django: Django-specific rules
+    "SIM",  # flake8-simplify
+    "N",    # pep8-naming
+    "ANN",  # flake8-annotations: missing type hints
+    "C90",  # mccabe: cyclomatic complexity
+]
+ignore = [
+    "ANN401",  # allow explicit Any where justified
+    "E501",    # line length is handled by the formatter
+]
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests.py" = ["ANN"]
+"**/tests/**" = ["ANN"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10

@@ -10,7 +10,7 @@
   </div>
   <div class="manage-row__main">
     <a class="manage-row__title" href="{% url 'manage_edition_edit' edition.pk %}?next={{ request.get_full_path|urlencode }}">
-      {{ edition.publishing.publishing_title }} #{{ edition.number }} {{ edition.variant }}
+      {{ edition.short_name }}
     </a>
     <div class="md-body-medium">
       {% blocktranslate with printing=edition.printing %}{{ printing }} printing{% endblocktranslate %} · {% blocktranslate with serie=edition.publishing.serie %}Series {{ serie }}{% endblocktranslate %}{% if edition.publishing.year %} · {{ edition.publishing.year }}{% endif %} · {{ edition.publishing.language|upper }}
@@ -34,12 +34,12 @@
   </div>
   <div class="manage-row__actions">
     <a class="md-icon-btn" href="{% url 'manage_edition_edit' edition.pk %}?next={{ request.get_full_path|urlencode }}"
-       aria-label="{% blocktranslate with title=edition.publishing.publishing_title number=edition.number variant=edition.variant %}Edit {{ title }} #{{ number }} {{ variant }}{% endblocktranslate %}" title="{% translate 'Edit' %}">
+       aria-label="{% blocktranslate with title=edition.publishing.publishing_title number=edition.number variant=edition.variant_label %}Edit {{ title }} #{{ number }} {{ variant }}{% endblocktranslate %}" title="{% translate 'Edit' %}">
       <span class="material-symbols-outlined" aria-hidden="true">edit</span>
     </a>
     <button type="button" class="md-btn md-btn--danger-outlined" data-bs-toggle="modal" data-bs-target="#deleteDialog"
             data-delete-url="{% url 'manage_edition_delete' edition.pk %}"
-            data-delete-name="{{ edition.publishing.publishing_title }} #{{ edition.number }} {{ edition.variant }}">
+            data-delete-name="{{ edition.short_name }}">
       <span class="material-symbols-outlined" aria-hidden="true">delete</span>
       {% translate "Delete" %}
     </button>

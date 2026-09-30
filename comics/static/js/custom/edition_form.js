@@ -89,6 +89,18 @@
     initial: data.collected,
   });
 
+  // ---------- Cover name preview: "event store variant" (see Edition.variant_label) ----------
+  const labelPreview = document.getElementById("variant-label-preview");
+  const labelParts = ["id_event_exclusive", "id_retailer_exclusive", "id_variant"].map((id) => document.getElementById(id));
+  const renderLabelPreview = () => {
+    const parts = labelParts.map((input) => input.value.trim()).filter(Boolean);
+    const exclusive = labelParts[0].value.trim() || labelParts[1].value.trim();
+    labelPreview.hidden = !exclusive; // only useful once the cover is an exclusive
+    labelPreview.querySelector("strong").textContent = parts.join(" ");
+  };
+  labelParts.forEach((input) => input.addEventListener("input", renderLabelPreview));
+  renderLabelPreview();
+
   // ---------- Cover artists: visible list + selector to add more ----------
   const artistList = document.getElementById("artist-list");
   if (artistList) {

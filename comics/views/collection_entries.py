@@ -1,6 +1,9 @@
 """Registering pieces (Collection records): in Gestión for any collector, and in Mis comics for
 the signed-in user. Both use CollectionEntryForm and the two small JSON endpoints below."""
 
+from __future__ import annotations
+
+from typing import Any
 from urllib.parse import urlencode
 
 from django.contrib import messages
@@ -12,10 +15,10 @@ from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import ProtectedError, Q
-from django.http import JsonResponse
+from django.forms.models import BaseInlineFormSet
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.utils.dateparse import parse_date
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_GET, require_POST
 
@@ -27,6 +30,7 @@ from comics.forms import (
     edition_label,
     purchase_label,
 )
+from comics.helper import parse_date_or_none, parse_id_or_none
 from comics.models import Collection, Edition
 from comics.views.manage_editions import PAGE_SIZE, RECENT_COUNT, _log, _safe_next
 
@@ -35,20 +39,22 @@ CARRY_OVER = ("publishing", "trade_date", "trade_type", "participant", "collecto
 TYPE_TABS = [("", "all"), (Collection.TradeChoices.BUYING, "buying"), (Collection.TradeChoices.SELLING, "selling")]
 
 
-def _carried_initial(request):
+def _carried_initial(request: HttpRequest) -> dict[str, str]:
     return {key: request.GET[key] for key in CARRY_OVER if request.GET.get(key)}
 
 
-def _carry_over_query(form):
+def _carry_over_query(form: CollectionEntryForm) -> str:
     values = {key: form.data.get(key) for key in CARRY_OVER if form.data.get(key)}
     return urlencode(values)
 
 
-def _signature_formset(request, form):
+def _signature_formset(request: HttpRequest, form: CollectionEntryForm) -> BaseInlineFormSet:
     return SignatureFormSet(request.POST or None, instance=form.instance, prefix="signatures")
 
 
-def _save_entry(request, form, signatures, created):
+def _save_entry(
+    request: HttpRequest, form: CollectionEntryForm, signatures: BaseInlineFormSet, created: bool
+) -> Collection | None:
     """Save the piece and its signatures together; on success log it and return the piece,
     otherwise add the error to the form."""
     try:
@@ -66,8 +72,9 @@ def _save_entry(request, form, signatures, created):
     return piece
 
 
-def _form_context(form, signatures, piece):
-    selected = form["edition"].value()
+def _form_context(form: CollectionEntryForm, signatures: BaseInlineFormSet, piece: Collection | None) -> dict[str, Any]:
+    # The submitted value may be malformed; the form reports that, here it only means "no edition".
+    selected = parse_id_or_none(form["edition"].value())
     edition = Edition.objects.filter(pk=selected).first() if selected else None
     return {
         "form": form,
@@ -87,7 +94,7 @@ def _form_context(form, signatures, piece):
 
 @login_required
 @require_GET
-def api_editions(request):
+def api_editions(request: HttpRequest) -> JsonResponse:
     try:
         publishing_id = int(request.GET.get("publishing", ""))
     except ValueError:
@@ -100,7 +107,7 @@ def api_editions(request):
                 {
                     "id": edition.pk,
                     "label": edition_label(edition),
-                    "title": f"{edition.publishing.publishing_title} #{edition.number} {edition.variant}".strip(),
+                    "title": edition.short_name,
                     "thumbnail": edition.thumbnail.url if edition.thumbnail else None,
                     "coverPrice": str(edition.cover_price),
                 }
@@ -112,7 +119,7 @@ def api_editions(request):
 
 @login_required
 @require_GET
-def api_purchases(request):
+def api_purchases(request: HttpRequest) -> JsonResponse:
     """Purchases a sale can point to. Only staff may ask about another collector's pieces."""
     collector = request.user
     if request.user.is_staff and request.GET.get("collector", "").isdigit():
@@ -124,7 +131,7 @@ def api_purchases(request):
     current = None
     if request.GET.get("current", "").isdigit():
         current = Collection.objects.filter(pk=request.GET["current"], collector=collector).first()
-    purchases = available_purchases(collector, edition_id, parse_date(request.GET.get("before", "")), current)
+    purchases = available_purchases(collector, edition_id, parse_date_or_none(request.GET.get("before")), current)
     return JsonResponse({"results": [{"id": item.pk, "label": purchase_label(item)} for item in purchases]})
 
 
@@ -132,7 +139,7 @@ def api_purchases(request):
 
 
 @login_required
-def my_piece_new(request):
+def my_piece_new(request: HttpRequest) -> HttpResponse:
     form = CollectionEntryForm(request.POST or None, collector=request.user, initial=_carried_initial(request))
     signatures = _signature_formset(request, form)
     if request.method == "POST" and all([form.is_valid(), signatures.is_valid()]):
@@ -151,23 +158,33 @@ def my_piece_new(request):
 
 
 @staff_member_required
-def collection_list(request):
+def collection_list(request: HttpRequest) -> HttpResponse:
     query = request.GET.get("q", "").strip()
     collector_filter = request.GET.get("collector", "")
     type_filter = request.GET.get("tipo", "")
 
     base = Collection.objects.all()
     if query:
-        base = base.filter(Q(edition__publishing__publishing_title__icontains=query) | Q(participant__name__icontains=query))
+        base = base.filter(
+            Q(edition__publishing__publishing_title__icontains=query) | Q(participant__name__icontains=query)
+        )
     if collector_filter.isdigit():
         base = base.filter(collector_id=collector_filter)
     labels = {"all": _("All"), "buying": _("Purchases"), "selling": _("Sales")}
-    tabs = [(value, labels[key], (base.filter(trade_type=value) if value else base).count()) for value, key in TYPE_TABS]
+    tabs = [
+        (value, labels[key], (base.filter(trade_type=value) if value else base).count()) for value, key in TYPE_TABS
+    ]
     related = ("collector", "participant", "edition__publishing")
     pieces = (
         (base.filter(trade_type=type_filter) if type_filter else base)
         .select_related(*related)
-        .order_by("edition__publishing__publishing_title", "edition__publishing__year", "edition__number", "edition__variant", "trade_date")
+        .order_by(
+            "edition__publishing__publishing_title",
+            "edition__publishing__year",
+            "edition__number",
+            "edition__variant",
+            "trade_date",
+        )
     )
 
     page_obj = Paginator(pieces, PAGE_SIZE).get_page(request.GET.get("page"))
@@ -192,7 +209,7 @@ def collection_list(request):
 
 
 @staff_member_required
-def collection_form(request, pk=None):
+def collection_form(request: HttpRequest, pk: int | None = None) -> HttpResponse:
     piece = get_object_or_404(Collection.objects.select_related("edition"), pk=pk) if pk else None
     back_url = _safe_next(request, reverse("manage_collections"))
     initial = {} if piece else {"collector": request.user.pk, **_carried_initial(request)}
@@ -214,7 +231,7 @@ def collection_form(request, pk=None):
 
 @staff_member_required
 @require_POST
-def collection_delete(request, pk):
+def collection_delete(request: HttpRequest, pk: int) -> HttpResponseRedirect:
     piece = get_object_or_404(Collection.objects.select_related("edition"), pk=pk)
     label = str(piece.edition)
     back_url = _safe_next(request, reverse("manage_collections"))

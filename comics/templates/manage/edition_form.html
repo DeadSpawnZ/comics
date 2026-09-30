@@ -4,7 +4,7 @@
 {% block breadcrumb %}
 <a href="{{ back_url }}">{% translate "Editions" %}</a>
 <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
-<span class="is-current">{% if edition %}{{ edition.publishing.publishing_title }} #{{ edition.number }} {{ edition.variant }}{% else %}{% translate "New" context "edition" %}{% endif %}</span>
+<span class="is-current">{% if edition %}{{ edition.short_name }}{% else %}{% translate "New" context "edition" %}{% endif %}</span>
 {% endblock %}
 
 {% block manage_content %}
@@ -23,7 +23,7 @@
       {% if edition %}
         <button type="button" class="md-btn md-btn--danger-outlined" data-bs-toggle="modal" data-bs-target="#deleteDialog"
                 data-delete-url="{% url 'manage_edition_delete' edition.pk %}"
-                data-delete-name="{{ edition.publishing.publishing_title }} #{{ edition.number }} {{ edition.variant }}">
+                data-delete-name="{{ edition.short_name }}">
           <span class="material-symbols-outlined" aria-hidden="true">delete</span>
           {% translate "Delete" %}
         </button>
@@ -62,13 +62,20 @@
           <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=form.format %}</div>
           <div class="col-6">{% include 'manage/includes/field.html' with field=form.release_date %}</div>
           <div class="col-6">{% include 'manage/includes/field.html' with field=form.cover_price %}</div>
-          <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=form.ratio %}</div>
-          <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=form.limited_to %}</div>
-          <div class="col-12 col-md-6">{% include 'manage/includes/field.html' with field=form.retailer_exclusive %}</div>
+          <div class="col-6 col-md-2">{% include 'manage/includes/field.html' with field=form.ratio %}</div>
+          <div class="col-6 col-md-2">{% include 'manage/includes/field.html' with field=form.limited_to %}</div>
+          <div class="col-12 col-md-4">{% include 'manage/includes/field.html' with field=form.event_exclusive %}</div>
+          <div class="col-12 col-md-4">{% include 'manage/includes/field.html' with field=form.retailer_exclusive %}</div>
+          <datalist id="event-options">{% for value in event_options %}<option value="{{ value }}">{% endfor %}</datalist>
+          <datalist id="retailer-options">{% for value in retailer_options %}<option value="{{ value }}">{% endfor %}</datalist>
           <div class="col-12 md-body-medium mt-1">
             {% blocktranslate trimmed %}
-              With a ratio (1:N) the cover counts as incentive. Fill in the store only for retailer-exclusive covers.
+              With a ratio (1:N) the cover counts as incentive. Fill in the event and/or the store only for exclusive
+              covers; the variant is optional for them.
             {% endblocktranslate %}
+            <span id="variant-label-preview" hidden>
+              {% translate "Shown as:" %} <strong></strong>
+            </span>
           </div>
           <div class="col-12">{% include 'manage/includes/field.html' with field=form.notes %}</div>
 

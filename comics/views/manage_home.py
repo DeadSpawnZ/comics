@@ -1,14 +1,21 @@
 """Gestión home: shortcuts, counts and the recent change history (the admin's LogEntry), so there is
 no need to switch to the Django admin to see what changed."""
 
+from __future__ import annotations
+
+import datetime
+from collections.abc import Iterable
+
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION, LogEntry
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.models import User
 from django.core.paginator import Paginator
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.urls import NoReverseMatch, reverse
 from django.utils import timezone
-from django.utils.translation import gettext as _, gettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 
 from comics.models import Collection, Connecting, Edition, Publishing, ReadingArc
 
@@ -55,7 +62,7 @@ ACTIONS = {
 }
 
 
-def _link(entry, existing):
+def _link(entry: LogEntry, existing: dict[str, set[str]]) -> tuple[str | None, bool]:
     """Where an entry points: its Gestión page, else its admin page; nothing if it was deleted."""
     if entry.action_flag == DELETION:
         return None, False
@@ -70,7 +77,7 @@ def _link(entry, existing):
         return None, False
 
 
-def _existing_ids(entries):
+def _existing_ids(entries: Iterable[LogEntry]) -> dict[str, set[str]]:
     """{model: {object_id, ...}} of the objects (with a Gestión page) that still exist."""
     wanted = {}
     for entry in entries:
@@ -82,7 +89,7 @@ def _existing_ids(entries):
     }
 
 
-def _day_label(day, today):
+def _day_label(day: datetime.date, today: datetime.date) -> str | None:
     if day == today:
         return _("Today")
     if (today - day).days == 1:
@@ -91,7 +98,7 @@ def _day_label(day, today):
 
 
 @staff_member_required
-def manage_home(request):
+def manage_home(request: HttpRequest) -> HttpResponse:
     type_filter = request.GET.get("tipo", "")
     user_filter = request.GET.get("usuario", "")
 

@@ -10,8 +10,8 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
-from pathlib import Path
 import os
+from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -22,9 +22,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 # In production, set DJANGO_SECRET_KEY as an environment variable.
-SECRET_KEY = os.getenv(
-    "DJANGO_SECRET_KEY", "django-insecure-co0&+i479c@=uh-m43zsbn2wwy1(x5@k5-99l_8in67^p%r4+o"
-)
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "django-insecure-co0&+i479c@=uh-m43zsbn2wwy1(x5@k5-99l_8in67^p%r4+o")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DJANGO_DEBUG", "True").lower() == "true"
@@ -89,11 +87,11 @@ WSGI_APPLICATION = "comic.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": os.getenv('MYSQL_DATABASE'),
-        "USER": os.getenv('MYSQL_USER'),
-        "PASSWORD": os.getenv('MYSQL_PASSWORD'),
-        "HOST": os.getenv('DATABASE_HOST', 'mysql_container'),
-        "PORT": os.getenv('MYSQL_PORT'),
+        "NAME": os.getenv("MYSQL_DATABASE"),
+        "USER": os.getenv("MYSQL_USER"),
+        "PASSWORD": os.getenv("MYSQL_PASSWORD"),
+        "HOST": os.getenv("DATABASE_HOST", "mysql_container"),
+        "PORT": os.getenv("MYSQL_PORT"),
     }
 }
 

@@ -1,7 +1,14 @@
 """Comics module pages that show the catalog from the point of view of the signed-in user:
 what they own and what they are missing. Editing these records belongs to Gestión."""
 
+from __future__ import annotations
+
+from collections.abc import Iterable
+from typing import Any
+
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 
@@ -12,12 +19,12 @@ COVER_STRIP_SIZE = 6
 ENTRY_FILTERS = ("all", "owned", "missing")
 
 
-def _percent(part, total):
+def _percent(part: int, total: int) -> int:
     return round(part * 100 / total) if total else 0
 
 
 @login_required
-def arc_list(request):
+def arc_list(request: HttpRequest) -> HttpResponse:
     cards = []
     for arc in ReadingArc.objects.all():
         entries = arc.entries_with_ownership(request.user)
@@ -35,7 +42,7 @@ def arc_list(request):
 
 
 @login_required
-def arc_detail(request, pk):
+def arc_detail(request: HttpRequest, pk: int) -> HttpResponse:
     arc = get_object_or_404(ReadingArc, pk=pk)
     entries = arc.entries_with_ownership(request.user)
     owned = sum(1 for entry in entries if entry.owned)
@@ -65,7 +72,7 @@ def arc_detail(request, pk):
     )
 
 
-def _connecting_summary(connecting, user):
+def _connecting_summary(connecting: Connecting, user: User) -> dict[str, Any]:
     grid = connecting.ownership_grid(user)
     pieces = [piece for row in grid for piece in row if piece]
     owned = sum(1 for piece in pieces if piece.owned)
@@ -80,28 +87,30 @@ def _connecting_summary(connecting, user):
 
 
 @login_required
-def connecting_list(request):
+def connecting_list(request: HttpRequest) -> HttpResponse:
     cards = [_connecting_summary(connecting, request.user) for connecting in Connecting.objects.order_by("name")]
     return render(request, "my_comics/connecting_list.html", {"cards": cards})
 
 
 @login_required
-def connecting_detail(request, pk):
+def connecting_detail(request: HttpRequest, pk: int) -> HttpResponse:
     summary = _connecting_summary(get_object_or_404(Connecting, pk=pk), request.user)
     summary["missing_pieces"] = [piece for piece in summary["pieces"] if not piece.owned]
     return render(request, "my_comics/connecting_detail.html", summary)
 
 
-def _owned_counts(user, edition_ids):
+def _owned_counts(user: User, edition_ids: Iterable[int]) -> dict[int, int]:
     """{edition_id: number of copies `user` owns} for the given editions."""
     counts = {}
-    for edition_id in Collection.objects.owned_by(user).filter(edition_id__in=edition_ids).values_list("edition_id", flat=True):
+    for edition_id in (
+        Collection.objects.owned_by(user).filter(edition_id__in=edition_ids).values_list("edition_id", flat=True)
+    ):
         counts[edition_id] = counts.get(edition_id, 0) + 1
     return counts
 
 
 @login_required
-def edition_list(request):
+def edition_list(request: HttpRequest) -> HttpResponse:
     """Read-only edition catalog with the same filters as Gestión, flagged with what the user owns."""
     context = edition_catalog_context(request)
     page_obj = context["page_obj"]
@@ -112,7 +121,7 @@ def edition_list(request):
 
 
 @login_required
-def edition_detail(request, pk):
+def edition_detail(request: HttpRequest, pk: int) -> HttpResponse:
     edition = get_object_or_404(Edition.objects.select_related("publishing", "issue__publishing"), pk=pk)
     siblings = sibling_editions_of(edition)
     owned_ids = set(_owned_counts(request.user, [edition.id] + [sibling.id for sibling in siblings]))
@@ -137,7 +146,10 @@ def edition_detail(request, pk):
             "sibling_groups": Edition.group_by_cover_kind(siblings),
             "linked_elsewhere": bool(
                 edition.issue_id
-                and (edition.issue.publishing_id != edition.publishing_id or edition.issue.number != edition.number.strip())
+                and (
+                    edition.issue.publishing_id != edition.publishing_id
+                    or edition.issue.number != edition.number.strip()
+                )
             ),
         },
     )

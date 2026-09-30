@@ -1,48 +1,36 @@
+from __future__ import annotations
+
+from collections.abc import Sequence
+
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_GET
 from django.contrib.auth.models import User
 from django.core.paginator import Paginator
-from django.shortcuts import get_object_or_404, render
-from django.http import JsonResponse
-from django.utils.dateparse import parse_date
 from django.db.models import (
-    OuterRef,
-    Subquery,
-    Prefetch,
-    IntegerField,
     Case,
-    When,
+    IntegerField,
+    OuterRef,
+    Prefetch,
+    Subquery,
     Value,
+    When,
 )
 from django.db.models.functions import Cast
+from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.shortcuts import render
+from django.utils.translation import gettext as _
+from django.views.decorators.http import require_GET
 
-from comics.models import Collection, Signature, Editorial, Edition
+from comics.helper import parse_date_or_none
+from comics.models import Collection, Edition, Editorial, Signature
 
 PAGE_LIMIT = 30
 
 
-def collectable(request, collectable_id):
-    collectable_obj = get_object_or_404(Collection, pk=collectable_id)
-    try:
-        # selected_choice = collectable.choice_set.get(pk=request.POST["choice"])
-        return render(
-            request,
-            "collection.html",
-            {
-                "collectable": collectable_obj,
-                "error_message": "You didn't select a choice.",
-            },
-        )
-    except Exception as ex:
-        print(str(ex))
-        pass
-
-
-def _attach_sibling_editions(collections, user):
+def _attach_sibling_editions(collections: Sequence[Collection], user: User) -> None:
     """Set `collection.sibling_editions`: the other editions of the same issue (variants, printings,
     foreign or anniversary editions), each flagged with `owned`. Two queries for the whole page."""
-    issue_ids = {collection.edition.issue_id for collection in collections if collection.edition and collection.edition.issue_id}
+    issue_ids = {collection.edition.issue_id for collection in collections if collection.edition.issue_id}
     by_issue = {}
     if issue_ids:
         editions = (
@@ -51,20 +39,22 @@ def _attach_sibling_editions(collections, user):
             .order_by("release_date", "publishing__publishing_title", "number", "variant", "printing")
         )
         owned_ids = set(
-            Collection.objects.owned_by(user).filter(edition__issue_id__in=issue_ids).values_list("edition_id", flat=True)
+            Collection.objects.owned_by(user)
+            .filter(edition__issue_id__in=issue_ids)
+            .values_list("edition_id", flat=True)
         )
         for edition in editions:
             edition.owned = edition.id in owned_ids
             by_issue.setdefault(edition.issue_id, []).append(edition)
     for collection in collections:
         edition = collection.edition
-        siblings = by_issue.get(edition.issue_id, []) if edition else []
+        siblings = by_issue.get(edition.issue_id, [])
         collection.sibling_editions = [sibling for sibling in siblings if sibling.id != edition.id]
         collection.sibling_groups = Edition.group_by_cover_kind(collection.sibling_editions)
 
 
 @login_required
-def comics_view(request):
+def comics_view(request: HttpRequest) -> HttpResponse:
     collector = request.user
     letter = request.GET.get("letter", "A")
     selected_country = request.GET.get("country")
@@ -87,15 +77,13 @@ def comics_view(request):
             signed_artists,
             "edition__publishing__editorials",
         )
-        .annotate(first_editorial_country=first_editorial_country,
+        .annotate(
+            first_editorial_country=first_editorial_country,
             edition_number_int=Case(
-                When(
-                    edition__number__regex=r'^\d+$',
-                    then=Cast("edition__number", IntegerField())
-                ),
+                When(edition__number__regex=r"^\d+$", then=Cast("edition__number", IntegerField())),
                 default=Value(None),
                 output_field=IntegerField(),
-            )
+            ),
         )
         .order_by(
             "edition__publishing__title__name",
@@ -115,9 +103,7 @@ def comics_view(request):
         collections = collections.filter(edition__publishing__title__name__istartswith=letter)
 
     if selected_country:
-        collections = collections.filter(
-            edition__publishing__editorials__country=selected_country
-        ).distinct()
+        collections = collections.filter(edition__publishing__editorials__country=selected_country).distinct()
 
     paginator = Paginator(collections, PAGE_LIMIT)
     page_number = request.GET.get("page")
@@ -142,39 +128,40 @@ def comics_view(request):
 # Used only by the admin collection form (collection_form_events.js): staff only.
 @staff_member_required
 @require_GET
-def get_previous_trades(request, edition_id):
-    try:
-        used_previous_trades_ids = (
-            Collection.objects.filter(edition_id=edition_id)
-            .exclude(previous_trade=None)
-            .values_list("previous_trade_id", flat=True)
-        )
-        trades = (
-            Collection.objects.filter(edition_id=edition_id, trade_type=Collection.TradeChoices.BUYING)
-            .exclude(id__in=used_previous_trades_ids)
-            .select_related("edition__publishing", "participant")
-            .prefetch_related("edition__publishing__editorials")
-        )
+def get_previous_trades(request: HttpRequest, edition_id: int) -> JsonResponse:
+    used_previous_trades_ids = (
+        Collection.objects.filter(edition_id=edition_id)
+        .exclude(previous_trade=None)
+        .values_list("previous_trade_id", flat=True)
+    )
+    trades = (
+        Collection.objects.filter(edition_id=edition_id, trade_type=Collection.TradeChoices.BUYING)
+        .exclude(id__in=used_previous_trades_ids)
+        .select_related("edition__publishing", "participant")
+        .prefetch_related("edition__publishing__editorials")
+    )
 
-        # You cannot sell something you did not own yet: only purchases made
-        # on or before the sale date are offered.
-        before_date = parse_date(request.GET.get("before", ""))
-        if before_date:
-            trades = trades.filter(trade_date__lte=before_date)
+    # You cannot sell something you did not own yet: only purchases made
+    # on or before the sale date are offered.
+    before_date = parse_date_or_none(request.GET.get("before"))
+    if before_date:
+        trades = trades.filter(trade_date__lte=before_date)
 
-        trades = trades.order_by(
-            "edition__publishing__publishing_title",
-            "edition__number",
-            "edition__variant",
-            "trade_date",
-        )
+    trades = trades.order_by(
+        "edition__publishing__publishing_title",
+        "edition__number",
+        "edition__variant",
+        "trade_date",
+    )
 
-        data = [
-            {"id": trade.id, "text": f"{trade.edition} || {trade.trade_date} || {trade.participant.name}"}
-            for trade in trades
-        ]
-        return JsonResponse({"results": data})
-    except Collection.DoesNotExist:
-        return JsonResponse({"results": []})
-    except Exception as e:
-        return JsonResponse({"error": str(e)})
+    # The participant is optional (unknown or not recorded). The label is translated outside the
+    # f-string: makemessages cannot see gettext calls inside f-string expressions.
+    unknown = _("Unknown")
+    data = [
+        {
+            "id": trade.id,
+            "text": f"{trade.edition} || {trade.trade_date} || {trade.participant.name if trade.participant else unknown}",
+        }
+        for trade in trades
+    ]
+    return JsonResponse({"results": data})

@@ -104,7 +104,7 @@
 
               <div class="overlay-info">
                 <div class="fw-bold">{{ collection.edition.publishing.publishing_title }}</div>
-                <small>#{{ collection.edition.number }} {{ collection.edition.variant }} {{ collection.edition.publishing.serie }} {{ collection.edition.printing }}</small>
+                <small>#{{ collection.edition.number }} {{ collection.edition.variant_label }} {{ collection.edition.publishing.serie }} {{ collection.edition.printing }}</small>
               </div>
             </div>
           </div>
@@ -120,7 +120,7 @@
                     {{ collection.edition.publishing.publishing_title }}
                   </h2>
                   <div class="md-body-medium">
-                    #{{ collection.edition.number }} {{ collection.edition.variant }} · {{ collection.edition.get_format_display }}
+                    #{{ collection.edition.number }} {{ collection.edition.variant_label }} · {{ collection.edition.get_format_display }}
                   </div>
                 </div>
               </div>
@@ -157,7 +157,7 @@
                     <section>
                       <div class="md-section-label">Issue</div>
                       <dl class="md-list">
-                        <dt>{% translate "Number" %}</dt><dd>#{{ collection.edition.number }} {{ collection.edition.variant }}</dd>
+                        <dt>{% translate "Number" %}</dt><dd>#{{ collection.edition.number }} {{ collection.edition.variant_label }}</dd>
                         <dt>{% translate "Cover price" %}</dt><dd>${{ collection.edition.cover_price }}</dd>
                         <dt>{% translate "Release" %}</dt><dd>{{ collection.edition.release_date }}</dd>
                         <dt>{% translate "Language" %}</dt><dd>{{ collection.edition.publishing.get_language_display }}</dd>

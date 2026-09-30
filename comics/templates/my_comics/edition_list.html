@@ -65,7 +65,7 @@
         </div>
         <div class="manage-row__main">
           <a class="manage-row__title" href="{% url 'comics_edition_detail' edition.pk %}?next={{ request.get_full_path|urlencode }}">
-            {{ edition.publishing.publishing_title }} #{{ edition.number }} {{ edition.variant }}
+            {{ edition.short_name }}
           </a>
           <div class="md-body-medium">
             {% blocktranslate with printing=edition.printing %}{{ printing }} printing{% endblocktranslate %} · {% blocktranslate with serie=edition.publishing.serie %}Series {{ serie }}{% endblocktranslate %}{% if edition.publishing.year %} · {{ edition.publishing.year }}{% endif %} · {{ edition.publishing.language|upper }}
@@ -88,7 +88,7 @@
         </div>
         <div class="manage-row__actions">
           <a class="md-icon-btn" href="{% url 'comics_edition_detail' edition.pk %}?next={{ request.get_full_path|urlencode }}"
-             aria-label="{% blocktranslate with title=edition.publishing.publishing_title number=edition.number variant=edition.variant %}View {{ title }} #{{ number }} {{ variant }}{% endblocktranslate %}" title="{% translate 'View' %}">
+             aria-label="{% blocktranslate with title=edition.publishing.publishing_title number=edition.number variant=edition.variant_label %}View {{ title }} #{{ number }} {{ variant }}{% endblocktranslate %}" title="{% translate 'View' %}">
             <span class="material-symbols-outlined" aria-hidden="true">visibility</span>
           </a>
         </div>
