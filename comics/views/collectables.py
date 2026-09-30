@@ -2,6 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.shortcuts import render
+
 from comics.models import GeekCollectable
 
 PAGE_LIMIT = 30
@@ -18,10 +19,7 @@ def collectables_view(request):
 
     # 🔎 Optional search
     if search:
-        collectables = collectables.filter(
-            Q(name__icontains=search) |
-            Q(description__icontains=search)
-        )
+        collectables = collectables.filter(Q(name__icontains=search) | Q(description__icontains=search))
 
     paginator = Paginator(collectables, PAGE_LIMIT)
     page_number = request.GET.get("page")

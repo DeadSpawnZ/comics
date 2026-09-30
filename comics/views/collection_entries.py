@@ -158,16 +158,26 @@ def collection_list(request):
 
     base = Collection.objects.all()
     if query:
-        base = base.filter(Q(edition__publishing__publishing_title__icontains=query) | Q(participant__name__icontains=query))
+        base = base.filter(
+            Q(edition__publishing__publishing_title__icontains=query) | Q(participant__name__icontains=query)
+        )
     if collector_filter.isdigit():
         base = base.filter(collector_id=collector_filter)
     labels = {"all": _("All"), "buying": _("Purchases"), "selling": _("Sales")}
-    tabs = [(value, labels[key], (base.filter(trade_type=value) if value else base).count()) for value, key in TYPE_TABS]
+    tabs = [
+        (value, labels[key], (base.filter(trade_type=value) if value else base).count()) for value, key in TYPE_TABS
+    ]
     related = ("collector", "participant", "edition__publishing")
     pieces = (
         (base.filter(trade_type=type_filter) if type_filter else base)
         .select_related(*related)
-        .order_by("edition__publishing__publishing_title", "edition__publishing__year", "edition__number", "edition__variant", "trade_date")
+        .order_by(
+            "edition__publishing__publishing_title",
+            "edition__publishing__year",
+            "edition__number",
+            "edition__variant",
+            "trade_date",
+        )
     )
 
     page_obj = Paginator(pieces, PAGE_SIZE).get_page(request.GET.get("page"))

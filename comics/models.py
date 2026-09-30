@@ -1,39 +1,38 @@
-import io
 import datetime
+import io
 import logging
-from PIL import Image
+from datetime import datetime
+
+from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import InMemoryUploadedFile
-from datetime import datetime
-from django.contrib.auth.models import User
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
-from django.utils.translation import gettext, ngettext
-from django.utils.translation import gettext_lazy as _
-from django.utils.timezone import now
 from django.db.models import (
+    CASCADE,
+    PROTECT,
+    SET_NULL,
+    BooleanField,
     CharField,
     DateField,
-    TextField,
+    DecimalField,
+    F,
+    ForeignKey,
+    ImageField,
     IntegerField,
     ManyToManyField,
-    ForeignKey,
-    IntegerField,
-    Model,
-    TextChoices,
-    SET_NULL,
-    SET_DEFAULT,
-    PROTECT,
-    DecimalField,
-    BooleanField,
-    ImageField,
-    UniqueConstraint,
-    PositiveSmallIntegerField,
-    CASCADE,
-    Q,
-    F,
     Min,
+    Model,
+    PositiveSmallIntegerField,
+    Q,
     QuerySet,
+    TextChoices,
+    TextField,
+    UniqueConstraint,
 )
+from django.utils.translation import gettext, ngettext
+from django.utils.translation import gettext_lazy as _
+from PIL import Image
+
 from .helper import generate_image_jpge
 
 logger = logging.getLogger(__name__)
@@ -65,7 +64,7 @@ class Title(Model):
 
     def save(self, *args, **kwargs):
         self.process_name()
-        super(Title, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name
@@ -146,7 +145,7 @@ class Publishing(Model):
         self.process_publishing_title()
 
         self.validate_duplicates()
-        super(Publishing, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
 
 class Artist(Model):
@@ -230,10 +229,7 @@ class Edition(Model):
             code="invalid_limit",
         ),
     ]
-    some_number = RegexValidator(
-        regex=r'\d+',
-        message='Debe contener al menos un número'
-    )
+    some_number = RegexValidator(regex=r"\d+", message="Debe contener al menos un número")
 
     publishing = ForeignKey(Publishing, on_delete=PROTECT, blank=True)
     number = CharField(max_length=5, validators=[some_number])
@@ -286,16 +282,7 @@ class Edition(Model):
         first_editorial = editorials[0] if editorials else None
         country_code = first_editorial.country.upper() if first_editorial else ""
 
-        comic_name = """{publishing_title} #{number} {variant} {serie} {printing} {country}-{language} {year}""".format(
-            publishing_title=self.publishing.publishing_title,
-            number=str(self.number),
-            variant=self.variant_label,
-            serie=self.publishing.serie,
-            printing=self.printing,
-            country=country_code,
-            language=self.publishing.language.upper(),
-            year=str(self.publishing.year),
-        )
+        comic_name = f"""{self.publishing.publishing_title} #{str(self.number)} {self.variant_label} {self.publishing.serie} {self.printing} {country_code}-{self.publishing.language.upper()} {str(self.publishing.year)}"""
         if self.is_compilation:
             comic_name += " [Compilation]"
 
@@ -480,10 +467,12 @@ class Edition(Model):
         self.process_variant()
         self.validate()
         self.process_image()
-        old_issue_id = Edition.objects.filter(pk=self.pk).values_list("issue_id", flat=True).first() if self.pk else None
+        old_issue_id = (
+            Edition.objects.filter(pk=self.pk).values_list("issue_id", flat=True).first() if self.pk else None
+        )
         self.assign_default_issue()
 
-        super(Edition, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
         # Issue change (automatic or manual link): the previous one is deleted if left without editions.
         if old_issue_id and old_issue_id != self.issue_id:
@@ -566,7 +555,9 @@ class Collection(Model):
 
     def validate_duplicate(self):
         coincidences = (
-            Collection.objects.filter(edition__publishing__publishing_title__exact=self.edition.publishing.publishing_title)
+            Collection.objects.filter(
+                edition__publishing__publishing_title__exact=self.edition.publishing.publishing_title
+            )
             .filter(trade_date=self.trade_date)
             .filter(amount=self.amount)
             .filter(trade_type=self.trade_type)
@@ -585,7 +576,7 @@ class Collection(Model):
         self.validate_previous_trade()
         self.validate_duplicate()
 
-        super(Collection, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
 
 class Signature(Model):
@@ -638,7 +629,8 @@ class ReadingArc(Model):
         one by one violates the UniqueConstraints when entries are reordered."""
         self.entries.all().delete()
         ReadingArcEntry.objects.bulk_create(
-            ReadingArcEntry(arc=self, issue_id=issue_id, order=order) for order, issue_id in enumerate(issue_ids, start=1)
+            ReadingArcEntry(arc=self, issue_id=issue_id, order=order)
+            for order, issue_id in enumerate(issue_ids, start=1)
         )
 
     def entries_with_covers(self):
@@ -750,8 +742,7 @@ class Connecting(Model):
         """rows x columns matrix with the piece at each position (or None)."""
         by_position = {(piece.row, piece.column): piece for piece in self.pieces.select_related("edition__publishing")}
         return [
-            [by_position.get((row, column)) for column in range(1, self.columns + 1)]
-            for row in range(1, self.rows + 1)
+            [by_position.get((row, column)) for column in range(1, self.columns + 1)] for row in range(1, self.rows + 1)
         ]
 
     def ownership_grid(self, user):
@@ -829,4 +820,4 @@ class GeekCollectable(Model):
     def save(self, *args, **kwargs):
         self.process_image()
 
-        super(GeekCollectable, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)

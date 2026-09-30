@@ -15,13 +15,25 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
+from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path, re_path
 from django.views.i18n import JavaScriptCatalog
-from django.conf import settings
 from django.views.static import serve as serve_static
+
 from comics.views import (
-    collection, collection_entries, publishing, login, collectables, manage, manage_arcs, manage_editions, manage_home, manage_publishings, my_comics)
+    collectables,
+    collection,
+    collection_entries,
+    login,
+    manage,
+    manage_arcs,
+    manage_editions,
+    manage_home,
+    manage_publishings,
+    my_comics,
+    publishing,
+)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -51,12 +63,16 @@ urlpatterns = [
     path("gestion/colecciones/", collection_entries.collection_list, name="manage_collections"),
     path("gestion/colecciones/nueva/", collection_entries.collection_form, name="manage_collection_new"),
     path("gestion/colecciones/<int:pk>/", collection_entries.collection_form, name="manage_collection_edit"),
-    path("gestion/colecciones/<int:pk>/eliminar/", collection_entries.collection_delete, name="manage_collection_delete"),
-    path("gestion/publishings/",manage_publishings.publishing_list, name="manage_publishings"),
+    path(
+        "gestion/colecciones/<int:pk>/eliminar/", collection_entries.collection_delete, name="manage_collection_delete"
+    ),
+    path("gestion/publishings/", manage_publishings.publishing_list, name="manage_publishings"),
     path("gestion/publishings/nuevo/", manage_publishings.publishing_form, name="manage_publishing_new"),
     path("gestion/publishings/<int:pk>/", manage_publishings.publishing_form, name="manage_publishing_edit"),
-    path("gestion/publishings/<int:pk>/eliminar/", manage_publishings.publishing_delete, name="manage_publishing_delete"),
-    path("gestion/api/issues/",manage_editions.publishing_issues, name="manage_publishing_issues"),
+    path(
+        "gestion/publishings/<int:pk>/eliminar/", manage_publishings.publishing_delete, name="manage_publishing_delete"
+    ),
+    path("gestion/api/issues/", manage_editions.publishing_issues, name="manage_publishing_issues"),
     path("gestion/arcos/", manage_arcs.arc_list, name="manage_arcs"),
     path("gestion/arcos/nuevo/", manage_arcs.arc_form, name="manage_arc_new"),
     path("gestion/arcos/<int:pk>/", manage_arcs.arc_form, name="manage_arc_edit"),

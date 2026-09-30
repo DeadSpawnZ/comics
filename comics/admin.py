@@ -1,31 +1,31 @@
 from django.contrib import admin
 from django.contrib.admin.utils import unquote
-from django.utils.html import format_html
-from django.urls import path
-from django.template.response import TemplateResponse
-from django.db.models.functions import TruncMonth
 from django.db.models import Count, Sum
+from django.db.models.functions import TruncMonth
+from django.template.response import TemplateResponse
+from django.urls import path
+from django.utils.html import format_html
+
+from .forms import CollectionForm, EditionForm
 
 # Register your models here.
-
 from .models import (
-    CollectedIssue,
-    Edition,
-    Issue,
-    Editorial,
-    Title,
-    Publishing,
     Artist,
+    CollectedIssue,
     Collection,
-    Dealer,
-    Signature,
-    GeekCollectable,
     Connecting,
     ConnectingPiece,
+    Dealer,
+    Edition,
+    Editorial,
+    GeekCollectable,
+    Issue,
+    Publishing,
     ReadingArc,
     ReadingArcEntry,
+    Signature,
+    Title,
 )
-from .forms import CollectionForm, EditionForm
 
 
 def save_formset_reinserting(formset):
@@ -353,12 +353,14 @@ class CollectionAdmin(admin.ModelAdmin):
         }
         return TemplateResponse(request, "admin/collection_stats.html", context)
 
+
 @admin.register(GeekCollectable)
 class GeekCollectableAdmin(admin.ModelAdmin):
     list_display = ["name", "amount", "trade_date", "participant"]
     ordering = ["name"]
     search_fields = ["name", "participant__name"]
     list_filter = ["trade_date", "participant"]
+
 
 class ConnectingPieceInline(admin.TabularInline):
     model = ConnectingPiece

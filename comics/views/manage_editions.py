@@ -12,7 +12,8 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
-from django.utils.translation import gettext as _, gettext_lazy, ngettext, pgettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy, ngettext, pgettext_lazy
 from django.views.decorators.http import require_GET, require_POST
 
 from comics.forms import EditionManageForm, publishing_choices
@@ -99,9 +100,7 @@ def edition_catalog_context(request):
     format_filter = request.GET.get("format", "")
     type_filter = request.GET.get("tipo", "")
 
-    base = Edition.objects.annotate(
-        is_compilation_flag=Exists(CollectedIssue.objects.filter(edition=OuterRef("pk")))
-    )
+    base = Edition.objects.annotate(is_compilation_flag=Exists(CollectedIssue.objects.filter(edition=OuterRef("pk"))))
     if query:
         base = base.filter(
             Q(publishing__publishing_title__icontains=query)
@@ -168,8 +167,10 @@ def edition_form(request, pk=None):
     else:
         content = CONTENT_SINGLE
     selected_issue_id = None
-    if edition and edition.issue_id and (
-        edition.issue.publishing_id != edition.publishing_id or edition.issue.number != edition.number.strip()
+    if (
+        edition
+        and edition.issue_id
+        and (edition.issue.publishing_id != edition.publishing_id or edition.issue.number != edition.number.strip())
     ):
         selected_issue_id = edition.issue_id  # manual link; the own issue is left as the first option
     collected_ids = list(edition.collected_entries.values_list("issue_id", flat=True)) if edition else []
@@ -195,7 +196,9 @@ def edition_form(request, pk=None):
                 message = _("Edition created: %(edition)s") if created else _("Edition saved: %(edition)s")
                 messages.success(request, message % {"edition": saved})
                 if "save_continue" in request.POST:
-                    return redirect(f"{reverse('manage_edition_edit', args=[saved.pk])}?{urlencode({'next': back_url})}")
+                    return redirect(
+                        f"{reverse('manage_edition_edit', args=[saved.pk])}?{urlencode({'next': back_url})}"
+                    )
                 return redirect(back_url)
 
     issue_publishing_id = None
@@ -205,12 +208,16 @@ def edition_form(request, pk=None):
         issue_publishing_id = edition.publishing_id
     else:
         issue_publishing_id = _own_issue_parts(form, None)[0]
-    collected ={issue.id: issue for issue in Issue.objects.filter(pk__in=collected_ids).select_related("publishing")}
+    collected = {issue.id: issue for issue in Issue.objects.filter(pk__in=collected_ids).select_related("publishing")}
 
     # The own issue is offered only as the first option ("issue propio"), never repeated in the list.
     own_publishing_id, own_number = _own_issue_parts(form, edition)
-    own_publishing = form.fields["publishing"].queryset.filter(pk=own_publishing_id).first() if own_publishing_id else None
-    own_issue = Issue.objects.filter(publishing_id=own_publishing_id, number=own_number).first() if own_publishing else None
+    own_publishing = (
+        form.fields["publishing"].queryset.filter(pk=own_publishing_id).first() if own_publishing_id else None
+    )
+    own_issue = (
+        Issue.objects.filter(publishing_id=own_publishing_id, number=own_number).first() if own_publishing else None
+    )
     if own_issue and selected_issue_id == own_issue.pk:
         selected_issue_id = None
     issue_options = _issues_for_publishing(issue_publishing_id) if issue_publishing_id else []
@@ -218,9 +225,9 @@ def edition_form(request, pk=None):
         issue_options = [issue for issue in issue_options if issue.pk != own_issue.pk]
     if own_publishing and own_number:
         own_label = f"{own_publishing.publishing_title} #{own_number}"
-        own_option = (
-            _("%(issue)s · own issue") if own_issue else _("%(issue)s · own issue (will be created)")
-        ) % {"issue": own_label}
+        own_option = (_("%(issue)s · own issue") if own_issue else _("%(issue)s · own issue (will be created)")) % {
+            "issue": own_label
+        }
     else:
         own_option = _("Own issue (by publishing and number)")
 

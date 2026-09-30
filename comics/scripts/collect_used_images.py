@@ -1,5 +1,6 @@
 # scripts/collect_used_images.py
 from pathlib import Path
+
 from comics.models import Edition
 
 

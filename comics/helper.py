@@ -1,6 +1,8 @@
 import io
+
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from PIL import Image
+
 
 def generate_image_jpge(base_name, image) -> InMemoryUploadedFile:
     if not image:
@@ -17,7 +19,7 @@ def generate_image_jpge(base_name, image) -> InMemoryUploadedFile:
         img_format = "JPEG"
     elif img.mode != "RGB":
         img = img.convert("RGB")
-    
+
     # Save new JPEG image as original
     original_io = io.BytesIO()
     img.save(original_io, format="JPEG", quality=95)
@@ -33,8 +35,9 @@ def generate_image_jpge(base_name, image) -> InMemoryUploadedFile:
         None,
     )
 
+
 def collectable_image_path(instance, filename):
-    ext = filename.split('.')[-1]
+    ext = filename.split(".")[-1]
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     name = instance.name.replace(" ", "_")
     filename = f"{name}_{timestamp}.{ext}"

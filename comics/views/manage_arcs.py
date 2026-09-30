@@ -64,7 +64,12 @@ def arc_form(request, pk=None):
                 with transaction.atomic():
                     saved.save()
                     saved.set_issues(cleaned_ids)
-                    _log(request, saved, ADDITION if created else CHANGE, f"{'Creado' if created else 'Modificado'} desde Gestión.")
+                    _log(
+                        request,
+                        saved,
+                        ADDITION if created else CHANGE,
+                        f"{'Creado' if created else 'Modificado'} desde Gestión.",
+                    )
                 message = _("Reading arc created: %(arc)s") if created else _("Reading arc saved: %(arc)s")
                 messages.success(request, message % {"arc": saved})
                 if "save_continue" in request.POST:
@@ -72,7 +77,9 @@ def arc_form(request, pk=None):
                 return redirect(back_url)
 
         # Keep what the user submitted when the form is shown again with errors.
-        submitted = {issue.pk: issue for issue in Issue.objects.filter(pk__in=[i for i in issue_ids if isinstance(i, int)])}
+        submitted = {
+            issue.pk: issue for issue in Issue.objects.filter(pk__in=[i for i in issue_ids if isinstance(i, int)])
+        }
         items = [{"id": pk, "label": str(submitted[pk])} for pk in issue_ids if pk in submitted]
     else:
         items = [_entry_payload(entry) for entry in arc.entries_with_covers()] if arc else []

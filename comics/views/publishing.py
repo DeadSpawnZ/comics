@@ -1,13 +1,8 @@
-from django.db.models import F
-from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
-from django.shortcuts import get_object_or_404, render, redirect
-from django.template import loader
-from django.urls import reverse
-from django.contrib.auth import authenticate
 from django.contrib.admin.views.decorators import staff_member_required
+from django.http import JsonResponse
 from django.views.decorators.http import require_GET
 
-from comics.models import Publishing, Edition
+from comics.models import Edition, Publishing
 
 
 # Used only by the admin (fill_release_date.js): staff only.

@@ -95,7 +95,9 @@ def connecting_detail(request, pk):
 def _owned_counts(user, edition_ids):
     """{edition_id: number of copies `user` owns} for the given editions."""
     counts = {}
-    for edition_id in Collection.objects.owned_by(user).filter(edition_id__in=edition_ids).values_list("edition_id", flat=True):
+    for edition_id in (
+        Collection.objects.owned_by(user).filter(edition_id__in=edition_ids).values_list("edition_id", flat=True)
+    ):
         counts[edition_id] = counts.get(edition_id, 0) + 1
     return counts
 
@@ -137,7 +139,10 @@ def edition_detail(request, pk):
             "sibling_groups": Edition.group_by_cover_kind(siblings),
             "linked_elsewhere": bool(
                 edition.issue_id
-                and (edition.issue.publishing_id != edition.publishing_id or edition.issue.number != edition.number.strip())
+                and (
+                    edition.issue.publishing_id != edition.publishing_id
+                    or edition.issue.number != edition.number.strip()
+                )
             ),
         },
     )

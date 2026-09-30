@@ -22,7 +22,9 @@ def publishing_list(request):
     query = request.GET.get("q", "").strip()
     language = request.GET.get("language", "")
 
-    all_publishings = Publishing.objects.annotate(edition_count=Count("edition", distinct=True)).prefetch_related("editorials")
+    all_publishings = Publishing.objects.annotate(edition_count=Count("edition", distinct=True)).prefetch_related(
+        "editorials"
+    )
     publishings = all_publishings
     if query:
         publishings = publishings.filter(Q(publishing_title__icontains=query) | Q(title__name__icontains=query))
@@ -63,7 +65,12 @@ def publishing_form(request, pk=None):
             form.add_error(None, exc)
         else:
             created = publishing is None
-            _log(request, saved, ADDITION if created else CHANGE, f"{'Creado' if created else 'Modificado'} desde Gestión.")
+            _log(
+                request,
+                saved,
+                ADDITION if created else CHANGE,
+                f"{'Creado' if created else 'Modificado'} desde Gestión.",
+            )
             message = _("Publishing created: %(publishing)s") if created else _("Publishing saved: %(publishing)s")
             messages.success(request, message % {"publishing": publishing_label(saved)})
             if "save_add_edition" in request.POST:

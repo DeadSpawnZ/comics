@@ -8,7 +8,8 @@ from django.core.paginator import Paginator
 from django.shortcuts import render
 from django.urls import NoReverseMatch, reverse
 from django.utils import timezone
-from django.utils.translation import gettext as _, gettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 
 from comics.models import Collection, Connecting, Edition, Publishing, ReadingArc
 

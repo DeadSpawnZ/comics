@@ -10,6 +10,7 @@ current directory. Tables that Django regenerates by itself
 because they are the most common cause of integrity errors when the
 dump is restored with `loaddata` in another environment.
 """
+
 import os
 import sys
 from datetime import datetime

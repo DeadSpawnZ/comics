@@ -1,23 +1,22 @@
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_GET
-from django.contrib.auth.models import User
 from django.core.paginator import Paginator
-from django.shortcuts import get_object_or_404, render
-from django.http import JsonResponse
-from django.utils.dateparse import parse_date
 from django.db.models import (
-    OuterRef,
-    Subquery,
-    Prefetch,
-    IntegerField,
     Case,
-    When,
+    IntegerField,
+    OuterRef,
+    Prefetch,
+    Subquery,
     Value,
+    When,
 )
 from django.db.models.functions import Cast
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, render
+from django.utils.dateparse import parse_date
+from django.views.decorators.http import require_GET
 
-from comics.models import Collection, Signature, Editorial, Edition
+from comics.models import Collection, Edition, Editorial, Signature
 
 PAGE_LIMIT = 30
 
@@ -42,7 +41,9 @@ def collectable(request, collectable_id):
 def _attach_sibling_editions(collections, user):
     """Set `collection.sibling_editions`: the other editions of the same issue (variants, printings,
     foreign or anniversary editions), each flagged with `owned`. Two queries for the whole page."""
-    issue_ids = {collection.edition.issue_id for collection in collections if collection.edition and collection.edition.issue_id}
+    issue_ids = {
+        collection.edition.issue_id for collection in collections if collection.edition and collection.edition.issue_id
+    }
     by_issue = {}
     if issue_ids:
         editions = (
@@ -51,7 +52,9 @@ def _attach_sibling_editions(collections, user):
             .order_by("release_date", "publishing__publishing_title", "number", "variant", "printing")
         )
         owned_ids = set(
-            Collection.objects.owned_by(user).filter(edition__issue_id__in=issue_ids).values_list("edition_id", flat=True)
+            Collection.objects.owned_by(user)
+            .filter(edition__issue_id__in=issue_ids)
+            .values_list("edition_id", flat=True)
         )
         for edition in editions:
             edition.owned = edition.id in owned_ids
@@ -87,15 +90,13 @@ def comics_view(request):
             signed_artists,
             "edition__publishing__editorials",
         )
-        .annotate(first_editorial_country=first_editorial_country,
+        .annotate(
+            first_editorial_country=first_editorial_country,
             edition_number_int=Case(
-                When(
-                    edition__number__regex=r'^\d+$',
-                    then=Cast("edition__number", IntegerField())
-                ),
+                When(edition__number__regex=r"^\d+$", then=Cast("edition__number", IntegerField())),
                 default=Value(None),
                 output_field=IntegerField(),
-            )
+            ),
         )
         .order_by(
             "edition__publishing__title__name",
@@ -115,9 +116,7 @@ def comics_view(request):
         collections = collections.filter(edition__publishing__title__name__istartswith=letter)
 
     if selected_country:
-        collections = collections.filter(
-            edition__publishing__editorials__country=selected_country
-        ).distinct()
+        collections = collections.filter(edition__publishing__editorials__country=selected_country).distinct()
 
     paginator = Paginator(collections, PAGE_LIMIT)
     page_number = request.GET.get("page")

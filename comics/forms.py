@@ -3,7 +3,8 @@ from django.contrib.auth.models import User
 from django.core.exceptions import NON_FIELD_ERRORS
 from django.db.models import prefetch_related_objects
 from django.utils.translation import gettext_lazy as _
-from .models import Collection, Edition, Editorial, Publishing, Dealer, ReadingArc, Signature, Title
+
+from .models import Collection, Dealer, Edition, Editorial, Publishing, ReadingArc, Signature, Title
 
 
 class CollectionForm(forms.ModelForm):
@@ -40,18 +41,18 @@ class CollectionForm(forms.ModelForm):
         if "publishing" in self.data:
             try:
                 publishing_id = int(self.data.get("publishing"))
-                self.fields["edition"].queryset = Edition.objects.filter(
-                    publishing_id=publishing_id
-                ).order_by("number", "variant")
+                self.fields["edition"].queryset = Edition.objects.filter(publishing_id=publishing_id).order_by(
+                    "number", "variant"
+                )
             except (ValueError, TypeError):
                 pass
 
         # EDIT: existing object
         elif self.instance.pk and self.instance.edition:
             publishing = self.instance.edition.publishing
-            self.fields["edition"].queryset = Edition.objects.filter(
-                publishing=publishing
-            ).order_by("number", "variant")
+            self.fields["edition"].queryset = Edition.objects.filter(publishing=publishing).order_by(
+                "number", "variant"
+            )
             self.initial["publishing"] = publishing
 
     def filter_previous_trade(self):
@@ -94,8 +95,8 @@ class CollectionForm(forms.ModelForm):
             )
 
             self.fields["previous_trade"].queryset = qs
-            self.fields["previous_trade"].label_from_instance = (
-                lambda obj: f"{obj.edition} || {obj.trade_date} || {getattr(obj.participant, 'name', None)}"
+            self.fields["previous_trade"].label_from_instance = lambda obj: (
+                f"{obj.edition} || {obj.trade_date} || {getattr(obj.participant, 'name', None)}"
             )
 
 
@@ -225,7 +226,9 @@ class EditionManageForm(forms.ModelForm):
         for field in self.fields.values():
             widget = field.widget
             if isinstance(widget, (forms.CheckboxSelectMultiple, forms.FileInput)):
-                widget.attrs.setdefault("class", "form-control" if isinstance(widget, forms.FileInput) else "form-check-input")
+                widget.attrs.setdefault(
+                    "class", "form-control" if isinstance(widget, forms.FileInput) else "form-check-input"
+                )
             elif isinstance(widget, forms.Select):
                 widget.attrs["class"] = "form-select"
             else:
@@ -238,6 +241,7 @@ class EditionManageForm(forms.ModelForm):
             if name in self.fields:
                 widget = self.fields[name].widget
                 widget.attrs["class"] = f"{widget.attrs.get('class', '')} is-invalid".strip()
+
 
 class ReadingArcForm(forms.ModelForm):
     """Reading arc data for the Gestion module. The ordered issues are handled in the view."""
@@ -395,7 +399,9 @@ class CollectionEntryForm(forms.ModelForm):
         }
         error_messages = {
             NON_FIELD_ERRORS: {
-                "unique_together": _("That piece is already registered (same edition, date, amount, type and participant)."),
+                "unique_together": _(
+                    "That piece is already registered (same edition, date, amount, type and participant)."
+                ),
             },
         }
 
@@ -428,20 +434,30 @@ class CollectionEntryForm(forms.ModelForm):
 
         # The edition and purchase selects only list the options of the current choice; the page
         # reloads them (API) when the publishing, edition or date change. Validation uses the full querysets.
-        publishing_id = self._current("publishing") or (self.instance.edition.publishing_id if self.instance.edition_id else None)
+        publishing_id = self._current("publishing") or (
+            self.instance.edition.publishing_id if self.instance.edition_id else None
+        )
         edition_id = self._current("edition") or self.instance.edition_id
         if publishing_id is None and edition_id:
             publishing_id = Edition.objects.filter(pk=edition_id).values_list("publishing_id", flat=True).first()
         if publishing_id:
             self.initial.setdefault("publishing", publishing_id)
-        editions = Edition.objects.filter(publishing_id=publishing_id).select_related("publishing") if publishing_id else []
+        editions = (
+            Edition.objects.filter(publishing_id=publishing_id).select_related("publishing") if publishing_id else []
+        )
         editions = sorted(editions, key=lambda item: (_number_key(item.number), item.variant, item.printing))
         edition.widget.choices = [("", _("Choose a publishing first") if not publishing_id else "---------")] + [
             (item.pk, edition_label(item)) for item in editions
         ]
         owner = collector or self._current_collector()
-        purchases = available_purchases(owner, edition_id, self._current("trade_date"), self.instance) if owner and edition_id else []
-        self.fields["previous_trade"].widget.choices = [("", "---------")] + [(item.pk, purchase_label(item)) for item in purchases]
+        purchases = (
+            available_purchases(owner, edition_id, self._current("trade_date"), self.instance)
+            if owner and edition_id
+            else []
+        )
+        self.fields["previous_trade"].widget.choices = [("", "---------")] + [
+            (item.pk, purchase_label(item)) for item in purchases
+        ]
 
         for field in self.fields.values():
             widget = field.widget
@@ -473,7 +489,9 @@ class CollectionEntryForm(forms.ModelForm):
             if not allowed.filter(pk=previous.pk).exists():
                 self.add_error(
                     "previous_trade",
-                    _("Choose a purchase of this edition by the same collector, made on or before the sale date and not sold yet."),
+                    _(
+                        "Choose a purchase of this edition by the same collector, made on or before the sale date and not sold yet."
+                    ),
                 )
         return cleaned
 

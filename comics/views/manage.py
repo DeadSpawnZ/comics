@@ -9,11 +9,12 @@ from django.db.models import Count
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
-from django.utils.translation import gettext as _, gettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_GET
 
 from comics.forms import publishing_choices
-from comics.models import Edition, Connecting
+from comics.models import Connecting, Edition
 
 
 class ConnectingForm(forms.ModelForm):
