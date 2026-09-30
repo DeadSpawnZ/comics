@@ -9,6 +9,16 @@
 - Tests: if Docker is running (`docker info`), run them in Docker against MySQL; otherwise fall back to `.venv/Scripts/python.exe manage.py test comics --settings=comic.settings_test` (SQLite in memory). The MySQL run stays authoritative for migrations and DB-specific behavior.
 - New dependencies go pinned into `requirements.txt` (runtime) or `requirements-dev.txt` (dev/test), then `uv pip install --python .venv/Scripts/python.exe -r requirements-dev.txt`.
 
+## Backend feature workflow
+
+For non-trivial backend features or fixes, orchestrate the project subagents instead of implementing directly:
+
+1. Delegate the implementation to `backend-senior` with a clear spec of the feature.
+2. Send its result to `code-reviewer` for review of the current diff.
+3. If the verdict is `CHANGES REQUESTED`, pass the findings back to the same `backend-senior` (continue it with SendMessage so it keeps its context) and review again.
+4. Stop after `APPROVED` or after **3 review rounds**; if still not approved, summarize the disagreement and ask the user.
+5. Report to the user (in Spanish): what was built, review rounds, remaining MINOR findings, and test results. Do not commit until the user asks.
+
 ## Commits
 
 - Only commit when the user explicitly asks for it.
