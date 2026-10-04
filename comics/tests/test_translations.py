@@ -22,6 +22,19 @@ NEW_TRANSLATIONS = {
     "Unknown": "Desconocido",
     "Your username and password didn't match.": "El usuario y la contraseña no coinciden.",
     "Log in to continue.": "Inicia sesión para continuar.",
+    # Accounts (login page, registration) and error pages.
+    "Email": "Correo electrónico",
+    "Confirm password": "Confirmar contraseña",
+    "A user with that email already exists.": "Ya existe un usuario con ese correo electrónico.",
+    "Don't have an account?": "¿No tienes cuenta?",
+    "Create account": "Crear cuenta",
+    "Register to keep track of your collection.": "Regístrate para llevar el control de tu colección.",
+    "Already have an account?": "¿Ya tienes cuenta?",
+    "Go to my comics": "Ir a mis comics",
+    "Access denied": "Acceso denegado",
+    "You don't have permission to open this page.": "No tienes permiso para abrir esta página.",
+    "Page not found": "Página no encontrada",
+    "This page doesn't exist or was moved.": "Esta página no existe o se movió.",
 }
 
 

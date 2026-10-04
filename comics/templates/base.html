@@ -140,54 +140,29 @@
                 </li>
                 {% endif %}
                 <li>
-                  <a class="dropdown-item" href="{% url 'logout' %}">
-                    <span class="material-symbols-outlined" aria-hidden="true">logout</span>
-                    {% translate "Log out" %}
-                  </a>
+                  {# POST with CSRF token: signing out is a state change. #}
+                  <form method="post" action="{% url 'logout' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="dropdown-item">
+                      <span class="material-symbols-outlined" aria-hidden="true">logout</span>
+                      {% translate "Log out" %}
+                    </button>
+                  </form>
                 </li>
               </ul>
             </div>
-            {% else %}
-            <button type="button" class="md-btn md-btn--filled" data-bs-toggle="modal" data-bs-target="#loginDialog">
+            {% elif url_name != 'login' and url_name != 'register' %}
+            {# The login page is the only sign-in UI; it brings the user back here afterwards. #}
+            <a class="md-btn md-btn--filled" href="{% url 'login' %}?next={{ request.get_full_path|urlencode }}">
               <span class="material-symbols-outlined" aria-hidden="true">login</span>
               {% translate "Log in" %}
-            </button>
+            </a>
             {% endif %}
           </div>
         </div>
       </div>
     </nav>
     {% endwith %}
-
-    {% if not user.is_authenticated %}
-    <div class="modal fade md-dialog" id="loginDialog" tabindex="-1" aria-labelledby="loginDialogTitle" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <form method="post" action="{% url 'login' %}">
-            {% csrf_token %}
-            {% if login_next %}<input type="hidden" name="next" value="{{ login_next }}">{% endif %}
-            <div class="modal-header">
-              <h2 class="modal-title md-headline-small" id="loginDialogTitle">{% translate "Log in" %}</h2>
-            </div>
-            <div class="modal-body d-flex flex-column gap-3">
-              <div class="form-floating md-field">
-                <input type="text" class="form-control" id="loginUsername" name="username" placeholder="{% translate 'Username' %}" autocomplete="username" required>
-                <label for="loginUsername">{% translate "Username" %}</label>
-              </div>
-              <div class="form-floating md-field">
-                <input type="password" class="form-control" id="loginPassword" name="password" placeholder="{% translate 'Password' %}" autocomplete="current-password" required>
-                <label for="loginPassword">{% translate "Password" %}</label>
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="md-btn md-btn--text" data-bs-dismiss="modal">{% translate "Cancel" %}</button>
-              <button type="submit" class="md-btn md-btn--filled">{% translate "Sign in" %}</button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-    {% endif %}
 
     <main class="container-fluid">{% block content %} {% endblock %}</main>
 

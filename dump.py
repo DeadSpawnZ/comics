@@ -33,6 +33,9 @@ EXCLUDED_MODELS = [
 # --natural-primary: users and groups are written without their id, so loaddata matches them by
 #   username / group name. A freshly migrated database already has the role groups (migration
 #   0093), maybe with other ids; loading them by id would collide on the unique group name.
+#   As a consequence user and group ids are not preserved by a restore (they may change). That is
+#   safe: every reference to them inside the dump is written by natural key, and the only tables
+#   that store user ids outside the dump (admin log, sessions) are excluded above.
 DUMPDATA_OPTIONS = ["--indent=4", "--natural-foreign", "--natural-primary"]
 
 

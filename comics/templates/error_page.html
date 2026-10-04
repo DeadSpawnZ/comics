@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% comment %}Shared layout of the error pages (403.html, 404.html).{% endcomment %}
+{% block content %}
+<div class="my-4">
+  <div class="md-surface-card text-center py-5">
+    <span class="material-symbols-outlined d-block mb-2 empty-state-icon" aria-hidden="true">{% block error_icon %}{% endblock %}</span>
+    <h1 class="md-headline-small mb-2">{% block error_title %}{% endblock %}</h1>
+    <p class="md-body-medium mb-3">{% block error_message %}{% endblock %}</p>
+    <a class="md-btn md-btn--filled" href="{% url 'comics' %}">
+      <span class="material-symbols-outlined" aria-hidden="true">menu_book</span>
+      {% translate "Go to my comics" %}
+    </a>
+  </div>
+</div>
+{% endblock %}

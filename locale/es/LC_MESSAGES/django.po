@@ -1551,14 +1551,62 @@ msgstr ""
 msgid "Publishing deleted: %(publishing)s"
 msgstr "Publishing eliminado: %(publishing)s"
 
-#: comics/templates/login.html:9
+#: comics/forms.py
 msgid "Your username and password didn't match."
 msgstr "El usuario y la contraseña no coinciden."
 
-#: comics/templates/login.html:11
+#: comics/templates/accounts/login.html:6
 msgid "Log in to continue."
 msgstr "Inicia sesión para continuar."
 
 #: comics/views/collection.py:176
 msgid "Unknown"
 msgstr "Desconocido"
+
+#: comics/forms.py
+msgid "Email"
+msgstr "Correo electrónico"
+
+#: comics/forms.py
+msgid "Confirm password"
+msgstr "Confirmar contraseña"
+
+#: comics/forms.py
+msgid "A user with that email already exists."
+msgstr "Ya existe un usuario con ese correo electrónico."
+
+#: comics/templates/accounts/login.html:23
+msgid "Don't have an account?"
+msgstr "¿No tienes cuenta?"
+
+#: comics/templates/accounts/login.html:24 comics/templates/accounts/register.html:5
+msgid "Create account"
+msgstr "Crear cuenta"
+
+#: comics/templates/accounts/register.html:6
+msgid "Register to keep track of your collection."
+msgstr "Regístrate para llevar el control de tu colección."
+
+#: comics/templates/accounts/register.html:27
+msgid "Already have an account?"
+msgstr "¿Ya tienes cuenta?"
+
+#: comics/templates/error_page.html:12
+msgid "Go to my comics"
+msgstr "Ir a mis comics"
+
+#: comics/templates/403.html:4
+msgid "Access denied"
+msgstr "Acceso denegado"
+
+#: comics/templates/403.html:5
+msgid "You don't have permission to open this page."
+msgstr "No tienes permiso para abrir esta página."
+
+#: comics/templates/404.html:4
+msgid "Page not found"
+msgstr "Página no encontrada"
+
+#: comics/templates/404.html:5
+msgid "This page doesn't exist or was moved."
+msgstr "Esta página no existe o se movió."

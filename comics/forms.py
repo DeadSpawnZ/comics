@@ -4,8 +4,10 @@ import datetime
 from typing import Any
 
 from django import forms
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.models import User
-from django.core.exceptions import NON_FIELD_ERRORS
+from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
+from django.db import transaction
 from django.db.models import QuerySet, prefetch_related_objects
 from django.utils.translation import gettext_lazy as _
 
@@ -576,3 +578,70 @@ class SignatureForm(forms.ModelForm):
 SignatureFormSet = forms.inlineformset_factory(
     Collection, Signature, form=SignatureForm, fk_name="collectable", extra=0, can_delete=True
 )
+
+
+# ---------- Accounts: sign in and self-registration ----------
+
+
+def _outlined_text_fields(form: forms.BaseForm) -> None:
+    """Material/Bootstrap outlined fields: floating labels need a placeholder."""
+    for field in form.fields.values():
+        field.widget.attrs.update({"class": "form-control", "placeholder": field.label})
+
+
+class LoginForm(AuthenticationForm):
+    """Django's sign-in form (inactive users and wrong passwords get the same message, so the form
+    does not reveal which accounts exist), with the app's labels and message."""
+
+    error_messages = {
+        **AuthenticationForm.error_messages,
+        "invalid_login": _("Your username and password didn't match."),
+    }
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.fields["username"].label = _("Username")
+        self.fields["password"].label = _("Password")
+        _outlined_text_fields(self)
+
+
+class RegistrationForm(UserCreationForm):
+    """Self-registration: username, email and password (checked by AUTH_PASSWORD_VALIDATORS).
+
+    The email is required and unique ignoring case. That rule lives here and not in the database
+    because existing accounts have no email (several empty values). Without SMTP there is no email
+    verification yet: when there is, the account can be created inactive here and activated from
+    the emailed link."""
+
+    email = forms.EmailField(label=_("Email"), max_length=254)
+
+    error_messages = {
+        **UserCreationForm.error_messages,
+        "duplicate_email": _("A user with that email already exists."),
+    }
+
+    class Meta(UserCreationForm.Meta):
+        model = User
+        fields = ("username", "email")
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.fields["username"].label = _("Username")
+        self.fields["password1"].label = _("Password")
+        self.fields["password2"].label = _("Confirm password")
+        self.fields["email"].widget.attrs["autocomplete"] = "email"
+        _outlined_text_fields(self)
+
+    def clean_email(self) -> str:
+        # EmailField already stripped the value; normalize_email lowercases the domain part.
+        email = User.objects.normalize_email(self.cleaned_data["email"])
+        # Telling that an email is taken is unavoidable without sending emails (and the same holds
+        # for usernames); with SMTP this can become a notice sent to that address instead.
+        if User.objects.filter(email__iexact=email).exists():
+            raise ValidationError(self.error_messages["duplicate_email"], code="duplicate_email")
+        return email
+
+    def save(self, commit: bool = True) -> User:
+        # The user and its default role (added by the post_save signal) are saved together.
+        with transaction.atomic():
+            return super().save(commit=commit)

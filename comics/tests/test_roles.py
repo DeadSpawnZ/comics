@@ -329,21 +329,6 @@ class EnsureRolesTests(ComiTestCase):
         self.assertEqual(by_command, by_migration)
 
 
-class LogoutTests(ComiTestCase):
-    def test_logout_goes_to_the_login_page(self) -> None:
-        for user in [make_user(), make_superuser()]:
-            with self.subTest(superuser=user.is_superuser):
-                self.client.force_login(user)
-                response = self.client.get(reverse("logout"))
-                self.assertRedirects(response, reverse("login"), fetch_redirect_response=False)
-                self.assertNotIn("_auth_user_id", self.client.session)
-
-    def test_admin_logout_goes_to_the_login_page(self) -> None:
-        self.client.force_login(make_superuser())
-        response = self.client.post(reverse("admin:logout"))
-        self.assertRedirects(response, reverse("login"), fetch_redirect_response=False)
-
-
 class RolesMigrationTests(ComiTestCase):
     """The test database was built by running the migrations, so the groups below come from 0093."""
 

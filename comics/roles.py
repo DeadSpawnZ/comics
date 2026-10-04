@@ -57,6 +57,10 @@ def ensure_roles() -> None:
     everyone is a Collector and superusers are also Administrators. Only adds, never removes, so
     it is safe to run any number of times and keeps memberships and permissions added by hand."""
     with transaction.atomic():
+        # Model permissions normally exist (post_migrate creates them on migrate and on flush);
+        # create any that are missing so the lookups below cannot fail.
+        for app_label in {perm.split(".")[0] for perms in ROLE_PERMISSIONS.values() for perm in perms}:
+            create_permissions(apps.get_app_config(app_label), verbosity=0)
         for name, permissions in ROLE_PERMISSIONS.items():
             group, _created = Group.objects.get_or_create(name=name)
             group.permissions.add(*(_permission(perm) for perm in permissions))
@@ -66,8 +70,6 @@ def ensure_roles() -> None:
 
 
 def _permission(perm: str) -> Permission:
-    """The Permission row for "app_label.codename". The app's model permissions are created first if
-    missing (they normally exist: post_migrate creates them on migrate and on flush)."""
+    """The Permission row for "app_label.codename"."""
     app_label, codename = perm.split(".")
-    create_permissions(apps.get_app_config(app_label), verbosity=0)
     return Permission.objects.get(content_type__app_label=app_label, codename=codename)

@@ -1,12 +1,11 @@
-"""Login view, EditionAdmin flag, CollectedIssue inline and image/date helpers (point 6)."""
+"""EditionAdmin flag, CollectedIssue inline and image/date helpers (point 6).
+The login view tests moved to test_accounts.py."""
 
 import datetime
 import io
-from unittest import mock
 
 from django.contrib import admin
 from django.test import RequestFactory, override_settings
-from django.urls import reverse
 from PIL import Image
 
 from comics.admin import CollectedIssueInline
@@ -14,80 +13,7 @@ from comics.helper import generate_image_jpeg, parse_date_or_none, parse_id_or_n
 from comics.models import CollectedIssue, Edition
 
 from .base import ComiTestCase
-from .factories import image_upload, make_edition, make_editorial, make_publishing, make_superuser, make_user
-
-
-class LoginViewTests(ComiTestCase):
-    def setUp(self) -> None:
-        self.user = make_user(username="reader", password="right-pass")
-        self.url = reverse("login")
-
-    def test_get_shows_the_sign_in_page_without_authenticating(self) -> None:
-        with mock.patch("comics.views.login.authenticate") as authenticate:
-            response = self.client.get(self.url)
-        authenticate.assert_not_called()
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "login.html")
-        self.assertContains(response, 'id="loginDialog"')
-        self.assertNotContains(response, "didn't match")
-
-    def test_post_with_valid_credentials_signs_in(self) -> None:
-        response = self.client.post(self.url, {"username": "reader", "password": "right-pass"})
-        self.assertRedirects(response, "/collectables/", fetch_redirect_response=False)
-        self.assertEqual(int(self.client.session["_auth_user_id"]), self.user.pk)
-
-    def test_post_with_wrong_credentials_shows_the_error(self) -> None:
-        response = self.client.post(self.url, {"username": "reader", "password": "wrong"})
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Your username and password didn't match.")
-        self.assertNotIn("_auth_user_id", self.client.session)
-
-    def test_other_methods_are_not_allowed(self) -> None:
-        self.assertEqual(self.client.put(self.url).status_code, 405)
-        self.assertEqual(self.client.delete(self.url).status_code, 405)
-
-    def test_signed_in_user_is_sent_to_the_collection(self) -> None:
-        self.client.force_login(self.user)
-        self.assertRedirects(self.client.get(self.url), "/collectables/", fetch_redirect_response=False)
-
-    def test_login_required_pages_send_their_url_as_next(self) -> None:
-        response = self.client.get(reverse("comics"))
-        self.assertRedirects(response, f"{self.url}?next=/comics/", fetch_redirect_response=False)
-
-    def test_next_is_carried_in_the_login_dialog(self) -> None:
-        response = self.client.get(self.url, {"next": "/comics/arcos/"})
-        self.assertContains(response, '<input type="hidden" name="next" value="/comics/arcos/">', html=True)
-
-    def test_no_next_field_without_a_valid_next(self) -> None:
-        for params in [{}, {"next": "https://evil.example.com/"}]:
-            with self.subTest(params=params):
-                html = self.client.get(self.url, params).content.decode()
-                # Only the login dialog's form (the language menu has its own `next` field).
-                dialog = html[html.index('id="loginDialog"') :]
-                dialog_form = dialog[: dialog.index("</form>")]
-                self.assertNotIn('name="next"', dialog_form)
-
-    def test_post_redirects_to_a_same_site_next(self) -> None:
-        response = self.client.post(
-            self.url, {"username": "reader", "password": "right-pass", "next": "/comics/arcos/"}
-        )
-        self.assertRedirects(response, "/comics/arcos/", fetch_redirect_response=False)
-
-    def test_post_rejects_an_external_next(self) -> None:
-        for target in ["https://evil.example.com/", "//evil.example.com/", "javascript:alert(1)"]:
-            with self.subTest(next=target):
-                self.client.logout()
-                response = self.client.post(self.url, {"username": "reader", "password": "right-pass", "next": target})
-                self.assertRedirects(response, "/collectables/", fetch_redirect_response=False)
-
-    def test_failed_post_keeps_the_next(self) -> None:
-        response = self.client.post(self.url, {"username": "reader", "password": "wrong", "next": "/comics/"})
-        self.assertContains(response, '<input type="hidden" name="next" value="/comics/">', html=True)
-
-    def test_signed_in_user_follows_a_same_site_next(self) -> None:
-        self.client.force_login(self.user)
-        response = self.client.get(self.url, {"next": "/comics/"})
-        self.assertRedirects(response, "/comics/", fetch_redirect_response=False)
+from .factories import image_upload, make_edition, make_editorial, make_publishing, make_superuser
 
 
 class EditionAdminTests(ComiTestCase):

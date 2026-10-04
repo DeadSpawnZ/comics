@@ -22,10 +22,10 @@ from django.views.i18n import JavaScriptCatalog
 from django.views.static import serve as serve_static
 
 from comics.views import (
+    accounts,
     collectables,
     collection,
     collection_entries,
-    login,
     manage,
     manage_arcs,
     manage_editions,
@@ -39,8 +39,9 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("i18n/", include("django.conf.urls.i18n")),
     path("jsi18n/", JavaScriptCatalog.as_view(), name="javascript-catalog"),
-    path("login/", login.login_view, name="login"),
-    path("logout/", login.logout_view, name="logout"),
+    path("login/", accounts.login_view, name="login"),
+    path("logout/", accounts.logout_view, name="logout"),
+    path("registro/", accounts.register_view, name="register"),
     path("ajax/get-publishing-date/<int:publishing_id>/", publishing.get_publishing_date, name="get_publishing_date"),
     path("ajax/get-comics/<int:publishing_id>/", publishing.get_comics_by_publishing, name="get_comics_by_publishing"),
     path("ajax/get-previous-trades/<int:edition_id>/", collection.get_previous_trades, name="get_previous_trades"),
