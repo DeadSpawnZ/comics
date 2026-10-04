@@ -1,5 +1,7 @@
 """Accounts: the login page, self-registration, POST-only logout and the styled error pages."""
 
+import re
+
 from django.contrib.auth.models import User
 from django.test import Client, override_settings
 from django.urls import reverse
@@ -9,7 +11,7 @@ from comics.roles import ADMINISTRATORS, COLLECTORS
 from .base import ComiTestCase
 from .factories import make_superuser, make_user
 
-LANDING = "/collectables/"
+LANDING = reverse("collectables")  # DEFAULT_LANDING of comics.views.accounts
 
 
 class LoginPageTests(ComiTestCase):
@@ -224,9 +226,14 @@ class LogoutTests(ComiTestCase):
     def test_user_menu_signs_out_with_a_post_form(self) -> None:
         self.client.force_login(make_user())
         html = self.client.get(reverse("comics")).content.decode()
-        form = html[html.index(f'action="{reverse("logout")}"') - 40 :]
-        self.assertIn('method="post"', form[:60])
-        self.assertIn('name="csrfmiddlewaretoken"', form[: form.index("</form>")])
+        # Every <form ...>...</form> of the page, as (attributes, body).
+        forms = re.findall(r"<form\b([^>]*)>(.*?)</form>", html, flags=re.DOTALL)
+        logout_forms = [(attrs, body) for attrs, body in forms if f'action="{reverse("logout")}"' in attrs]
+        self.assertEqual(len(logout_forms), 1)
+        attrs, body = logout_forms[0]
+        self.assertIn('method="post"', attrs)
+        self.assertIn('name="csrfmiddlewaretoken"', body)
+        self.assertNotIn(f'href="{reverse("logout")}"', html)
 
     def test_admin_logout_goes_to_the_login_page(self) -> None:
         self.client.force_login(make_superuser())

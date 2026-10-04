@@ -17,7 +17,8 @@ from django.views.decorators.http import require_POST
 from comics.decorators import management_required
 from comics.forms import PublishingManageForm, publishing_label
 from comics.models import Publishing, Title
-from comics.views.manage_editions import PAGE_SIZE, RECENT_COUNT, _log, _safe_next
+from comics.views.manage_editions import PAGE_SIZE, RECENT_COUNT
+from comics.views.utils import log_action, safe_next_url
 
 
 @management_required
@@ -57,7 +58,7 @@ def publishing_list(request: HttpRequest) -> HttpResponse:
 @management_required
 def publishing_form(request: HttpRequest, pk: int | None = None) -> HttpResponse:
     publishing = get_object_or_404(Publishing, pk=pk) if pk else None
-    back_url = _safe_next(request, reverse("manage_publishings"))
+    back_url = safe_next_url(request, reverse("manage_publishings"))
     form = PublishingManageForm(request.POST or None, instance=publishing)
 
     if request.method == "POST" and form.is_valid():
@@ -68,7 +69,7 @@ def publishing_form(request: HttpRequest, pk: int | None = None) -> HttpResponse
             form.add_error(None, exc)
         else:
             created = publishing is None
-            _log(
+            log_action(
                 request,
                 saved,
                 ADDITION if created else CHANGE,
@@ -101,10 +102,10 @@ def publishing_form(request: HttpRequest, pk: int | None = None) -> HttpResponse
 def publishing_delete(request: HttpRequest, pk: int) -> HttpResponseRedirect:
     publishing = get_object_or_404(Publishing, pk=pk)
     label = publishing_label(publishing)
-    back_url = _safe_next(request, reverse("manage_publishings"))
+    back_url = safe_next_url(request, reverse("manage_publishings"))
     try:
         with transaction.atomic():
-            _log(request, publishing, DELETION, "Eliminado desde Gestión.")
+            log_action(request, publishing, DELETION, "Eliminado desde Gestión.")
             publishing.delete()
     except ProtectedError:
         messages.error(

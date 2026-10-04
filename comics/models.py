@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import io
 import logging
+import re
+import secrets
 from collections.abc import Iterable
 from datetime import datetime
 from typing import Any, Self
@@ -10,6 +12,7 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
+from django.db import transaction
 from django.db.models import (
     CASCADE,
     PROTECT,
@@ -22,9 +25,11 @@ from django.db.models import (
     ForeignKey,
     ImageField,
     IntegerField,
+    Manager,
     ManyToManyField,
     Min,
     Model,
+    OneToOneField,
     PositiveSmallIntegerField,
     Q,
     QuerySet,
@@ -37,7 +42,7 @@ from django.utils.translation import gettext, ngettext
 from django.utils.translation import gettext_lazy as _
 from PIL import Image
 
-from .helper import generate_image_jpeg
+from .helper import generate_image_jpeg, square_jpeg
 
 logger = logging.getLogger(__name__)
 
@@ -858,3 +863,77 @@ class AreaAccess(Model):
 
     def __str__(self) -> str:
         return str(self._meta.verbose_name)
+
+
+PHONE_ALLOWED = re.compile(r"^\+?[0-9 ().-]+$")
+
+
+def validate_phone(value: str) -> None:
+    """Light phone check (no library): digits with the usual separators, an optional leading +,
+    and 7 to 15 digits (15 is the international maximum, E.164)."""
+    digits = sum(char.isdigit() for char in value)
+    if not PHONE_ALLOWED.match(value) or not 7 <= digits <= 15:
+        raise ValidationError(_("Enter a valid phone number."), code="invalid_phone")
+
+
+class ProfileManager(Manager["Profile"]):
+    def for_user(self, user: User) -> Profile:
+        """The user's profile, created on the spot when missing. New users get one from a signal
+        and existing ones from a migration, but loaddata skips signals (an old dump restores users
+        without profiles), so reads go through here and never fail."""
+        profile, _created = self.get_or_create(user=user)
+        return profile
+
+    def get_by_natural_key(self, username: str) -> Profile:
+        return self.get(user__username=username)
+
+
+class Profile(Model):
+    """What a user adds about themselves. Email and phone are private: only the owner sees them."""
+
+    AVATAR_SIZE = 512  # pixels, square
+
+    user = OneToOneField(User, on_delete=CASCADE, related_name="profile")
+    avatar = ImageField(upload_to="avatars/", blank=True)
+    phone = CharField(max_length=30, blank=True, validators=[validate_phone])
+    is_public = BooleanField(default=True)  # other signed-in users can see the profile
+
+    objects = ProfileManager()
+
+    def __str__(self) -> str:
+        return self.user.username
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        update_fields = kwargs.get("update_fields")
+        if update_fields is not None and "avatar" not in update_fields:
+            # The picture is not being saved: a stale in-memory value must neither be re-encoded
+            # nor replace (and delete) the picture stored now.
+            super().save(*args, **kwargs)
+            return
+        old_avatar = self._stored_avatar()
+        if self.avatar and self.avatar.name != old_avatar:
+            # Random file name: media files are served without a session check.
+            self.avatar = square_jpeg(f"user{self.user_id}_{secrets.token_hex(8)}", self.avatar, self.AVATAR_SIZE)
+        super().save(*args, **kwargs)
+        if old_avatar and old_avatar != self.avatar.name:
+            # The replaced or removed picture goes too, once the new state is committed.
+            storage = self.avatar.storage
+            transaction.on_commit(lambda: storage.delete(old_avatar))
+
+    def natural_key(self) -> tuple[str]:
+        # Dumps refer to the profile by its user's username, like the user itself (see dump.py).
+        return self.user.natural_key()
+
+    natural_key.dependencies = ["auth.user"]
+
+    def remove_avatar(self) -> None:
+        """Drop the picture (save() deletes the file once committed)."""
+        if self.avatar:
+            self.avatar = ""
+            self.save(update_fields=["avatar"])
+
+    def _stored_avatar(self) -> str:
+        """Avatar file name currently saved in the database ("" when none or not saved yet)."""
+        if not self.pk:
+            return ""
+        return Profile.objects.filter(pk=self.pk).values_list("avatar", flat=True).first() or ""

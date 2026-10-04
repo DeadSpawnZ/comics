@@ -925,3 +925,34 @@ a.md-paginator__page:hover {
   color: var(--md-on-surface);
   font-size: 0.9375rem;
 }
+
+/* Avatars (user profile pictures) */
+.md-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.md-avatar--sm {
+  width: 28px;
+  height: 28px;
+}
+
+.md-avatar--lg {
+  width: 128px;
+  height: 128px;
+}
+
+.md-avatar--placeholder {
+  background-color: var(--md-surface-container-high);
+  color: var(--md-on-surface-variant);
+}
+
+.md-avatar--lg .material-symbols-outlined {
+  font-size: 64px;
+}

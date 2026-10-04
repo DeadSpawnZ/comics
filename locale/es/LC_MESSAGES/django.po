@@ -1610,3 +1610,141 @@ msgstr "Página no encontrada"
 #: comics/templates/404.html:5
 msgid "This page doesn't exist or was moved."
 msgstr "Esta página no existe o se movió."
+
+#: comics/models.py
+msgid "Enter a valid phone number."
+msgstr "Introduce un número de teléfono válido."
+
+#: comics/forms.py
+msgid "Phone"
+msgstr "Teléfono"
+
+#: comics/forms.py
+msgid "First name"
+msgstr "Nombre"
+
+#: comics/forms.py
+msgid "Last name"
+msgstr "Apellidos"
+
+#: comics/forms.py
+#, python-format
+msgid "The picture is too large (maximum %(size)s MB)."
+msgstr "La imagen es demasiado grande (máximo %(size)s MB)."
+
+#: comics/forms.py
+msgid "Upload a JPEG, PNG, WebP or GIF picture."
+msgstr "Sube una imagen JPEG, PNG, WebP o GIF."
+
+#: comics/forms.py
+msgid "The picture has too many pixels."
+msgstr "La imagen tiene demasiados píxeles."
+
+#: comics/forms.py comics/templates/profiles/own.html
+msgid "Profile picture"
+msgstr "Foto de perfil"
+
+#: comics/forms.py comics/templates/profiles/own.html
+msgid "Public profile"
+msgstr "Perfil público"
+
+#: comics/forms.py
+msgid "Current password"
+msgstr "Contraseña actual"
+
+#: comics/forms.py
+msgid "New password"
+msgstr "Nueva contraseña"
+
+#: comics/forms.py
+msgid "Confirm new password"
+msgstr "Confirmar nueva contraseña"
+
+#: comics/views/profiles.py
+msgid "Personal information saved."
+msgstr "Información personal guardada."
+
+#: comics/views/profiles.py
+msgid "Profile picture updated."
+msgstr "Foto de perfil actualizada."
+
+#: comics/views/profiles.py
+msgid "Privacy settings saved."
+msgstr "Privacidad guardada."
+
+#: comics/views/profiles.py
+msgid "Password changed."
+msgstr "Contraseña cambiada."
+
+#: comics/views/profiles.py
+msgid "Profile picture removed."
+msgstr "Foto de perfil eliminada."
+
+#: comics/templates/base.html
+msgid "Profile"
+msgstr "Perfil"
+
+#: comics/templates/profiles/own.html comics/templates/profiles/public.html
+#, python-format
+msgid "Member since %(date)s"
+msgstr "Miembro desde %(date)s"
+
+#: comics/templates/profiles/own.html
+msgid "Private profile"
+msgstr "Perfil privado"
+
+#: comics/templates/profiles/own.html
+msgid "View my profile"
+msgstr "Ver mi perfil"
+
+#: comics/templates/profiles/own.html
+msgid "Personal information"
+msgstr "Información personal"
+
+#: comics/templates/profiles/own.html
+msgid "Your email and phone are only visible to you."
+msgstr "Tu correo y tu teléfono solo los ves tú."
+
+#: comics/templates/profiles/own.html
+msgid "Privacy"
+msgstr "Privacidad"
+
+#: comics/templates/profiles/own.html
+msgid "A public profile can be seen by other signed-in users; a private one only shows your username."
+msgstr "Un perfil público lo pueden ver los demás usuarios con sesión iniciada; uno privado solo muestra tu nombre de usuario."
+
+#: comics/templates/profiles/own.html
+msgid "Upload a new picture (JPEG, PNG, WebP or GIF, up to 5 MB)"
+msgstr "Sube una imagen nueva (JPEG, PNG, WebP o GIF, hasta 5 MB)"
+
+#: comics/templates/profiles/own.html
+msgid "Upload"
+msgstr "Subir"
+
+#: comics/templates/profiles/own.html
+msgid "Remove picture"
+msgstr "Quitar foto"
+
+#: comics/templates/profiles/own.html
+msgid "Change password"
+msgstr "Cambiar contraseña"
+
+#: comics/templates/profiles/includes/achievements.html
+msgid "Achievements"
+msgstr "Logros"
+
+#: comics/templates/profiles/includes/achievements.html
+msgid "No achievements yet."
+msgstr "Todavía no hay logros."
+
+#: comics/templates/profiles/public.html
+msgid "Edit profile"
+msgstr "Editar perfil"
+
+#: comics/templates/profiles/public.html
+msgid "Your profile is private: other users only see your username."
+msgstr "Tu perfil es privado: los demás usuarios solo ven tu nombre de usuario."
+
+#: comics/templates/profiles/private.html
+msgid "This profile is private."
+msgstr "Este perfil es privado."

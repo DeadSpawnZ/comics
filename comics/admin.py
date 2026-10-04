@@ -28,6 +28,7 @@ from .models import (
     Editorial,
     GeekCollectable,
     Issue,
+    Profile,
     Publishing,
     ReadingArc,
     ReadingArcEntry,
@@ -54,6 +55,15 @@ def save_formset_reinserting(formset: BaseModelFormSet) -> None:
 
 
 admin.site.register(Signature)
+
+
+@admin.register(Profile)
+class ProfileAdmin(admin.ModelAdmin):
+    list_display = ("user", "is_public", "phone")
+    list_filter = ("is_public",)
+    list_select_related = ("user",)
+    search_fields = ("user__username", "user__email")
+    raw_id_fields = ("user",)
 
 
 @admin.register(Dealer)

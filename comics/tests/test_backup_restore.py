@@ -1,7 +1,9 @@
 """Backups (dump.py / dumpdata) still work with the AreaAccess model, and a restore keeps the roles:
 group permissions travel by natural key, so they survive permission ids that differ between
-databases. `ensure_roles` rebuilds the groups when a dump does not bring them."""
+databases. `ensure_roles` rebuilds the groups when a dump does not bring them. Profiles travel by
+their user's username too."""
 
+import json
 import tempfile
 from io import StringIO
 from pathlib import Path
@@ -12,7 +14,7 @@ from django.core.management import call_command
 from django.test import TransactionTestCase, override_settings
 
 import dump
-from comics.models import Collection
+from comics.models import Collection, Profile
 from comics.roles import ACCESS_MANAGEMENT, ADMINISTRATORS, COLLECTORS, ROLE_PERMISSIONS, ensure_roles
 
 from .base import TEST_MEDIA_ROOT, TEST_STORAGES, ComiTestCase
@@ -83,6 +85,34 @@ class RestoreTests(TransactionTestCase):
         self.assertTrue(manager.has_perm(ACCESS_MANAGEMENT))
         self.assertEqual(set(manager.groups.values_list("name", flat=True)), {COLLECTORS, ADMINISTRATORS})
         self.assertEqual(Collection.objects.get().collector, manager)
+
+    def test_restore_keeps_profiles_by_username(self) -> None:
+        manager = make_user(username="manager")
+        # The file itself is not part of the dump (media is backed up separately): only its path.
+        Profile.objects.filter(user=manager).update(avatar="avatars/user1_0123456789abcdef.jpg", phone="811 234 5678")
+        Profile.objects.filter(user=manager).update(is_public=False)
+        make_user(username="plain")
+        with tempfile.TemporaryDirectory() as tmp:
+            dump_file = self.make_dump(tmp)
+            entries = [
+                item for item in json.loads(dump_file.read_text(encoding="utf-8")) if item["model"] == "comics.profile"
+            ]
+            # Written by username, without the profile's own id.
+            self.assertEqual(sorted(item["fields"]["user"] for item in entries), [["manager"], ["plain"]])
+            self.assertTrue(all("pk" not in item for item in entries))
+
+            call_command("flush", interactive=False, verbosity=0)
+            # The target already has a "manager" (with a fresh profile, under other ids): the dump
+            # updates both instead of colliding on them.
+            make_user(username="other")
+            make_user(username="manager")
+            call_command("loaddata", str(dump_file), verbosity=0)
+
+        self.assertEqual(Profile.objects.filter(user__username="manager").count(), 1)
+        profile = Profile.objects.get(user__username="manager")
+        self.assertEqual(profile.avatar.name, "avatars/user1_0123456789abcdef.jpg")
+        self.assertEqual((profile.phone, profile.is_public), ("811 234 5678", False))
+        self.assertTrue(Profile.objects.filter(user__username="plain").exists())
 
     def test_ensure_roles_rebuilds_the_groups_after_flush(self) -> None:
         call_command("flush", interactive=False, verbosity=0)

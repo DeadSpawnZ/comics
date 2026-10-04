@@ -9,19 +9,20 @@ from django.conf import settings
 from django.contrib.auth import login, logout
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect, render
+from django.urls import reverse_lazy
 from django.views.decorators.http import require_http_methods, require_POST
 
 from comics.forms import LoginForm, RegistrationForm
-from comics.views.manage_editions import _safe_next
+from comics.views.utils import safe_next_url
 
-DEFAULT_LANDING = "/collectables/"
+DEFAULT_LANDING = reverse_lazy("collectables")
 
 
 @require_http_methods(["GET", "POST"])
 def login_view(request: HttpRequest) -> HttpResponse:
     """GET shows the sign-in page (the LOGIN_URL target); POST signs in. Both honor a same-site
     `next` URL (what @login_required adds), carried through the form as a hidden field."""
-    next_url = _safe_next(request, "")
+    next_url = safe_next_url(request, "")
     if request.user.is_authenticated:
         return redirect(next_url or DEFAULT_LANDING)
     form = LoginForm(request, data=request.POST if request.method == "POST" else None)
@@ -35,7 +36,7 @@ def login_view(request: HttpRequest) -> HttpResponse:
 def register_view(request: HttpRequest) -> HttpResponse:
     """Self-registration. A new account is signed in right away and, like every user, is a
     Collector (comics.signals). Signed-in users have nothing to do here."""
-    next_url = _safe_next(request, "")
+    next_url = safe_next_url(request, "")
     if request.user.is_authenticated:
         return redirect(next_url or DEFAULT_LANDING)
     form = RegistrationForm(request.POST if request.method == "POST" else None)

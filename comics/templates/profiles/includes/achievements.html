@@ -1,0 +1,22 @@
+{% load i18n %}
+{% comment %}Achievements of a profile. Expects `achievements`: a list whose items have `name`,
+`description`, `icon` (a Material Symbols name) and `awarded_at` (a date). Empty for now.{% endcomment %}
+<section class="md-surface-card" aria-labelledby="achievements-title">
+  <h2 class="md-title-medium mb-3" id="achievements-title">{% translate "Achievements" %}</h2>
+  {% if achievements %}
+    <ul class="list-unstyled d-flex flex-column gap-3 mb-0">
+      {% for achievement in achievements %}
+        <li class="d-flex align-items-start gap-3">
+          <span class="material-symbols-outlined" aria-hidden="true">{{ achievement.icon }}</span>
+          <div>
+            <div class="md-title-medium">{{ achievement.name }}</div>
+            <div class="md-body-medium">{{ achievement.description }}</div>
+            <div class="md-body-medium small">{{ achievement.awarded_at|date:"DATE_FORMAT" }}</div>
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="md-body-medium mb-0">{% translate "No achievements yet." %}</p>
+  {% endif %}
+</section>

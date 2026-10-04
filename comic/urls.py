@@ -32,6 +32,7 @@ from comics.views import (
     manage_home,
     manage_publishings,
     my_comics,
+    profiles,
     publishing,
 )
 
@@ -42,6 +43,8 @@ urlpatterns = [
     path("login/", accounts.login_view, name="login"),
     path("logout/", accounts.logout_view, name="logout"),
     path("registro/", accounts.register_view, name="register"),
+    path("perfil/", profiles.own_profile, name="profile"),
+    path("u/<str:username>/", profiles.user_profile, name="user_profile"),
     path("ajax/get-publishing-date/<int:publishing_id>/", publishing.get_publishing_date, name="get_publishing_date"),
     path("ajax/get-comics/<int:publishing_id>/", publishing.get_comics_by_publishing, name="get_comics_by_publishing"),
     path("ajax/get-previous-trades/<int:edition_id>/", collection.get_previous_trades, name="get_previous_trades"),

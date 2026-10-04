@@ -169,18 +169,47 @@ class DjangoAdminAccessTests(RoleUsersMixin, ComiTestCase):
                     else:
                         self.assert_sent_to_admin_login(url)
 
-    def test_admin_login_form_accepts_superusers_only(self) -> None:
-        url = reverse("admin:login")
-        superuser_without_staff = make_user(is_superuser=True, password="pass-1234")
-        staff_only = make_user(is_staff=True, role=ADMINISTRATORS, password="pass-1234")
+    def test_admin_login_is_the_app_login(self) -> None:
+        """The admin has no login form of its own: anonymous visitors go to the app login (and come
+        back), signed-in users without access get 403 (no redirect loop), superusers go through."""
+        changelist = reverse("admin:comics_edition_changelist")
+        admin_login = f"{reverse('admin:login')}?{urlencode({'next': changelist})}"
 
-        response = self.client.post(url, {"username": staff_only.username, "password": "pass-1234"})
-        self.assertEqual(response.status_code, 200)
+        response = self.client.get(changelist)
+        self.assertRedirects(response, admin_login, fetch_redirect_response=False)
+        response = self.client.get(admin_login)
+        app_login = f"{reverse('login')}?{urlencode({'next': changelist})}"
+        self.assertRedirects(response, app_login, fetch_redirect_response=False)
+        # POSTing credentials to the admin login does not sign anyone in either.
+        make_superuser(username="root", password="pass-1234")
+        self.client.post(admin_login, {"username": "root", "password": "pass-1234"})
         self.assertNotIn("_auth_user_id", self.client.session)
 
-        response = self.client.post(url, {"username": superuser_without_staff.username, "password": "pass-1234"})
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(int(self.client.session["_auth_user_id"]), superuser_without_staff.pk)
+        for role in ["collector", "administrator", "staff"]:
+            self.login_as(role)
+            with self.subTest(role=role):
+                self.assertEqual(self.client.get(admin_login).status_code, 403)
+
+        self.login_as("superuser")
+        self.assertRedirects(self.client.get(admin_login), changelist, fetch_redirect_response=False)
+        response = self.client.get(reverse("admin:login"), {"next": "https://evil.example.com/"})
+        self.assertRedirects(response, reverse("admin:index"), fetch_redirect_response=False)
+
+    def test_admin_login_as_next_does_not_loop(self) -> None:
+        admin_login = reverse("admin:login")
+        looping = f"{admin_login}?{urlencode({'next': admin_login})}"
+        self.login_as("superuser")
+        self.assertRedirects(self.client.get(looping), reverse("admin:index"), fetch_redirect_response=False)
+        self.login_as("anonymous")
+        app_login = f"{reverse('login')}?{urlencode({'next': reverse('admin:index')})}"
+        self.assertRedirects(self.client.get(looping), app_login, fetch_redirect_response=False)
+
+    def test_app_login_brings_a_superuser_back_to_the_admin(self) -> None:
+        make_superuser(username="root", password="pass-1234")
+        changelist = reverse("admin:comics_edition_changelist")
+        response = self.client.post(reverse("login"), {"username": "root", "password": "pass-1234", "next": changelist})
+        self.assertRedirects(response, changelist, fetch_redirect_response=False)
+        self.assertEqual(self.client.get(changelist).status_code, 200)
 
 
 class MyComicsAccessTests(RoleUsersMixin, ComiTestCase):

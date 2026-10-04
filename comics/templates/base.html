@@ -127,10 +127,20 @@
                 aria-label="{% blocktranslate with username=user.username %}Account of {{ username }}{% endblocktranslate %}"
                 title="{{ user.username }}"
               >
-                <span class="material-symbols-outlined" aria-hidden="true">account_circle</span>
+                {% if user.profile.avatar %}
+                  <img class="md-avatar md-avatar--sm" src="{{ user.profile.avatar.url }}" alt="">
+                {% else %}
+                  <span class="material-symbols-outlined" aria-hidden="true">account_circle</span>
+                {% endif %}
               </button>
               <ul class="dropdown-menu dropdown-menu-end md-menu">
                 <li><h6 class="dropdown-header">{{ user.username }}</h6></li>
+                <li>
+                  <a class="dropdown-item" href="{% url 'profile' %}">
+                    <span class="material-symbols-outlined" aria-hidden="true">person</span>
+                    {% translate "Profile" %}
+                  </a>
+                </li>
                 {% if user.is_superuser %}
                 <li>
                   <a class="dropdown-item" href="{% url 'admin:index' %}">

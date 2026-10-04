@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% comment %}A profile as signed-in users see it. Never shows the email or the phone.{% endcomment %}
+
+{% block content %}
+<div class="my-4 d-flex flex-column gap-3">
+  <div class="md-surface-card d-flex align-items-center gap-3 flex-wrap">
+    {% include 'profiles/includes/avatar.html' with avatar_class='md-avatar--lg' %}
+    <div class="flex-grow-1">
+      <h1 class="md-headline-small mb-1">{{ owner.username }}</h1>
+      {% if owner.get_full_name %}<p class="md-body-medium mb-1">{{ owner.get_full_name }}</p>{% endif %}
+      <p class="md-body-medium mb-0">
+        {% blocktranslate with date=owner.date_joined|date:"DATE_FORMAT" %}Member since {{ date }}{% endblocktranslate %}
+      </p>
+    </div>
+    {% if is_own %}
+      <a class="md-btn md-btn--tonal" href="{% url 'profile' %}">
+        <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+        {% translate "Edit profile" %}
+      </a>
+    {% endif %}
+  </div>
+  {% if is_own and not profile.is_public %}
+    <p class="md-body-medium mb-0" role="note">{% translate "Your profile is private: other users only see your username." %}</p>
+  {% endif %}
+  {% include 'profiles/includes/achievements.html' %}
+</div>
+{% endblock %}

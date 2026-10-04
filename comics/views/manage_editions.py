@@ -6,15 +6,14 @@ from typing import Any
 from urllib.parse import urlencode
 
 from django.contrib import messages
-from django.contrib.admin.models import ADDITION, CHANGE, DELETION, LogEntry
+from django.contrib.admin.models import ADDITION, CHANGE, DELETION
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db import transaction
-from django.db.models import Exists, Model, OuterRef, ProtectedError, Q, QuerySet
+from django.db.models import Exists, OuterRef, ProtectedError, Q, QuerySet
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonResponse, QueryDict
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, ngettext, pgettext_lazy
 from django.views.decorators.http import require_GET, require_POST
@@ -23,6 +22,7 @@ from comics.decorators import management_required
 from comics.forms import EditionManageForm, publishing_choices
 from comics.models import CollectedIssue, Edition, Issue
 from comics.views.manage import _number_sort_key
+from comics.views.utils import log_action, safe_next_url
 
 PAGE_SIZE = 25
 RECENT_COUNT = 5  # latest additions listed before the A-Z catalog
@@ -33,22 +33,6 @@ TYPE_TABS = [
     ("individual", gettext_lazy("Single")),
     ("compilacion", gettext_lazy("Compilations")),
 ]
-
-
-def _log(request: HttpRequest, edition: Model, flag: int, message: str) -> None:
-    LogEntry.objects.log_actions(
-        user_id=request.user.pk, queryset=[edition], action_flag=flag, change_message=message, single_object=True
-    )
-
-
-def _safe_next(request: HttpRequest, fallback: str) -> str:
-    """The `next` URL (POST or GET) when it stays on this site, else `fallback`."""
-    target = request.POST.get("next") or request.GET.get("next")
-    if target and url_has_allowed_host_and_scheme(
-        target, allowed_hosts={request.get_host()}, require_https=request.is_secure()
-    ):
-        return target
-    return fallback
 
 
 def _issue_payload(issue: Issue) -> dict[str, Any]:
@@ -168,7 +152,7 @@ def sibling_editions_of(edition: Edition) -> list[Edition]:
 def edition_form(request: HttpRequest, pk: int | None = None) -> HttpResponse:  # noqa: C901
     edition = get_object_or_404(Edition.objects.select_related("issue__publishing"), pk=pk) if pk else None
     list_url = reverse("manage_editions")
-    back_url = _safe_next(request, list_url)
+    back_url = safe_next_url(request, list_url)
 
     content = CONTENT_COMPILATION if edition and edition.collected_entries.exists() else CONTENT_SINGLE
     selected_issue_id = None
@@ -197,7 +181,7 @@ def edition_form(request: HttpRequest, pk: int | None = None) -> HttpResponse:  
             else:
                 created = edition is None
                 label = "Creada" if created else "Modificada"
-                _log(request, saved, ADDITION if created else CHANGE, f"{label} desde Gestión.")
+                log_action(request, saved, ADDITION if created else CHANGE, f"{label} desde Gestión.")
                 message = _("Edition created: %(edition)s") if created else _("Edition saved: %(edition)s")
                 messages.success(request, message % {"edition": saved})
                 if "save_continue" in request.POST:
@@ -328,10 +312,10 @@ def edition_delete(request: HttpRequest, pk: int) -> HttpResponseRedirect:
     edition = get_object_or_404(Edition, pk=pk)
     label = str(edition)
     issue_id = edition.issue_id
-    back_url = _safe_next(request, reverse("manage_editions"))
+    back_url = safe_next_url(request, reverse("manage_editions"))
     try:
         with transaction.atomic():
-            _log(request, edition, DELETION, "Eliminada desde Gestión.")
+            log_action(request, edition, DELETION, "Eliminada desde Gestión.")
             edition.delete()
             if issue_id:
                 Issue.objects.filter(pk=issue_id).delete_orphans()

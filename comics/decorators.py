@@ -33,7 +33,8 @@ def management_required(view_func: View) -> View:
 
 def admin_site_required(view_func: View) -> View:
     """Endpoints used only by Django admin pages: same rule as the admin site itself
-    (ComiAdminSite.has_permission) and, like staff_member_required, the admin login otherwise."""
+    (ComiAdminSite.has_permission) and, like staff_member_required, the admin login otherwise
+    (which sends anonymous visitors to the app login and refuses signed-in users with 403)."""
 
     @wraps(view_func)
     def wrapper(request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:

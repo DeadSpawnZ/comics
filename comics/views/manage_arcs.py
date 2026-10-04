@@ -17,7 +17,7 @@ from django.views.decorators.http import require_POST
 from comics.decorators import management_required
 from comics.forms import ReadingArcForm, publishing_choices
 from comics.models import Issue, ReadingArc, ReadingArcEntry
-from comics.views.manage_editions import _log, _safe_next
+from comics.views.utils import log_action, safe_next_url
 
 COVER_STRIP_SIZE = 8
 
@@ -44,7 +44,7 @@ def arc_list(request: HttpRequest) -> HttpResponse:
 @management_required
 def arc_form(request: HttpRequest, pk: int | None = None) -> HttpResponse:
     arc = get_object_or_404(ReadingArc, pk=pk) if pk else None
-    back_url = _safe_next(request, reverse("manage_arcs"))
+    back_url = safe_next_url(request, reverse("manage_arcs"))
     form = ReadingArcForm(request.POST or None, instance=arc)
     issue_errors = []
 
@@ -68,7 +68,7 @@ def arc_form(request: HttpRequest, pk: int | None = None) -> HttpResponse:
                 with transaction.atomic():
                     saved.save()
                     saved.set_issues(cleaned_ids)
-                    _log(
+                    log_action(
                         request,
                         saved,
                         ADDITION if created else CHANGE,
@@ -108,7 +108,7 @@ def arc_delete(request: HttpRequest, pk: int) -> HttpResponseRedirect:
     arc = get_object_or_404(ReadingArc, pk=pk)
     label = str(arc)
     with transaction.atomic():
-        _log(request, arc, DELETION, "Eliminado desde Gestión.")
+        log_action(request, arc, DELETION, "Eliminado desde Gestión.")
         arc.delete()
     messages.success(request, _("Reading arc deleted: %(arc)s") % {"arc": label})
-    return redirect(_safe_next(request, reverse("manage_arcs")))
+    return redirect(safe_next_url(request, reverse("manage_arcs")))
