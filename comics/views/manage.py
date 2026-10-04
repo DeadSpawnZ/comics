@@ -5,7 +5,6 @@ from typing import Any
 
 from django import forms
 from django.contrib.admin.models import ADDITION, CHANGE, LogEntry
-from django.contrib.admin.views.decorators import staff_member_required
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Count
@@ -16,6 +15,7 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_GET
 
+from comics.decorators import management_required
 from comics.forms import publishing_choices
 from comics.models import Connecting, Edition, Issue
 
@@ -47,7 +47,7 @@ def _edition_payload(edition: Edition) -> dict[str, Any]:
     }
 
 
-@staff_member_required
+@management_required
 def connecting_list(request: HttpRequest) -> HttpResponse:
     connectings = Connecting.objects.annotate(piece_count=Count("pieces")).order_by("name")
     cards = [
@@ -62,7 +62,7 @@ def connecting_list(request: HttpRequest) -> HttpResponse:
     return render(request, "manage/connecting_list.html", {"cards": cards})
 
 
-@staff_member_required
+@management_required
 def connecting_editor(request: HttpRequest, pk: int | None = None) -> HttpResponse:
     connecting = get_object_or_404(Connecting, pk=pk) if pk else None
 
@@ -140,7 +140,7 @@ def _save_connecting(request: HttpRequest, connecting: Connecting | None) -> Jso
     return JsonResponse({"id": obj.pk, "url": reverse("manage_connecting_edit", args=[obj.pk])})
 
 
-@staff_member_required
+@management_required
 @require_GET
 def publishing_comics(request: HttpRequest) -> JsonResponse:
     try:

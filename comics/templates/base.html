@@ -68,7 +68,7 @@
                 Collectables
               </a>
             </li>
-            {% if user.is_staff %}
+            {% if perms.comics.access_management %}
             <li class="nav-item">
               <a class="nav-link md-nav-link {% if url_name|slice:':7' == 'manage_' %}active{% endif %}"
                  {% if url_name|slice:':7' == 'manage_' %}aria-current="page"{% endif %}
@@ -131,7 +131,7 @@
               </button>
               <ul class="dropdown-menu dropdown-menu-end md-menu">
                 <li><h6 class="dropdown-header">{{ user.username }}</h6></li>
-                {% if user.is_staff %}
+                {% if user.is_superuser %}
                 <li>
                   <a class="dropdown-item" href="{% url 'admin:index' %}">
                     <span class="material-symbols-outlined" aria-hidden="true">admin_panel_settings</span>

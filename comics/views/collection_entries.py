@@ -8,7 +8,6 @@ from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION
-from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
@@ -22,6 +21,7 @@ from django.urls import reverse
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_GET, require_POST
 
+from comics.decorators import management_required
 from comics.forms import (
     CollectionEntryForm,
     SignatureFormSet,
@@ -32,6 +32,7 @@ from comics.forms import (
 )
 from comics.helper import parse_date_or_none, parse_id_or_none
 from comics.models import Collection, Edition
+from comics.roles import can_access_management
 from comics.views.manage_editions import PAGE_SIZE, RECENT_COUNT, _log, _safe_next
 
 # Values carried over by "Save and add another" (a batch bought the same day from the same person).
@@ -120,9 +121,9 @@ def api_editions(request: HttpRequest) -> JsonResponse:
 @login_required
 @require_GET
 def api_purchases(request: HttpRequest) -> JsonResponse:
-    """Purchases a sale can point to. Only staff may ask about another collector's pieces."""
+    """Purchases a sale can point to. Only Gestión users may ask about another collector's pieces."""
     collector = request.user
-    if request.user.is_staff and request.GET.get("collector", "").isdigit():
+    if can_access_management(request.user) and request.GET.get("collector", "").isdigit():
         collector = User.objects.filter(pk=request.GET["collector"]).first() or collector
     try:
         edition_id = int(request.GET.get("edition", ""))
@@ -157,7 +158,7 @@ def my_piece_new(request: HttpRequest) -> HttpResponse:
 # ---------- Gestión: pieces of every collector ----------
 
 
-@staff_member_required
+@management_required
 def collection_list(request: HttpRequest) -> HttpResponse:
     query = request.GET.get("q", "").strip()
     collector_filter = request.GET.get("collector", "")
@@ -208,7 +209,7 @@ def collection_list(request: HttpRequest) -> HttpResponse:
     )
 
 
-@staff_member_required
+@management_required
 def collection_form(request: HttpRequest, pk: int | None = None) -> HttpResponse:
     piece = get_object_or_404(Collection.objects.select_related("edition"), pk=pk) if pk else None
     back_url = _safe_next(request, reverse("manage_collections"))
@@ -229,7 +230,7 @@ def collection_form(request: HttpRequest, pk: int | None = None) -> HttpResponse
     return render(request, "manage/collection_form.html", context)
 
 
-@staff_member_required
+@management_required
 @require_POST
 def collection_delete(request: HttpRequest, pk: int) -> HttpResponseRedirect:
     piece = get_object_or_404(Collection.objects.select_related("edition"), pk=pk)

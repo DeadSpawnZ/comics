@@ -7,7 +7,7 @@ from decimal import Decimal
 from typing import Any
 from unittest import mock
 
-from django.contrib.auth.models import User
+from django.contrib.auth.models import Group, User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from PIL import Image
 
@@ -16,10 +16,19 @@ from comics.models import Collection, Dealer, Edition, Editorial, Publishing
 _sequence = itertools.count(1)
 
 
-def make_user(*, staff: bool = False, password: str = "secret-pass", **fields: Any) -> User:
+def make_user(*, role: str | None = None, password: str = "secret-pass", **fields: Any) -> User:
+    """A registered user, i.e. a Collector (the post_save signal adds that role), plus `role` if given
+    (one of the group names in comics.roles, e.g. ADMINISTRATORS for Gestión access)."""
     username = fields.pop("username", f"user{next(_sequence)}")
-    user = User.objects.create_user(username=username, password=password, is_staff=staff, **fields)
+    user = User.objects.create_user(username=username, password=password, **fields)
+    if role:
+        user.groups.add(Group.objects.get(name=role))
     return user
+
+
+def make_superuser(**fields: Any) -> User:
+    """A superuser with no extra group: whatever it can do comes from the superuser flag alone."""
+    return make_user(is_staff=True, is_superuser=True, **fields)
 
 
 def make_editorial(**fields: Any) -> Editorial:

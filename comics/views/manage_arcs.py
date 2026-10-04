@@ -6,7 +6,6 @@ from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION
-from django.contrib.admin.views.decorators import staff_member_required
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
@@ -15,6 +14,7 @@ from django.urls import reverse
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 
+from comics.decorators import management_required
 from comics.forms import ReadingArcForm, publishing_choices
 from comics.models import Issue, ReadingArc, ReadingArcEntry
 from comics.views.manage_editions import _log, _safe_next
@@ -26,7 +26,7 @@ def _entry_payload(entry: ReadingArcEntry) -> dict[str, Any]:
     return {"id": entry.issue_id, "label": str(entry.issue), "cover": entry.cover_url}
 
 
-@staff_member_required
+@management_required
 def arc_list(request: HttpRequest) -> HttpResponse:
     cards = []
     for arc in ReadingArc.objects.all():
@@ -41,7 +41,7 @@ def arc_list(request: HttpRequest) -> HttpResponse:
     return render(request, "manage/arc_list.html", {"cards": cards})
 
 
-@staff_member_required
+@management_required
 def arc_form(request: HttpRequest, pk: int | None = None) -> HttpResponse:
     arc = get_object_or_404(ReadingArc, pk=pk) if pk else None
     back_url = _safe_next(request, reverse("manage_arcs"))
@@ -102,7 +102,7 @@ def arc_form(request: HttpRequest, pk: int | None = None) -> HttpResponse:
     )
 
 
-@staff_member_required
+@management_required
 @require_POST
 def arc_delete(request: HttpRequest, pk: int) -> HttpResponseRedirect:
     arc = get_object_or_404(ReadingArc, pk=pk)

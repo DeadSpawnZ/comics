@@ -14,7 +14,7 @@ from comics.helper import generate_image_jpeg, parse_date_or_none, parse_id_or_n
 from comics.models import CollectedIssue, Edition
 
 from .base import ComiTestCase
-from .factories import image_upload, make_edition, make_editorial, make_publishing, make_user
+from .factories import image_upload, make_edition, make_editorial, make_publishing, make_superuser, make_user
 
 
 class LoginViewTests(ComiTestCase):
@@ -107,7 +107,7 @@ class EditionAdminTests(ComiTestCase):
             CollectedIssue.objects.create(edition=compilation, issue=issue, order=order)
         inline = CollectedIssueInline(Edition, admin.site)
         request = RequestFactory().get("/")
-        request.user = make_user(staff=True, is_superuser=True)
+        request.user = make_superuser()
 
         # Every row shows its issue, whose label needs the issue's publishing: one query for all.
         with self.assertNumQueries(1):

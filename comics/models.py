@@ -838,3 +838,23 @@ class GeekCollectable(Model):
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         base_name = f"{self.name}_{timestamp}".replace(" ", "_")
         self.image = generate_image_jpeg(base_name, self.image)
+
+
+class AreaAccess(Model):
+    """Holder of the permissions that open a whole area of the site instead of acting on one model.
+
+    Django ties every permission to a content type, so area permissions need a model to hang from.
+    It has no default add/change/delete/view permissions: it exists only so `comics.access_management`
+    is declared in code, created by Django's own post_migrate handler on every database, and listed
+    in the admin like any other permission. Its table stays empty; it is a real (managed) table so
+    every model Django iterates (dumpdata, flush) exists in the database. See comics/roles.py for
+    the groups that use these permissions."""
+
+    class Meta:
+        default_permissions = ()
+        permissions = [("access_management", "Can access the management area (Gestión)")]
+        verbose_name = "area access"
+        verbose_name_plural = "area access"
+
+    def __str__(self) -> str:
+        return str(self._meta.verbose_name)

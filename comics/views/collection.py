@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.paginator import Paginator
@@ -21,6 +20,7 @@ from django.shortcuts import render
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_GET
 
+from comics.decorators import admin_site_required
 from comics.helper import parse_date_or_none
 from comics.models import Collection, Edition, Editorial, Signature
 
@@ -125,8 +125,8 @@ def comics_view(request: HttpRequest) -> HttpResponse:
     )
 
 
-# Used only by the admin collection form (collection_form_events.js): staff only.
-@staff_member_required
+# Used only by the admin collection form (collection_form_events.js): same access rule as the admin.
+@admin_site_required
 @require_GET
 def get_previous_trades(request: HttpRequest, edition_id: int) -> JsonResponse:
     used_previous_trades_ids = (

@@ -33,7 +33,8 @@ ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "*").split(",")
 # Application definition
 
 INSTALLED_APPS = [
-    "django.contrib.admin",
+    # django.contrib.admin, with the superuser-only site (comics/admin_site.py).
+    "comics.apps.ComiAdminConfig",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
@@ -161,6 +162,8 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 LOGIN_URL = "/login/"
-LOGOUT_REDIRECT_URL = "/publishings/"
+# After logging out (from the app menu or the admin): every app page needs a session, so the
+# login page is where a signed-out user can do something.
+LOGOUT_REDIRECT_URL = LOGIN_URL
 SESSION_COOKIE_AGE = 86400
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False

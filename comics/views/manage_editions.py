@@ -7,7 +7,6 @@ from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION, LogEntry
-from django.contrib.admin.views.decorators import staff_member_required
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db import transaction
@@ -20,6 +19,7 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, ngettext, pgettext_lazy
 from django.views.decorators.http import require_GET, require_POST
 
+from comics.decorators import management_required
 from comics.forms import EditionManageForm, publishing_choices
 from comics.models import CollectedIssue, Edition, Issue
 from comics.views.manage import _number_sort_key
@@ -76,7 +76,7 @@ def _issues_for_publishing(publishing_id: int) -> list[Issue]:
     return sorted(issues, key=_number_sort_key)
 
 
-@staff_member_required
+@management_required
 def edition_list(request: HttpRequest) -> HttpResponse:
     return render(request, "manage/edition_list.html", edition_catalog_context(request))
 
@@ -164,7 +164,7 @@ def sibling_editions_of(edition: Edition) -> list[Edition]:
 
 
 # Complex (C901) but untested: kept as is until tests cover it, then split it.
-@staff_member_required
+@management_required
 def edition_form(request: HttpRequest, pk: int | None = None) -> HttpResponse:  # noqa: C901
     edition = get_object_or_404(Edition.objects.select_related("issue__publishing"), pk=pk) if pk else None
     list_url = reverse("manage_editions")
@@ -322,7 +322,7 @@ def _save_edition(form: EditionManageForm, content: str, issue_id: int | None, c
     return edition
 
 
-@staff_member_required
+@management_required
 @require_POST
 def edition_delete(request: HttpRequest, pk: int) -> HttpResponseRedirect:
     edition = get_object_or_404(Edition, pk=pk)
@@ -356,7 +356,7 @@ def edition_delete(request: HttpRequest, pk: int) -> HttpResponseRedirect:
     return redirect(back_url)
 
 
-@staff_member_required
+@management_required
 @require_GET
 def publishing_issues(request: HttpRequest) -> JsonResponse:
     try:

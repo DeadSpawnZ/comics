@@ -20,7 +20,7 @@
     </a>
     <h1 class="md-headline-small mb-0">{{ edition.short_name }}</h1>
   </div>
-  {% if user.is_staff %}
+  {% if perms.comics.access_management %}
     <a class="md-btn md-btn--tonal" href="{% url 'manage_edition_edit' edition.pk %}?next={{ request.get_full_path|urlencode }}">
       <span class="material-symbols-outlined" aria-hidden="true">edit</span>
       {% translate "Edit in Management" %}

@@ -68,6 +68,14 @@ Si aparece un error de integridad de datos al restaurar, limpia las tablas exist
 docker compose exec web python manage.py flush
 ```
 
+Los roles de usuario (grupos Collectors, Reviewers y Administrators) viajan dentro del dump. Si el dump es anterior a los roles, o si hiciste `flush` y el dump no los trae, vuelve a crearlos después de `loaddata` (se puede correr las veces que sea, no duplica nada):
+
+```bash
+docker compose exec web python manage.py ensure_roles
+```
+
+Crea los tres grupos con sus permisos, mete a todos los usuarios en Collectors y a los superusuarios también en Administrators. No quita membresías ni permisos que ya existan.
+
 ## Respaldo completo en SQL (`mysqldump`)
 
 El respaldo JSON de arriba solo contiene los datos de Django. Para una copia exacta de toda la base (tablas, índices, restricciones e historial del admin) usa `mysqldump`. Es el respaldo que se saca antes de aplicar una migración y se guarda en `backups/` con el nombre `comic-<fecha>.sql`.

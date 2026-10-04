@@ -7,9 +7,9 @@ import datetime
 from collections.abc import Iterable
 
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION, LogEntry
-from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.models import User
 from django.core.paginator import Paginator
+from django.db.models import Exists, OuterRef
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.urls import NoReverseMatch, reverse
@@ -17,6 +17,7 @@ from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
+from comics.decorators import management_required
 from comics.models import Collection, Connecting, Edition, Publishing, ReadingArc
 
 HISTORY_PAGE_SIZE = 40
@@ -97,7 +98,7 @@ def _day_label(day: datetime.date, today: datetime.date) -> str | None:
     return None  # the template formats the date
 
 
-@staff_member_required
+@management_required
 def manage_home(request: HttpRequest) -> HttpResponse:
     type_filter = request.GET.get("tipo", "")
     user_filter = request.GET.get("usuario", "")
@@ -140,7 +141,9 @@ def manage_home(request: HttpRequest) -> HttpResponse:
             "type_filters": TYPE_FILTERS,
             "type_filter": type_filter,
             "user_filter": user_filter,
-            "users": User.objects.filter(is_staff=True).order_by("username"),
+            # Everyone with history entries (not a role: Mis comics actions are logged too, and
+            # entries stay filterable after their author loses access).
+            "users": User.objects.filter(Exists(LogEntry.objects.filter(user=OuterRef("pk")))).order_by("username"),
             "stats": stats,
         },
     )
