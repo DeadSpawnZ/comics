@@ -123,6 +123,22 @@ NEW_TRANSLATIONS = {
     "Levels": "Niveles",
     "Each level is reached when the count gets to its threshold. To add a level, fill in the empty row.": "Cada nivel se alcanza cuando la cuenta llega a su umbral. Para agregar un nivel, llena la fila vacía.",
     "This achievement is earned or not: it has a single level.": "Este logro se gana o no: tiene un solo nivel.",
+    # Edition rarity and the achievement catalogue.
+    "Common": "Común",
+    "Rare": "Rara",
+    "Very rare": "Muy rara",
+    "Legendary": "Legendaria",
+    "Treasures": "Tesoros",
+    "Sagas": "Sagas",
+    "Rarity": "Rareza",
+    "very rare or legendary editions owned": "ediciones muy raras o legendarias en la colección",
+    "signed pieces owned": "piezas firmadas en la colección",
+    "most editions owned of one issue": "máximo de ediciones de un mismo número",
+    "most purchases on a single day": "máximo de compras en un solo día",
+    "has bought again an issue they sold": "ha vuelto a comprar un número que vendió",
+    "connectings completed": "connectings completos",
+    "reading arcs completed": "arcos de lectura completos",
+    "has signed in on October 31": "ha iniciado sesión un 31 de octubre",
 }
 
 
@@ -133,6 +149,9 @@ NEW_PLURALS = {
     ): ("Desbloqueaste %(count)d logro: míralo en tu perfil.", "Desbloqueaste %(count)d logros: míralos en tu perfil."),
     ("%(counter)s user", "%(counter)s users"): ("%(counter)s usuario", "%(counter)s usuarios"),
 }
+
+
+NEW_CONTEXT_TRANSLATIONS = {("rarities", "All"): "Todas"}
 
 
 class SpanishCatalogTests(SimpleTestCase):
@@ -158,6 +177,9 @@ class SpanishCatalogTests(SimpleTestCase):
         for source, spanish in NEW_TRANSLATIONS.items():
             with self.subTest(msgid=source):
                 self.assertEqual(catalog.gettext(source), spanish)
+        for (context, source), spanish in NEW_CONTEXT_TRANSLATIONS.items():
+            with self.subTest(context=context, msgid=source):
+                self.assertEqual(catalog.pgettext(context, source), spanish)
         for (singular, plural), forms in NEW_PLURALS.items():
             for count, spanish in [(1, forms[0]), (2, forms[1])]:
                 with self.subTest(msgid=singular, count=count):

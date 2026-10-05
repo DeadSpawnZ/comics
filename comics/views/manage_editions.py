@@ -18,9 +18,11 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, ngettext, pgettext_lazy
 from django.views.decorators.http import require_GET, require_POST
 
+from comics.achievements.engine import schedule_compilation_owners, schedule_for_owners
+from comics.achievements.registry import Event
 from comics.decorators import management_required
 from comics.forms import EditionManageForm, publishing_choices
-from comics.models import CollectedIssue, Edition, Issue
+from comics.models import CollectedIssue, Collection, Edition, Issue
 from comics.views.manage import _number_sort_key
 from comics.views.utils import log_action, safe_next_url
 
@@ -89,6 +91,7 @@ def edition_catalog_context(request: HttpRequest) -> dict[str, Any]:
     the read-only Comics module."""
     query = request.GET.get("q", "").strip()
     format_filter = request.GET.get("format", "")
+    rarity_filter = request.GET.get("rarity", "")
     type_filter = request.GET.get("tipo", "")
 
     base = Edition.objects.annotate(is_compilation_flag=Exists(CollectedIssue.objects.filter(edition=OuterRef("pk"))))
@@ -101,6 +104,8 @@ def edition_catalog_context(request: HttpRequest) -> dict[str, Any]:
         )
     if format_filter:
         base = base.filter(format=format_filter)
+    if rarity_filter:
+        base = base.filter(rarity=rarity_filter)
 
     by_type = {
         "": base,
@@ -119,7 +124,7 @@ def edition_catalog_context(request: HttpRequest) -> dict[str, Any]:
 
     # The latest additions go first (only on the unfiltered first page), then the A-Z list.
     recent = []
-    if page_obj.number == 1 and not (query or format_filter or type_filter):
+    if page_obj.number == 1 and not (query or format_filter or rarity_filter or type_filter):
         recent = list(Edition.objects.select_related("publishing", "issue__publishing").order_by("-id")[:RECENT_COUNT])
         _add_row_details(recent)
 
@@ -132,6 +137,8 @@ def edition_catalog_context(request: HttpRequest) -> dict[str, Any]:
         "format_filter": format_filter,
         "type_filter": type_filter,
         "format_choices": Edition.FormatChoices.choices,
+        "rarity_filter": rarity_filter,
+        "rarity_choices": Edition.RarityChoices.choices,
     }
 
 
@@ -287,6 +294,9 @@ def _clean_content(data: QueryDict, content: str) -> tuple[int | None, list[int]
 @transaction.atomic
 def _save_edition(form: EditionManageForm, content: str, issue_id: int | None, collected_ids: list[int]) -> Edition:
     edition = form.save(commit=False)
+    old_issue_id = (
+        Edition.objects.filter(pk=edition.pk).values_list("issue_id", flat=True).first() if edition.pk else None
+    )
     if content == CONTENT_COMPILATION:
         edition.save()
         form.save_m2m()
@@ -303,7 +313,17 @@ def _save_edition(form: EditionManageForm, content: str, issue_id: int | None, c
         edition.issue_id = issue_id  # None = own issue (by publishing and number)
         edition.save()
         form.save_m2m()
+    _schedule_owners_after_content_change(edition, content, old_issue_id)
     return edition
+
+
+def _schedule_owners_after_content_change(edition: Edition, content: str, old_issue_id: int | None) -> None:
+    """What an edition contains counts for issue-based achievements (multiverse, reading arcs,
+    rebuys). The collected issues are bulk-inserted (no signals), so the owners are scheduled here."""
+    if content == CONTENT_COMPILATION:
+        schedule_compilation_owners(edition.pk)
+    if edition.issue_id != old_issue_id:
+        schedule_for_owners(Event.COLLECTION, Collection.objects.filter(edition=edition))
 
 
 @management_required

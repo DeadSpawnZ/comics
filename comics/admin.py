@@ -190,6 +190,7 @@ class EditionAdmin(admin.ModelAdmin):
                     "event_exclusive",
                     "cover_price",
                     "format",
+                    "rarity",
                     "release_date",
                 )
             },
@@ -206,6 +207,7 @@ class EditionAdmin(admin.ModelAdmin):
         "number",
         "variant",
         "format",
+        "rarity",
         "get_serie",
         "printing",
         "get_release_date",

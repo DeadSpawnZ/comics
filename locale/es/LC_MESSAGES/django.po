@@ -1977,3 +1977,68 @@ msgid "%(counter)s user"
 msgid_plural "%(counter)s users"
 msgstr[0] "%(counter)s usuario"
 msgstr[1] "%(counter)s usuarios"
+
+#: comics/models.py
+msgid "Common"
+msgstr "Común"
+
+#: comics/models.py
+msgid "Rare"
+msgstr "Rara"
+
+#: comics/models.py
+msgid "Very rare"
+msgstr "Muy rara"
+
+#: comics/models.py
+msgid "Legendary"
+msgstr "Legendaria"
+
+#: comics/models.py
+msgid "Treasures"
+msgstr "Tesoros"
+
+#: comics/models.py
+msgid "Sagas"
+msgstr "Sagas"
+
+#: comics/forms.py comics/templates/manage/edition_list.html
+msgid "Rarity"
+msgstr "Rareza"
+
+#: comics/achievements/rules.py
+msgid "very rare or legendary editions owned"
+msgstr "ediciones muy raras o legendarias en la colección"
+
+#: comics/achievements/rules.py
+msgid "signed pieces owned"
+msgstr "piezas firmadas en la colección"
+
+#: comics/achievements/rules.py
+msgid "most editions owned of one issue"
+msgstr "máximo de ediciones de un mismo número"
+
+#: comics/achievements/rules.py
+msgid "most purchases on a single day"
+msgstr "máximo de compras en un solo día"
+
+#: comics/achievements/rules.py
+msgid "has bought again an issue they sold"
+msgstr "ha vuelto a comprar un número que vendió"
+
+#: comics/achievements/rules.py
+msgid "connectings completed"
+msgstr "connectings completos"
+
+#: comics/achievements/rules.py
+msgid "reading arcs completed"
+msgstr "arcos de lectura completos"
+
+#: comics/achievements/rules.py
+msgid "has signed in on October 31"
+msgstr "ha iniciado sesión un 31 de octubre"
+
+#: comics/templates/manage/edition_list.html
+msgctxt "rarities"
+msgid "All"
+msgstr "Todas"

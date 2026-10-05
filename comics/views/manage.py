@@ -15,6 +15,7 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_GET
 
+from comics.achievements.engine import schedule_connecting_owners
 from comics.decorators import management_required
 from comics.forms import publishing_choices
 from comics.models import Connecting, Edition, Issue
@@ -127,6 +128,8 @@ def _save_connecting(request: HttpRequest, connecting: Connecting | None) -> Jso
     with transaction.atomic():
         obj.save()
         obj.set_pieces(placements)
+        # set_pieces inserts in bulk (no signals): owners may have completed it.
+        schedule_connecting_owners(obj.pk)
         # Record in the admin history ("Historia" and "Acciones recientes").
         pieces = f"{len(placements)} pieza{'s' if len(placements) != 1 else ''}"
         LogEntry.objects.log_actions(

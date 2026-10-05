@@ -10,9 +10,23 @@ from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 from django.http import HttpRequest
 
-from comics.achievements.engine import schedule
+from comics.achievements.engine import (
+    schedule,
+    schedule_compilation_owners,
+    schedule_connecting_owners,
+    schedule_edition_owners,
+    schedule_reading_arc_owners,
+)
 from comics.achievements.registry import Event, codes_for
-from comics.models import Collection, Profile, Signature
+from comics.models import (
+    CollectedIssue,
+    Collection,
+    ConnectingPiece,
+    Edition,
+    Profile,
+    ReadingArcEntry,
+    Signature,
+)
 from comics.roles import assign_default_role
 
 
@@ -64,3 +78,37 @@ def profile_changed(sender: type[Profile], instance: Profile, raw: bool, **kwarg
 @receiver(user_logged_in, dispatch_uid="comics.achievements.logged_in")
 def logged_in(sender: type[User], request: HttpRequest | None, user: User, **kwargs: Any) -> None:
     schedule(Event.LOGIN, user.pk)
+
+
+@receiver(post_save, sender=Edition, dispatch_uid="comics.achievements.edition_saved")
+def edition_rarity_changed(sender: type[Edition], instance: Edition, created: bool, raw: bool, **kwargs: Any) -> None:
+    """A rarity change can complete or undo rarity-based progress of the edition's owners.
+    (QuerySet.update() sends no signal: rarity is edited one edition at a time, in Gestión or the admin.)"""
+    previous = getattr(instance, "loaded_rarity", None)
+    instance.loaded_rarity = instance.rarity
+    if not (created or raw) and previous != instance.rarity:
+        schedule_edition_owners(instance.pk)
+
+
+@receiver(post_save, sender=ConnectingPiece, dispatch_uid="comics.achievements.piece_saved")
+@receiver(post_delete, sender=ConnectingPiece, dispatch_uid="comics.achievements.piece_deleted")
+def connecting_piece_changed(sender: type[ConnectingPiece], instance: ConnectingPiece, **kwargs: Any) -> None:
+    # Gestión replaces all pieces with a bulk insert (no signals) and schedules the owners itself;
+    # these cover the admin and deletions.
+    if not kwargs.get("raw"):
+        schedule_connecting_owners(instance.connecting_id)
+
+
+@receiver(post_save, sender=ReadingArcEntry, dispatch_uid="comics.achievements.arc_entry_saved")
+@receiver(post_delete, sender=ReadingArcEntry, dispatch_uid="comics.achievements.arc_entry_deleted")
+def reading_arc_entry_changed(sender: type[ReadingArcEntry], instance: ReadingArcEntry, **kwargs: Any) -> None:
+    if not kwargs.get("raw"):
+        schedule_reading_arc_owners(instance.arc_id)
+
+
+@receiver(post_save, sender=CollectedIssue, dispatch_uid="comics.achievements.collected_issue_saved")
+@receiver(post_delete, sender=CollectedIssue, dispatch_uid="comics.achievements.collected_issue_deleted")
+def collected_issue_changed(sender: type[CollectedIssue], instance: CollectedIssue, **kwargs: Any) -> None:
+    # What a compilation collects counts towards reading arcs.
+    if not kwargs.get("raw"):
+        schedule_compilation_owners(instance.edition_id)

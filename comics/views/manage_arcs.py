@@ -14,6 +14,7 @@ from django.urls import reverse
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 
+from comics.achievements.engine import schedule_reading_arc_owners
 from comics.decorators import management_required
 from comics.forms import ReadingArcForm, publishing_choices
 from comics.models import Issue, ReadingArc, ReadingArcEntry
@@ -68,6 +69,8 @@ def arc_form(request: HttpRequest, pk: int | None = None) -> HttpResponse:
                 with transaction.atomic():
                     saved.save()
                     saved.set_issues(cleaned_ids)
+                    # set_issues inserts in bulk (no signals): owners may have completed it.
+                    schedule_reading_arc_owners(saved.pk)
                     log_action(
                         request,
                         saved,

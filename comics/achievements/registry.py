@@ -18,6 +18,9 @@ class Event(StrEnum):
     SIGNATURE = "signature"  # a signature was added, changed or deleted
     PROFILE = "profile"  # the profile changed (e.g. privacy)
     LOGIN = "login"  # the user signed in (date-based rules)
+    EDITION_RARITY = "edition_rarity"  # an edition the user owns changed its rarity
+    CONNECTING = "connecting"  # the pieces of a connecting with an edition the user owns changed
+    READING_ARC = "reading_arc"  # the issues of a reading arc (or a compilation) the user owns changed
 
 
 class Kind(StrEnum):

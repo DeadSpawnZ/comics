@@ -225,6 +225,15 @@ class Edition(Model):
         DIGITAL = "digital", _("Digital")
         MAGAZINE = "magazine", _("Magazine")
 
+    class RarityChoices(TextChoices):
+        COMMON = "common", _("Common")
+        RARE = "rare", _("Rare")
+        VERY_RARE = "very_rare", _("Very rare")
+        LEGENDARY = "legendary", _("Legendary")
+
+    # "Great rarity": what the Infinity Gauntlet achievement counts.
+    GREAT_RARITY = (RarityChoices.VERY_RARE, RarityChoices.LEGENDARY)
+
     class PrintingChoices(TextChoices):
         FIRST = "1st", _("1st")
         SECOND = "2nd", _("2nd")
@@ -267,6 +276,8 @@ class Edition(Model):
     )
     cover_price = DecimalField(max_digits=8, decimal_places=2, default=0.00)
     format = CharField(max_length=20, choices=FormatChoices, default=FormatChoices.SINGLE_ISSUE)
+    # How hard the edition is to find, set in Gestión (not computed from ratio or print run).
+    rarity = CharField(max_length=20, choices=RarityChoices, default=RarityChoices.COMMON)
     release_date = DateField(default=datetime.now)
     image = ImageField(upload_to="images/originals/", null=True, blank=True)
     thumbnail = ImageField(upload_to="images/thumbnails/", null=True, blank=True)
@@ -323,6 +334,18 @@ class Edition(Model):
         # Issue change (automatic or manual link): the previous one is deleted if left without editions.
         if old_issue_id and old_issue_id != self.issue_id:
             Issue.objects.filter(pk=old_issue_id).delete_orphans()
+
+    @classmethod
+    def from_db(cls, db: str, field_names: Iterable[str], values: Iterable[Any]) -> Self:
+        instance = super().from_db(db, field_names, values)
+        # The rarity as loaded, to tell after a save whether it changed (see comics.signals).
+        instance.loaded_rarity = instance.__dict__.get("rarity")
+        return instance
+
+    @property
+    def is_notable_rarity(self) -> bool:
+        """Rare or above: collectors see it with a badge (common editions show nothing)."""
+        return self.rarity != self.RarityChoices.COMMON
 
     COVER_KINDS = (
         ("regular", _("Regular covers")),
@@ -998,6 +1021,8 @@ class AchievementCategory(TextChoices):
     lives in code too (with translated labels); Gestión picks the category of each achievement."""
 
     COLLECTION = "collection", _("Collection")
+    TREASURES = "treasures", _("Treasures")
+    SAGAS = "sagas", _("Sagas")
     COMMUNITY = "community", _("Community")
     SENIORITY = "seniority", _("Seniority")
 

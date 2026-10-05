@@ -13,10 +13,11 @@ from collections.abc import Iterable
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.db.backends.base.base import BaseDatabaseWrapper
+from django.db.models import Q, QuerySet
 from django.utils.translation import gettext as _
 from django.utils.translation import ngettext
 
-from comics.models import Achievement, UserAchievement
+from comics.models import Achievement, Collection, UserAchievement
 
 from . import rules as _rules  # noqa: F401  (registers the rules)
 from .registry import Event, Kind, Rule, all_rules, codes_for
@@ -113,6 +114,40 @@ def _pending_evaluation(connection: BaseDatabaseWrapper, user_id: int) -> _Pendi
     except (AttributeError, IndexError, KeyError, TypeError):
         return None
     return None
+
+
+def schedule_for_owners(event: Event, collectors: QuerySet[Collection]) -> None:
+    """schedule() for every user with a purchase among `collectors` (a Collection queryset).
+    Sold pieces are included: evaluating someone who no longer qualifies is harmless. Skips the
+    query when no rule listens to `event`."""
+    if codes_for(event):
+        purchases = collectors.filter(trade_type=Collection.TradeChoices.BUYING)
+        for user_id in purchases.values_list("collector_id", flat=True).distinct():
+            schedule(event, user_id)
+
+
+def schedule_edition_owners(edition_id: int) -> None:
+    """After an edition's rarity changed."""
+    schedule_for_owners(Event.EDITION_RARITY, Collection.objects.filter(edition_id=edition_id))
+
+
+def schedule_connecting_owners(connecting_id: int) -> None:
+    """After a connecting's pieces changed: only owners of one of its editions can complete it."""
+    pieces = Collection.objects.filter(edition__connecting_pieces__connecting_id=connecting_id)
+    schedule_for_owners(Event.CONNECTING, pieces)
+
+
+def schedule_reading_arc_owners(arc_id: int) -> None:
+    """After a reading arc's issues changed: owners of an edition (or compilation) of one of them."""
+    owners = Collection.objects.filter(
+        Q(edition__issue__arc_entries__arc_id=arc_id) | Q(edition__collected_entries__issue__arc_entries__arc_id=arc_id)
+    )
+    schedule_for_owners(Event.READING_ARC, owners)
+
+
+def schedule_compilation_owners(edition_id: int) -> None:
+    """After the issues a compilation collects changed (they count for reading arcs)."""
+    schedule_for_owners(Event.READING_ARC, Collection.objects.filter(edition_id=edition_id))
 
 
 def schedule_for_everyone(code: str) -> None:

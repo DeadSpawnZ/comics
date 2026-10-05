@@ -1049,3 +1049,45 @@ a.md-paginator__page:hover {
   flex-grow: 1;
   height: 6px;
 }
+
+/* Edition rarity (rare and above) */
+.rarity-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.05rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+  vertical-align: middle;
+  border: 1px solid currentColor;
+}
+
+.rarity-badge .material-symbols-outlined {
+  font-size: 0.9rem;
+}
+
+.rarity-badge--rare {
+  color: #1565c0;
+}
+
+.rarity-badge--very_rare {
+  color: #7b1fa2;
+}
+
+.rarity-badge--legendary {
+  color: #b26a00;
+}
+
+:root[data-bs-theme="dark"] .rarity-badge--rare {
+  color: #90caf9;
+}
+
+:root[data-bs-theme="dark"] .rarity-badge--very_rare {
+  color: #ce93d8;
+}
+
+:root[data-bs-theme="dark"] .rarity-badge--legendary {
+  color: #ffcc80;
+}

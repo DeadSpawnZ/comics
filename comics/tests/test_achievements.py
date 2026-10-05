@@ -27,10 +27,35 @@ from comics.roles import ADMINISTRATORS
 from .base import ComiTestCase
 from .factories import make_collection, make_edition, make_user
 
-SEEDED = {"origin", "great_power", "veteran", "secret_identity"}
+SEEDED = {
+    "origin",
+    "great_power",
+    "veteran",
+    "secret_identity",
+    "infinity_gauntlet",
+    "batcave_vault",
+    "multiverse",
+    "speed_force",
+    "lazarus_pit",
+    "assemble",
+    "chronicler",
+    "halloween",
+}
+COLLECTION_RULES = {
+    "origin",
+    "great_power",
+    "infinity_gauntlet",
+    "batcave_vault",
+    "multiverse",
+    "speed_force",
+    "lazarus_pit",
+    "assemble",
+    "chronicler",
+}
 # What a browser sends when it loads a page (notices are only announced on page loads).
 PAGE = {"accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"}
 seed_migration = importlib.import_module("comics.migrations.0097_seed_achievements")
+more_seed_migration = importlib.import_module("comics.migrations.0099_seed_more_achievements")
 
 
 def achievement(code: str) -> Achievement:
@@ -64,7 +89,7 @@ class SeedTests(ComiTestCase):
         self.assertFalse(achievement("origin").tiers.exists())
 
     def test_frozen_seed_matches_the_catalogue(self) -> None:
-        self.assertEqual(seed_migration.ACHIEVEMENTS, catalogue.ACHIEVEMENTS)
+        self.assertEqual(seed_migration.ACHIEVEMENTS + more_seed_migration.ACHIEVEMENTS, catalogue.ACHIEVEMENTS)
 
     def test_ensure_catalogue_only_creates_what_is_missing(self) -> None:
         Achievement.objects.filter(code="origin").delete()
@@ -225,12 +250,12 @@ class TriggerTests(ComiTestCase):
         self.assertEqual(held(self.user, "veteran"), 1)
 
     def test_events_only_evaluate_their_rules(self) -> None:
-        self.assertEqual(codes_for(Event.COLLECTION), {"origin", "great_power"})
-        self.assertEqual(codes_for(Event.SIGNATURE), set())  # no rule needs it yet: nothing scheduled
+        self.assertEqual(codes_for(Event.COLLECTION), COLLECTION_RULES)
+        self.assertEqual(codes_for(Event.SIGNATURE), {"batcave_vault"})
         with mock.patch.object(engine, "evaluate") as evaluate, self.captureOnCommitCallbacks(execute=True):
             buy(self.user)
         evaluate.assert_called_once()
-        self.assertEqual(set(evaluate.call_args.args[1]), {"origin", "great_power"})
+        self.assertEqual(set(evaluate.call_args.args[1]), COLLECTION_RULES)
 
     def test_one_evaluation_per_user_and_transaction(self) -> None:
         with self.committed():
@@ -245,9 +270,7 @@ class TriggerTests(ComiTestCase):
             Profile.objects.get(user=self.user).save()  # another event of the same user joins
         self.assertEqual(len(callbacks), 2)
         calls = {call.args[0].pk: set(call.args[1]) for call in evaluate.call_args_list}
-        self.assertEqual(
-            calls, {self.user.pk: {"origin", "great_power", "secret_identity"}, other.pk: {"origin", "great_power"}}
-        )
+        self.assertEqual(calls, {self.user.pk: COLLECTION_RULES | {"secret_identity"}, other.pk: COLLECTION_RULES})
 
     def test_unexpected_pending_callback_shapes_fall_back_to_a_new_evaluation(self) -> None:
         unexpected = ("not", "the", "expected", "shape", "at", "all")
@@ -422,7 +445,10 @@ class DisplayTests(ComiTestCase):
         groups = {
             group.label: (group.earned, group.total) for group in showcase(self.owner, include_locked=True).groups
         }
-        self.assertEqual(groups, {"Collection": (2, 2), "Community": (0, 1), "Seniority": (0, 1)})
+        self.assertEqual(
+            groups,
+            {"Collection": (2, 5), "Treasures": (0, 2), "Sagas": (0, 2), "Community": (0, 2), "Seniority": (0, 1)},
+        )
 
     def test_other_users_only_see_earned_achievements(self) -> None:
         self.client.force_login(self.viewer)
