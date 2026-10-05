@@ -70,6 +70,68 @@ NEW_TRANSLATIONS = {
     "Edit profile": "Editar perfil",
     "Your profile is private: other users only see your username.": "Tu perfil es privado: los demás usuarios solo ven tu nombre de usuario.",
     "This profile is private.": "Este perfil es privado.",
+    # Achievements.
+    "Use a Material Symbols icon name: lowercase letters, digits and _.": "Usa un nombre de ícono de Material Symbols: minúsculas, dígitos y _.",
+    "Community": "Comunidad",
+    "Seniority": "Antigüedad",
+    "has registered a piece": "ha registrado una pieza",
+    "comics in the collection": "cómics en la colección",
+    "full years as a member": "años completos como miembro",
+    "has made the profile private": "ha hecho privado su perfil",
+    "Achievement unlocked: %(name)s (level %(level)s)": "Logro desbloqueado: %(name)s (nivel %(level)s)",
+    "Achievement unlocked: %(name)s": "Logro desbloqueado: %(name)s",
+    "Upload a JPEG, PNG or WebP picture.": "Sube una imagen JPEG, PNG o WebP.",
+    "Icon image": "Imagen del ícono",
+    "Name (English)": "Nombre (inglés)",
+    "Name (Spanish)": "Nombre (español)",
+    "Description (English)": "Descripción (inglés)",
+    "Description (Spanish)": "Descripción (español)",
+    "Hint (English)": "Pista (inglés)",
+    "Hint (Spanish)": "Pista (español)",
+    "Category": "Categoría",
+    "Icon (Material Symbols name)": "Ícono (nombre de Material Symbols)",
+    "Order": "Orden",
+    "Secret": "Secreto",
+    "Enabled": "Activo",
+    "Level": "Nivel",
+    "Threshold": "Umbral",
+    "Label (English)": "Etiqueta (inglés)",
+    "Label (Spanish)": "Etiqueta (español)",
+    "This achievement is earned or not: it has no levels.": "Este logro se gana o no: no tiene niveles.",
+    "Add at least one level.": "Agrega al menos un nivel.",
+    "Levels must be numbered 1, 2, 3… with no gaps or repeats.": "Los niveles deben ir numerados 1, 2, 3… sin huecos ni repeticiones.",
+    "Each level needs a higher threshold than the previous one.": "Cada nivel necesita un umbral mayor que el anterior.",
+    "Achievement saved: %(name)s": "Logro guardado: %(name)s",
+    "Achievement": "Logro",
+    "%(earned)s of %(total)s": "%(earned)s de %(total)s",
+    "Level %(level)s": "Nivel %(level)s",
+    "Secret achievement.": "Logro secreto.",
+    "Earned on %(date)s": "Obtenido el %(date)s",
+    "Names, texts, icons and levels are edited here; how each one is earned is defined in code.": "Aquí se editan nombres, textos, íconos y niveles; cómo se gana cada uno está definido en el código.",
+    "Rules in code without an achievement (they award nothing):": "Reglas en el código sin logro (no otorgan nada):",
+    "Disabled": "Desactivado",
+    "No rule in code": "Sin regla en el código",
+    "No levels": "Sin niveles",
+    "There are no achievements yet.": "Todavía no hay logros.",
+    "Back to achievements": "Volver a logros",
+    "Counts: %(measure)s": "Cuenta: %(measure)s",
+    "There is no rule in code for this achievement: it is never awarded.": "No hay una regla en el código para este logro: nunca se otorga.",
+    "Texts": "Textos",
+    "Hints are shown instead of the description while a secret achievement is not earned. Leave them empty to show nothing but ???.": "Las pistas se muestran en lugar de la descripción mientras un logro secreto no se ha ganado. Déjalas vacías para mostrar solo ???.",
+    "Appearance": "Apariencia",
+    "Icon image (PNG, JPEG or WebP, up to 2 MB; replaces the icon)": "Imagen del ícono (PNG, JPEG o WebP, hasta 2 MB; reemplaza al ícono)",
+    "Levels": "Niveles",
+    "Each level is reached when the count gets to its threshold. To add a level, fill in the empty row.": "Cada nivel se alcanza cuando la cuenta llega a su umbral. Para agregar un nivel, llena la fila vacía.",
+    "This achievement is earned or not: it has a single level.": "Este logro se gana o no: tiene un solo nivel.",
+}
+
+
+NEW_PLURALS = {
+    (
+        "You unlocked %(count)d achievement: see it on your profile.",
+        "You unlocked %(count)d achievements: see them on your profile.",
+    ): ("Desbloqueaste %(count)d logro: míralo en tu perfil.", "Desbloqueaste %(count)d logros: míralos en tu perfil."),
+    ("%(counter)s user", "%(counter)s users"): ("%(counter)s usuario", "%(counter)s usuarios"),
 }
 
 
@@ -96,3 +158,7 @@ class SpanishCatalogTests(SimpleTestCase):
         for source, spanish in NEW_TRANSLATIONS.items():
             with self.subTest(msgid=source):
                 self.assertEqual(catalog.gettext(source), spanish)
+        for (singular, plural), forms in NEW_PLURALS.items():
+            for count, spanish in [(1, forms[0]), (2, forms[1])]:
+                with self.subTest(msgid=singular, count=count):
+                    self.assertEqual(catalog.ngettext(singular, plural, count), spanish)

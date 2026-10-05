@@ -175,6 +175,8 @@
     {% endwith %}
 
     <main class="container-fluid">{% block content %} {% endblock %}</main>
+    {# Messages of every page (saved changes, unlocked achievements...). #}
+    {% include 'includes/snackbar.html' %}
 
     <!-- Translation catalog for JavaScript (provides gettext/interpolate) -->
     <script src="{% url 'javascript-catalog' %}"></script>

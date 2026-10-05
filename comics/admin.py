@@ -16,8 +16,10 @@ from django.urls import URLPattern, path
 from django.utils.html import format_html
 from django.utils.safestring import SafeString
 
-from .forms import CollectionForm, EditionForm
+from .forms import CollectionForm, EditionForm, save_formset_reinserting
 from .models import (
+    Achievement,
+    AchievementTier,
     Artist,
     CollectedIssue,
     Collection,
@@ -34,27 +36,35 @@ from .models import (
     ReadingArcEntry,
     Signature,
     Title,
+    UserAchievement,
 )
 
-
-def save_formset_reinserting(formset: BaseModelFormSet) -> None:
-    """Save an inline whose rows have UniqueConstraints (position, order, etc.).
-    Swapping values between rows violates the constraints if rows are updated one by
-    one (MySQL checks every UPDATE and does not support deferred constraints), so the
-    changed rows are deleted and inserted again with their final values. The formset
-    already validated that the final state has no duplicates."""
-    instances = formset.save(commit=False)
-    for obj in formset.deleted_objects:
-        obj.delete()
-    formset.model.objects.filter(pk__in=[obj.pk for obj in instances if obj.pk]).delete()
-    for obj in instances:
-        obj.pk = None
-        obj._state.adding = True
-        obj.save()
-    formset.save_m2m()
-
-
 admin.site.register(Signature)
+
+
+class AchievementTierInline(admin.TabularInline):
+    model = AchievementTier
+    extra = 0
+
+
+@admin.register(Achievement)
+class AchievementAdmin(admin.ModelAdmin):
+    # Day-to-day editing happens in Gestión; the admin is the superusers' fallback.
+    list_display = ("code", "name_en", "name_es", "category", "is_secret", "is_enabled")
+    list_filter = ("category", "is_secret", "is_enabled")
+    inlines = [AchievementTierInline]
+
+    def save_formset(self, request: HttpRequest, form: ModelForm, formset: BaseModelFormSet, change: bool) -> None:
+        save_formset_reinserting(formset)
+
+
+@admin.register(UserAchievement)
+class UserAchievementAdmin(admin.ModelAdmin):
+    list_display = ("user", "achievement", "level", "awarded_at", "notified")
+    list_filter = ("achievement",)
+    list_select_related = ("user", "achievement")
+    search_fields = ("user__username",)
+    raw_id_fields = ("user",)
 
 
 @admin.register(Profile)

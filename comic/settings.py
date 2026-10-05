@@ -54,6 +54,8 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    # After auth and messages: turns newly earned achievements into messages.
+    "comics.middleware.AchievementNoticeMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 

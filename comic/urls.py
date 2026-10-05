@@ -27,6 +27,7 @@ from comics.views import (
     collection,
     collection_entries,
     manage,
+    manage_achievements,
     manage_arcs,
     manage_editions,
     manage_home,
@@ -85,6 +86,8 @@ urlpatterns = [
     path("gestion/connectings/nuevo/", manage.connecting_editor, name="manage_connecting_new"),
     path("gestion/connectings/<int:pk>/", manage.connecting_editor, name="manage_connecting_edit"),
     path("gestion/api/comics/", manage.publishing_comics, name="manage_publishing_comics"),
+    path("gestion/logros/", manage_achievements.achievement_list, name="manage_achievements"),
+    path("gestion/logros/<int:pk>/", manage_achievements.achievement_form, name="manage_achievement_edit"),
 ]
 
 # Static files are served by WhiteNoise (see MIDDLEWARE), in dev and in local "production".

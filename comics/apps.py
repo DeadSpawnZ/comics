@@ -8,6 +8,7 @@ class ComicsConfig(AppConfig):
 
     def ready(self) -> None:
         from comics import signals  # noqa: F401  (connects the receivers)
+        from comics.achievements import rules  # noqa: F401  (registers the achievement rules)
 
 
 class ComiAdminConfig(AdminConfig):

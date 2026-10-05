@@ -17,6 +17,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_GET, require_http_methods
 
+from comics.achievements.display import showcase
 from comics.forms import AvatarForm, PersonalInfoForm, PrivacyForm, ProfilePasswordForm
 from comics.models import Profile
 
@@ -27,12 +28,6 @@ SUCCESS_MESSAGES = {
     "privacy": _("Privacy settings saved."),
     "password": _("Password changed."),
 }
-
-
-def achievements_for(user: User) -> list[Any]:
-    """Achievements a profile shows (see profiles/includes/achievements.html for what each item
-    needs). Empty until the achievement engine exists."""
-    return []
 
 
 def _section_forms(request: HttpRequest, profile: Profile, bound: str | None) -> dict[str, forms.BaseForm]:
@@ -83,7 +78,8 @@ def own_profile(request: HttpRequest) -> HttpResponse:
             "profile": profile,
             "forms": section_forms,
             "failed_section": section,
-            "achievements": achievements_for(request.user),
+            # The owner also sees locked achievements and their progress.
+            "achievements": showcase(request.user, include_locked=True),
         },
     )
 
@@ -103,6 +99,7 @@ def user_profile(request: HttpRequest, username: str) -> HttpResponse:
             "owner": owner,
             "profile": profile,
             "is_own": owner == request.user,
-            "achievements": achievements_for(owner),
+            # Only earned ones, also when the owner previews their page as others see it.
+            "achievements": showcase(owner, include_locked=False),
         },
     )

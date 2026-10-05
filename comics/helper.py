@@ -60,18 +60,36 @@ def generate_image_jpeg(base_name: str, image: File | None) -> InMemoryUploadedF
     return _jpeg_upload(img, f"{base_name}.jpg", quality=95)
 
 
+def _shrink_on_open(source: Image.Image, size: int) -> None:
+    """Reduce a just-opened picture before any copy (rotation, flattening, cropping): JPEGs are
+    decoded at a reduced scale (draft) and anything still larger is cut down to a `size * 4` box,
+    so a big upload never sits in memory at full size several times."""
+    if source.format == "JPEG":
+        source.draft("RGB", (size * 2, size * 2))
+    source.thumbnail((size * 4, size * 4), Image.Resampling.LANCZOS)
+
+
 def square_jpeg(base_name: str, image: File, size: int) -> InMemoryUploadedFile:
     """`image` as a `size` x `size` JPEG: rotated as its EXIF says, centre-cropped to a square
-    and resized. Re-encoding also drops the original metadata (EXIF location and so on).
-
-    The picture is shrunk right after opening, before any copy (rotation, flattening, cropping):
-    JPEGs are decoded at a reduced scale (draft) and anything still larger is cut down to a
-    `size * 4` box, so a big upload never sits in memory at full size several times."""
+    and resized. Re-encoding also drops the original metadata (EXIF location and so on)."""
     image.seek(0)
     with Image.open(image) as source:
-        if source.format == "JPEG":
-            source.draft("RGB", (size * 2, size * 2))
-        source.thumbnail((size * 4, size * 4), Image.Resampling.LANCZOS)
+        _shrink_on_open(source, size)
         img = _flatten_to_rgb(ImageOps.exif_transpose(source))
         img = ImageOps.fit(img, (size, size), method=Image.Resampling.LANCZOS)
     return _jpeg_upload(img, f"{base_name}.jpg", quality=90)
+
+
+def square_png(base_name: str, image: File, size: int) -> InMemoryUploadedFile:
+    """Like square_jpeg, but a PNG that keeps transparency (badges and icons usually have it).
+    Re-encoding keeps only the pixels: nothing of the uploaded file but the image survives."""
+    image.seek(0)
+    with Image.open(image) as source:
+        _shrink_on_open(source, size)
+        img = ImageOps.exif_transpose(source).convert("RGBA")
+        img = ImageOps.fit(img, (size, size), method=Image.Resampling.LANCZOS)
+    buffer = io.BytesIO()
+    img.save(buffer, format="PNG", optimize=True)
+    buffer.seek(0)
+    filename = f"{base_name}.png"
+    return InMemoryUploadedFile(buffer, "ImageField", filename, "image/png", buffer.getbuffer().nbytes, None)

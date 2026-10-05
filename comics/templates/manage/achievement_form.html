@@ -1,0 +1,116 @@
+{% extends 'manage/base_manage.html' %}
+{% load i18n %}
+
+{% block breadcrumb %}
+<a href="{{ back_url }}">{% translate "Achievements" %}</a>
+<span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+<span class="is-current">{{ achievement.name }}</span>
+{% endblock %}
+
+{% block manage_content %}
+<form method="post" enctype="multipart/form-data" novalidate>
+  {% csrf_token %}
+  <input type="hidden" name="next" value="{{ back_url }}">
+
+  <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <a class="md-icon-btn" href="{{ back_url }}" aria-label="{% translate 'Back to achievements' %}" title="{% translate 'Back to achievements' %}">
+        <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+      </a>
+      <div>
+        <h1 class="md-headline-small mb-0">{{ achievement.name }}</h1>
+        <span class="md-body-medium"><code>{{ achievement.code }}</code>{% if rule %} · {% blocktranslate with measure=rule.measure %}Counts: {{ measure }}{% endblocktranslate %}{% endif %}</span>
+      </div>
+    </div>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <button type="submit" name="save_continue" class="md-btn md-btn--tonal">{% translate "Save and continue editing" %}</button>
+      <button type="submit" class="md-btn md-btn--filled">
+        <span class="material-symbols-outlined" aria-hidden="true">save</span>
+        {% translate "Save" %}
+      </button>
+    </div>
+  </div>
+
+  {% if not rule %}
+    <div class="editor-errors mb-3" role="alert">
+      <span class="material-symbols-outlined" aria-hidden="true">warning</span>
+      <ul><li>{% translate "There is no rule in code for this achievement: it is never awarded." %}</li></ul>
+    </div>
+  {% endif %}
+
+  {% if form.errors or tiers.non_form_errors %}
+    <div class="editor-errors mb-3" role="alert">
+      <span class="material-symbols-outlined" aria-hidden="true">error</span>
+      <ul>
+        {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+        {% for error in tiers.non_form_errors %}<li>{{ error }}</li>{% endfor %}
+        {% if form.errors and not form.non_field_errors %}<li>{% translate "Check the highlighted fields." %}</li>{% endif %}
+      </ul>
+    </div>
+  {% endif %}
+
+  <div class="d-flex flex-column gap-3">
+    <div class="md-surface-card">
+      <h2 class="md-title-medium mb-3">{% translate "Texts" %}</h2>
+      <div class="row g-3">
+        <div class="col-12 col-md-6">{% include 'manage/includes/field.html' with field=form.name_en %}</div>
+        <div class="col-12 col-md-6">{% include 'manage/includes/field.html' with field=form.name_es %}</div>
+        <div class="col-12 col-md-6">{% include 'manage/includes/field.html' with field=form.description_en %}</div>
+        <div class="col-12 col-md-6">{% include 'manage/includes/field.html' with field=form.description_es %}</div>
+        <div class="col-12 col-md-6">{% include 'manage/includes/field.html' with field=form.hint_en %}</div>
+        <div class="col-12 col-md-6">{% include 'manage/includes/field.html' with field=form.hint_es %}</div>
+        <div class="col-12 md-body-medium">{% translate "Hints are shown instead of the description while a secret achievement is not earned. Leave them empty to show nothing but ???." %}</div>
+      </div>
+    </div>
+
+    <div class="md-surface-card">
+      <h2 class="md-title-medium mb-3">{% translate "Appearance" %}</h2>
+      <div class="row g-3 align-items-center">
+        <div class="col-12 col-md-4">{% include 'manage/includes/field.html' with field=form.category %}</div>
+        <div class="col-6 col-md-4">{% include 'manage/includes/field.html' with field=form.icon %}</div>
+        <div class="col-6 col-md-4">{% include 'manage/includes/field.html' with field=form.display_order %}</div>
+        <div class="col-12 col-md-8">
+          <label class="md-section-label d-block" for="{{ form.icon_image.id_for_label }}">{% translate "Icon image (PNG, JPEG or WebP, up to 2 MB; replaces the icon)" %}</label>
+          {{ form.icon_image }}
+          {% for error in form.icon_image.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="col-12 col-md-4 d-flex align-items-center gap-3">
+          <span class="achievement-card__icon" aria-hidden="true">
+            {% if achievement.icon_image %}<img src="{{ achievement.icon_image.url }}" alt="">{% else %}<span class="material-symbols-outlined">{{ achievement.icon }}</span>{% endif %}
+          </span>
+          <div class="d-flex flex-column gap-1">
+            <div class="form-check form-switch">{{ form.is_enabled }} <label class="form-check-label" for="{{ form.is_enabled.id_for_label }}">{{ form.is_enabled.label }}</label></div>
+            <div class="form-check form-switch">{{ form.is_secret }} <label class="form-check-label" for="{{ form.is_secret.id_for_label }}">{{ form.is_secret.label }}</label></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="md-surface-card" id="tiers">
+      <h2 class="md-title-medium mb-3">{% translate "Levels" %}</h2>
+      {{ tiers.management_form }}
+      {% if tiers.counted %}
+        <p class="md-body-medium">{% translate "Each level is reached when the count gets to its threshold. To add a level, fill in the empty row." %}</p>
+        <div class="d-flex flex-column gap-2">
+          {% for tier_form in tiers %}
+            <div class="row g-2 align-items-center">
+              {% for hidden in tier_form.hidden_fields %}{{ hidden }}{% endfor %}
+              <div class="col-6 col-md-2">{% include 'manage/includes/field.html' with field=tier_form.level %}</div>
+              <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=tier_form.threshold %}</div>
+              <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=tier_form.label_en %}</div>
+              <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=tier_form.label_es %}</div>
+              <div class="col-12 col-md-1">
+                {% if tier_form.instance.pk %}
+                  <label class="form-check m-0 d-flex align-items-center gap-2">{{ tier_form.DELETE }} <span class="form-check-label">{% translate "Delete" %}</span></label>
+                {% endif %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="md-body-medium mb-0">{% translate "This achievement is earned or not: it has a single level." %}</p>
+      {% endif %}
+    </div>
+  </div>
+</form>
+{% endblock %}

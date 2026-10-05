@@ -9,10 +9,13 @@ from django.contrib.auth.models import User
 from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
 from django.db import transaction
 from django.db.models import QuerySet, prefetch_related_objects
+from django.forms.models import BaseModelFormSet
 from django.utils.translation import gettext_lazy as _
 
 from .helper import parse_date_or_none, parse_id_or_none
 from .models import (
+    Achievement,
+    AchievementTier,
     Collection,
     Dealer,
     Edition,
@@ -591,6 +594,23 @@ SignatureFormSet = forms.inlineformset_factory(
 )
 
 
+def save_formset_reinserting(formset: BaseModelFormSet) -> None:
+    """Save an inline whose rows have UniqueConstraints (position, order, etc.).
+    Swapping values between rows violates the constraints if rows are updated one by
+    one (MySQL checks every UPDATE and does not support deferred constraints), so the
+    changed rows are deleted and inserted again with their final values. The formset
+    already validated that the final state has no duplicates."""
+    instances = formset.save(commit=False)
+    for obj in formset.deleted_objects:
+        obj.delete()
+    formset.model.objects.filter(pk__in=[obj.pk for obj in instances if obj.pk]).delete()
+    for obj in instances:
+        obj.pk = None
+        obj._state.adding = True
+        obj.save()
+    formset.save_m2m()
+
+
 # ---------- Accounts: sign in, self-registration and profile ----------
 
 
@@ -702,13 +722,15 @@ class PersonalInfoForm(forms.ModelForm):
         return user
 
 
-class AvatarField(forms.ImageField):
+class LimitedImageField(forms.ImageField):
     """An uploaded picture with limits: checked by size before Pillow parses it, then by format
-    and pixel count (a small file can still decode to a huge image)."""
+    and pixel count (a small file can still decode to a huge image). Only raster formats Pillow
+    decodes can pass, so SVG (which can carry scripts) never does."""
 
     MAX_BYTES = 5 * 1024 * 1024
     MAX_PIXELS = 25_000_000
-    FORMATS = ("JPEG", "PNG", "WEBP", "GIF")
+    FORMATS: tuple[str, ...] = ("JPEG", "PNG", "WEBP")
+    FORMAT_ERROR = _("Upload a JPEG, PNG or WebP picture.")
 
     def to_python(self, data: Any) -> Any:
         if data and getattr(data, "size", 0) > self.MAX_BYTES:
@@ -720,10 +742,15 @@ class AvatarField(forms.ImageField):
         if upload is not None:
             image = upload.image
             if image.format not in self.FORMATS:
-                raise ValidationError(_("Upload a JPEG, PNG, WebP or GIF picture."), code="invalid_format")
+                raise ValidationError(self.FORMAT_ERROR, code="invalid_format")
             if image.width * image.height > self.MAX_PIXELS:
                 raise ValidationError(_("The picture has too many pixels."), code="too_many_pixels")
         return upload
+
+
+class AvatarField(LimitedImageField):
+    FORMATS = ("JPEG", "PNG", "WEBP", "GIF")
+    FORMAT_ERROR = _("Upload a JPEG, PNG, WebP or GIF picture.")
 
 
 class AvatarForm(forms.ModelForm):
@@ -756,3 +783,121 @@ class ProfilePasswordForm(PasswordChangeForm):
         self.fields["new_password1"].label = _("New password")
         self.fields["new_password2"].label = _("Confirm new password")
         _outlined_text_fields(self)
+
+
+# ---------- Gestión: achievements ----------
+
+
+class AchievementIconField(LimitedImageField):
+    MAX_BYTES = 2 * 1024 * 1024
+
+
+class AchievementForm(forms.ModelForm):
+    """Everything about an achievement but its code (which ties it to its rule in code)."""
+
+    icon_image = AchievementIconField(
+        label=_("Icon image"),
+        required=False,
+        widget=forms.ClearableFileInput(attrs={"accept": "image/png,image/jpeg,image/webp"}),
+    )
+
+    class Meta:
+        model = Achievement
+        fields = (
+            "name_en",
+            "name_es",
+            "description_en",
+            "description_es",
+            "hint_en",
+            "hint_es",
+            "category",
+            "icon",
+            "icon_image",
+            "display_order",
+            "is_secret",
+            "is_enabled",
+        )
+        labels = {
+            "name_en": _("Name (English)"),
+            "name_es": _("Name (Spanish)"),
+            "description_en": _("Description (English)"),
+            "description_es": _("Description (Spanish)"),
+            "hint_en": _("Hint (English)"),
+            "hint_es": _("Hint (Spanish)"),
+            "category": _("Category"),
+            "icon": _("Icon (Material Symbols name)"),
+            "display_order": _("Order"),
+            "is_secret": _("Secret"),
+            "is_enabled": _("Enabled"),
+        }
+        widgets = {
+            "description_en": forms.Textarea(attrs={"rows": 2}),
+            "description_es": forms.Textarea(attrs={"rows": 2}),
+            "hint_en": forms.Textarea(attrs={"rows": 2}),
+            "hint_es": forms.Textarea(attrs={"rows": 2}),
+        }
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        for name, field in self.fields.items():
+            widget = field.widget
+            if isinstance(widget, forms.CheckboxInput):
+                widget.attrs["class"] = "form-check-input"
+            elif isinstance(widget, forms.Select):
+                widget.attrs["class"] = "form-select"
+            elif name != "icon_image":
+                widget.attrs.update({"class": "form-control", "placeholder": field.label})
+        self.fields["icon_image"].widget.attrs["class"] = "form-control"
+
+
+class AchievementTierForm(forms.ModelForm):
+    class Meta:
+        model = AchievementTier
+        fields = ("level", "threshold", "label_en", "label_es")
+        labels = {
+            "level": _("Level"),
+            "threshold": _("Threshold"),
+            "label_en": _("Label (English)"),
+            "label_es": _("Label (Spanish)"),
+        }
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        _outlined_text_fields(self)
+
+
+class BaseAchievementTierFormSet(forms.BaseInlineFormSet):
+    """Levels of an achievement. Count-based rules need at least one, numbered from 1 with no
+    gaps and thresholds growing with the level; yes/no rules have a single implicit level."""
+
+    def __init__(self, *args: Any, counted: bool, **kwargs: Any) -> None:
+        self.counted = counted
+        super().__init__(*args, **kwargs)
+
+    def clean(self) -> None:
+        super().clean()
+        if any(form.errors for form in self.forms):
+            return
+        kept = [form.cleaned_data for form in self.forms if form.cleaned_data and not form.cleaned_data.get("DELETE")]
+        if not self.counted:
+            if kept:
+                raise ValidationError(_("This achievement is earned or not: it has no levels."))
+            return
+        if not kept:
+            raise ValidationError(_("Add at least one level."))
+        kept.sort(key=lambda data: data["level"])
+        if [data["level"] for data in kept] != list(range(1, len(kept) + 1)):
+            raise ValidationError(_("Levels must be numbered 1, 2, 3… with no gaps or repeats."))
+        thresholds = [data["threshold"] for data in kept]
+        if any(lower >= higher for lower, higher in zip(thresholds, thresholds[1:], strict=False)):
+            raise ValidationError(_("Each level needs a higher threshold than the previous one."))
+
+
+AchievementTierFormSet = forms.inlineformset_factory(
+    Achievement,
+    AchievementTier,
+    form=AchievementTierForm,
+    formset=BaseAchievementTierFormSet,
+    extra=1,
+    can_delete=True,
+)

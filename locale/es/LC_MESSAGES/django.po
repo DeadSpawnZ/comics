@@ -1748,3 +1748,232 @@ msgstr "Tu perfil es privado: los demás usuarios solo ven tu nombre de usuario.
 #: comics/templates/profiles/private.html
 msgid "This profile is private."
 msgstr "Este perfil es privado."
+
+#: comics/models.py
+msgid "Use a Material Symbols icon name: lowercase letters, digits and _."
+msgstr "Usa un nombre de ícono de Material Symbols: minúsculas, dígitos y _."
+
+#: comics/models.py
+msgid "Community"
+msgstr "Comunidad"
+
+#: comics/models.py
+msgid "Seniority"
+msgstr "Antigüedad"
+
+#: comics/achievements/rules.py
+msgid "has registered a piece"
+msgstr "ha registrado una pieza"
+
+#: comics/achievements/rules.py
+msgid "comics in the collection"
+msgstr "cómics en la colección"
+
+#: comics/achievements/rules.py
+msgid "full years as a member"
+msgstr "años completos como miembro"
+
+#: comics/achievements/rules.py
+msgid "has made the profile private"
+msgstr "ha hecho privado su perfil"
+
+#: comics/achievements/engine.py
+#, python-format
+msgid "Achievement unlocked: %(name)s (level %(level)s)"
+msgstr "Logro desbloqueado: %(name)s (nivel %(level)s)"
+
+#: comics/achievements/engine.py
+#, python-format
+msgid "Achievement unlocked: %(name)s"
+msgstr "Logro desbloqueado: %(name)s"
+
+#: comics/forms.py
+msgid "Upload a JPEG, PNG or WebP picture."
+msgstr "Sube una imagen JPEG, PNG o WebP."
+
+#: comics/forms.py
+msgid "Icon image"
+msgstr "Imagen del ícono"
+
+#: comics/forms.py
+msgid "Name (English)"
+msgstr "Nombre (inglés)"
+
+#: comics/forms.py
+msgid "Name (Spanish)"
+msgstr "Nombre (español)"
+
+#: comics/forms.py
+msgid "Description (English)"
+msgstr "Descripción (inglés)"
+
+#: comics/forms.py
+msgid "Description (Spanish)"
+msgstr "Descripción (español)"
+
+#: comics/forms.py
+msgid "Hint (English)"
+msgstr "Pista (inglés)"
+
+#: comics/forms.py
+msgid "Hint (Spanish)"
+msgstr "Pista (español)"
+
+#: comics/forms.py
+msgid "Category"
+msgstr "Categoría"
+
+#: comics/forms.py
+msgid "Icon (Material Symbols name)"
+msgstr "Ícono (nombre de Material Symbols)"
+
+#: comics/forms.py
+msgid "Order"
+msgstr "Orden"
+
+#: comics/forms.py comics/templates/manage/achievement_list.html
+msgid "Secret"
+msgstr "Secreto"
+
+#: comics/forms.py
+msgid "Enabled"
+msgstr "Activo"
+
+#: comics/forms.py
+msgid "Level"
+msgstr "Nivel"
+
+#: comics/forms.py
+msgid "Threshold"
+msgstr "Umbral"
+
+#: comics/forms.py
+msgid "Label (English)"
+msgstr "Etiqueta (inglés)"
+
+#: comics/forms.py
+msgid "Label (Spanish)"
+msgstr "Etiqueta (español)"
+
+#: comics/forms.py
+msgid "This achievement is earned or not: it has no levels."
+msgstr "Este logro se gana o no: no tiene niveles."
+
+#: comics/forms.py
+msgid "Add at least one level."
+msgstr "Agrega al menos un nivel."
+
+#: comics/forms.py
+msgid "Levels must be numbered 1, 2, 3… with no gaps or repeats."
+msgstr "Los niveles deben ir numerados 1, 2, 3… sin huecos ni repeticiones."
+
+#: comics/forms.py
+msgid "Each level needs a higher threshold than the previous one."
+msgstr "Cada nivel necesita un umbral mayor que el anterior."
+
+#: comics/views/manage_achievements.py
+#, python-format
+msgid "Achievement saved: %(name)s"
+msgstr "Logro guardado: %(name)s"
+
+#: comics/views/manage_home.py
+msgid "Achievement"
+msgstr "Logro"
+
+#: comics/templates/profiles/includes/achievements.html
+#, python-format
+msgid "%(earned)s of %(total)s"
+msgstr "%(earned)s de %(total)s"
+
+#: comics/templates/profiles/includes/achievements.html
+#, python-format
+msgid "Level %(level)s"
+msgstr "Nivel %(level)s"
+
+#: comics/templates/profiles/includes/achievements.html
+msgid "Secret achievement."
+msgstr "Logro secreto."
+
+#: comics/templates/profiles/includes/achievements.html
+#, python-format
+msgid "Earned on %(date)s"
+msgstr "Obtenido el %(date)s"
+
+#: comics/templates/manage/achievement_list.html
+msgid "Names, texts, icons and levels are edited here; how each one is earned is defined in code."
+msgstr "Aquí se editan nombres, textos, íconos y niveles; cómo se gana cada uno está definido en el código."
+
+#: comics/templates/manage/achievement_list.html
+msgid "Rules in code without an achievement (they award nothing):"
+msgstr "Reglas en el código sin logro (no otorgan nada):"
+
+#: comics/templates/manage/achievement_list.html
+msgid "Disabled"
+msgstr "Desactivado"
+
+#: comics/templates/manage/achievement_list.html
+msgid "No rule in code"
+msgstr "Sin regla en el código"
+
+#: comics/templates/manage/achievement_list.html
+msgid "No levels"
+msgstr "Sin niveles"
+
+#: comics/templates/manage/achievement_list.html
+msgid "There are no achievements yet."
+msgstr "Todavía no hay logros."
+
+#: comics/templates/manage/achievement_form.html
+msgid "Back to achievements"
+msgstr "Volver a logros"
+
+#: comics/templates/manage/achievement_form.html
+#, python-format
+msgid "Counts: %(measure)s"
+msgstr "Cuenta: %(measure)s"
+
+#: comics/templates/manage/achievement_form.html
+msgid "There is no rule in code for this achievement: it is never awarded."
+msgstr "No hay una regla en el código para este logro: nunca se otorga."
+
+#: comics/templates/manage/achievement_form.html
+msgid "Texts"
+msgstr "Textos"
+
+#: comics/templates/manage/achievement_form.html
+msgid "Hints are shown instead of the description while a secret achievement is not earned. Leave them empty to show nothing but ???."
+msgstr "Las pistas se muestran en lugar de la descripción mientras un logro secreto no se ha ganado. Déjalas vacías para mostrar solo ???."
+
+#: comics/templates/manage/achievement_form.html
+msgid "Appearance"
+msgstr "Apariencia"
+
+#: comics/templates/manage/achievement_form.html
+msgid "Icon image (PNG, JPEG or WebP, up to 2 MB; replaces the icon)"
+msgstr "Imagen del ícono (PNG, JPEG o WebP, hasta 2 MB; reemplaza al ícono)"
+
+#: comics/templates/manage/achievement_form.html
+msgid "Levels"
+msgstr "Niveles"
+
+#: comics/templates/manage/achievement_form.html
+msgid "Each level is reached when the count gets to its threshold. To add a level, fill in the empty row."
+msgstr "Cada nivel se alcanza cuando la cuenta llega a su umbral. Para agregar un nivel, llena la fila vacía."
+
+#: comics/templates/manage/achievement_form.html
+msgid "This achievement is earned or not: it has a single level."
+msgstr "Este logro se gana o no: tiene un solo nivel."
+
+#: comics/achievements/engine.py
+#, python-format
+msgid "You unlocked %(count)d achievement: see it on your profile."
+msgid_plural "You unlocked %(count)d achievements: see them on your profile."
+msgstr[0] "Desbloqueaste %(count)d logro: míralo en tu perfil."
+msgstr[1] "Desbloqueaste %(count)d logros: míralos en tu perfil."
+
+#: comics/templates/manage/achievement_list.html
+#, python-format
+msgid "%(counter)s user"
+msgid_plural "%(counter)s users"
+msgstr[0] "%(counter)s usuario"
+msgstr[1] "%(counter)s usuarios"

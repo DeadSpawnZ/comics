@@ -39,18 +39,21 @@ EXCLUDED_MODELS = [
 DUMPDATA_OPTIONS = ["--indent=4", "--natural-foreign", "--natural-primary"]
 
 
-def dumpdata_args(output_filename: str) -> list[str]:
-    """Arguments for the dumpdata command (after "dumpdata"), shared with the tests."""
-    args = ["-o", output_filename, *DUMPDATA_OPTIONS]
-    for model in EXCLUDED_MODELS:
-        args += ["--exclude", model]
-    return args
+def write_dump(output_filename: str) -> None:
+    """Write the dump to `output_filename` in UTF-8 (Django must be set up). Shared with the tests.
+
+    The file is opened here rather than with dumpdata's -o, which uses the platform's default
+    encoding: on Windows (cp1252) loaddata, which always reads UTF-8, could not load it back."""
+    from django.core.management import call_command
+
+    with open(output_filename, "w", encoding="utf-8") as stream:
+        call_command("dumpdata", *DUMPDATA_OPTIONS, exclude=EXCLUDED_MODELS, stdout=stream)
 
 
 def main() -> None:
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "comic.settings")
     try:
-        from django.core.management import execute_from_command_line
+        import django
     except ImportError as exc:
         raise ImportError(
             "Couldn't import Django. Are you sure it's installed and "
@@ -64,7 +67,8 @@ def main() -> None:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         output_filename = f"dump-{timestamp}.json"
 
-    execute_from_command_line(["manage.py", "dumpdata", *dumpdata_args(output_filename)])
+    django.setup()
+    write_dump(output_filename)
     print(output_filename)
 
 

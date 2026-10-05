@@ -1,7 +1,7 @@
 """Backups (dump.py / dumpdata) still work with the AreaAccess model, and a restore keeps the roles:
 group permissions travel by natural key, so they survive permission ids that differ between
 databases. `ensure_roles` rebuilds the groups when a dump does not bring them. Profiles travel by
-their user's username too."""
+their user's username too, and achievements by their code."""
 
 import json
 import tempfile
@@ -14,7 +14,8 @@ from django.core.management import call_command
 from django.test import TransactionTestCase, override_settings
 
 import dump
-from comics.models import Collection, Profile
+from comics.achievements.catalogue import ACHIEVEMENTS, ensure_catalogue
+from comics.models import Achievement, AchievementTier, Collection, Profile, UserAchievement
 from comics.roles import ACCESS_MANAGEMENT, ADMINISTRATORS, COLLECTORS, ROLE_PERMISSIONS, ensure_roles
 
 from .base import TEST_MEDIA_ROOT, TEST_STORAGES, ComiTestCase
@@ -31,8 +32,11 @@ class DumpTests(ComiTestCase):
         make_collection(collector=make_user(role=ADMINISTRATORS), edition=make_edition())
         with tempfile.TemporaryDirectory() as tmp:
             output = Path(tmp) / "dump.json"
-            call_command("dumpdata", *dump.dumpdata_args(str(output)), stdout=StringIO())
-            self.assertIn('"model": "auth.group"', output.read_text(encoding="utf-8"))
+            dump.write_dump(str(output))
+            content = output.read_text(encoding="utf-8")
+            self.assertIn('"model": "auth.group"', content)
+            # Non-ASCII texts (seeded achievement names) survive as UTF-8.
+            self.assertIn("Un gran poder…", content)
 
     def test_bare_dumpdata_of_the_app_succeeds(self) -> None:
         out = StringIO()
@@ -49,7 +53,7 @@ class RestoreTests(TransactionTestCase):
 
     def make_dump(self, tmp: str) -> Path:
         output = Path(tmp) / "dump.json"
-        call_command("dumpdata", *dump.dumpdata_args(str(output)), stdout=StringIO())
+        dump.write_dump(str(output))
         return output
 
     def shift_permission_ids(self) -> None:
@@ -85,6 +89,60 @@ class RestoreTests(TransactionTestCase):
         self.assertTrue(manager.has_perm(ACCESS_MANAGEMENT))
         self.assertEqual(set(manager.groups.values_list("name", flat=True)), {COLLECTORS, ADMINISTRATORS})
         self.assertEqual(Collection.objects.get().collector, manager)
+
+    def test_restore_keeps_achievements_by_code(self) -> None:
+        hero = make_user(username="hero")
+        great_power = Achievement.objects.get(code="great_power")
+        great_power.name_es = "Gran poder"  # edited in Gestión
+        great_power.save()
+        AchievementTier.objects.filter(achievement=great_power, level=1).update(threshold=10)
+        UserAchievement.objects.award(hero, great_power, 2)
+        UserAchievement.objects.award(hero, Achievement.objects.get(code="origin"), 1)
+        with tempfile.TemporaryDirectory() as tmp:
+            dump_file = self.make_dump(tmp)
+            content = json.loads(dump_file.read_text(encoding="utf-8"))
+            awards = [item for item in content if item["model"] == "comics.userachievement"]
+            self.assertIn(
+                ["hero", "great_power"], [[*item["fields"]["user"], *item["fields"]["achievement"]] for item in awards]
+            )
+            self.assertTrue(all("pk" not in item for item in content if item["model"].startswith("comics.achievement")))
+
+            call_command("flush", interactive=False, verbosity=0)
+            # A migrated target already has the seeded achievements, here under other ids.
+            Achievement.objects.create(code="placeholder", name_en="x", name_es="x")
+            ensure_catalogue()
+            Achievement.objects.filter(code="placeholder").delete()
+            call_command("loaddata", str(dump_file), verbosity=0)
+
+        self.assertEqual(Achievement.objects.filter(code="great_power").count(), 1)
+        great_power = Achievement.objects.get(code="great_power")
+        self.assertEqual(great_power.name_es, "Gran poder")
+        self.assertEqual(list(great_power.tiers.values_list("level", "threshold")), [(1, 10), (2, 500), (3, 1000)])
+        hero = User.objects.get(username="hero")
+        levels = dict(UserAchievement.objects.filter(user=hero).values_list("achievement__code", "level"))
+        self.assertEqual(levels, {"great_power": 2, "origin": 1})
+
+    def test_older_dump_after_flush_needs_ensure_achievements(self) -> None:
+        make_collection(collector=make_user(username="hero"), edition=make_edition())
+        with tempfile.TemporaryDirectory() as tmp:
+            dump_file = self.make_dump(tmp)
+            older = [
+                item for item in json.loads(dump_file.read_text(encoding="utf-8")) if "achievement" not in item["model"]
+            ]
+            dump_file.write_text(json.dumps(older), encoding="utf-8")
+            call_command("flush", interactive=False, verbosity=0)
+            call_command("loaddata", str(dump_file), verbosity=0)
+        self.assertFalse(Achievement.objects.exists())
+
+        call_command("ensure_achievements", stdout=StringIO())
+        call_command("ensure_achievements", stdout=StringIO())
+        call_command("award_achievements", stdout=StringIO(), stderr=StringIO())
+
+        self.assertEqual(
+            set(Achievement.objects.values_list("code", flat=True)), {item["code"] for item in ACHIEVEMENTS}
+        )
+        self.assertEqual(AchievementTier.objects.filter(achievement__code="great_power").count(), 3)
+        self.assertTrue(UserAchievement.objects.filter(user__username="hero", achievement__code="origin").exists())
 
     def test_restore_keeps_profiles_by_username(self) -> None:
         manager = make_user(username="manager")
