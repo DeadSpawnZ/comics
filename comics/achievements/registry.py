@@ -1,13 +1,26 @@
-"""The rule registry: the only part of an achievement that lives in code is how it is earned."""
+"""The rule registry: the only part of an achievement that lives in code is how it is earned.
+
+Each rule has a key; achievements name the rule that awards them (`Achievement.rule`), so several
+achievements can share one rule. A built-in rule measures the user only (`progress(user)`) and has
+one row per rule, seeded by a data migration. A generic rule also reads its parameters from the
+achievement row (`row_progress(user, achievement)`, e.g. its time windows): Gestión can create
+achievements with it, as many as wanted."""
 
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from enum import StrEnum
+from typing import TYPE_CHECKING
 
 from django.contrib.auth.models import User
 from django.utils.functional import Promise
+
+if TYPE_CHECKING:
+    from comics.models import Achievement
+
+UserProgress = Callable[[User], int]
+RowProgress = Callable[[User, "Achievement"], int]
 
 
 class Event(StrEnum):
@@ -30,37 +43,87 @@ class Kind(StrEnum):
 
 @dataclass(frozen=True)
 class Rule:
-    code: str
+    key: str
     kind: Kind
     events: frozenset[Event]
-    progress: Callable[[User], int]  # a count, or 0/1 for BOOLEAN rules
-    measure: str | Promise  # what is counted, shown in Gestión next to the tiers
+    measure: str | Promise  # what is counted, shown in Gestión and next to the levels
+    progress: UserProgress | None = None  # built-in rules: a count, or 0/1 for BOOLEAN rules
+    row_progress: RowProgress | None = None  # generic rules: also read the achievement row
+    needs_window: bool = False  # generic rules that only count inside the row's time windows
+
+    @property
+    def generic(self) -> bool:
+        return self.row_progress is not None
+
+    @property
+    def counted(self) -> bool:
+        """Whether achievements with this rule have levels (tiers)."""
+        return self.kind is Kind.COUNT
+
+    def progress_for(self, user: User, achievement: Achievement) -> int:
+        if self.row_progress is not None:
+            return self.row_progress(user, achievement)
+        assert self.progress is not None
+        return self.progress(user)
 
 
 _RULES: dict[str, Rule] = {}
 
 
-def rule(
-    code: str, *, kind: Kind, events: Iterable[Event], measure: str | Promise
-) -> Callable[[Callable[[User], int]], Callable[[User], int]]:
-    """Register the decorated function as the progress of the achievement with this `code`."""
+def _register(item: Rule) -> None:
+    if item.key in _RULES:
+        raise ValueError(f"Achievement rule {item.key!r} is registered twice.")
+    _RULES[item.key] = item
 
-    def register(progress: Callable[[User], int]) -> Callable[[User], int]:
-        if code in _RULES:
-            raise ValueError(f"Achievement rule {code!r} is registered twice.")
-        _RULES[code] = Rule(code=code, kind=kind, events=frozenset(events), progress=progress, measure=measure)
+
+def rule(
+    key: str, *, kind: Kind, events: Iterable[Event], measure: str | Promise
+) -> Callable[[UserProgress], UserProgress]:
+    """Register the decorated function as the progress of a built-in rule."""
+
+    def register(progress: UserProgress) -> UserProgress:
+        _register(Rule(key=key, kind=kind, events=frozenset(events), measure=measure, progress=progress))
         return progress
 
     return register
 
 
-def get_rule(code: str) -> Rule | None:
-    return _RULES.get(code)
+def generic_rule(
+    key: str, *, kind: Kind, events: Iterable[Event], measure: str | Promise, needs_window: bool = False
+) -> Callable[[RowProgress], RowProgress]:
+    """Register the decorated function as the progress of a generic rule (reads the row too)."""
+
+    def register(progress: RowProgress) -> RowProgress:
+        item = Rule(
+            key=key,
+            kind=kind,
+            events=frozenset(events),
+            measure=measure,
+            row_progress=progress,
+            needs_window=needs_window,
+        )
+        _register(item)
+        return progress
+
+    return register
+
+
+def get_rule(key: str) -> Rule | None:
+    return _RULES.get(key)
 
 
 def all_rules() -> dict[str, Rule]:
     return dict(_RULES)
 
 
-def codes_for(event: Event) -> set[str]:
-    return {code for code, item in _RULES.items() if event in item.events}
+def generic_rules() -> dict[str, Rule]:
+    return {key: item for key, item in _RULES.items() if item.generic}
+
+
+def builtin_rules() -> dict[str, Rule]:
+    """Rules awarded by one seeded row each (Gestión cannot create rows for them)."""
+    return {key: item for key, item in _RULES.items() if not item.generic}
+
+
+def rule_keys_for(event: Event) -> set[str]:
+    return {key for key, item in _RULES.items() if event in item.events}

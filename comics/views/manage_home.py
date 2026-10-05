@@ -18,7 +18,7 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
 from comics.decorators import management_required
-from comics.models import Achievement, Collection, Connecting, Edition, Publishing, ReadingArc
+from comics.models import Achievement, AchievementCategory, Collection, Connecting, Edition, Publishing, ReadingArc
 
 HISTORY_PAGE_SIZE = 40
 
@@ -30,6 +30,7 @@ MANAGE_PAGES = {
     "readingarc": (ReadingArc, "manage_arc_edit"),
     "connecting": (Connecting, "manage_connecting_edit"),
     "achievement": (Achievement, "manage_achievement_edit"),
+    "achievementcategory": (AchievementCategory, "manage_achievement_category_edit"),
 }
 
 TYPE_FILTERS = [
@@ -40,6 +41,7 @@ TYPE_FILTERS = [
     ("readingarc", gettext_lazy("Reading arcs")),
     ("connecting", "Connectings"),
     ("achievement", gettext_lazy("Achievements")),
+    ("achievementcategory", gettext_lazy("Achievement categories")),
     ("other", gettext_lazy("Other")),
 ]
 
@@ -50,6 +52,7 @@ TYPE_LABELS = {
     "readingarc": gettext_lazy("Reading arc"),
     "connecting": "Connecting",
     "achievement": gettext_lazy("Achievement"),
+    "achievementcategory": gettext_lazy("Achievement category"),
     "issue": "Issue",
     "title": gettext_lazy("Title"),
     "dealer": gettext_lazy("Participant"),

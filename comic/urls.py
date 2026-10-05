@@ -27,6 +27,7 @@ from comics.views import (
     collection,
     collection_entries,
     manage,
+    manage_achievement_categories,
     manage_achievements,
     manage_arcs,
     manage_editions,
@@ -87,7 +88,29 @@ urlpatterns = [
     path("gestion/connectings/<int:pk>/", manage.connecting_editor, name="manage_connecting_edit"),
     path("gestion/api/comics/", manage.publishing_comics, name="manage_publishing_comics"),
     path("gestion/logros/", manage_achievements.achievement_list, name="manage_achievements"),
+    path("gestion/logros/nuevo/", manage_achievements.achievement_create, name="manage_achievement_new"),
     path("gestion/logros/<int:pk>/", manage_achievements.achievement_form, name="manage_achievement_edit"),
+    path("gestion/logros/<int:pk>/eliminar/", manage_achievements.achievement_delete, name="manage_achievement_delete"),
+    path(
+        "gestion/logros/categorias/",
+        manage_achievement_categories.category_list,
+        name="manage_achievement_categories",
+    ),
+    path(
+        "gestion/logros/categorias/nueva/",
+        manage_achievement_categories.category_form,
+        name="manage_achievement_category_new",
+    ),
+    path(
+        "gestion/logros/categorias/<int:pk>/",
+        manage_achievement_categories.category_form,
+        name="manage_achievement_category_edit",
+    ),
+    path(
+        "gestion/logros/categorias/<int:pk>/eliminar/",
+        manage_achievement_categories.category_delete,
+        name="manage_achievement_category_delete",
+    ),
 ]
 
 # Static files are served by WhiteNoise (see MIDDLEWARE), in dev and in local "production".

@@ -4,6 +4,7 @@ import io
 import logging
 import re
 import secrets
+import unicodedata
 from collections.abc import Iterable
 from datetime import datetime
 from typing import Any, Self
@@ -39,6 +40,7 @@ from django.db.models import (
     QuerySet,
     TextChoices,
     TextField,
+    TimeField,
     UniqueConstraint,
 )
 from django.utils import timezone
@@ -47,6 +49,7 @@ from django.utils.translation import get_language, gettext, ngettext
 from django.utils.translation import gettext_lazy as _
 from PIL import Image
 
+from .achievements.windows import CalendarWindow, clear_unused, window_errors
 from .helper import generate_image_jpeg, square_jpeg, square_png
 
 logger = logging.getLogger(__name__)
@@ -996,8 +999,9 @@ class Profile(PictureModel):
 
 
 # ---------- Achievements ----------
-# What an achievement is called, looks like and how its levels are set lives here (editable in
-# Gestión); how it is earned lives in code (comics/achievements), tied by `code`.
+# What an achievement is called, looks like, when it can be earned and how its levels are set
+# lives here (editable in Gestión); how it is earned lives in code (comics/achievements), tied by
+# the achievement's `rule`.
 
 
 def localized(obj: object, field: str) -> str:
@@ -1016,30 +1020,103 @@ validate_icon_name = RegexValidator(
 )
 
 
-class AchievementCategory(TextChoices):
-    """Shown in an achievement's detail card on the profile. A new category always comes with new
-    rules in code, so the list lives in code too (with translated labels); Gestión picks the
-    category of each achievement."""
-
-    COLLECTION = "collection", _("Collection")
-    TREASURES = "treasures", _("Treasures")
-    SAGAS = "sagas", _("Sagas")
-    COMMUNITY = "community", _("Community")
-    SENIORITY = "seniority", _("Seniority")
+# Codes generated in Gestión start with this, so they never collide with (nor pick up the bundled
+# artwork of) a built-in code a future data migration seeds. Built-in codes never use it.
+GENERATED_CODE_PREFIX = "g_"
 
 
-class AchievementManager(Manager["Achievement"]):
+def unique_code(name: str, taken: Iterable[str], *, max_length: int = 50) -> str:
+    """A code made from `name` (lowercase ASCII letters, digits and _, after GENERATED_CODE_PREFIX)
+    that is not in `taken`: "Noche de brujas" -> "g_noche_de_brujas", then "g_noche_de_brujas_2"...
+    Codes are identifiers (natural keys, bundled artwork names), so they never change once given."""
+    ascii_name = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode()
+    room = max_length - len(GENERATED_CODE_PREFIX)
+    base = re.sub(r"[^a-z0-9]+", "_", ascii_name.lower()).strip("_")[:room].strip("_") or "item"
+    taken = set(taken)
+    code, number = f"{GENERATED_CODE_PREFIX}{base}", 1
+    while code in taken:
+        number += 1
+        suffix = f"_{number}"
+        code = f"{GENERATED_CODE_PREFIX}{base[: room - len(suffix)].rstrip('_')}{suffix}"
+    return code
+
+
+class AchievementCategoryManager(Manager["AchievementCategory"]):
+    def get_by_natural_key(self, code: str) -> AchievementCategory:
+        return self.get(code=code)
+
+
+class AchievementCategory(PictureModel):
+    """A group of achievements, managed in Gestión: its name, order and medallion. A disabled
+    category hides (and stops awarding) all its achievements. It cannot be deleted while it has
+    achievements (PROTECT)."""
+
+    IMAGE_SIZE = 256  # pixels, square
+    PICTURE_FIELD = "image"
+
+    code = CharField(max_length=30, unique=True)  # natural key; generated from the name, never changed
+    name_en = CharField(max_length=80)
+    name_es = CharField(max_length=80)
+    description_en = CharField(max_length=255, blank=True)
+    description_es = CharField(max_length=255, blank=True)
+    display_order = PositiveSmallIntegerField(default=0)
+    is_enabled = BooleanField(default=True)
+    image = ImageField(upload_to="achievement_categories/", blank=True)  # else the bundled medallion
+
+    objects = AchievementCategoryManager()
+
+    class Meta:
+        ordering = ["display_order", "code"]
+        verbose_name_plural = "achievement categories"
+
+    def __str__(self) -> str:
+        return self.name or self.code
+
+    def natural_key(self) -> tuple[str]:
+        return (self.code,)
+
+    def normalize_picture(self, upload: Any) -> InMemoryUploadedFile:
+        return square_png(_random_name(f"category_{self.code}"), upload, self.IMAGE_SIZE)
+
+    @property
+    def name(self) -> str:
+        return localized(self, "name")
+
+    @property
+    def description(self) -> str:
+        return localized(self, "description")
+
+
+class AchievementQuerySet(QuerySet["Achievement"]):
+    def active(self) -> AchievementQuerySet:
+        """Shown and awarded: enabled, in an enabled category."""
+        return self.filter(is_enabled=True, category__is_enabled=True)
+
+
+class AchievementManager(Manager.from_queryset(AchievementQuerySet)):  # type: ignore[misc]
     def get_by_natural_key(self, code: str) -> Achievement:
         return self.get(code=code)
 
 
+def _day_validators() -> list[Any]:
+    return [MinValueValidator(1), MaxValueValidator(31)]
+
+
+def _month_validators() -> list[Any]:
+    return [MinValueValidator(1), MaxValueValidator(12)]
+
+
 class Achievement(PictureModel):
-    """An achievement as users see it. Rows are seeded by migrations, one per rule in code."""
+    """An achievement as users see it. `code` identifies the row (natural key, bundled artwork);
+    `rule` names the rule in code that awards it, so several rows can share one rule. Built-in
+    rows come from data migrations; Gestión creates rows only for generic rules, which read their
+    parameters (the time windows) from the row."""
 
     ICON_SIZE = 256  # pixels, square
     PICTURE_FIELD = "icon_image"
 
-    code = CharField(max_length=50, unique=True)  # ties the row to its rule; not editable in Gestión
+    code = CharField(max_length=50, unique=True)  # never changed; generated from the name in Gestión
+    rule = CharField(max_length=50)  # registry key (comics/achievements/rules.py); fixed once created
     name_en = CharField(max_length=80)
     name_es = CharField(max_length=80)
     description_en = CharField(max_length=255, blank=True)
@@ -1047,16 +1124,27 @@ class Achievement(PictureModel):
     # Shown instead of the description while a secret achievement is not earned (optional).
     hint_en = CharField(max_length=255, blank=True)
     hint_es = CharField(max_length=255, blank=True)
-    category = CharField(max_length=30, choices=AchievementCategory.choices, default=AchievementCategory.COLLECTION)
+    category = ForeignKey(AchievementCategory, on_delete=PROTECT, related_name="achievements")
     icon = CharField(max_length=50, default="emoji_events", validators=[validate_icon_name])
     icon_image = ImageField(upload_to="achievements/", blank=True)  # replaces `icon` when set
     is_secret = BooleanField(default=False)
     is_enabled = BooleanField(default=True)
     display_order = PositiveSmallIntegerField(default=0)
+    # Time windows (comics/achievements/windows.py), read by windowed rules, in the project time zone.
+    calendar_window = CharField(max_length=10, choices=CalendarWindow.choices, default=CalendarWindow.NONE)
+    window_start_day = PositiveSmallIntegerField(null=True, blank=True, validators=_day_validators())
+    window_start_month = PositiveSmallIntegerField(null=True, blank=True, validators=_month_validators())
+    window_end_day = PositiveSmallIntegerField(null=True, blank=True, validators=_day_validators())
+    window_end_month = PositiveSmallIntegerField(null=True, blank=True, validators=_month_validators())
+    window_start_date = DateField(null=True, blank=True)
+    window_end_date = DateField(null=True, blank=True)
+    window_start_time = TimeField(null=True, blank=True)
+    window_end_time = TimeField(null=True, blank=True)
 
     objects = AchievementManager()
 
     class Meta:
+        # "category" follows the category's own ordering (display_order, code).
         ordering = ["category", "display_order", "code"]
 
     def __str__(self) -> str:
@@ -1064,6 +1152,15 @@ class Achievement(PictureModel):
 
     def natural_key(self) -> tuple[str]:
         return (self.code,)
+
+    natural_key.dependencies = ["comics.achievementcategory"]
+
+    def clean(self) -> None:
+        super().clean()
+        clear_unused(self)
+        errors = window_errors(self)
+        if errors:
+            raise ValidationError(errors)
 
     def normalize_picture(self, upload: Any) -> InMemoryUploadedFile:
         return square_png(_random_name(f"achievement_{self.code}"), upload, self.ICON_SIZE)
@@ -1079,6 +1176,10 @@ class Achievement(PictureModel):
     @property
     def hint(self) -> str:
         return localized(self, "hint")
+
+    @property
+    def is_active(self) -> bool:
+        return self.is_enabled and self.category.is_enabled
 
 
 class AchievementTierManager(Manager["AchievementTier"]):

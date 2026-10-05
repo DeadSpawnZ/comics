@@ -62,6 +62,16 @@ Si el archivo está solo en tu equipo (por ejemplo, uno generado con `backup-db.
 docker compose cp .\backups\dump-<fecha>.json web:/code/dump-<fecha>.json
 ```
 
+Un dump solo se puede cargar en una base con el mismo esquema que tenía la base de origen. En particular, **un dump tomado antes de la migración `0100`** (categorías de logros como filas, reglas y ventanas de tiempo) no se puede cargar en una base ya migrada: guarda la categoría de cada logro como texto y no trae las columnas nuevas. Para restaurarlo, deja la base en la migración que tenía el origen, carga el dump y luego aplica el resto de las migraciones, que convierten los datos:
+
+```bash
+docker compose exec web python manage.py migrate comics 0099
+docker compose exec web python manage.py loaddata /code/dump-<fecha>.json
+docker compose exec web python manage.py migrate
+```
+
+Volver a `0099` descarta lo que solo existe en el esquema nuevo (categorías editadas, ventanas de tiempo, reglas de logros creados en Gestión): saca antes el respaldo SQL de la base de destino. (Sobre una base vacía: `migrate comics 0099` crea las tablas hasta ese punto. Para saber en qué migración estaba el origen, busca la última de `comics` en su tabla `django_migrations`, o la fecha del dump frente a la de la migración.)
+
 Si aparece un error de integridad de datos al restaurar, limpia las tablas existentes antes de reintentar:
 
 ```bash

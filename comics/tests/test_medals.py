@@ -29,12 +29,11 @@ from comics.achievements.medals import (
     rim_for,
     top_medal,
 )
-from comics.achievements.registry import all_rules
 from comics.models import Achievement, AchievementTier, Profile
 from comics.roles import ADMINISTRATORS
 
 from .base import ComiTestCase
-from .factories import image_upload, make_collection, make_edition, make_user
+from .factories import image_upload, make_achievement, make_collection, make_edition, make_user
 from .test_achievements import achievement, set_thresholds
 
 ARTWORK_DIR = Path(settings.BASE_DIR) / "comics" / "static" / "achievements"
@@ -116,14 +115,14 @@ class IconResolutionTests(ComiTestCase):
 class BundledArtworkTests(ComiTestCase):
     def test_every_catalogue_code_has_its_artwork(self) -> None:
         # Fails when an achievement is added without its medal: add comics/static/achievements/<code>.svg.
-        codes = {item["code"] for item in catalogue.ACHIEVEMENTS} | set(all_rules())
-        for code in sorted(codes) + ["_secret"]:
+        codes = {item["code"] for item in catalogue.ACHIEVEMENTS}
+        for code in sorted(codes) + ["_secret", "_category"]:
             with self.subTest(code=code):
                 self.assertIsNotNone(finders.find(f"achievements/{code}.svg"), f"missing achievements/{code}.svg")
 
     def test_artwork_is_plain_svg(self) -> None:
         files = sorted(ARTWORK_DIR.glob("*.svg"))
-        self.assertGreaterEqual(len(files), 13)
+        self.assertGreaterEqual(len(files), 14)
         for path in files:
             with self.subTest(file=path.name):
                 root = ET.parse(path).getroot()
@@ -321,7 +320,7 @@ class GestionMedalTests(ComiTestCase):
 
         before = queries()
         upload_icon(achievement("origin"))
-        Achievement.objects.create(code="ghost", name_en="Ghost", name_es="Fantasma")
+        make_achievement(code="ghost", name_en="Ghost", name_es="Fantasma")
         self.assertEqual(queries(), before)
 
     def test_edit_page_previews_every_level_and_says_where_the_picture_comes_from(self) -> None:
@@ -338,7 +337,7 @@ class GestionMedalTests(ComiTestCase):
         self.assertIn('data-icon-source="upload"', html)
 
     def test_edit_page_falls_back_to_the_icon(self) -> None:
-        ghost = Achievement.objects.create(code="ghost", icon="bolt", name_en="Ghost", name_es="Fantasma")
+        ghost = make_achievement(code="ghost", icon="bolt", name_en="Ghost", name_es="Fantasma")
         html = self.edit_page(ghost)
         self.assertIn('<span class="medal__symbol material-symbols-outlined">bolt</span>', html)
         self.assertIn('data-icon-source="symbol"', html)

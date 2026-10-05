@@ -20,12 +20,12 @@ from PIL import Image
 
 from comics.achievements import catalogue, engine
 from comics.achievements.display import showcase
-from comics.achievements.registry import Event, all_rules, codes_for
+from comics.achievements.registry import Event, all_rules, rule_keys_for
 from comics.models import Achievement, AchievementTier, Collection, Profile, UserAchievement
 from comics.roles import ADMINISTRATORS
 
 from .base import ComiTestCase
-from .factories import make_collection, make_edition, make_user
+from .factories import make_achievement, make_collection, make_edition, make_user
 
 SEEDED = {
     "origin",
@@ -82,14 +82,21 @@ def buy(user: object, edition: object = None, **fields: object) -> Collection:
 class SeedTests(ComiTestCase):
     def test_migration_seeds_one_row_per_rule(self) -> None:
         self.assertEqual(set(Achievement.objects.values_list("code", flat=True)), SEEDED)
-        self.assertEqual(set(all_rules()), SEEDED)
+        # Every rule serves a seeded row; halloween is the generic login_in_window with a window.
+        self.assertEqual(set(Achievement.objects.values_list("rule", flat=True)), set(all_rules()))
+        self.assertEqual(set(all_rules()), SEEDED - {"halloween"} | {"login_in_window"})
         self.assertEqual(list(achievement("great_power").tiers.values_list("threshold", flat=True)), [100, 500, 1000])
         self.assertEqual(list(achievement("veteran").tiers.values_list("threshold", flat=True)), [1, 3, 5])
         self.assertTrue(achievement("secret_identity").is_secret)
         self.assertFalse(achievement("origin").tiers.exists())
 
     def test_frozen_seed_matches_the_catalogue(self) -> None:
-        self.assertEqual(seed_migration.ACHIEVEMENTS + more_seed_migration.ACHIEVEMENTS, catalogue.ACHIEVEMENTS)
+        # Rules and windows came later (0101): the first seeds froze everything else.
+        seeded = [
+            {key: value for key, value in item.items() if key not in ("rule", "window")}
+            for item in catalogue.ACHIEVEMENTS
+        ]
+        self.assertEqual(seed_migration.ACHIEVEMENTS + more_seed_migration.ACHIEVEMENTS, seeded)
 
     def test_ensure_catalogue_only_creates_what_is_missing(self) -> None:
         Achievement.objects.filter(code="origin").delete()
@@ -171,7 +178,7 @@ class EngineTests(ComiTestCase):
         self.assertEqual(held(self.user, "great_power"), 0)
 
     def test_rows_without_rule_and_rules_without_row(self) -> None:
-        Achievement.objects.create(code="ghost", name_en="Ghost", name_es="Fantasma")
+        make_achievement(code="ghost", name_en="Ghost", name_es="Fantasma")
         Achievement.objects.filter(code="origin").delete()
         buy(self.user)
         with self.assertLogs("comics.achievements.engine", "WARNING") as logs:
@@ -250,8 +257,8 @@ class TriggerTests(ComiTestCase):
         self.assertEqual(held(self.user, "veteran"), 1)
 
     def test_events_only_evaluate_their_rules(self) -> None:
-        self.assertEqual(codes_for(Event.COLLECTION), COLLECTION_RULES)
-        self.assertEqual(codes_for(Event.SIGNATURE), {"batcave_vault"})
+        self.assertEqual(rule_keys_for(Event.COLLECTION), COLLECTION_RULES)
+        self.assertEqual(rule_keys_for(Event.SIGNATURE), {"batcave_vault"})
         with mock.patch.object(engine, "evaluate") as evaluate, self.captureOnCommitCallbacks(execute=True):
             buy(self.user)
         evaluate.assert_called_once()
@@ -466,7 +473,7 @@ class DisplayTests(ComiTestCase):
         self.assertNotIn("Origin", self.client.get(reverse("user_profile", args=["owner"])).content.decode())
 
     def test_rows_without_rule_are_not_shown(self) -> None:
-        Achievement.objects.create(code="ghost", name_en="Ghostly", name_es="Fantasmal")
+        make_achievement(code="ghost", name_en="Ghostly", name_es="Fantasmal")
         self.assertNotIn("Ghostly", self.own_page())
 
     def test_icon_image_replaces_the_symbol(self) -> None:
@@ -500,7 +507,7 @@ class GestionTests(ComiTestCase):
             "description_es": target.description_es,
             "hint_en": target.hint_en,
             "hint_es": target.hint_es,
-            "category": target.category,
+            "category": str(target.category_id),
             "icon": target.icon,
             "display_order": str(target.display_order),
         }
@@ -539,13 +546,13 @@ class GestionTests(ComiTestCase):
 
     def test_list_shows_counts_and_flags(self) -> None:
         UserAchievement.objects.award(make_user(), self.great_power, 1)
-        Achievement.objects.create(code="ghost", name_en="Ghost", name_es="Fantasma")
+        make_achievement(code="ghost", name_en="Ghost", name_es="Fantasma")
         Achievement.objects.filter(code="veteran").delete()
         achievement("origin")  # unchanged
         response = self.client.get(reverse("manage_achievements"))
         rows = {item.code: item for item in response.context["achievements"]}
         self.assertEqual(rows["great_power"].earned_by, 1)
-        self.assertIsNone(rows["ghost"].rule)
+        self.assertIsNone(rows["ghost"].rule_info)
         self.assertContains(response, "No rule in code")
         self.assertEqual(response.context["rules_without_row"], ["veteran"])
 

@@ -2122,3 +2122,228 @@ msgstr "La medalla usa la ilustración incluida en Comi; una imagen subida la re
 #: comics/templates/manage/achievement_form.html
 msgid "The medal uses the icon; an uploaded image replaces it."
 msgstr "La medalla usa el ícono; una imagen subida lo reemplaza."
+
+#: comics/achievements/windows.py
+msgid "No date window"
+msgstr "Sin ventana de fechas"
+
+#: comics/achievements/windows.py
+msgid "Every year, between two days"
+msgstr "Cada año, entre dos días"
+
+#: comics/achievements/windows.py
+msgid "Between two dates"
+msgstr "Entre dos fechas"
+
+#: comics/achievements/windows.py
+msgid "Enter the day and the month."
+msgstr "Indica el día y el mes."
+
+#: comics/achievements/windows.py
+msgid "That day does not exist in that month."
+msgstr "Ese día no existe en ese mes."
+
+#: comics/achievements/windows.py
+msgid "Enter the start date."
+msgstr "Indica la fecha de inicio."
+
+#: comics/achievements/windows.py
+msgid "Enter the end date."
+msgstr "Indica la fecha de fin."
+
+#: comics/achievements/windows.py
+msgid "The end date cannot be before the start date."
+msgstr "La fecha de fin no puede ser anterior a la de inicio."
+
+#: comics/achievements/windows.py
+msgid "Enter both times, or neither."
+msgstr "Indica ambas horas, o ninguna."
+
+#: comics/achievements/windows.py
+msgid "The end time must be different from the start time."
+msgstr "La hora de fin debe ser distinta de la de inicio."
+
+#: comics/achievements/rules.py
+msgid "has signed in inside the achievement's time window"
+msgstr "ha iniciado sesión dentro de la ventana de tiempo del logro"
+
+#: comics/forms.py
+msgid "Medallion image"
+msgstr "Imagen del medallón"
+
+#: comics/forms.py
+msgid "Start month"
+msgstr "Mes de inicio"
+
+#: comics/forms.py
+msgid "End month"
+msgstr "Mes de fin"
+
+#: comics/forms.py
+msgid "Start day"
+msgstr "Día de inicio"
+
+#: comics/forms.py
+msgid "End day"
+msgstr "Día de fin"
+
+#: comics/forms.py
+msgid "End date"
+msgstr "Fecha de fin"
+
+#: comics/forms.py
+msgid "Date window"
+msgstr "Ventana de fechas"
+
+#: comics/forms.py
+msgid "From (time)"
+msgstr "Desde (hora)"
+
+#: comics/forms.py
+msgid "Until (time)"
+msgstr "Hasta (hora)"
+
+#: comics/forms.py
+msgid "Rule"
+msgstr "Regla"
+
+#: comics/forms.py
+msgid "This rule only counts inside a time window: set a date window, a time window or both."
+msgstr "Esta regla solo cuenta dentro de una ventana de tiempo: indica una ventana de fechas, de horas o ambas."
+
+#: comics/achievements/gestion.py
+msgid "Built-in achievements cannot be deleted: disable it instead."
+msgstr "Los logros incluidos no se pueden eliminar: desactívalo en su lugar."
+
+#: comics/achievements/gestion.py
+msgid "Someone has already earned it, so it cannot be deleted: disable it instead."
+msgstr "Alguien ya lo consiguió, así que no se puede eliminar: desactívalo en su lugar."
+
+#: comics/achievements/gestion.py
+msgid "It has achievements: move them to another category first."
+msgstr "Tiene logros: muévelos antes a otra categoría."
+
+#: comics/views/manage_achievements.py
+#, python-format
+msgid "Achievement created: %(name)s"
+msgstr "Logro creado: %(name)s"
+
+#: comics/views/manage_achievements.py
+#, python-format
+msgid "Achievement deleted: %(name)s"
+msgstr "Logro eliminado: %(name)s"
+
+#: comics/views/manage_achievements.py
+#, python-format
+msgid "“%(name)s” cannot be deleted. %(reason)s"
+msgstr "“%(name)s” no se puede eliminar. %(reason)s"
+
+#: comics/views/manage_achievement_categories.py
+#, python-format
+msgid "Category created: %(name)s"
+msgstr "Categoría creada: %(name)s"
+
+#: comics/views/manage_achievement_categories.py
+#, python-format
+msgid "Category saved: %(name)s"
+msgstr "Categoría guardada: %(name)s"
+
+#: comics/views/manage_achievement_categories.py
+#, python-format
+msgid "Category deleted: %(name)s"
+msgstr "Categoría eliminada: %(name)s"
+
+#: comics/views/manage_home.py
+msgid "Achievement categories"
+msgstr "Categorías de logros"
+
+#: comics/views/manage_home.py
+msgid "Achievement category"
+msgstr "Categoría de logros"
+
+#: comics/templates/manage/achievement_list.html
+msgid "Categories"
+msgstr "Categorías"
+
+#: comics/templates/manage/achievement_list.html
+msgid "New achievement"
+msgstr "Nuevo logro"
+
+#: comics/templates/manage/achievement_list.html
+msgid "rule"
+msgstr "regla"
+
+#: comics/templates/manage/achievement_list.html
+msgid "Created in Gestión"
+msgstr "Creado en Gestión"
+
+#: comics/templates/manage/achievement_list.html
+msgid "No time window"
+msgstr "Sin ventana de tiempo"
+
+#: comics/templates/manage/achievement_form.html
+msgid "Its code is made from the name and cannot be changed later."
+msgstr "Su código se genera a partir del nombre y no se puede cambiar después."
+
+#: comics/templates/manage/achievement_form.html
+msgid "Only generic rules can be used here: they take their settings (such as the time window) from the achievement."
+msgstr "Aquí solo se pueden usar reglas genéricas: toman su configuración (como la ventana de tiempo) del logro."
+
+#: comics/templates/manage/achievement_form.html
+msgid "Time window"
+msgstr "Ventana de tiempo"
+
+#: comics/templates/manage/achievement_form.html
+msgid "The achievement only counts inside its windows (both, when both are set), in the project's time zone. A yearly window may wrap the end of the year (24/12 to 06/01) and a time window may wrap midnight (23:00 to 02:00; the end time is not included)."
+msgstr "El logro solo cuenta dentro de sus ventanas (ambas, si se indican las dos), en la zona horaria del proyecto. Una ventana anual puede cruzar el fin de año (24/12 a 06/01) y una de horas puede cruzar la medianoche (23:00 a 02:00; la hora de fin no se incluye)."
+
+#: comics/templates/manage/achievement_form.html
+msgid "Every year: the start and end day and month. 29 February only exists in leap years: in other years a window starting on it starts on 1 March, and one ending on it ends on 28 February."
+msgstr "Cada año: el día y mes de inicio y de fin. El 29 de febrero solo existe en años bisiestos: los demás años una ventana que empieza ese día empieza el 1 de marzo, y una que termina ese día termina el 28 de febrero."
+
+#: comics/templates/manage/achievement_form.html
+msgid "Between two dates: a one-off event; both days are included."
+msgstr "Entre dos fechas: un evento único; ambos días se incluyen."
+
+#: comics/templates/manage/achievement_form.html
+msgid "Time of day (optional): leave both empty for the whole day."
+msgstr "Horas del día (opcional): deja ambas vacías para todo el día."
+
+#: comics/templates/manage/achievement_form.html
+msgid "Delete achievement?"
+msgstr "¿Eliminar logro?"
+
+#: comics/templates/manage/achievement_category_list.html
+msgid "Categories group achievements on profiles. A category can only be deleted when it has no achievements."
+msgstr "Las categorías agrupan los logros en los perfiles. Una categoría solo se puede eliminar si no tiene logros."
+
+#: comics/templates/manage/achievement_category_list.html
+msgid "New category"
+msgstr "Nueva categoría"
+
+#: comics/templates/manage/achievement_category_list.html
+msgid "There are no categories yet."
+msgstr "Todavía no hay categorías."
+
+#: comics/templates/manage/achievement_category_form.html
+msgid "Back to categories"
+msgstr "Volver a categorías"
+
+#: comics/templates/manage/achievement_category_form.html
+msgid "Medallion image (PNG, JPEG or WebP, up to 2 MB; replaces the generic medallion)"
+msgstr "Imagen del medallón (PNG, JPEG o WebP, hasta 2 MB; reemplaza al medallón genérico)"
+
+#: comics/templates/manage/achievement_category_form.html
+msgid "A disabled category hides all its achievements from profiles and stops awarding them."
+msgstr "Una categoría desactivada oculta todos sus logros de los perfiles y deja de otorgarlos."
+
+#: comics/templates/manage/achievement_category_form.html
+msgid "Delete category?"
+msgstr "¿Eliminar categoría?"
+
+#: comics/templates/manage/achievement_category_list.html
+#, python-format
+msgid "%(counter)s achievement"
+msgid_plural "%(counter)s achievements"
+msgstr[0] "%(counter)s logro"
+msgstr[1] "%(counter)s logros"

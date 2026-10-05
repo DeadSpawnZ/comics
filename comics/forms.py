@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime
+from collections.abc import Iterable
 from typing import Any
 
 from django import forms
@@ -10,11 +11,17 @@ from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
 from django.db import transaction
 from django.db.models import QuerySet, prefetch_related_objects
 from django.forms.models import BaseModelFormSet
+from django.utils.dates import MONTHS
+from django.utils.functional import Promise
 from django.utils.translation import gettext_lazy as _
 
+from .achievements.catalogue import BUILTIN_CODES
+from .achievements.registry import Rule, generic_rules
+from .achievements.windows import CalendarWindow
 from .helper import parse_date_or_none, parse_id_or_none
 from .models import (
     Achievement,
+    AchievementCategory,
     AchievementTier,
     Collection,
     Dealer,
@@ -25,6 +32,7 @@ from .models import (
     ReadingArc,
     Signature,
     Title,
+    unique_code,
     validate_phone,
 )
 
@@ -795,14 +803,55 @@ class AchievementIconField(LimitedImageField):
     MAX_BYTES = 2 * 1024 * 1024
 
 
-class AchievementForm(forms.ModelForm):
-    """Everything about an achievement but its code (which ties it to its rule in code)."""
-
-    icon_image = AchievementIconField(
-        label=_("Icon image"),
+def _icon_field(label: str | Promise) -> AchievementIconField:
+    return AchievementIconField(
+        label=label,
         required=False,
-        widget=forms.ClearableFileInput(attrs={"accept": "image/png,image/jpeg,image/webp"}),
+        widget=forms.ClearableFileInput(attrs={"accept": "image/png,image/jpeg,image/webp", "class": "form-control"}),
     )
+
+
+def _material_widgets(form: forms.BaseForm, skip: Iterable[str] = ()) -> None:
+    """Bootstrap/Material classes: switches, selects and outlined fields (with placeholders)."""
+    for name, field in form.fields.items():
+        widget = field.widget
+        if name in skip:
+            continue
+        if isinstance(widget, forms.CheckboxInput):
+            widget.attrs["class"] = "form-check-input"
+        elif isinstance(widget, forms.Select):
+            widget.attrs["class"] = "form-select"
+        else:
+            widget.attrs.update({"class": "form-control", "placeholder": field.label})
+
+
+WINDOW_FIELDS = (
+    "calendar_window",
+    "window_start_day",
+    "window_start_month",
+    "window_end_day",
+    "window_end_month",
+    "window_start_date",
+    "window_end_date",
+    "window_start_time",
+    "window_end_time",
+)
+
+
+def _month_field(label: str | Promise) -> forms.TypedChoiceField:
+    return forms.TypedChoiceField(
+        label=label, choices=[("", "---------"), *MONTHS.items()], coerce=int, empty_value=None, required=False
+    )
+
+
+class AchievementForm(forms.ModelForm):
+    """What Gestión edits of an achievement. The code and the rule are fixed once it exists; the
+    time windows only appear for rules that read them (`rule.needs_window`), and such a rule
+    needs at least one window. Window consistency is validated by Achievement.clean()."""
+
+    icon_image = _icon_field(_("Icon image"))
+    window_start_month = _month_field(_("Start month"))
+    window_end_month = _month_field(_("End month"))
 
     class Meta:
         model = Achievement
@@ -819,6 +868,7 @@ class AchievementForm(forms.ModelForm):
             "display_order",
             "is_secret",
             "is_enabled",
+            *WINDOW_FIELDS,
         )
         labels = {
             "name_en": _("Name (English)"),
@@ -832,25 +882,124 @@ class AchievementForm(forms.ModelForm):
             "display_order": _("Order"),
             "is_secret": _("Secret"),
             "is_enabled": _("Enabled"),
+            "calendar_window": _("Date window"),
+            "window_start_day": _("Start day"),
+            "window_end_day": _("End day"),
+            "window_start_date": _("Start date"),
+            "window_end_date": _("End date"),
+            "window_start_time": _("From (time)"),
+            "window_end_time": _("Until (time)"),
         }
         widgets = {
             "description_en": forms.Textarea(attrs={"rows": 2}),
             "description_es": forms.Textarea(attrs={"rows": 2}),
             "hint_en": forms.Textarea(attrs={"rows": 2}),
             "hint_es": forms.Textarea(attrs={"rows": 2}),
+            "window_start_date": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+            "window_end_date": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+            "window_start_time": forms.TimeInput(attrs={"type": "time"}, format="%H:%M"),
+            "window_end_time": forms.TimeInput(attrs={"type": "time"}, format="%H:%M"),
+        }
+
+    def __init__(self, *args: Any, rule: Rule | None = None, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.rule = rule
+        if rule is None or not rule.needs_window:
+            for name in WINDOW_FIELDS:
+                del self.fields[name]
+        _material_widgets(self, skip=("icon_image",))
+
+    @property
+    def has_windows(self) -> bool:
+        return "calendar_window" in self.fields
+
+    def clean(self) -> dict[str, Any]:
+        cleaned = super().clean()
+        if self.has_windows and self.rule is not None and self.rule.needs_window:
+            calendar = cleaned.get("calendar_window") not in (None, "", CalendarWindow.NONE)
+            times = cleaned.get("window_start_time") is not None or cleaned.get("window_end_time") is not None
+            if not (calendar or times):
+                raise ValidationError(
+                    _("This rule only counts inside a time window: set a date window, a time window or both."),
+                    code="window_required",
+                )
+        return cleaned
+
+
+class AchievementCreateForm(AchievementForm):
+    """A new achievement made in Gestión: only with a generic rule (built-in rules have their own
+    seeded row). Its code is generated from the name, unique and never reused from the catalogue."""
+
+    rule = forms.ChoiceField(label=_("Rule"))
+
+    class Meta(AchievementForm.Meta):
+        fields = ("rule", *AchievementForm.Meta.fields)
+
+    def __init__(self, *args: Any, rule: Rule | None = None, **kwargs: Any) -> None:
+        super().__init__(*args, rule=rule, **kwargs)
+        self.fields["rule"].choices = [
+            (key, f"{key} · {item.measure}") for key, item in sorted(generic_rules().items())
+        ]
+        self.fields["rule"].widget.attrs["class"] = "form-select"
+
+    def clean(self) -> dict[str, Any]:
+        cleaned = super().clean()
+        self.assign_code()
+        return cleaned
+
+    def assign_code(self) -> None:
+        """Give the new achievement a free code made from its name (again after a collision)."""
+        name = self.cleaned_data.get("name_en") or self.cleaned_data.get("name_es")
+        if name:
+            taken = set(Achievement.objects.values_list("code", flat=True)) | BUILTIN_CODES
+            self.instance.code = unique_code(name, taken)
+
+
+class AchievementCategoryForm(forms.ModelForm):
+    """A category of achievements. Its code is generated from the name when it is created."""
+
+    image = _icon_field(_("Medallion image"))
+
+    class Meta:
+        model = AchievementCategory
+        fields = (
+            "name_en",
+            "name_es",
+            "description_en",
+            "description_es",
+            "display_order",
+            "is_enabled",
+            "image",
+        )
+        labels = {
+            "name_en": _("Name (English)"),
+            "name_es": _("Name (Spanish)"),
+            "description_en": _("Description (English)"),
+            "description_es": _("Description (Spanish)"),
+            "display_order": _("Order"),
+            "is_enabled": _("Enabled"),
+        }
+        widgets = {
+            "description_en": forms.Textarea(attrs={"rows": 2}),
+            "description_es": forms.Textarea(attrs={"rows": 2}),
         }
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        for name, field in self.fields.items():
-            widget = field.widget
-            if isinstance(widget, forms.CheckboxInput):
-                widget.attrs["class"] = "form-check-input"
-            elif isinstance(widget, forms.Select):
-                widget.attrs["class"] = "form-select"
-            elif name != "icon_image":
-                widget.attrs.update({"class": "form-control", "placeholder": field.label})
-        self.fields["icon_image"].widget.attrs["class"] = "form-control"
+        _material_widgets(self, skip=("image",))
+
+    def clean(self) -> dict[str, Any]:
+        cleaned = super().clean()
+        if self.instance.pk is None:
+            self.assign_code()
+        return cleaned
+
+    def assign_code(self) -> None:
+        """Give a new category a free code made from its name (again after a collision)."""
+        name = self.cleaned_data.get("name_en") or self.cleaned_data.get("name_es")
+        if name:
+            taken = AchievementCategory.objects.values_list("code", flat=True)
+            self.instance.code = unique_code(name, taken, max_length=30)
 
 
 class AchievementTierForm(forms.ModelForm):

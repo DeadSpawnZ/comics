@@ -3,8 +3,8 @@ a row of the ones not earned yet.
 
 The owner sees every enabled achievement: earned ones with their level and date, locked ones with
 their progress ("45 / 100"), and secret ones not earned yet as "???" (with the hint, if Gestión
-set one). Other users see only what was earned. Disabled achievements, and rows without a rule in
-code, are never shown."""
+set one). Other users see only what was earned. Inactive achievements (disabled, or in a disabled
+category) and rows whose rule is not in code are never shown."""
 
 from __future__ import annotations
 
@@ -61,12 +61,14 @@ def showcase(user: User, *, include_locked: bool) -> Showcase:
     """`user`'s achievements; `include_locked` for the owner's own view (locked ones and progress).
     Earned medals come highest level first; locked ones with progress before hidden secrets."""
     rules = all_rules()
-    achievements = list(Achievement.objects.filter(is_enabled=True, code__in=rules).prefetch_related("tiers"))
+    achievements = list(
+        Achievement.objects.active().filter(rule__in=rules).select_related("category").prefetch_related("tiers")
+    )
     held = {award.achievement_id: award for award in UserAchievement.objects.filter(user=user)}
     earned: list[AchievementCard] = []
     locked: list[AchievementCard] = []
     for achievement in achievements:
-        card = _card(user, achievement, rules[achievement.code], held.get(achievement.pk), include_locked)
+        card = _card(user, achievement, rules[achievement.rule], held.get(achievement.pk), include_locked)
         if card is not None:
             (earned if card.earned else locked).append(card)
     # Stable sorts: ties keep the catalogue order (category, display_order, code).
@@ -88,7 +90,7 @@ def _card(
     next_threshold = None if concealed or not upcoming else min(upcoming)
     progress = goal = None
     if include_locked and not concealed and rule.kind is Kind.COUNT and next_threshold is not None:
-        goal, progress = next_threshold, rule.progress(user)
+        goal, progress = next_threshold, rule.progress_for(user, achievement)
     return AchievementCard(
         achievement=achievement,
         earned=award is not None,

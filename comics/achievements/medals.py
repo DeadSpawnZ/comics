@@ -18,10 +18,11 @@ from django.db.models import TextChoices
 from django.templatetags.static import static
 from django.utils.translation import gettext_lazy as _
 
-from comics.models import Achievement
+from comics.models import Achievement, AchievementCategory
 
 STATIC_DIR = "achievements"
 SECRET_ICON = f"{STATIC_DIR}/_secret.svg"
+CATEGORY_ICON = f"{STATIC_DIR}/_category.svg"  # generic category medallion
 SECRET_SYMBOL = "help"
 # Codes are seeded by migrations, but only well-formed ones are turned into a static path (no
 # separators, no leading "_": "_secret" is the placeholder, not an achievement).
@@ -80,6 +81,13 @@ def icon_url(achievement: Achievement, *, concealed: bool = False) -> str | None
     path = bundled_icon(achievement.code)
     # static() goes through the configured storage: hashed names with the manifest storage.
     return static(path) if path else None
+
+
+def category_icon_url(category: AchievementCategory) -> str:
+    """URL of a category's medallion: the image uploaded in Gestión, else the generic one."""
+    if category.image:
+        return category.image.url
+    return static(CATEGORY_ICON)
 
 
 @dataclass(frozen=True)

@@ -40,7 +40,9 @@ DAY = datetime.date(2021, 5, 1)
 
 
 def progress(code: str, user: object) -> int:
-    return get_rule(code).progress(user)
+    """`user`'s progress for the achievement `code`, through its rule (generic rules read the row)."""
+    row = Achievement.objects.get(code=code)
+    return get_rule(row.rule).progress_for(user, row)
 
 
 def held(user: object, code: str) -> int:
@@ -462,7 +464,7 @@ class CatalogueTests(ComiTestCase):
         self.assertEqual(response.context["rules_without_row"], [])
         rows = response.context["achievements"]
         self.assertEqual(len(rows), 12)
-        self.assertTrue(all(row.rule is not None and not row.missing_tiers for row in rows))
+        self.assertTrue(all(row.rule_info is not None and not row.missing_tiers for row in rows))
         self.assertNotContains(response, "No rule in code")
 
     def test_seeded_levels_and_secrets(self) -> None:

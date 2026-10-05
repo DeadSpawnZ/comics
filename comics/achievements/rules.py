@@ -1,5 +1,6 @@
 """How each achievement is earned. Names, texts, icons and tiers are data (Gestión); a rule only
-measures progress. Every rule needs a row with the same code, seeded by a data migration.
+measures progress. Every built-in rule needs a row (rule = its key), seeded by a data migration;
+generic rules read the achievement row too, and Gestión creates their rows.
 
 Rules run on every event they listen to, so each one is one or two aggregate queries: never a
 loop over the user's whole collection. "Owned" means Collection.objects.owned_by (purchases not
@@ -12,9 +13,10 @@ from django.db.models import Count, F, Max, Min, Q
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from comics.models import Collection, Connecting, Edition, Profile, ReadingArc
+from comics.models import Achievement, Collection, Connecting, Edition, Profile, ReadingArc
 
-from .registry import Event, Kind, rule
+from .registry import Event, Kind, generic_rule, rule
+from .windows import has_window, in_windows
 
 
 @rule("origin", kind=Kind.BOOLEAN, events=[Event.COLLECTION], measure=_("has registered a piece"))
@@ -161,12 +163,21 @@ def chronicler(user: User) -> int:
 # ---------- Community ----------
 
 
-@rule("halloween", kind=Kind.BOOLEAN, events=[Event.LOGIN], measure=_("has signed in on October 31"))
-def halloween(user: User) -> int:
-    # The last sign-in, in the project's time zone. Django updates last_login (its own receiver,
-    # connected before ours) before this runs. Only the last sign-in is stored, so past Halloweens
-    # count only if the user has not signed in since.
-    if user.last_login is None:
+# ---------- Generic rules: Gestión creates achievements with them ----------
+
+
+@generic_rule(
+    "login_in_window",
+    kind=Kind.BOOLEAN,
+    events=[Event.LOGIN],
+    measure=_("has signed in inside the achievement's time window"),
+    needs_window=True,
+)
+def login_in_window(user: User, achievement: Achievement) -> int:
+    # The last sign-in, in the project's time zone (e.g. Halloween: a yearly 31/10 - 31/10 window).
+    # Django updates last_login (its own receiver, connected before ours) before this runs. Only
+    # the last sign-in is stored, so it is not retroactive beyond it: a past window counts only if
+    # the user has not signed in since. An achievement without any window never counts.
+    if user.last_login is None or not has_window(achievement):
         return 0
-    signed_in = timezone.localtime(user.last_login)
-    return int((signed_in.month, signed_in.day) == (10, 31))
+    return int(in_windows(achievement, user.last_login))

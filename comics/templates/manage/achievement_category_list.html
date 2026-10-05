@@ -1,0 +1,52 @@
+{% extends 'manage/base_manage.html' %}
+{% load i18n %}
+
+{% block breadcrumb %}
+<a href="{% url 'manage_achievements' %}">{% translate "Achievements" %}</a>
+<span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+<span class="is-current">{% translate "Categories" %}</span>
+{% endblock %}
+
+{% block manage_content %}
+<div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+  <div>
+    <h1 class="md-headline-small mb-0">{% translate "Achievement categories" %}</h1>
+    <span class="md-body-medium">{% translate "Categories group achievements on profiles. A category can only be deleted when it has no achievements." %}</span>
+  </div>
+  <a class="md-btn md-btn--filled" href="{% url 'manage_achievement_category_new' %}?next={{ request.get_full_path|urlencode }}">
+    <span class="material-symbols-outlined" aria-hidden="true">add</span>
+    {% translate "New category" %}
+  </a>
+</div>
+
+<div class="md-surface-card manage-table">
+  <ul class="manage-rows">
+    {% for category in categories %}
+      <li class="manage-row manage-row--no-thumb">
+        <div class="manage-row__main d-flex align-items-center gap-3">
+          <span class="medal medal--base medal--sm" aria-hidden="true"><span class="medal__disc"><img src="{{ category.medallion_url }}" alt="" loading="lazy" decoding="async"></span></span>
+          <div>
+            <a class="manage-row__title" href="{% url 'manage_achievement_category_edit' category.pk %}?next={{ request.get_full_path|urlencode }}">{{ category.name }}</a>
+            <div class="md-body-medium"><code>{{ category.code }}</code>{% if category.description %} · {{ category.description }}{% endif %}</div>
+          </div>
+        </div>
+        <div class="manage-row__chips">
+          <span class="md-assist-chip">{% blocktranslate count counter=category.achievement_count %}{{ counter }} achievement{% plural %}{{ counter }} achievements{% endblocktranslate %}</span>
+          {% if not category.is_enabled %}<span class="md-assist-chip">{% translate "Disabled" %}</span>{% endif %}
+        </div>
+        <div class="manage-row__actions">
+          <a class="md-icon-btn" href="{% url 'manage_achievement_category_edit' category.pk %}?next={{ request.get_full_path|urlencode }}"
+             aria-label="{% translate 'Edit' %}" title="{% translate 'Edit' %}">
+            <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+          </a>
+        </div>
+      </li>
+    {% empty %}
+      <li class="text-center py-5 list-unstyled">
+        <span class="material-symbols-outlined d-block mb-2 empty-state-icon" aria-hidden="true">category</span>
+        <p class="md-body-medium mb-0">{% translate "There are no categories yet." %}</p>
+      </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}

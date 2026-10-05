@@ -36,7 +36,7 @@ popover. A secret not earned yet shows nothing but "???" and its hint.{% endcomm
     <div class="medal-popover__name">{{ card.achievement.name }}</div>
     {% if card.achievement.description %}<div class="medal-popover__desc">{{ card.achievement.description }}</div>{% endif %}
     <div class="medal-popover__meta">
-      <span>{{ card.achievement.get_category_display }}</span>
+      <span>{{ card.achievement.category.name }}</span>
       {% if card.earned and card.tiered and card.tier %}
         <span>{% blocktranslate trimmed with level=card.level max=card.max_level rim=card.medal.rim.label measure=card.measure threshold=card.tier.threshold %}
           Level {{ level }} of {{ max }} · {{ rim }} ({{ measure }}: {{ threshold }})

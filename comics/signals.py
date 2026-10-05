@@ -17,7 +17,7 @@ from comics.achievements.engine import (
     schedule_edition_owners,
     schedule_reading_arc_owners,
 )
-from comics.achievements.registry import Event, codes_for
+from comics.achievements.registry import Event, rule_keys_for
 from comics.models import (
     CollectedIssue,
     Collection,
@@ -64,7 +64,7 @@ def collection_changed(sender: type[Collection], instance: Collection, **kwargs:
 @receiver(post_save, sender=Signature, dispatch_uid="comics.achievements.signature_saved")
 @receiver(post_delete, sender=Signature, dispatch_uid="comics.achievements.signature_deleted")
 def signature_changed(sender: type[Signature], instance: Signature, **kwargs: Any) -> None:
-    if not kwargs.get("raw") and codes_for(Event.SIGNATURE):
+    if not kwargs.get("raw") and rule_keys_for(Event.SIGNATURE):
         collector_id = Collection.objects.filter(pk=instance.collectable_id).values_list("collector_id", flat=True)
         schedule(Event.SIGNATURE, collector_id.first())
 

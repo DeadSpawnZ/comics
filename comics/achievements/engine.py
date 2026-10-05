@@ -2,8 +2,8 @@
 
 Awards are computed from the current data (counts, flags), never from increments, so evaluating
 again is harmless (idempotent) and existing activity counts (retroactive). Levels only go up and
-earned achievements are never taken away. Only enabled achievements with a registered rule are
-awarded."""
+earned achievements are never taken away. Only active achievements (enabled, in an enabled
+category) whose rule is registered are awarded."""
 
 from __future__ import annotations
 
@@ -20,7 +20,7 @@ from django.utils.translation import ngettext
 from comics.models import Achievement, Collection, UserAchievement
 
 from . import rules as _rules  # noqa: F401  (registers the rules)
-from .registry import Event, Kind, Rule, all_rules, codes_for
+from .registry import Event, Kind, Rule, all_rules, rule_keys_for
 
 logger = logging.getLogger(__name__)
 
@@ -32,26 +32,45 @@ def level_for(rule: Rule, achievement: Achievement, progress: int) -> int:
     return max((tier.level for tier in achievement.tiers.all() if progress >= tier.threshold), default=0)
 
 
-def evaluate(user: User, codes: Iterable[str] | None = None, *, bulk: bool = False) -> list[str]:
-    """Award `user` every level earned among the rules `codes` (all rules when None). `bulk` marks
-    the awards to be announced together (retroactive runs). Returns the codes that went up."""
-    rules = all_rules()
-    if codes is not None:
-        wanted = set(codes)
-        rules = {code: item for code, item in rules.items() if code in wanted}
-    if not rules:
+def evaluate(
+    user: User,
+    rules: Iterable[str] | None = None,
+    *,
+    codes: Iterable[str] | None = None,
+    bulk: bool = False,
+) -> list[str]:
+    """Award `user` every level earned among the achievements whose rule is in `rules` (rule keys,
+    as events give them) and, when given, whose code is in `codes`; everything when both are None.
+    Several achievements can share a rule: a built-in rule is measured once for all of them, a
+    generic one per achievement (it reads the row). `bulk` marks the awards to be announced
+    together (retroactive runs). Returns the codes of the achievements that went up."""
+    registry = all_rules()
+    wanted = set(registry) if rules is None else set(rules) & set(registry)
+    if not wanted:
         return []
-    rows = list(Achievement.objects.filter(code__in=rules).prefetch_related("tiers"))
-    for code in sorted(set(rules) - {row.code for row in rows}):
-        logger.warning("Achievement rule %r has no Achievement row: it is not awarded.", code)
-    enabled = [row for row in rows if row.is_enabled]
+    rows = Achievement.objects.filter(rule__in=wanted)
+    if codes is not None:
+        rows = rows.filter(code__in=set(codes))
+    rows = list(rows.select_related("category").prefetch_related("tiers"))
+    if codes is None:
+        missing = {key for key in wanted if not registry[key].generic} - {row.rule for row in rows}
+        for key in sorted(missing):
+            logger.warning("Achievement rule %r has no Achievement row: it is not awarded.", key)
+    active = [row for row in rows if row.is_active]
     held = dict(
-        UserAchievement.objects.filter(user=user, achievement__in=enabled).values_list("achievement_id", "level")
+        UserAchievement.objects.filter(user=user, achievement__in=active).values_list("achievement_id", "level")
     )
+    measured: dict[str, int] = {}  # built-in rules, measured once
     raised = []
-    for achievement in enabled:
-        rule = rules[achievement.code]
-        level = level_for(rule, achievement, rule.progress(user))
+    for achievement in active:
+        rule = registry[achievement.rule]
+        if rule.generic:
+            progress = rule.progress_for(user, achievement)
+        else:
+            if rule.key not in measured:
+                measured[rule.key] = rule.progress_for(user, achievement)
+            progress = measured[rule.key]
+        level = level_for(rule, achievement, progress)
         if level > held.get(achievement.pk, 0):
             with transaction.atomic():
                 if UserAchievement.objects.award(user, achievement, level, bulk=bulk):
@@ -59,24 +78,24 @@ def evaluate(user: User, codes: Iterable[str] | None = None, *, bulk: bool = Fal
     return raised
 
 
-def _evaluate_user(user_id: int, codes: frozenset[str]) -> None:
+def _evaluate_user(user_id: int, rules: frozenset[str]) -> None:
     user = User.objects.filter(pk=user_id, is_active=True).first()
     if user is not None:
-        evaluate(user, codes)
+        evaluate(user, rules)
 
 
 class _PendingEvaluation:
     """An on_commit callback evaluating some rules for one user. Kept mutable so that later events
     of the same user in the same transaction join it instead of adding another evaluation."""
 
-    def __init__(self, user_id: int, codes: set[str]) -> None:
+    def __init__(self, user_id: int, rules: set[str]) -> None:
         self.user_id = user_id
-        self.codes = set(codes)
+        self.rules = set(rules)
         self.done = False  # once run, later events need a new evaluation
 
     def __call__(self) -> None:
         self.done = True
-        _evaluate_user(self.user_id, frozenset(self.codes))
+        _evaluate_user(self.user_id, frozenset(self.rules))
 
 
 def schedule(event: Event, user_id: int | None) -> None:
@@ -87,16 +106,16 @@ def schedule(event: Event, user_id: int | None) -> None:
     One evaluation per user and transaction: saving 50 pieces in one transaction evaluates once.
     The pending callbacks are looked up in `connection.run_on_commit` (Django's list of
     (savepoint ids, callback, robust)), which Django itself prunes when a savepoint rolls back;
-    codes joined from a rolled-back savepoint are only evaluated in vain, which is harmless."""
-    codes = codes_for(event)
-    if not (user_id and codes):
+    rules joined from a rolled-back savepoint are only evaluated in vain, which is harmless."""
+    rules = rule_keys_for(event)
+    if not (user_id and rules):
         return
     connection = transaction.get_connection()
     pending = _pending_evaluation(connection, user_id) if connection.in_atomic_block else None
     if pending is not None:
-        pending.codes |= codes
+        pending.rules |= rules
         return
-    transaction.on_commit(_PendingEvaluation(user_id, codes), robust=True)
+    transaction.on_commit(_PendingEvaluation(user_id, rules), robust=True)
 
 
 def _pending_evaluation(connection: BaseDatabaseWrapper, user_id: int) -> _PendingEvaluation | None:
@@ -120,7 +139,7 @@ def schedule_for_owners(event: Event, collectors: QuerySet[Collection]) -> None:
     """schedule() for every user with a purchase among `collectors` (a Collection queryset).
     Sold pieces are included: evaluating someone who no longer qualifies is harmless. Skips the
     query when no rule listens to `event`."""
-    if codes_for(event):
+    if rule_keys_for(event):
         purchases = collectors.filter(trade_type=Collection.TradeChoices.BUYING)
         for user_id in purchases.values_list("collector_id", flat=True).distinct():
             schedule(event, user_id)
@@ -150,20 +169,24 @@ def schedule_compilation_owners(edition_id: int) -> None:
     schedule_for_owners(Event.READING_ARC, Collection.objects.filter(edition_id=edition_id))
 
 
-def schedule_for_everyone(code: str) -> None:
-    """Re-evaluate one achievement for every active user after commit: after Gestión enables it
-    or changes its levels, so whoever already qualifies gets it without waiting for new activity.
+def schedule_for_everyone(*codes: str) -> None:
+    """Re-evaluate these achievements for every active user after commit: after Gestión creates
+    or enables one, changes its levels or windows, or enables its category, so whoever already
+    qualifies gets it without waiting for new activity.
 
     It runs in the request that saved the change, one user after another; a failure is logged and
     the loop goes on with the next user. Fine for a community of up to a few hundred users; beyond
     that, run `manage.py award_achievements --code <code>` in a background job instead."""
 
+    if not codes:
+        return
+
     def run() -> None:
         for user in User.objects.filter(is_active=True).iterator():
             try:
-                evaluate(user, [code])
+                evaluate(user, codes=codes)
             except Exception:
-                logger.exception("Evaluating achievement %r for user %s failed.", code, user.pk)
+                logger.exception("Evaluating achievements %r for user %s failed.", codes, user.pk)
 
     transaction.on_commit(run, robust=True)
 
@@ -187,8 +210,8 @@ def take_notices(user: User) -> list[str]:
     if not ids:
         return []
     claimed = _claim(ids)
-    pending = list(UserAchievement.objects.filter(pk__in=claimed).select_related("achievement"))
-    visible = [award for award in pending if award.achievement.is_enabled]
+    pending = list(UserAchievement.objects.filter(pk__in=claimed).select_related("achievement__category"))
+    visible = [award for award in pending if award.achievement.is_active]
     notices = []
     for award in (award for award in visible if not award.bulk_awarded):
         if award.level > 1:

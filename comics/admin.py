@@ -19,6 +19,7 @@ from django.utils.safestring import SafeString
 from .forms import CollectionForm, EditionForm, save_formset_reinserting
 from .models import (
     Achievement,
+    AchievementCategory,
     AchievementTier,
     Artist,
     CollectedIssue,
@@ -50,12 +51,17 @@ class AchievementTierInline(admin.TabularInline):
 @admin.register(Achievement)
 class AchievementAdmin(admin.ModelAdmin):
     # Day-to-day editing happens in Gestión; the admin is the superusers' fallback.
-    list_display = ("code", "name_en", "name_es", "category", "is_secret", "is_enabled")
-    list_filter = ("category", "is_secret", "is_enabled")
+    list_display = ("code", "rule", "name_en", "name_es", "category", "is_secret", "is_enabled")
+    list_filter = ("category", "rule", "is_secret", "is_enabled")
     inlines = [AchievementTierInline]
 
     def save_formset(self, request: HttpRequest, form: ModelForm, formset: BaseModelFormSet, change: bool) -> None:
         save_formset_reinserting(formset)
+
+
+@admin.register(AchievementCategory)
+class AchievementCategoryAdmin(admin.ModelAdmin):
+    list_display = ("code", "name_en", "name_es", "display_order", "is_enabled")
 
 
 @admin.register(UserAchievement)

@@ -1,15 +1,32 @@
-"""The achievement catalogue: the rows every rule needs, with their initial texts, icons and levels.
+"""The achievement catalogue: the built-in categories and achievements, with their initial texts,
+icons, levels and windows. Gestión can add more categories, and achievements with generic rules.
 
-Data migrations seed these rows (each keeps a frozen copy of what it seeds; a test checks they
-match this list). `manage.py ensure_achievements` creates the achievements that are missing (with
-their levels), e.g. after `flush` and restoring a dump taken before they existed. Existing
-achievements are never touched, so nothing Gestión changed is overwritten."""
+Data migrations seed these rows (each keeps a frozen copy of what it seeds; tests check they
+match this list). `manage.py ensure_achievements` creates the categories and achievements that are
+missing (with their levels), e.g. after `flush` and restoring a dump taken before they existed.
+Existing rows are never touched, so nothing Gestión changed is overwritten.
+
+An achievement's rule is its code unless it says otherwise ("rule"); "window" holds the time
+window fields of achievements with a windowed rule.
+
+Seeding a new built-in achievement or category: its data migration must get_or_create by code
+(never create blindly nor overwrite), so a database where it already exists keeps its row and
+whatever Gestión changed. Built-in codes never start with "g_": that prefix is reserved for codes
+generated in Gestión (models.GENERATED_CODE_PREFIX), so the two can never collide."""
 
 from __future__ import annotations
 
 from django.db import transaction
 
-from comics.models import Achievement, AchievementTier
+from comics.models import Achievement, AchievementCategory, AchievementTier
+
+CATEGORIES = [
+    {"code": "collection", "name_en": "Collection", "name_es": "Colección", "display_order": 10},
+    {"code": "treasures", "name_en": "Treasures", "name_es": "Tesoros", "display_order": 20},
+    {"code": "sagas", "name_en": "Sagas", "name_es": "Sagas", "display_order": 30},
+    {"code": "community", "name_en": "Community", "name_es": "Comunidad", "display_order": 40},
+    {"code": "seniority", "name_en": "Seniority", "name_es": "Antigüedad", "display_order": 50},
+]
 
 ACHIEVEMENTS = [
     {
@@ -152,17 +169,38 @@ ACHIEVEMENTS = [
         "hint_en": "Something happens one night a year…",
         "hint_es": "Algo pasa una noche al año…",
         "tiers": [],
+        "rule": "login_in_window",
+        "window": {
+            "calendar_window": "yearly",
+            "window_start_day": 31,
+            "window_start_month": 10,
+            "window_end_day": 31,
+            "window_end_month": 10,
+        },
     },
 ]
 
 
+# Codes of the built-in achievements: Gestión never deletes them nor gives their codes to new ones.
+BUILTIN_CODES = frozenset(item["code"] for item in ACHIEVEMENTS)
+
+
 def ensure_catalogue() -> list[str]:
-    """Create the missing achievements and levels of the catalogue. Returns the codes created."""
+    """Create the missing categories, achievements and levels of the catalogue. Returns the codes
+    of the achievements created."""
     created_codes = []
     with transaction.atomic():
+        categories = {}
+        for data in CATEGORIES:
+            values = dict(data)
+            code = values.pop("code")
+            categories[code], _created = AchievementCategory.objects.get_or_create(code=code, defaults=values)
         for data in ACHIEVEMENTS:
             values = dict(data)
             code, thresholds = values.pop("code"), values.pop("tiers")
+            values.update(values.pop("window", {}))
+            values["category"] = categories[values["category"]]
+            values.setdefault("rule", code)
             achievement, created = Achievement.objects.get_or_create(code=code, defaults=values)
             if created:
                 created_codes.append(code)

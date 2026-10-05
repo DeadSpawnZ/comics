@@ -1,7 +1,7 @@
 """Backups (dump.py / dumpdata) still work with the AreaAccess model, and a restore keeps the roles:
 group permissions travel by natural key, so they survive permission ids that differ between
 databases. `ensure_roles` rebuilds the groups when a dump does not bring them. Profiles travel by
-their user's username too, and achievements by their code."""
+their user's username too, achievements by their code and achievement categories by theirs."""
 
 import json
 import tempfile
@@ -15,11 +15,11 @@ from django.test import TransactionTestCase, override_settings
 
 import dump
 from comics.achievements.catalogue import ACHIEVEMENTS, ensure_catalogue
-from comics.models import Achievement, AchievementTier, Collection, Profile, UserAchievement
+from comics.models import Achievement, AchievementCategory, AchievementTier, Collection, Profile, UserAchievement
 from comics.roles import ACCESS_MANAGEMENT, ADMINISTRATORS, COLLECTORS, ROLE_PERMISSIONS, ensure_roles
 
 from .base import TEST_MEDIA_ROOT, TEST_STORAGES, ComiTestCase
-from .factories import make_collection, make_edition, make_user
+from .factories import make_achievement, make_category, make_collection, make_edition, make_user
 
 
 def group_permissions(name: str) -> set[str]:
@@ -109,7 +109,7 @@ class RestoreTests(TransactionTestCase):
 
             call_command("flush", interactive=False, verbosity=0)
             # A migrated target already has the seeded achievements, here under other ids.
-            Achievement.objects.create(code="placeholder", name_en="x", name_es="x")
+            make_achievement(code="placeholder", name_en="x", name_es="x")
             ensure_catalogue()
             Achievement.objects.filter(code="placeholder").delete()
             call_command("loaddata", str(dump_file), verbosity=0)
@@ -121,6 +121,51 @@ class RestoreTests(TransactionTestCase):
         hero = User.objects.get(username="hero")
         levels = dict(UserAchievement.objects.filter(user=hero).values_list("achievement__code", "level"))
         self.assertEqual(levels, {"great_power": 2, "origin": 1})
+
+    def test_restore_keeps_categories_and_gestion_achievements_by_code(self) -> None:
+        hero = make_user(username="hero")
+        AchievementCategory.objects.filter(code="sagas").update(name_es="Grandes sagas")  # edited in Gestión
+        events = make_category(code="events", name_en="Events", name_es="Eventos", display_order=60)
+        christmas = make_achievement(
+            code="christmas",
+            rule="login_in_window",
+            category=events,
+            calendar_window="yearly",
+            window_start_day=24,
+            window_start_month=12,
+            window_end_day=6,
+            window_end_month=1,
+        )
+        UserAchievement.objects.award(hero, christmas, 1)
+        with tempfile.TemporaryDirectory() as tmp:
+            dump_file = self.make_dump(tmp)
+            content = json.loads(dump_file.read_text(encoding="utf-8"))
+            categories = [item for item in content if item["model"] == "comics.achievementcategory"]
+            self.assertTrue(categories and all("pk" not in item for item in categories))
+            entry = next(
+                item
+                for item in content
+                if item["model"] == "comics.achievement" and item["fields"]["code"] == "christmas"
+            )
+            self.assertEqual(entry["fields"]["category"], ["events"])
+            # Categories come before the achievements that point at them.
+            models = [item["model"] for item in content]
+            self.assertLess(models.index("comics.achievementcategory"), models.index("comics.achievement"))
+
+            call_command("flush", interactive=False, verbosity=0)
+            # A migrated target already has the seeded categories and achievements, under other ids.
+            make_category(code="placeholder")
+            ensure_catalogue()
+            AchievementCategory.objects.filter(code="placeholder").delete()
+            call_command("loaddata", str(dump_file), verbosity=0)
+
+        self.assertEqual(AchievementCategory.objects.get(code="sagas").name_es, "Grandes sagas")
+        restored = Achievement.objects.get(code="christmas")
+        self.assertEqual(
+            (restored.category.code, restored.rule, restored.window_end_month), ("events", "login_in_window", 1)
+        )
+        self.assertTrue(UserAchievement.objects.filter(user__username="hero", achievement=restored).exists())
+        self.assertEqual(AchievementCategory.objects.filter(code="collection").count(), 1)
 
     def test_older_dump_after_flush_needs_ensure_achievements(self) -> None:
         make_collection(collector=make_user(username="hero"), edition=make_edition())

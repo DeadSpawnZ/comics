@@ -4,9 +4,23 @@
 {% block breadcrumb %}<span class="is-current">{% translate "Achievements" %}</span>{% endblock %}
 
 {% block manage_content %}
-<div class="mb-3">
-  <h1 class="md-headline-small mb-0">{% translate "Achievements" %}</h1>
-  <span class="md-body-medium">{% translate "Names, texts, icons and levels are edited here; how each one is earned is defined in code." %}</span>
+<div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+  <div>
+    <h1 class="md-headline-small mb-0">{% translate "Achievements" %}</h1>
+    <span class="md-body-medium">{% translate "Names, texts, icons and levels are edited here; how each one is earned is defined in code." %}</span>
+  </div>
+  <div class="d-flex align-items-center gap-2 flex-wrap">
+    <a class="md-btn md-btn--tonal" href="{% url 'manage_achievement_categories' %}">
+      <span class="material-symbols-outlined" aria-hidden="true">category</span>
+      {% translate "Categories" %}
+    </a>
+    {% if can_create %}
+      <a class="md-btn md-btn--filled" href="{% url 'manage_achievement_new' %}?next={{ request.get_full_path|urlencode }}">
+        <span class="material-symbols-outlined" aria-hidden="true">add</span>
+        {% translate "New achievement" %}
+      </a>
+    {% endif %}
+  </div>
 </div>
 
 {% if rules_without_row %}
@@ -18,40 +32,52 @@
   </div>
 {% endif %}
 
-<div class="md-surface-card manage-table">
-  <ul class="manage-rows">
-    {% for achievement in achievements %}
-      <li class="manage-row manage-row--no-thumb">
-        <div class="manage-row__main d-flex align-items-center gap-3">
-          {% include 'includes/achievement_medal.html' with medal=achievement.medal size='sm' %}
-          <div>
-            <a class="manage-row__title" href="{% url 'manage_achievement_edit' achievement.pk %}?next={{ request.get_full_path|urlencode }}">{{ achievement.name }}</a>
-            <div class="md-body-medium">
-              <code>{{ achievement.code }}</code> · {{ achievement.get_category_display }}
-              {% if achievement.tiers.all %} · {% for tier in achievement.tiers.all %}x{{ tier.level }}: {{ tier.threshold }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}
+{% regroup achievements by category as groups %}
+<div class="d-flex flex-column gap-3">
+  {% for group in groups %}
+    <section class="md-surface-card manage-table" aria-labelledby="achievement-category-{{ group.grouper.pk }}">
+      <div class="d-flex align-items-center gap-2 mb-2">
+        <h2 class="md-title-medium mb-0" id="achievement-category-{{ group.grouper.pk }}">{{ group.grouper.name }}</h2>
+        <span class="md-assist-chip">{{ group.list|length }}</span>
+        {% if not group.grouper.is_enabled %}<span class="md-assist-chip">{% translate "Disabled" %}</span>{% endif %}
+      </div>
+      <ul class="manage-rows">
+        {% for achievement in group.list %}
+          <li class="manage-row manage-row--no-thumb">
+            <div class="manage-row__main d-flex align-items-center gap-3">
+              {% include 'includes/achievement_medal.html' with medal=achievement.medal size='sm' %}
+              <div>
+                <a class="manage-row__title" href="{% url 'manage_achievement_edit' achievement.pk %}?next={{ request.get_full_path|urlencode }}">{{ achievement.name }}</a>
+                <div class="md-body-medium">
+                  <code>{{ achievement.code }}</code>{% if achievement.rule != achievement.code %} · {% translate "rule" %} <code>{{ achievement.rule }}</code>{% endif %}
+                  {% if achievement.tiers.all %} · {% for tier in achievement.tiers.all %}x{{ tier.level }}: {{ tier.threshold }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-        <div class="manage-row__chips">
-          <span class="md-assist-chip">{% blocktranslate count counter=achievement.earned_by %}{{ counter }} user{% plural %}{{ counter }} users{% endblocktranslate %}</span>
-          {% if achievement.is_secret %}<span class="md-assist-chip">{% translate "Secret" %}</span>{% endif %}
-          {% if not achievement.is_enabled %}<span class="md-assist-chip">{% translate "Disabled" %}</span>{% endif %}
-          {% if not achievement.rule %}<span class="md-assist-chip text-danger">{% translate "No rule in code" %}</span>{% endif %}
-          {% if achievement.missing_tiers %}<span class="md-assist-chip text-danger">{% translate "No levels" %}</span>{% endif %}
-        </div>
-        <div class="manage-row__actions">
-          <a class="md-icon-btn" href="{% url 'manage_achievement_edit' achievement.pk %}?next={{ request.get_full_path|urlencode }}"
-             aria-label="{% translate 'Edit' %}" title="{% translate 'Edit' %}">
-            <span class="material-symbols-outlined" aria-hidden="true">edit</span>
-          </a>
-        </div>
-      </li>
-    {% empty %}
-      <li class="text-center py-5 list-unstyled">
-        <span class="material-symbols-outlined d-block mb-2 empty-state-icon" aria-hidden="true">emoji_events</span>
-        <p class="md-body-medium mb-0">{% translate "There are no achievements yet." %}</p>
-      </li>
-    {% endfor %}
-  </ul>
+            <div class="manage-row__chips">
+              <span class="md-assist-chip">{% blocktranslate count counter=achievement.earned_by %}{{ counter }} user{% plural %}{{ counter }} users{% endblocktranslate %}</span>
+              {% if not achievement.is_builtin %}<span class="md-assist-chip">{% translate "Created in Gestión" %}</span>{% endif %}
+              {% if achievement.is_secret %}<span class="md-assist-chip">{% translate "Secret" %}</span>{% endif %}
+              {% if not achievement.is_enabled %}<span class="md-assist-chip">{% translate "Disabled" %}</span>{% endif %}
+              {% if not achievement.rule_info %}<span class="md-assist-chip text-danger">{% translate "No rule in code" %}</span>{% endif %}
+              {% if achievement.missing_tiers %}<span class="md-assist-chip text-danger">{% translate "No levels" %}</span>{% endif %}
+              {% if achievement.missing_window %}<span class="md-assist-chip text-danger">{% translate "No time window" %}</span>{% endif %}
+            </div>
+            <div class="manage-row__actions">
+              <a class="md-icon-btn" href="{% url 'manage_achievement_edit' achievement.pk %}?next={{ request.get_full_path|urlencode }}"
+                 aria-label="{% translate 'Edit' %}" title="{% translate 'Edit' %}">
+                <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+              </a>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+  {% empty %}
+    <div class="md-surface-card text-center py-5">
+      <span class="material-symbols-outlined d-block mb-2 empty-state-icon" aria-hidden="true">emoji_events</span>
+      <p class="md-body-medium mb-0">{% translate "There are no achievements yet." %}</p>
+    </div>
+  {% endfor %}
 </div>
 {% endblock %}
