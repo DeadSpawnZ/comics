@@ -2042,3 +2042,83 @@ msgstr "ha iniciado sesión un 31 de octubre"
 msgctxt "rarities"
 msgid "All"
 msgstr "Todas"
+
+#: comics/templates/profiles/includes/achievements.html
+msgid "Earned"
+msgstr "Conseguidos"
+
+#: comics/templates/profiles/includes/achievements.html
+msgid "Not yet earned"
+msgstr "Por conseguir"
+
+#: comics/templates/profiles/includes/achievements.html
+msgid "Only you can see these."
+msgstr "Solo tú los ves."
+
+#: comics/templates/profiles/includes/achievement_button.html
+#, python-format
+msgid "Secret achievement. Hint: %(hint)s"
+msgstr "Logro secreto. Pista: %(hint)s"
+
+#: comics/templates/profiles/includes/achievement_button.html
+#, python-format
+msgid "%(name)s, level %(level)s of %(max)s. Earned on %(date)s"
+msgstr "%(name)s, nivel %(level)s de %(max)s. Obtenido el %(date)s"
+
+#: comics/templates/profiles/includes/achievement_button.html
+#, python-format
+msgid "%(name)s. Earned on %(date)s"
+msgstr "%(name)s. Obtenido el %(date)s"
+
+#: comics/templates/profiles/includes/achievement_button.html
+#, python-format
+msgid "%(name)s, not earned yet. Progress: %(progress)s of %(goal)s"
+msgstr "%(name)s, aún sin conseguir. Progreso: %(progress)s de %(goal)s"
+
+#: comics/templates/profiles/includes/achievement_button.html
+#, python-format
+msgid "%(name)s, not earned yet."
+msgstr "%(name)s, aún sin conseguir."
+
+#: comics/templates/profiles/includes/achievement_button.html
+#, python-format
+msgid "Level %(level)s of %(max)s · %(rim)s (%(measure)s: %(threshold)s)"
+msgstr "Nivel %(level)s de %(max)s · %(rim)s (%(measure)s: %(threshold)s)"
+
+#: comics/templates/profiles/includes/achievement_button.html
+#, python-format
+msgid "Next level at %(threshold)s"
+msgstr "Siguiente nivel: %(threshold)s"
+
+#: comics/templates/profiles/includes/achievement_button.html
+#, python-format
+msgid "Progress: %(progress)s / %(goal)s"
+msgstr "Progreso: %(progress)s / %(goal)s"
+
+#: comics/achievements/medals.py
+msgid "Base"
+msgstr "Base"
+
+#: comics/achievements/medals.py
+msgid "Silver"
+msgstr "Plata"
+
+#: comics/achievements/medals.py
+msgid "Gold"
+msgstr "Oro"
+
+#: comics/templates/manage/achievement_form.html
+msgid "Medal"
+msgstr "Medalla"
+
+#: comics/templates/manage/achievement_form.html
+msgid "The medal uses the uploaded image."
+msgstr "La medalla usa la imagen subida."
+
+#: comics/templates/manage/achievement_form.html
+msgid "The medal uses the artwork included with Comi; an uploaded image replaces it."
+msgstr "La medalla usa la ilustración incluida en Comi; una imagen subida la reemplaza."
+
+#: comics/templates/manage/achievement_form.html
+msgid "The medal uses the icon; an uploaded image replaces it."
+msgstr "La medalla usa el ícono; una imagen subida lo reemplaza."

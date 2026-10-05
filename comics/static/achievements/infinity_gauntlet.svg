@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="6.5 6.5 51 51" width="128" height="128">
+  <!-- Comi achievement medal "infinity_gauntlet": disc and pictogram only; the app draws the level ring. -->
+  <clipPath id="disc"><circle cx="32" cy="32" r="25.5"/></clipPath>
+  <circle cx="32" cy="32" r="25.5" fill="#3a2a6b"/>
+  <g clip-path="url(#disc)">
+  <line x1="22.5" y1="37.5" x2="16.8" y2="29.8" stroke="#e2a93b" stroke-width="6.2" stroke-linecap="round"/>
+  <g fill="#e2a93b">
+  <rect x="21.5" y="17" width="5.2" height="13" rx="2.6"/>
+  <rect x="27" y="15" width="5.2" height="15" rx="2.6"/>
+  <rect x="32.5" y="15.5" width="5.2" height="14.5" rx="2.6"/>
+  <rect x="38" y="18" width="5.2" height="12" rx="2.6"/>
+  <path d="M21 27 H43.5 V37.5 C43.5 42 40.5 44.5 36.5 44.5 H28 C24 44.5 21 42 21 37.5 Z"/>
+  </g>
+  <rect x="22.5" y="44" width="19.5" height="6.5" rx="2" fill="#b07d1f"/>
+  <path d="M23.5 44.6 H41" stroke="#e2a93b" stroke-width="1" opacity=".6"/>
+  <circle cx="24.1" cy="25.5" r="1.7" fill="#3d7bff"/>
+  <circle cx="29.6" cy="25.5" r="1.7" fill="#ffd23f"/>
+  <circle cx="35.1" cy="25.5" r="1.7" fill="#e8343a"/>
+  <circle cx="40.6" cy="25.5" r="1.7" fill="#a14bff"/>
+  <circle cx="17.4" cy="30.6" r="1.7" fill="#ff8a2a"/>
+  <circle cx="32.2" cy="35" r="3.6" fill="#2fbf71" stroke="#b07d1f" stroke-width="1"/>
+  </g>
+</svg>

@@ -422,7 +422,7 @@ class DisplayTests(ComiTestCase):
     def test_owner_sees_earned_locked_progress_and_concealed_secrets(self) -> None:
         html = self.own_page()
         self.assertIn("Origin", html)
-        self.assertIn('class="achievement-level"', html)  # great_power x1 of 2 levels
+        self.assertIn('aria-label="With great power…, level 1 of 2.', html)
         self.assertIn("2 / 3", html)  # progress to the next level
         self.assertIn("Veteran", html)  # locked but visible
         self.assertIn("???", html)
@@ -441,14 +441,11 @@ class DisplayTests(ComiTestCase):
         engine.evaluate(self.owner)
         self.assertIn("Secret identity", self.own_page())
 
-    def test_groups_count_completion(self) -> None:
-        groups = {
-            group.label: (group.earned, group.total) for group in showcase(self.owner, include_locked=True).groups
-        }
-        self.assertEqual(
-            groups,
-            {"Collection": (2, 5), "Treasures": (0, 2), "Sagas": (0, 2), "Community": (0, 2), "Seniority": (0, 1)},
-        )
+    def test_rows_count_completion(self) -> None:
+        shown = showcase(self.owner, include_locked=True)
+        # Highest level first; at the same level, achievements with levels before the others.
+        self.assertEqual([card.achievement.code for card in shown.earned], ["great_power", "origin"])
+        self.assertEqual((shown.earned_count, len(shown.locked), shown.total), (2, 10, 12))
 
     def test_other_users_only_see_earned_achievements(self) -> None:
         self.client.force_login(self.viewer)
@@ -457,8 +454,9 @@ class DisplayTests(ComiTestCase):
         self.assertNotIn("Veteran", html)
         self.assertNotIn("???", html)
         self.assertNotIn(" / 3", html)
-        cards = [card for group in showcase(self.owner, include_locked=False).groups for card in group.cards]
-        self.assertTrue(all(card.earned for card in cards))
+        shown = showcase(self.owner, include_locked=False)
+        self.assertEqual(shown.locked, [])
+        self.assertTrue(all(card.earned for card in shown.earned))
 
     def test_disabled_achievements_are_hidden_everywhere(self) -> None:
         Achievement.objects.filter(code__in=["origin", "veteran"]).update(is_enabled=False)

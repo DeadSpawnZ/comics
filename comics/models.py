@@ -1017,8 +1017,9 @@ validate_icon_name = RegexValidator(
 
 
 class AchievementCategory(TextChoices):
-    """Groups on the profile. A new category always comes with new rules in code, so the list
-    lives in code too (with translated labels); Gestión picks the category of each achievement."""
+    """Shown in an achievement's detail card on the profile. A new category always comes with new
+    rules in code, so the list lives in code too (with translated labels); Gestión picks the
+    category of each achievement."""
 
     COLLECTION = "collection", _("Collection")
     TREASURES = "treasures", _("Treasures")

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="6.5 6.5 51 51" width="128" height="128">
+  <!-- Comi achievement medal "speed_force": disc and pictogram only; the app draws the level ring. -->
+  <clipPath id="disc"><circle cx="32" cy="32" r="25.5"/></clipPath>
+  <circle cx="32" cy="32" r="25.5" fill="#b3261e"/>
+  <g clip-path="url(#disc)">
+  <path d="M14 25h7M11.5 32h9M15 39h6" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" opacity=".85"/>
+  <path d="M36 13 L22.5 35 H31 L27.5 51 L43.5 27.5 H34.5 L39 13 Z" fill="#ffd23f" stroke="#7a140f" stroke-width="1.2" stroke-linejoin="round"/>
+  </g>
+</svg>

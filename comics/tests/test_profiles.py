@@ -112,7 +112,7 @@ class OwnProfilePageTests(ComiTestCase):
         self.assertContains(response, "reader@example.com")
         self.assertContains(response, "+52 81 1234 5678")
         # Nothing earned yet: the owner sees the locked achievements (see test_achievements.py).
-        self.assertEqual(response.context["achievements"].earned, 0)
+        self.assertEqual(response.context["achievements"].earned_count, 0)
         self.assertContains(response, "Achievements")
 
     def test_personal_info_is_saved(self) -> None:

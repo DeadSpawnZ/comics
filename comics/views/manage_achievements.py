@@ -16,6 +16,7 @@ from django.urls import reverse
 from django.utils.translation import gettext as _
 
 from comics.achievements.engine import schedule_for_everyone
+from comics.achievements.medals import icon_source, preview_medals, top_medal
 from comics.achievements.registry import Kind, all_rules, get_rule
 from comics.decorators import management_required
 from comics.forms import AchievementForm, AchievementTierFormSet, save_formset_reinserting
@@ -32,6 +33,7 @@ def achievement_list(request: HttpRequest) -> HttpResponse:
         achievement.rule = rule
         # A count-based rule without levels can never be earned.
         achievement.missing_tiers = rule is not None and rule.kind is Kind.COUNT and not achievement.tiers.all()
+        achievement.medal = top_medal(achievement)  # uses the prefetched tiers
     return render(
         request,
         "manage/achievement_list.html",
@@ -70,5 +72,14 @@ def achievement_form(request: HttpRequest, pk: int) -> HttpResponse:
     return render(
         request,
         "manage/achievement_form.html",
-        {"achievement": achievement, "rule": rule, "form": form, "tiers": tiers, "back_url": back_url},
+        {
+            "achievement": achievement,
+            "rule": rule,
+            "form": form,
+            "tiers": tiers,
+            "back_url": back_url,
+            # The saved medal at each level, with the picture it uses now.
+            "medals": preview_medals(achievement),
+            "icon_source": icon_source(achievement),
+        },
     )

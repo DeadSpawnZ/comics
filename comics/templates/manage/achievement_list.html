@@ -23,9 +23,7 @@
     {% for achievement in achievements %}
       <li class="manage-row manage-row--no-thumb">
         <div class="manage-row__main d-flex align-items-center gap-3">
-          <span class="achievement-card__icon" aria-hidden="true">
-            {% if achievement.icon_image %}<img src="{{ achievement.icon_image.url }}" alt="">{% else %}<span class="material-symbols-outlined">{{ achievement.icon }}</span>{% endif %}
-          </span>
+          {% include 'includes/achievement_medal.html' with medal=achievement.medal size='sm' %}
           <div>
             <a class="manage-row__title" href="{% url 'manage_achievement_edit' achievement.pk %}?next={{ request.get_full_path|urlencode }}">{{ achievement.name }}</a>
             <div class="md-body-medium">

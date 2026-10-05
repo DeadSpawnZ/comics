@@ -1,63 +1,36 @@
-{% load i18n %}
-{% comment %}Achievements of a profile, grouped by category. Expects `achievements`: a Showcase
-(comics/achievements/display.py) with `groups` (label, earned, total, cards), `earned` and `total`.
-Locked cards and progress only come in the owner's own view.{% endcomment %}
+{% load i18n static %}
+{% comment %}Achievements of a profile as rows of medals. Expects `achievements`: a Showcase
+(comics/achievements/display.py) with `earned`, `locked` (only filled on the owner's own view),
+`earned_count` and `total`. Each medal opens a detail card (achievement_medals.js) whose content is
+rendered here, escaped, in a <template>.{% endcomment %}
 <section class="md-surface-card" aria-labelledby="achievements-title">
-  <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-    <h2 class="md-title-medium mb-0" id="achievements-title">{% translate "Achievements" %}</h2>
-    {% if achievements.total %}
-      <span class="md-assist-chip">{% blocktranslate with earned=achievements.earned total=achievements.total %}{{ earned }} of {{ total }}{% endblocktranslate %}</span>
+  <h2 class="md-title-medium mb-3" id="achievements-title">{% translate "Achievements" %}</h2>
+  <div class="medal-shelves">
+    <div class="medal-shelf">
+      <h3 class="medal-shelf__title">
+        {% translate "Earned" %}
+        {% if achievements.total %}<span class="medal-shelf__note">{% blocktranslate with earned=achievements.earned_count total=achievements.total %}{{ earned }} of {{ total }}{% endblocktranslate %}</span>{% endif %}
+      </h3>
+      {% if achievements.earned %}
+        <ul class="medal-row">
+          {% for card in achievements.earned %}<li>{% include 'profiles/includes/achievement_button.html' %}</li>{% endfor %}
+        </ul>
+      {% else %}
+        <p class="md-body-medium mb-0">{% translate "No achievements yet." %}</p>
+      {% endif %}
+    </div>
+    {% if achievements.locked %}
+      <div class="medal-shelf">
+        <h3 class="medal-shelf__title">
+          {% translate "Not yet earned" %}
+          <span class="medal-shelf__note">{% translate "Only you can see these." %}</span>
+        </h3>
+        <ul class="medal-row">
+          {% for card in achievements.locked %}<li>{% include 'profiles/includes/achievement_button.html' %}</li>{% endfor %}
+        </ul>
+      </div>
     {% endif %}
   </div>
-  {% for group in achievements.groups %}
-    <div class="achievement-group">
-      <h3 class="achievement-group__title">
-        {{ group.label }}
-        <span class="md-body-medium">{% blocktranslate with earned=group.earned total=group.total %}{{ earned }} of {{ total }}{% endblocktranslate %}</span>
-      </h3>
-      <ul class="achievement-grid">
-        {% for card in group.cards %}
-          <li class="achievement-card{% if not card.earned %} is-locked{% endif %}">
-            <div class="achievement-card__icon" aria-hidden="true">
-              {% if card.concealed %}
-                <span class="material-symbols-outlined">help</span>
-              {% elif card.achievement.icon_image %}
-                <img src="{{ card.achievement.icon_image.url }}" alt="">
-              {% else %}
-                <span class="material-symbols-outlined">{{ card.achievement.icon }}</span>
-              {% endif %}
-            </div>
-            <div class="achievement-card__body">
-              <div class="achievement-card__name">
-                {% if card.concealed %}???{% else %}{{ card.achievement.name }}{% endif %}
-                {% if card.earned and card.tiered %}
-                  <span class="achievement-level" title="{% blocktranslate with level=card.level %}Level {{ level }}{% endblocktranslate %}">x{{ card.level }}</span>
-                {% endif %}
-              </div>
-              {% if card.concealed %}
-                <div class="md-body-medium">{% if card.achievement.hint %}{{ card.achievement.hint }}{% else %}{% translate "Secret achievement." %}{% endif %}</div>
-              {% else %}
-                <div class="md-body-medium">{{ card.achievement.description }}</div>
-              {% endif %}
-              {% if card.earned and card.tier.label %}<div class="md-body-medium small">{{ card.tier.label }}</div>{% endif %}
-              {% if card.goal %}
-                <div class="achievement-progress">
-                  <div class="progress" role="progressbar" aria-valuenow="{{ card.progress }}" aria-valuemin="0" aria-valuemax="{{ card.goal }}"
-                       aria-label="{% translate 'Progress' %}">
-                    <div class="progress-bar" style="width: {{ card.percent }}%"></div>
-                  </div>
-                  <span class="md-body-medium small">{{ card.progress }} / {{ card.goal }}</span>
-                </div>
-              {% endif %}
-              {% if card.earned %}
-                <div class="md-body-medium small">{% blocktranslate with date=card.awarded_at|date:"DATE_FORMAT" %}Earned on {{ date }}{% endblocktranslate %}</div>
-              {% endif %}
-            </div>
-          </li>
-        {% endfor %}
-      </ul>
-    </div>
-  {% empty %}
-    <p class="md-body-medium mb-0">{% translate "No achievements yet." %}</p>
-  {% endfor %}
+  <div class="medal-popover" id="achievement-popover" role="tooltip" hidden></div>
 </section>
+<script src="{% static 'js/custom/achievement_medals.js' %}" defer></script>

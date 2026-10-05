@@ -139,6 +139,25 @@ NEW_TRANSLATIONS = {
     "connectings completed": "connectings completos",
     "reading arcs completed": "arcos de lectura completos",
     "has signed in on October 31": "ha iniciado sesión un 31 de octubre",
+    # Achievement medals.
+    "Earned": "Conseguidos",
+    "Not yet earned": "Por conseguir",
+    "Only you can see these.": "Solo tú los ves.",
+    "Secret achievement. Hint: %(hint)s": "Logro secreto. Pista: %(hint)s",
+    "%(name)s, level %(level)s of %(max)s. Earned on %(date)s": "%(name)s, nivel %(level)s de %(max)s. Obtenido el %(date)s",
+    "%(name)s. Earned on %(date)s": "%(name)s. Obtenido el %(date)s",
+    "%(name)s, not earned yet. Progress: %(progress)s of %(goal)s": "%(name)s, aún sin conseguir. Progreso: %(progress)s de %(goal)s",
+    "%(name)s, not earned yet.": "%(name)s, aún sin conseguir.",
+    "Level %(level)s of %(max)s · %(rim)s (%(measure)s: %(threshold)s)": "Nivel %(level)s de %(max)s · %(rim)s (%(measure)s: %(threshold)s)",
+    "Next level at %(threshold)s": "Siguiente nivel: %(threshold)s",
+    "Progress: %(progress)s / %(goal)s": "Progreso: %(progress)s / %(goal)s",
+    "Base": "Base",
+    "Silver": "Plata",
+    "Gold": "Oro",
+    "Medal": "Medalla",
+    "The medal uses the uploaded image.": "La medalla usa la imagen subida.",
+    "The medal uses the artwork included with Comi; an uploaded image replaces it.": "La medalla usa la ilustración incluida en Comi; una imagen subida la reemplaza.",
+    "The medal uses the icon; an uploaded image replaces it.": "La medalla usa el ícono; una imagen subida lo reemplaza.",
 }
 
 

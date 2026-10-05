@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="6.5 6.5 51 51" width="128" height="128">
+  <!-- Comi achievement medal "chronicler": disc and pictogram only; the app draws the level ring. -->
+  <clipPath id="disc"><circle cx="32" cy="32" r="25.5"/></clipPath>
+  <circle cx="32" cy="32" r="25.5" fill="#140f33"/>
+  <g clip-path="url(#disc)">
+  <defs>
+  <radialGradient id="n1" cx="0.25" cy="0.75" r="0.6"><stop offset="0" stop-color="#8a4fe0" stop-opacity=".9"/><stop offset="1" stop-color="#8a4fe0" stop-opacity="0"/></radialGradient>
+  <radialGradient id="n2" cx="0.8" cy="0.25" r="0.55"><stop offset="0" stop-color="#3a7be6" stop-opacity=".85"/><stop offset="1" stop-color="#3a7be6" stop-opacity="0"/></radialGradient>
+  <filter id="w" x="-60%" y="-200%" width="220%" height="500%"><feGaussianBlur stdDeviation="1.2"/></filter>
+  </defs>
+  <rect x="0" y="0" width="64" height="64" fill="url(#n1)"/>
+  <rect x="0" y="0" width="64" height="64" fill="url(#n2)"/>
+  <g fill="#ffffff">
+  <circle cx="13" cy="20" r=".7" opacity=".8"/><circle cx="50" cy="16" r=".8" opacity=".9"/><circle cx="53" cy="30" r=".6" opacity=".7"/>
+  <circle cx="11" cy="33" r=".6" opacity=".7"/><circle cx="17" cy="13" r=".5" opacity=".6"/><circle cx="47" cy="44" r=".6" opacity=".6"/>
+  </g>
+  <g fill="#04050c">
+  <path d="M6 60 C10 50 19 46.5 27 46 H37 C45 46.5 54 50 58 60 Z"/>
+  <path d="M13 58 L14.5 41 L18.5 31.5 L22.5 38 L26 42.5 L27.5 47 Z"/>
+  <path d="M51 58 L49.5 41 L45.5 29.5 L41.5 38 L38 42.5 L36.5 47 Z"/>
+  <path d="M32 10.5 C40.5 10.5 44 17.5 44 25 C44 30.5 42.5 34 40 37.5 L36.5 42 C35 43.6 33.5 44.3 32 44.3 C30.5 44.3 29 43.6 27.5 42 L24 37.5 C21.5 34 20 30.5 20 25 C20 17.5 23.5 10.5 32 10.5 Z"/>
+  </g>
+  <path d="M23.5 33 C20.8 28 20.6 20 24.6 15 C27 12.2 29.6 10.9 32.6 10.7" fill="none" stroke="#46d6ff" stroke-width="1.3" stroke-linecap="round"/>
+  <path d="M23.5 33 C20.8 28 20.6 20 24.6 15 C27 12.2 29.6 10.9 32.6 10.7" fill="none" stroke="#46d6ff" stroke-width="2.6" opacity=".45" filter="url(#w)"/>
+  <rect x="7" y="27.4" width="50" height="2" rx="1" fill="#46d6ff" opacity=".35" filter="url(#w)"/>
+  <g fill="#46d6ff" opacity=".8" filter="url(#w)">
+  <ellipse cx="27.6" cy="28.3" rx="3" ry="1.7"/><ellipse cx="36.4" cy="28.3" rx="3" ry="1.7"/>
+  </g>
+  <g fill="#effdff">
+  <ellipse cx="27.6" cy="28.3" rx="2.1" ry="1.05"/><ellipse cx="36.4" cy="28.3" rx="2.1" ry="1.05"/>
+  </g>
+  </g>
+</svg>

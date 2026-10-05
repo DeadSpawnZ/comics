@@ -74,14 +74,25 @@
           {{ form.icon_image }}
           {% for error in form.icon_image.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
         </div>
-        <div class="col-12 col-md-4 d-flex align-items-center gap-3">
-          <span class="achievement-card__icon" aria-hidden="true">
-            {% if achievement.icon_image %}<img src="{{ achievement.icon_image.url }}" alt="">{% else %}<span class="material-symbols-outlined">{{ achievement.icon }}</span>{% endif %}
-          </span>
-          <div class="d-flex flex-column gap-1">
-            <div class="form-check form-switch">{{ form.is_enabled }} <label class="form-check-label" for="{{ form.is_enabled.id_for_label }}">{{ form.is_enabled.label }}</label></div>
-            <div class="form-check form-switch">{{ form.is_secret }} <label class="form-check-label" for="{{ form.is_secret.id_for_label }}">{{ form.is_secret.label }}</label></div>
+        <div class="col-12 col-md-4 d-flex flex-column gap-1">
+          <div class="form-check form-switch">{{ form.is_enabled }} <label class="form-check-label" for="{{ form.is_enabled.id_for_label }}">{{ form.is_enabled.label }}</label></div>
+          <div class="form-check form-switch">{{ form.is_secret }} <label class="form-check-label" for="{{ form.is_secret.id_for_label }}">{{ form.is_secret.label }}</label></div>
+        </div>
+        <div class="col-12">
+          <span class="md-section-label d-block mb-2">{% translate "Medal" %}</span>
+          <div class="d-flex align-items-end gap-3 flex-wrap">
+            {% for medal in medals %}
+              <div class="d-flex flex-column align-items-center gap-1">
+                {% include 'includes/achievement_medal.html' with size='lg' %}
+                {% if medals|length > 1 %}<span class="md-body-medium small">{% blocktranslate with level=medal.level %}Level {{ level }}{% endblocktranslate %}</span>{% endif %}
+              </div>
+            {% endfor %}
           </div>
+          <p class="md-body-medium mt-2 mb-0" data-icon-source="{{ icon_source }}">
+            {% if icon_source == "upload" %}{% translate "The medal uses the uploaded image." %}
+            {% elif icon_source == "bundled" %}{% translate "The medal uses the artwork included with Comi; an uploaded image replaces it." %}
+            {% else %}{% translate "The medal uses the icon; an uploaded image replaces it." %}{% endif %}
+          </p>
         </div>
       </div>
     </div>

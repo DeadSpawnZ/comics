@@ -957,97 +957,271 @@ a.md-paginator__page:hover {
   font-size: 64px;
 }
 
-/* Achievements (profile) */
-.achievement-group + .achievement-group {
-  margin-top: 1.25rem;
+/*
+ * Achievement medals: the picture (an <img>, or a Material Symbols icon) inside a ring coloured by
+ * level, as in the approved design: neutral for level 1 and achievements without levels, silver
+ * for level 2, gold from level 3. Proportions follow the artwork: a 62-unit medal whose disc has
+ * a radius of 25.5 units, so the ring takes 5.5/62 of the size.
+ */
+:root,
+:root[data-bs-theme="light"] {
+  --medal-popover-bg: #2f3036;
+  --medal-popover-fg: #f2f0f4;
+  --medal-popover-muted: #c4c6d0;
+  --medal-popover-accent: #abc7ff;
 }
 
-.achievement-group__title {
-  display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
-  font-size: 1rem;
-  font-weight: 500;
-  margin-bottom: 0.75rem;
+:root[data-bs-theme="dark"] {
+  --medal-popover-bg: #e3e2e6;
+  --medal-popover-fg: #1a1b1f;
+  --medal-popover-muted: #44474e;
+  --medal-popover-accent: #005cbb;
 }
 
-.achievement-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 0.75rem;
-  list-style: none;
-  margin: 0;
-  padding: 0;
+.medal {
+  --medal-size: 64px;
+  --rim-light: #f1ece2;
+  --rim-dark: #b9b2a3;
+  position: relative;
+  display: inline-block;
+  flex-shrink: 0;
+  width: var(--medal-size);
+  height: var(--medal-size);
 }
 
-.achievement-card {
-  display: flex;
-  gap: 0.75rem;
-  padding: 0.75rem;
-  border-radius: 12px;
-  background-color: var(--md-surface-container-high);
+.medal--sm {
+  --medal-size: 40px;
 }
 
-.achievement-card__icon {
+.medal--lg {
+  --medal-size: 88px;
+}
+
+.medal--silver {
+  --rim-light: #e4e9ef;
+  --rim-dark: #6f7a87;
+}
+
+.medal--gold {
+  --rim-light: #ffd866;
+  --rim-dark: #a5760f;
+}
+
+.medal--secret {
+  --rim-light: #d5d8de;
+  --rim-dark: #8b9099;
+}
+
+.medal__disc {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
-  flex-shrink: 0;
-  border-radius: 50%;
-  background-color: var(--md-primary-container);
-  color: var(--md-primary);
-  overflow: hidden;
-}
-
-.achievement-card__icon img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  padding: calc(var(--medal-size) * 5.5 / 62);
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--rim-light), var(--rim-dark));
 }
 
-.achievement-card__icon .material-symbols-outlined {
-  font-size: 28px;
+.medal__disc img,
+.medal__symbol {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  /* The thin dark line between the ring and the disc. */
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--rim-dark) 35%, transparent);
 }
 
-.achievement-card.is-locked .achievement-card__icon {
-  background-color: var(--md-surface-container-highest);
-  color: var(--md-on-surface-variant);
+.medal__symbol {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--md-primary-container);
+  color: var(--md-primary);
+  font-size: calc(var(--medal-size) * 0.45);
+}
+
+.medal.is-locked .medal__disc {
   filter: grayscale(1);
-  opacity: 0.7;
+  opacity: 0.42;
 }
 
-.achievement-card__body {
-  min-width: 0;
-  flex-grow: 1;
+.medal__pill,
+.medal__progress {
+  position: absolute;
+  border-radius: 999px;
+  border: 1px solid var(--md-outline-variant);
+  font-family: "Roboto Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-weight: 500;
+  line-height: 16px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
-.achievement-card__name {
+.medal__pill {
+  right: -4px;
+  bottom: -2px;
+  min-width: 26px;
+  padding: 0 6px;
+  background-color: var(--md-surface);
+  color: var(--md-on-surface);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  font-size: 11px;
+  text-align: center;
+}
+
+.medal__progress {
+  left: 50%;
+  bottom: -8px;
+  transform: translateX(-50%);
+  padding: 0 6px;
+  background-color: var(--md-surface-container-high);
+  color: var(--md-on-surface-variant);
+  font-size: 10.5px;
+}
+
+/* Achievements (profile): rows of medal buttons and their floating detail card */
+.medal-shelves {
+  display: grid;
+  gap: 1.375rem;
+}
+
+.medal-shelf__title {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.625rem;
+  font-size: 1rem;
   font-weight: 500;
 }
 
-.achievement-level {
-  display: inline-block;
-  margin-left: 0.25rem;
-  padding: 0 0.4rem;
-  border-radius: 8px;
-  background-color: var(--md-primary);
-  color: var(--bs-body-bg);
-  font-size: 0.75rem;
-  font-weight: 700;
+.medal-shelf__note {
+  color: var(--md-on-surface-variant);
+  font-size: 0.8125rem;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
 }
 
-.achievement-progress {
+.medal-row {
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: 0.25rem;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+  padding: 0 0 8px;
+  list-style: none;
 }
 
-.achievement-progress .progress {
-  flex-grow: 1;
-  height: 6px;
+.medal-btn {
+  display: block;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.medal-btn:hover {
+  transform: translateY(-2px);
+}
+
+.medal-btn:focus-visible {
+  outline: 3px solid var(--md-primary);
+  outline-offset: 3px;
+}
+
+.medal-popover {
+  position: absolute;
+  z-index: 1080;
+  width: 260px;
+  max-width: calc(100vw - 32px);
+  padding: 12px 14px;
+  border-radius: 12px;
+  background-color: var(--medal-popover-bg);
+  color: var(--medal-popover-fg);
+  box-shadow: 0 4px 8px 3px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.3);
+  font-size: 13px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+/* Transparent bridge over the gap to the medal, so the pointer can move onto the card. */
+.medal-popover::before {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  height: 12px;
+}
+
+.medal-popover.is-below::before {
+  top: auto;
+  bottom: 100%;
+}
+
+.medal-popover[hidden] {
+  display: none;
+}
+
+.medal-popover::after {
+  content: "";
+  position: absolute;
+  left: var(--arrow-x, 50%);
+  bottom: -6px;
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  background-color: var(--medal-popover-bg);
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.medal-popover.is-below::after {
+  top: -6px;
+  bottom: auto;
+}
+
+.medal-popover__name {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.medal-popover__desc {
+  margin-top: 4px;
+}
+
+.medal-popover__meta {
+  display: grid;
+  gap: 2px;
+  margin-top: 8px;
+  color: var(--medal-popover-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.medal-popover__bar {
+  height: 4px;
+  margin-top: 8px;
+  border-radius: 2px;
+  background-color: color-mix(in srgb, var(--medal-popover-muted) 35%, transparent);
+  overflow: hidden;
+}
+
+.medal-popover__bar span {
+  display: block;
+  height: 100%;
+  background-color: var(--medal-popover-accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .medal-btn {
+    transition: none;
+  }
+
+  .medal-btn:hover {
+    transform: none;
+  }
 }
 
 /* Edition rarity (rare and above) */
