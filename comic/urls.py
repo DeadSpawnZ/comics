@@ -29,11 +29,13 @@ from comics.views import (
     manage,
     manage_achievement_categories,
     manage_achievements,
+    manage_announcements,
     manage_arcs,
     manage_editions,
     manage_home,
     manage_publishings,
     my_comics,
+    notifications,
     profiles,
     publishing,
 )
@@ -47,6 +49,14 @@ urlpatterns = [
     path("registro/", accounts.register_view, name="register"),
     path("perfil/", profiles.own_profile, name="profile"),
     path("u/<str:username>/", profiles.user_profile, name="user_profile"),
+    path("notificaciones/", notifications.notification_list, name="notifications"),
+    path("notificaciones/menu/", notifications.notification_menu, name="notification_menu"),
+    path("notificaciones/<int:pk>/abrir/", notifications.notification_open, name="notification_open"),
+    path(
+        "notificaciones/marcar-leidas/",
+        notifications.notification_mark_all_read,
+        name="notifications_mark_all_read",
+    ),
     path("ajax/get-publishing-date/<int:publishing_id>/", publishing.get_publishing_date, name="get_publishing_date"),
     path("ajax/get-comics/<int:publishing_id>/", publishing.get_comics_by_publishing, name="get_comics_by_publishing"),
     path("ajax/get-previous-trades/<int:edition_id>/", collection.get_previous_trades, name="get_previous_trades"),
@@ -110,6 +120,14 @@ urlpatterns = [
         "gestion/logros/categorias/<int:pk>/eliminar/",
         manage_achievement_categories.category_delete,
         name="manage_achievement_category_delete",
+    ),
+    path("gestion/avisos/", manage_announcements.announcement_list, name="manage_announcements"),
+    path("gestion/avisos/nuevo/", manage_announcements.announcement_create, name="manage_announcement_new"),
+    path("gestion/avisos/<int:pk>/", manage_announcements.announcement_form, name="manage_announcement_edit"),
+    path(
+        "gestion/avisos/<int:pk>/eliminar/",
+        manage_announcements.announcement_delete,
+        name="manage_announcement_delete",
     ),
 ]
 

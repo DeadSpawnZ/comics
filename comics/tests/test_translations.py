@@ -213,6 +213,44 @@ NEW_TRANSLATIONS = {
     # Achievements by category (challenges).
     "%(measure)s: %(count)s": "%(measure)s: %(count)s",
     "Nothing earned in this category yet.": "Todavía no hay nada conseguido en esta categoría.",
+    # Notifications and announcements.
+    "Enter a path on this site that starts with “/”, e.g. /comics/.": "Introduce una ruta de este sitio que empiece por “/”, p. ej. /comics/.",
+    "Everyone": "Todos",
+    "Some roles": "Algunos roles",
+    "An achievement you unlocked is no longer available.": "Un logro que desbloqueaste ya no está disponible.",
+    "Collectors": "Coleccionistas",
+    "Reviewers": "Revisores",
+    "Administrators": "Administradores",
+    "Title (English)": "Título (inglés)",
+    "Title (Spanish)": "Título (español)",
+    "Message (English)": "Mensaje (inglés)",
+    "Message (Spanish)": "Mensaje (español)",
+    "Link (optional)": "Enlace (opcional)",
+    "A page of this site, e.g. /comics/. Opening the notification goes there.": "Una página de este sitio, p. ej. /comics/. Al abrir la notificación se va ahí.",
+    "Roles": "Roles",
+    "Send to": "Enviar a",
+    "Choose at least one role.": "Elige al menos un rol.",
+    "Announcement saved: %(title)s": "Aviso guardado: %(title)s",
+    "Announcement deleted: %(title)s": "Aviso eliminado: %(title)s",
+    "Announcements": "Avisos",
+    "Announcement": "Aviso",
+    "Notifications (%(badge)s unread)": "Notificaciones (%(badge)s sin leer)",
+    "Notifications": "Notificaciones",
+    "The notifications could not be loaded.": "No se pudieron cargar las notificaciones.",
+    "Loading…": "Cargando…",
+    "See all": "Ver todas",
+    "Unread": "Sin leer",
+    "Mark all as read": "Marcar todas como leídas",
+    "You have no notifications.": "No tienes notificaciones.",
+    "Announcements reach their recipients as notifications. Edits to the texts show up in the notifications already sent. Deleting one also removes its notifications.": "Los avisos llegan a sus destinatarios como notificaciones. Los cambios en los textos se ven en las notificaciones ya enviadas. Al eliminar uno también se eliminan sus notificaciones.",
+    "New announcement": "Nuevo aviso",
+    "There are no announcements yet.": "Todavía no hay avisos.",
+    "Delete announcement?": "¿Eliminar aviso?",
+    "Back to announcements": "Volver a avisos",
+    "It is sent when you save it: one notification for each active user in its audience.": "Se envía al guardarlo: una notificación para cada usuario activo de su audiencia.",
+    "Send": "Enviar",
+    "Audience": "Audiencia",
+    "Only used when sending to some roles. Users in several roles get it once.": "Solo se usa al enviar a algunos roles. Quien tenga varios roles lo recibe una vez.",
 }
 
 
@@ -261,6 +299,18 @@ NEW_PLURALS = {
     ("Complete %(count)s reading arc", "Complete %(count)s reading arcs"): (
         "Completa %(count)s arco de lectura",
         "Completa %(count)s arcos de lectura",
+    ),
+    ("You have %(count)d achievement: see it on your profile.", "You have %(count)d achievements: see them on your profile."): (
+        "Tienes %(count)d logro: míralo en tu perfil.",
+        "Tienes %(count)d logros: míralos en tu perfil.",
+    ),
+    ("Announcement sent to %(count)d user.", "Announcement sent to %(count)d users."): (
+        "Aviso enviado a %(count)d usuario.",
+        "Aviso enviado a %(count)d usuarios.",
+    ),
+    ("Read by %(read)s of %(counter)s recipient", "Read by %(read)s of %(counter)s recipients"): (
+        "Leído por %(read)s de %(counter)s destinatario",
+        "Leído por %(read)s de %(counter)s destinatarios",
     ),
 }
 

@@ -1,0 +1,21 @@
+{% load i18n humanize %}
+{% comment %}One notification, as a button that marks it read and opens what it is about (POST).
+Expects `notification` and, on the notifications page, `show_detail` (an announcement's body).
+Every text is autoescaped.{% endcomment %}
+<form method="post" action="{% url 'notification_open' notification.pk %}" class="notif-item__form">
+  {% csrf_token %}
+  <button type="submit" class="dropdown-item notif-item{% if notification.is_unread %} is-unread{% endif %}">
+    <span class="material-symbols-outlined notif-item__icon" aria-hidden="true">{{ notification.icon }}</span>
+    <span class="notif-item__main">
+      <span class="notif-item__text">{{ notification.text }}</span>
+      {% if show_detail and notification.detail %}
+        <span class="notif-item__detail">{{ notification.detail|linebreaksbr }}</span>
+      {% endif %}
+      <span class="notif-item__time" title="{{ notification.created_at|date:'DATETIME_FORMAT' }}">{{ notification.created_at|naturaltime }}</span>
+    </span>
+    {% if notification.is_unread %}
+      <span class="notif-item__dot" aria-hidden="true"></span>
+      <span class="visually-hidden">{% translate "Unread" %}</span>
+    {% endif %}
+  </button>
+</form>

@@ -21,6 +21,7 @@ from .models import (
     Achievement,
     AchievementCategory,
     AchievementTier,
+    Announcement,
     Artist,
     CollectedIssue,
     Collection,
@@ -31,6 +32,7 @@ from .models import (
     Editorial,
     GeekCollectable,
     Issue,
+    Notification,
     Profile,
     Publishing,
     ReadingArc,
@@ -71,6 +73,31 @@ class UserAchievementAdmin(admin.ModelAdmin):
     list_select_related = ("user", "achievement")
     search_fields = ("user__username",)
     raw_id_fields = ("user",)
+
+
+@admin.register(Announcement)
+class AnnouncementAdmin(admin.ModelAdmin):
+    # Created in Gestión only: creating one there is what sends its notifications.
+    list_display = ("title_en", "title_es", "audience", "created_by", "created_at")
+    list_select_related = ("created_by",)
+    # The audience is fixed once the notifications were sent.
+    readonly_fields = ("audience", "roles", "created_by", "created_at")
+
+    def has_add_permission(self, request: HttpRequest) -> bool:
+        return False
+
+
+@admin.register(Notification)
+class NotificationAdmin(admin.ModelAdmin):
+    list_display = ("recipient", "kind", "achievement", "announcement", "level", "count", "created_at", "read_at")
+    list_filter = ("kind",)
+    list_select_related = ("recipient", "achievement", "announcement")
+    search_fields = ("recipient__username",)
+    raw_id_fields = ("recipient", "achievement", "announcement")
+
+    def has_add_permission(self, request: HttpRequest) -> bool:
+        # Notifications are only created by the app (achievements, announcements).
+        return False
 
 
 @admin.register(Profile)

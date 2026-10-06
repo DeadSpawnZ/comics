@@ -75,6 +75,8 @@ TEMPLATES = [
                 "django.template.context_processors.i18n",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                # The navbar bell's unread count (lazy: only pages that show it query it).
+                "comics.context_processors.notifications",
             ],
         },
     },

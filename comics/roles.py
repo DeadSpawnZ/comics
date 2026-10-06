@@ -22,12 +22,20 @@ from django.apps import apps
 from django.contrib.auth.management import create_permissions
 from django.contrib.auth.models import AnonymousUser, Group, Permission, User
 from django.db import transaction
+from django.utils.translation import gettext_lazy as _
 
 COLLECTORS = "Collectors"
 REVIEWERS = "Reviewers"
 ADMINISTRATORS = "Administrators"
 
 ACCESS_MANAGEMENT = "comics.access_management"
+
+# How each role is called on screen (group names are identifiers and stay in English).
+ROLE_LABELS = {
+    COLLECTORS: _("Collectors"),
+    REVIEWERS: _("Reviewers"),
+    ADMINISTRATORS: _("Administrators"),
+}
 
 # Permissions ("app_label.codename") each role grants. The data migration that creates the groups
 # keeps its own frozen copy; a test checks the database still matches this table.
@@ -45,6 +53,11 @@ def assign_default_role(user: User) -> None:
     users (registration, createsuperuser, the admin, scripts) do not need to call it themselves."""
     collectors, _created = Group.objects.get_or_create(name=COLLECTORS)
     user.groups.add(collectors)
+
+
+def role_label(name: str) -> str:
+    """A role's name on screen (any other group keeps its own name)."""
+    return str(ROLE_LABELS.get(name, name))
 
 
 def can_access_management(user: User | AnonymousUser) -> bool:

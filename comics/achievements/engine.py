@@ -17,7 +17,7 @@ from django.db.models import Q, QuerySet
 from django.utils.translation import gettext as _
 from django.utils.translation import ngettext
 
-from comics.models import Achievement, Collection, UserAchievement
+from comics.models import Achievement, Collection, Notification, UserAchievement
 
 from . import rules as _rules  # noqa: F401  (registers the rules)
 from .registry import Event, Kind, Rule, all_rules, rule_keys_for
@@ -43,7 +43,11 @@ def evaluate(
     as events give them) and, when given, whose code is in `codes`; everything when both are None.
     Several achievements can share a rule: a built-in rule is measured once for all of them, a
     generic one per achievement (it reads the row). `bulk` marks the awards to be announced
-    together (retroactive runs). Returns the codes of the achievements that went up."""
+    together (retroactive runs). Returns the codes of the achievements that went up.
+
+    Every award or level-up gets its notification in the same transaction as the award. A bulk
+    run gets a single summary notification instead, created with its first award and counting
+    each later one (also in the award's transaction), so it always matches what was awarded."""
     registry = all_rules()
     wanted = set(registry) if rules is None else set(rules) & set(registry)
     if not wanted:
@@ -62,6 +66,7 @@ def evaluate(
     )
     measured: dict[str, int] = {}  # built-in rules, measured once
     raised = []
+    summary_id: int | None = None  # the bulk run's summary notification, once created
     for achievement in active:
         rule = registry[achievement.rule]
         if rule.generic:
@@ -75,6 +80,12 @@ def evaluate(
             with transaction.atomic():
                 if UserAchievement.objects.award(user, achievement, level, bulk=bulk):
                     raised.append(achievement.code)
+                    if not bulk:
+                        Notification.objects.achievement_unlocked(user, achievement, level)
+                    elif summary_id is None:
+                        summary_id = Notification.objects.achievements_unlocked(user, 1).pk
+                    else:
+                        Notification.objects.add_to_summary(summary_id)
     return raised
 
 

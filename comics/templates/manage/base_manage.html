@@ -68,6 +68,14 @@
           {% translate "Achievements" %}
         </a>
       </li>
+      <li>
+        <a class="md-side-nav__link {% if 'announcement' in url_name %}is-active{% endif %}"
+           {% if 'announcement' in url_name %}aria-current="page"{% endif %}
+           href="{% url 'manage_announcements' %}">
+          <span class="material-symbols-outlined" aria-hidden="true">campaign</span>
+          {% translate "Announcements" %}
+        </a>
+      </li>
     </ul>
   </nav>
   </aside>

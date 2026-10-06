@@ -29,6 +29,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0..1,0&display=block" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/custom/material.css' %}">
     <link rel="stylesheet" href="{% static 'css/custom/collections.css' %}">
+    <link rel="stylesheet" href="{% static 'css/custom/notifications.css' %}">
     {% block extra_css %}{% endblock %}
   </head>
   <body>
@@ -39,6 +40,40 @@
           <span class="material-symbols-outlined" aria-hidden="true">auto_stories</span>
           Comi
         </a>
+        {% if user.is_authenticated %}
+        {# Outside the collapsible menu so it stays visible on phones; last in the bar on wide screens. #}
+        {% with unread=notification_badge.unread badge=notification_badge.label %}
+        <div class="dropdown notif-bell ms-auto ms-lg-1 order-lg-last" data-notifications
+             data-menu-url="{% url 'notification_menu' %}">
+          <button
+            class="md-icon-btn"
+            type="button"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+            {% if unread %}
+            aria-label="{% blocktranslate %}Notifications ({{ badge }} unread){% endblocktranslate %}"
+            {% else %}
+            aria-label="{% translate 'Notifications' %}"
+            {% endif %}
+            title="{% translate 'Notifications' %}"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">notifications</span>
+            {% if unread %}<span class="notif-bell__badge" aria-hidden="true">{{ badge }}</span>{% endif %}
+          </button>
+          <div class="dropdown-menu dropdown-menu-end md-menu notif-menu">
+            <h6 class="dropdown-header">{% translate "Notifications" %}</h6>
+            {# Filled by notifications.js when the menu opens (server-rendered, escaped fragment). #}
+            <div data-notifications-body aria-live="polite">
+              <p class="notif-menu__status" data-notifications-status
+                 data-error-text="{% translate 'The notifications could not be loaded.' %}">{% translate "Loading…" %}</p>
+            </div>
+            <div class="notif-menu__footer">
+              <a class="md-btn md-btn--text" href="{% url 'notifications' %}">{% translate "See all" %}</a>
+            </div>
+          </div>
+        </div>
+        {% endwith %}
+        {% endif %}
         <button
           class="md-icon-btn d-lg-none"
           type="button"
@@ -187,5 +222,6 @@
     <!-- Bootstrap JS (includes Popper) -->
     <script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
     <script src="{% static 'js/custom/theme_toggle.js' %}"></script>
+    <script src="{% static 'js/custom/notifications.js' %}"></script>
   </body>
 </html>

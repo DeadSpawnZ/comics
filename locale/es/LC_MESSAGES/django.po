@@ -2411,3 +2411,175 @@ msgid "Complete %(count)s reading arc"
 msgid_plural "Complete %(count)s reading arcs"
 msgstr[0] "Completa %(count)s arco de lectura"
 msgstr[1] "Completa %(count)s arcos de lectura"
+
+#: comics/models.py
+msgid "Enter a path on this site that starts with “/”, e.g. /comics/."
+msgstr "Introduce una ruta de este sitio que empiece por “/”, p. ej. /comics/."
+
+#: comics/models.py
+msgid "Everyone"
+msgstr "Todos"
+
+#: comics/models.py
+msgid "Some roles"
+msgstr "Algunos roles"
+
+#: comics/models.py
+msgid "An achievement you unlocked is no longer available."
+msgstr "Un logro que desbloqueaste ya no está disponible."
+
+#: comics/roles.py
+msgid "Collectors"
+msgstr "Coleccionistas"
+
+#: comics/roles.py
+msgid "Reviewers"
+msgstr "Revisores"
+
+#: comics/roles.py
+msgid "Administrators"
+msgstr "Administradores"
+
+#: comics/forms.py
+msgid "Title (English)"
+msgstr "Título (inglés)"
+
+#: comics/forms.py
+msgid "Title (Spanish)"
+msgstr "Título (español)"
+
+#: comics/forms.py
+msgid "Message (English)"
+msgstr "Mensaje (inglés)"
+
+#: comics/forms.py
+msgid "Message (Spanish)"
+msgstr "Mensaje (español)"
+
+#: comics/forms.py
+msgid "Link (optional)"
+msgstr "Enlace (opcional)"
+
+#: comics/forms.py
+msgid "A page of this site, e.g. /comics/. Opening the notification goes there."
+msgstr "Una página de este sitio, p. ej. /comics/. Al abrir la notificación se va ahí."
+
+#: comics/forms.py
+msgid "Roles"
+msgstr "Roles"
+
+#: comics/forms.py
+msgid "Send to"
+msgstr "Enviar a"
+
+#: comics/forms.py
+msgid "Choose at least one role."
+msgstr "Elige al menos un rol."
+
+#: comics/views/manage_announcements.py
+#, python-format
+msgid "Announcement saved: %(title)s"
+msgstr "Aviso guardado: %(title)s"
+
+#: comics/views/manage_announcements.py
+#, python-format
+msgid "Announcement deleted: %(title)s"
+msgstr "Aviso eliminado: %(title)s"
+
+#: comics/views/manage_home.py
+msgid "Announcements"
+msgstr "Avisos"
+
+#: comics/views/manage_home.py
+msgid "Announcement"
+msgstr "Aviso"
+
+#: comics/templates/base.html
+#, python-format
+msgid "Notifications (%(badge)s unread)"
+msgstr "Notificaciones (%(badge)s sin leer)"
+
+#: comics/templates/base.html
+msgid "Notifications"
+msgstr "Notificaciones"
+
+#: comics/templates/base.html
+msgid "The notifications could not be loaded."
+msgstr "No se pudieron cargar las notificaciones."
+
+#: comics/templates/base.html
+msgid "Loading…"
+msgstr "Cargando…"
+
+#: comics/templates/base.html
+msgid "See all"
+msgstr "Ver todas"
+
+#: comics/templates/notifications/includes/item.html
+msgid "Unread"
+msgstr "Sin leer"
+
+#: comics/templates/notifications/includes/menu.html
+msgid "Mark all as read"
+msgstr "Marcar todas como leídas"
+
+#: comics/templates/notifications/includes/menu.html
+msgid "You have no notifications."
+msgstr "No tienes notificaciones."
+
+#: comics/templates/manage/announcement_list.html
+msgid "Announcements reach their recipients as notifications. Edits to the texts show up in the notifications already sent. Deleting one also removes its notifications."
+msgstr "Los avisos llegan a sus destinatarios como notificaciones. Los cambios en los textos se ven en las notificaciones ya enviadas. Al eliminar uno también se eliminan sus notificaciones."
+
+#: comics/templates/manage/announcement_list.html
+msgid "New announcement"
+msgstr "Nuevo aviso"
+
+#: comics/templates/manage/announcement_list.html
+msgid "There are no announcements yet."
+msgstr "Todavía no hay avisos."
+
+#: comics/templates/manage/announcement_list.html
+msgid "Delete announcement?"
+msgstr "¿Eliminar aviso?"
+
+#: comics/templates/manage/announcement_form.html
+msgid "Back to announcements"
+msgstr "Volver a avisos"
+
+#: comics/templates/manage/announcement_form.html
+msgid "It is sent when you save it: one notification for each active user in its audience."
+msgstr "Se envía al guardarlo: una notificación para cada usuario activo de su audiencia."
+
+#: comics/templates/manage/announcement_form.html
+msgid "Send"
+msgstr "Enviar"
+
+#: comics/templates/manage/announcement_form.html
+msgid "Audience"
+msgstr "Audiencia"
+
+#: comics/templates/manage/announcement_form.html
+msgid "Only used when sending to some roles. Users in several roles get it once."
+msgstr "Solo se usa al enviar a algunos roles. Quien tenga varios roles lo recibe una vez."
+
+#: comics/models.py
+#, python-format
+msgid "You have %(count)d achievement: see it on your profile."
+msgid_plural "You have %(count)d achievements: see them on your profile."
+msgstr[0] "Tienes %(count)d logro: míralo en tu perfil."
+msgstr[1] "Tienes %(count)d logros: míralos en tu perfil."
+
+#: comics/views/manage_announcements.py
+#, python-format
+msgid "Announcement sent to %(count)d user."
+msgid_plural "Announcement sent to %(count)d users."
+msgstr[0] "Aviso enviado a %(count)d usuario."
+msgstr[1] "Aviso enviado a %(count)d usuarios."
+
+#: comics/templates/manage/announcement_list.html
+#, python-format
+msgid "Read by %(read)s of %(counter)s recipient"
+msgid_plural "Read by %(read)s of %(counter)s recipients"
+msgstr[0] "Leído por %(read)s de %(counter)s destinatario"
+msgstr[1] "Leído por %(read)s de %(counter)s destinatarios"

@@ -1,7 +1,9 @@
 """Backups (dump.py / dumpdata) still work with the AreaAccess model, and a restore keeps the roles:
 group permissions travel by natural key, so they survive permission ids that differ between
 databases. `ensure_roles` rebuilds the groups when a dump does not bring them. Profiles travel by
-their user's username too, achievements by their code and achievement categories by theirs."""
+their user's username too, achievements by their code and achievement categories by theirs.
+Notifications point to their user and achievement by natural key and to announcements by id
+(announcements are content, like pieces: nothing seeds them)."""
 
 import json
 import tempfile
@@ -11,12 +13,22 @@ from pathlib import Path
 from django.contrib.auth.models import Group, Permission, User
 from django.contrib.contenttypes.models import ContentType
 from django.core.management import call_command
+from django.utils import timezone
 from django.test import TransactionTestCase, override_settings
 
 import dump
 from comics.achievements.catalogue import ACHIEVEMENTS, ensure_catalogue
-from comics.models import Achievement, AchievementCategory, AchievementTier, Collection, Profile, UserAchievement
-from comics.roles import ACCESS_MANAGEMENT, ADMINISTRATORS, COLLECTORS, ROLE_PERMISSIONS, ensure_roles
+from comics.models import (
+    Achievement,
+    AchievementCategory,
+    AchievementTier,
+    Announcement,
+    Collection,
+    Notification,
+    Profile,
+    UserAchievement,
+)
+from comics.roles import ACCESS_MANAGEMENT, ADMINISTRATORS, COLLECTORS, REVIEWERS, ROLE_PERMISSIONS, ensure_roles
 
 from .base import TEST_MEDIA_ROOT, TEST_STORAGES, ComiTestCase
 from .factories import make_achievement, make_category, make_collection, make_edition, make_user
@@ -172,8 +184,11 @@ class RestoreTests(TransactionTestCase):
         make_collection(collector=make_user(username="hero"), edition=make_edition())
         with tempfile.TemporaryDirectory() as tmp:
             dump_file = self.make_dump(tmp)
+            # Notifications came after achievements (and point to them): not in such a dump either.
             older = [
-                item for item in json.loads(dump_file.read_text(encoding="utf-8")) if "achievement" not in item["model"]
+                item
+                for item in json.loads(dump_file.read_text(encoding="utf-8"))
+                if "achievement" not in item["model"] and item["model"] != "comics.notification"
             ]
             dump_file.write_text(json.dumps(older), encoding="utf-8")
             call_command("flush", interactive=False, verbosity=0)
@@ -189,6 +204,51 @@ class RestoreTests(TransactionTestCase):
         )
         self.assertEqual(AchievementTier.objects.filter(achievement__code="great_power").count(), 3)
         self.assertTrue(UserAchievement.objects.filter(user__username="hero", achievement__code="origin").exists())
+
+    def test_restore_keeps_notifications_and_announcements(self) -> None:
+        hero = make_user(username="hero")
+        reviewer = make_user(username="reviewer", role=REVIEWERS)
+        manager = make_user(username="manager", role=ADMINISTRATORS)
+        great_power = Achievement.objects.get(code="great_power")
+        UserAchievement.objects.award(hero, great_power, 2)
+        Notification.objects.achievement_unlocked(hero, great_power, 2)
+        news = Announcement.objects.create(
+            title_en="News", title_es="Noticias", audience=Announcement.Audience.ROLES, created_by=manager
+        )
+        news.roles.set([Group.objects.get(name=REVIEWERS)])
+        self.assertEqual(news.publish(), 1)
+        read_at = timezone.now().replace(microsecond=0)
+        Notification.objects.filter(recipient=reviewer).update(read_at=read_at)
+        with tempfile.TemporaryDirectory() as tmp:
+            dump_file = self.make_dump(tmp)
+            content = json.loads(dump_file.read_text(encoding="utf-8"))
+            entry = next(
+                item
+                for item in content
+                if item["model"] == "comics.notification" and item["fields"]["achievement"] == ["great_power"]
+            )
+            self.assertEqual(entry["fields"]["recipient"], ["hero"])
+            entry = next(item for item in content if item["model"] == "comics.announcement")
+            self.assertEqual((entry["fields"]["roles"], entry["fields"]["created_by"]), ([["Reviewers"]], ["manager"]))
+
+            call_command("flush", interactive=False, verbosity=0)
+            # A migrated target already has the role groups and the achievements, under other ids.
+            placeholder = Group.objects.create(name="placeholder")
+            ensure_roles()
+            placeholder.delete()
+            make_achievement(code="placeholder", name_en="x", name_es="x")
+            ensure_catalogue()
+            Achievement.objects.filter(code="placeholder").delete()
+            call_command("loaddata", str(dump_file), verbosity=0)
+
+        unlocked = Notification.objects.get(recipient__username="hero", achievement__code="great_power")
+        self.assertEqual((unlocked.kind, unlocked.level, unlocked.read_at), (Notification.Kind.ACHIEVEMENT, 2, None))
+        news = Announcement.objects.get()
+        self.assertEqual(list(news.roles.values_list("name", flat=True)), [REVIEWERS])
+        self.assertEqual(news.created_by.username, "manager")
+        sent = Notification.objects.get(announcement=news)
+        self.assertEqual((sent.recipient.username, sent.read_at), ("reviewer", read_at))
+        self.assertEqual(sent.text, "News")
 
     def test_restore_keeps_profiles_by_username(self) -> None:
         manager = make_user(username="manager")
