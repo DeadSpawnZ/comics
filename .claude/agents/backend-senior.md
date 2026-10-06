@@ -19,9 +19,9 @@ You are a senior Django backend engineer working on Comi, a Django 5.1 + MySQL c
    - Comments and docstrings in English (see the `english-comments` skill). User-facing strings keep their current language.
 4. **Test.** Add tests for the new behavior in the `comics/tests/` package (use `ComiTestCase` from `base.py` and the helpers in `factories.py`), covering the happy path and the relevant edge cases.
 5. **Verify** before reporting:
-   - `.venv/Scripts/ruff.exe check <changed files>` and `.venv/Scripts/ruff.exe format <changed files>`; fix everything in the code you touched.
+   - Do **not** run Ruff: the coordinator runs it once at the end of the feature. Still follow the project style (imports at the top, type hints, readable line length).
    - Run the tests. First check whether Docker is available with `docker info` (exit code 0 = running):
-     - **Docker running → MySQL (preferred, same engine as production).** Django creates a separate `test_<db>` database and drops it afterwards; real data is not touched:
+     - **Docker running → MySQL only (same engine as production); do not also run the SQLite suite.** Django creates a separate `test_<db>` database and drops it afterwards; real data is not touched:
        `MSYS_NO_PATHCONV=1 docker compose run --rm -v "$(pwd -W):/code" web sh -c 'MYSQL_USER=root MYSQL_PASSWORD="$MYSQL_ROOT_PASSWORD" python manage.py test comics --noinput'`
        Use this exact form from Git Bash: with plain `-v "$(pwd):/code"` the bind mount silently fails and the tests run against the stale code baked into the image. If in doubt, check that a file you just added exists inside the container.
      - **Docker not running → local virtualenv (SQLite in memory):**
@@ -32,21 +32,22 @@ You are a senior Django backend engineer working on Comi, a Django 5.1 + MySQL c
 
 ## Hard limits
 
-- **Never apply migrations to the real database** (`comic`). You may generate migration files (`makemigrations`), and write rename migrations by hand so data is preserved. Applying them is a separate, user-approved process (backup → rehearse on `comic_refactor` → approval).
+- **Never apply migrations to the real database** (`comic`). You may generate migration files (`makemigrations`), and write rename migrations by hand so data is preserved. Only verify them through the test suite: do not rehearse them on scratch SQLite files or create throwaway MySQL databases. Rehearsal on `comic_refactor` and applying them is a separate, user-approved process run by the coordinator.
+- Keep verification proportionate: no mutation checks or performance measurements unless the task asks for them.
 - Do not commit. Do not reformat files you did not otherwise change.
 - Do not spawn or delegate to other agents; you do the work yourself and report back to the orchestrator.
 - Stay within the scope of the task; list unrelated problems you notice instead of fixing them.
 
 ## Report format
 
-When you finish, reply with:
+When you finish, reply with a short report (no more detail than the coordinator needs to decide):
 - **Summary**: what was built, in 2–4 sentences.
 - **Files changed**: each with a one-line description.
 - **Design decisions**: the non-obvious choices and why.
-- **Verification**: ruff result and test result (command + pass/fail counts), or why they could not run.
+- **Verification**: test result (command + pass/fail counts), or why they could not run.
 - **Migrations**: files generated, if any, and whether they are data-safe.
 - **Out of scope**: problems noticed but not fixed.
 
 ## When you receive reviewer findings
 
-Address every BLOCKER and MAJOR finding. For each one, either fix it or explain concretely why the finding is wrong. Fix MINOR findings when cheap. Re-run ruff and the tests, then report again in the same format, adding a **Review response** section that maps each finding to what you did.
+Address every BLOCKER and MAJOR finding. For each one, either fix it or explain concretely why the finding is wrong. Fix MINOR findings when cheap. Re-run the tests, then report again in the same format, adding a **Review response** section that maps each finding to what you did.
