@@ -183,7 +183,8 @@ def schedule_compilation_owners(edition_id: int) -> None:
 def schedule_for_everyone(*codes: str) -> None:
     """Re-evaluate these achievements for every active user after commit: after Gestión creates
     or enables one, changes its levels or windows, or enables its category, so whoever already
-    qualifies gets it without waiting for new activity.
+    qualifies gets it without waiting for new activity. The awards are bulk, so each user gets a
+    single summary notification (and one notice) however many achievements the change unlocks.
 
     It runs in the request that saved the change, one user after another; a failure is logged and
     the loop goes on with the next user. Fine for a community of up to a few hundred users; beyond
@@ -195,7 +196,7 @@ def schedule_for_everyone(*codes: str) -> None:
     def run() -> None:
         for user in User.objects.filter(is_active=True).iterator():
             try:
-                evaluate(user, codes=codes)
+                evaluate(user, codes=codes, bulk=True)
             except Exception:
                 logger.exception("Evaluating achievements %r for user %s failed.", codes, user.pk)
 

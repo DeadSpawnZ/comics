@@ -674,10 +674,10 @@ class GestionTests(ComiTestCase):
         real_evaluate = engine.evaluate
         failing = users[0] if users[0].pk < users[1].pk else users[1]
 
-        def evaluate(user: object, codes: object) -> list[str]:
+        def evaluate(user: object, codes: object, bulk: bool = False) -> list[str]:
             if user.pk == failing.pk:
                 raise RuntimeError("boom")
-            return real_evaluate(user, codes)
+            return real_evaluate(user, codes=codes, bulk=bulk)
 
         with (
             mock.patch.object(engine, "evaluate", side_effect=evaluate),

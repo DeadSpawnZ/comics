@@ -319,6 +319,18 @@ class AchievementNotificationTests(ComiTestCase):
         call_command("award_achievements", stdout=StringIO(), stderr=StringIO())
         self.assertEqual(Notification.objects.filter(recipient=self.user).count(), 1)
 
+    def test_a_gestion_reevaluation_sends_one_summary(self) -> None:
+        set_thresholds("great_power", 1, 2)
+        buy(self.user)
+        buy(self.user)
+        Notification.objects.filter(recipient=self.user).delete()
+        UserAchievement.objects.filter(user=self.user, achievement__code__in=["origin", "great_power"]).delete()
+        with self.captureOnCommitCallbacks(execute=True):
+            engine.schedule_for_everyone("origin", "great_power")
+        summaries = self.notifications()
+        self.assertEqual(len(summaries), 1)  # origin and great_power together
+        self.assertEqual((summaries[0].kind, summaries[0].count), (Notification.Kind.ACHIEVEMENT_SUMMARY, 2))
+
     def test_renames_show_up_and_the_viewer_language_is_used(self) -> None:
         origin = Achievement.objects.get(code="origin")
         notification = Notification.objects.achievement_unlocked(self.user, origin, 1)
