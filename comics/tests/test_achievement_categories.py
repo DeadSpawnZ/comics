@@ -226,10 +226,10 @@ class DisabledCategoryTests(ComiTestCase):
         engine.evaluate(self.user)
         self.assertEqual(held(self.user, "origin"), 0)
         shown = showcase(self.user, include_locked=True)
-        codes = {card.achievement.code for card in [*shown.earned, *shown.locked]}
+        codes = {reto.achievement.code for shelf in shown.categories for reto in shelf.retos}
         self.assertNotIn("origin", codes)
         self.assertIn("veteran", codes)
-        self.assertEqual(shown.total, Achievement.objects.exclude(category__code="collection").count())
+        self.assertNotIn("collection", [shelf.category.code for shelf in shown.categories])
 
     def test_announcements_skip_disabled_categories(self) -> None:
         UserAchievement.objects.award(self.user, achievement("origin"), 1)

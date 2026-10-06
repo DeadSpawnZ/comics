@@ -12,6 +12,7 @@ from django.contrib.auth.models import User
 from django.db.models import Count, F, Max, Min, Q
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from django.utils.translation import ngettext_lazy
 
 from comics.models import Achievement, Collection, Connecting, Edition, Profile, ReadingArc
 
@@ -33,12 +34,28 @@ def origin(user: User) -> int:
     return int(Collection.objects.filter(collector=user).exists())
 
 
-@rule("great_power", kind=Kind.COUNT, events=[Event.COLLECTION], measure=_("comics in the collection"))
+@rule(
+    "great_power",
+    kind=Kind.COUNT,
+    events=[Event.COLLECTION],
+    measure=_("comics in the collection"),
+    requirement=ngettext_lazy(
+        "Have at least %(count)s comic in your collection", "Have at least %(count)s comics in your collection", "count"
+    ),
+)
 def great_power(user: User) -> int:
     return Collection.objects.owned_by(user).count()
 
 
-@rule("veteran", kind=Kind.COUNT, events=[Event.LOGIN], measure=_("full years as a member"))
+@rule(
+    "veteran",
+    kind=Kind.COUNT,
+    events=[Event.LOGIN],
+    measure=_("full years as a member"),
+    requirement=ngettext_lazy(
+        "Be a member for at least %(count)s full year", "Be a member for at least %(count)s full years", "count"
+    ),
+)
 def veteran(user: User) -> int:
     today = timezone.localdate()
     joined = timezone.localdate(user.date_joined)
@@ -61,6 +78,11 @@ def secret_identity(user: User) -> int:
     kind=Kind.COUNT,
     events=[Event.COLLECTION, Event.EDITION_RARITY],
     measure=_("very rare or legendary editions owned"),
+    requirement=ngettext_lazy(
+        "Own at least %(count)s very rare or legendary edition",
+        "Own at least %(count)s very rare or legendary editions",
+        "count",
+    ),
 )
 def infinity_gauntlet(user: User) -> int:
     # Distinct editions: two copies of the same edition are one stone.
@@ -73,6 +95,7 @@ def infinity_gauntlet(user: User) -> int:
     kind=Kind.COUNT,
     events=[Event.COLLECTION, Event.SIGNATURE],
     measure=_("signed pieces owned"),
+    requirement=ngettext_lazy("Own at least %(count)s signed piece", "Own at least %(count)s signed pieces", "count"),
 )
 def batcave_vault(user: User) -> int:
     return Collection.objects.owned_by(user).filter(signature__isnull=False).distinct().count()
@@ -81,7 +104,17 @@ def batcave_vault(user: User) -> int:
 # ---------- Collection ----------
 
 
-@rule("multiverse", kind=Kind.COUNT, events=[Event.COLLECTION], measure=_("most editions owned of one issue"))
+@rule(
+    "multiverse",
+    kind=Kind.COUNT,
+    events=[Event.COLLECTION],
+    measure=_("most editions owned of one issue"),
+    requirement=ngettext_lazy(
+        "Own %(count)s different edition of the same issue",
+        "Own %(count)s different editions of the same issue",
+        "count",
+    ),
+)
 def multiverse(user: User) -> int:
     per_issue = (
         Collection.objects.owned_by(user)
@@ -94,7 +127,13 @@ def multiverse(user: User) -> int:
     return per_issue.first() or 0
 
 
-@rule("speed_force", kind=Kind.COUNT, events=[Event.COLLECTION], measure=_("most purchases on a single day"))
+@rule(
+    "speed_force",
+    kind=Kind.COUNT,
+    events=[Event.COLLECTION],
+    measure=_("most purchases on a single day"),
+    requirement=ngettext_lazy("Buy %(count)s comic on the same day", "Buy %(count)s comics on the same day", "count"),
+)
 def speed_force(user: User) -> int:
     # Purchases, sold or not: buying them that day already happened. The trade date is the only
     # date a piece has (no creation timestamp), which is also what makes this retroactive.
@@ -133,6 +172,7 @@ def lazarus_pit(user: User) -> int:
     kind=Kind.COUNT,
     events=[Event.COLLECTION, Event.CONNECTING],
     measure=_("connectings completed"),
+    requirement=ngettext_lazy("Complete %(count)s connecting", "Complete %(count)s connectings", "count"),
 )
 def assemble(user: User) -> int:
     # Same ownership as Connecting.ownership_grid: every piece's edition owned.
@@ -152,6 +192,7 @@ def assemble(user: User) -> int:
     kind=Kind.COUNT,
     events=[Event.COLLECTION, Event.READING_ARC],
     measure=_("reading arcs completed"),
+    requirement=ngettext_lazy("Complete %(count)s reading arc", "Complete %(count)s reading arcs", "count"),
 )
 def chronicler(user: User) -> int:
     # Same ownership as ReadingArc.entries_with_ownership: an issue is owned through any edition

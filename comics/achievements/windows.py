@@ -63,16 +63,24 @@ class WindowKind(TextChoices):
 ALL_WINDOW_KINDS = frozenset(WindowKind)
 
 
-def window_kinds(item: Windowed) -> set[WindowKind]:
-    """The kinds of window `item` has set."""
+def window_kinds_of(
+    calendar_window: str | None, start_time: datetime.time | None, end_time: datetime.time | None
+) -> set[WindowKind]:
+    """The kinds of window these values set. A time-of-day window counts as soon as one of its
+    times is given (a half-filled one is a validation error of its own)."""
     kinds = set()
-    if item.calendar_window == CalendarWindow.YEARLY:
+    if calendar_window == CalendarWindow.YEARLY:
         kinds.add(WindowKind.YEARLY)
-    elif item.calendar_window == CalendarWindow.ABSOLUTE:
+    elif calendar_window == CalendarWindow.ABSOLUTE:
         kinds.add(WindowKind.ABSOLUTE)
-    if has_time_window(item):
+    if start_time is not None or end_time is not None:
         kinds.add(WindowKind.TIME_OF_DAY)
     return kinds
+
+
+def window_kinds(item: Windowed) -> set[WindowKind]:
+    """The kinds of window `item` has set."""
+    return window_kinds_of(item.calendar_window, item.window_start_time, item.window_end_time)
 
 
 def project_zone() -> zoneinfo.ZoneInfo:

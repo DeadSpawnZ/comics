@@ -71,7 +71,6 @@ NEW_TRANSLATIONS = {
     "Your profile is private: other users only see your username.": "Tu perfil es privado: los demás usuarios solo ven tu nombre de usuario.",
     "This profile is private.": "Este perfil es privado.",
     # Achievements.
-    "Use a Material Symbols icon name: lowercase letters, digits and _.": "Usa un nombre de ícono de Material Symbols: minúsculas, dígitos y _.",
     "Community": "Comunidad",
     "Seniority": "Antigüedad",
     "has registered a piece": "ha registrado una pieza",
@@ -89,7 +88,6 @@ NEW_TRANSLATIONS = {
     "Hint (English)": "Pista (inglés)",
     "Hint (Spanish)": "Pista (español)",
     "Category": "Categoría",
-    "Icon (Material Symbols name)": "Ícono (nombre de Material Symbols)",
     "Order": "Orden",
     "Secret": "Secreto",
     "Enabled": "Activo",
@@ -103,7 +101,6 @@ NEW_TRANSLATIONS = {
     "Each level needs a higher threshold than the previous one.": "Cada nivel necesita un umbral mayor que el anterior.",
     "Achievement saved: %(name)s": "Logro guardado: %(name)s",
     "Achievement": "Logro",
-    "%(earned)s of %(total)s": "%(earned)s de %(total)s",
     "Level %(level)s": "Nivel %(level)s",
     "Secret achievement.": "Logro secreto.",
     "Earned on %(date)s": "Obtenido el %(date)s",
@@ -119,7 +116,6 @@ NEW_TRANSLATIONS = {
     "Texts": "Textos",
     "Hints are shown instead of the description while a secret achievement is not earned. Leave them empty to show nothing but ???.": "Las pistas se muestran en lugar de la descripción mientras un logro secreto no se ha ganado. Déjalas vacías para mostrar solo ???.",
     "Appearance": "Apariencia",
-    "Icon image (PNG, JPEG or WebP, up to 2 MB; replaces the icon)": "Imagen del ícono (PNG, JPEG o WebP, hasta 2 MB; reemplaza al ícono)",
     "Levels": "Niveles",
     "Each level is reached when the count gets to its threshold. To add a level, fill in the empty row.": "Cada nivel se alcanza cuando la cuenta llega a su umbral. Para agregar un nivel, llena la fila vacía.",
     "This achievement is earned or not: it has a single level.": "Este logro se gana o no: tiene un solo nivel.",
@@ -140,16 +136,6 @@ NEW_TRANSLATIONS = {
     "reading arcs completed": "arcos de lectura completos",
     "has signed in on October 31": "ha iniciado sesión un 31 de octubre",
     # Achievement medals.
-    "Earned": "Conseguidos",
-    "Not yet earned": "Por conseguir",
-    "Only you can see these.": "Solo tú los ves.",
-    "Secret achievement. Hint: %(hint)s": "Logro secreto. Pista: %(hint)s",
-    "%(name)s, level %(level)s of %(max)s. Earned on %(date)s": "%(name)s, nivel %(level)s de %(max)s. Obtenido el %(date)s",
-    "%(name)s. Earned on %(date)s": "%(name)s. Obtenido el %(date)s",
-    "%(name)s, not earned yet. Progress: %(progress)s of %(goal)s": "%(name)s, aún sin conseguir. Progreso: %(progress)s de %(goal)s",
-    "%(name)s, not earned yet.": "%(name)s, aún sin conseguir.",
-    "Level %(level)s of %(max)s · %(rim)s (%(measure)s: %(threshold)s)": "Nivel %(level)s de %(max)s · %(rim)s (%(measure)s: %(threshold)s)",
-    "Next level at %(threshold)s": "Siguiente nivel: %(threshold)s",
     "Progress: %(progress)s / %(goal)s": "Progreso: %(progress)s / %(goal)s",
     "Base": "Base",
     "Silver": "Plata",
@@ -157,7 +143,6 @@ NEW_TRANSLATIONS = {
     "Medal": "Medalla",
     "The medal uses the uploaded image.": "La medalla usa la imagen subida.",
     "The medal uses the artwork included with Comi; an uploaded image replaces it.": "La medalla usa la ilustración incluida en Comi; una imagen subida la reemplaza.",
-    "The medal uses the icon; an uploaded image replaces it.": "La medalla usa el ícono; una imagen subida lo reemplaza.",
     # Achievement categories, time windows and achievements created in Gestión.
     "No date window": "Sin ventana de fechas",
     "Every year, between two days": "Cada año, entre dos días",
@@ -224,6 +209,9 @@ NEW_TRANSLATIONS = {
     "This rule needs %(kinds)s.": "Esta regla necesita %(kinds)s.",
     "Icon image (PNG, JPEG or WebP, up to 2 MB; replaces the medal artwork)": "Imagen del ícono (PNG, JPEG o WebP, hasta 2 MB; reemplaza la ilustración de la medalla)",
     "The medal uses the generic artwork until it has its own; an uploaded image replaces it.": "La medalla usa la ilustración genérica hasta tener la suya; una imagen subida la reemplaza.",
+    # Achievements by category (challenges).
+    "%(measure)s: %(count)s": "%(measure)s: %(count)s",
+    "Nothing earned in this category yet.": "Todavía no hay nada conseguido en esta categoría.",
 }
 
 
@@ -234,10 +222,53 @@ NEW_PLURALS = {
     ): ("Desbloqueaste %(count)d logro: míralo en tu perfil.", "Desbloqueaste %(count)d logros: míralos en tu perfil."),
     ("%(counter)s user", "%(counter)s users"): ("%(counter)s usuario", "%(counter)s usuarios"),
     ("%(counter)s achievement", "%(counter)s achievements"): ("%(counter)s logro", "%(counter)s logros"),
+    ("%(earned)s of %(counter)s challenge", "%(earned)s of %(counter)s challenges"): (
+        "%(earned)s de %(counter)s reto",
+        "%(earned)s de %(counter)s retos",
+    ),
+    ("Have at least %(count)s comic in your collection", "Have at least %(count)s comics in your collection"): (
+        "Ten al menos %(count)s cómic en tu colección",
+        "Ten al menos %(count)s cómics en tu colección",
+    ),
+    ("Be a member for at least %(count)s full year", "Be a member for at least %(count)s full years"): (
+        "Sé miembro durante al menos %(count)s año completo",
+        "Sé miembro durante al menos %(count)s años completos",
+    ),
+    (
+        "Own at least %(count)s very rare or legendary edition",
+        "Own at least %(count)s very rare or legendary editions",
+    ): (
+        "Ten al menos %(count)s edición muy rara o legendaria",
+        "Ten al menos %(count)s ediciones muy raras o legendarias",
+    ),
+    ("Own at least %(count)s signed piece", "Own at least %(count)s signed pieces"): (
+        "Ten al menos %(count)s pieza firmada",
+        "Ten al menos %(count)s piezas firmadas",
+    ),
+    ("Own %(count)s different edition of the same issue", "Own %(count)s different editions of the same issue"): (
+        "Ten %(count)s edición distinta del mismo número",
+        "Ten %(count)s ediciones distintas del mismo número",
+    ),
+    ("Buy %(count)s comic on the same day", "Buy %(count)s comics on the same day"): (
+        "Compra %(count)s cómic el mismo día",
+        "Compra %(count)s cómics el mismo día",
+    ),
+    ("Complete %(count)s connecting", "Complete %(count)s connectings"): (
+        "Completa %(count)s connecting",
+        "Completa %(count)s connectings",
+    ),
+    ("Complete %(count)s reading arc", "Complete %(count)s reading arcs"): (
+        "Completa %(count)s arco de lectura",
+        "Completa %(count)s arcos de lectura",
+    ),
 }
 
 
-NEW_CONTEXT_TRANSLATIONS = {("rarities", "All"): "Todas"}
+NEW_CONTEXT_TRANSLATIONS = {
+    ("rarities", "All"): "Todas",
+    ("challenge", "Earned"): "Conseguido",
+    ("challenge", "Not earned yet"): "Aún no conseguido",
+}
 
 
 class SpanishCatalogTests(SimpleTestCase):

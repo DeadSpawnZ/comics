@@ -1,36 +1,48 @@
 {% load i18n static %}
-{% comment %}Achievements of a profile as rows of medals. Expects `achievements`: a Showcase
-(comics/achievements/display.py) with `earned`, `locked` (only filled on the owner's own view),
-`earned_count` and `total`. Each medal opens a detail card (achievement_medals.js) whose content is
-rendered here, escaped, in a <template>.{% endcomment %}
+{% comment %}Achievements of a profile, by category. Expects `achievements`: a Showcase
+(comics/achievements/display.py) with `categories` (each with its medallion, earned/total
+challenges, percent and the `retos` this viewer may see), `earned` and `total`. Each category is a
+disclosure button for its panel of challenges; the panels are rendered here (escaped) and hidden,
+and achievement_trophies.js only shows one and moves it below the row of its button.{% endcomment %}
 <section class="md-surface-card" aria-labelledby="achievements-title">
-  <h2 class="md-title-medium mb-3" id="achievements-title">{% translate "Achievements" %}</h2>
-  <div class="medal-shelves">
-    <div class="medal-shelf">
-      <h3 class="medal-shelf__title">
-        {% translate "Earned" %}
-        {% if achievements.total %}<span class="medal-shelf__note">{% blocktranslate with earned=achievements.earned_count total=achievements.total %}{{ earned }} of {{ total }}{% endblocktranslate %}</span>{% endif %}
-      </h3>
-      {% if achievements.earned %}
-        <ul class="medal-row">
-          {% for card in achievements.earned %}<li>{% include 'profiles/includes/achievement_button.html' %}</li>{% endfor %}
-        </ul>
-      {% else %}
-        <p class="md-body-medium mb-0">{% translate "No achievements yet." %}</p>
-      {% endif %}
-    </div>
-    {% if achievements.locked %}
-      <div class="medal-shelf">
-        <h3 class="medal-shelf__title">
-          {% translate "Not yet earned" %}
-          <span class="medal-shelf__note">{% translate "Only you can see these." %}</span>
-        </h3>
-        <ul class="medal-row">
-          {% for card in achievements.locked %}<li>{% include 'profiles/includes/achievement_button.html' %}</li>{% endfor %}
-        </ul>
-      </div>
+  <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+    <h2 class="md-title-medium mb-0" id="achievements-title">{% translate "Achievements" %}</h2>
+    {% if achievements.total %}
+      <span class="md-assist-chip">{% blocktranslate count counter=achievements.total with earned=achievements.earned %}{{ earned }} of {{ counter }} challenge{% plural %}{{ earned }} of {{ counter }} challenges{% endblocktranslate %}</span>
     {% endif %}
   </div>
-  <div class="medal-popover" id="achievement-popover" role="tooltip" hidden></div>
+  {% if achievements.categories %}
+    <div class="trophy-grid" data-trophy-grid>
+      {% for shelf in achievements.categories %}
+        <button type="button" class="trophy-category" id="trophy-category-{{ shelf.category.pk }}"
+                aria-expanded="false" aria-controls="trophy-panel-{{ shelf.category.pk }}">
+          <span class="medal medal--base medal--lg{% if not shelf.earned %} is-locked{% endif %}" aria-hidden="true">
+            <span class="medal__disc"><img src="{{ shelf.medallion_url }}" alt="" loading="lazy" decoding="async"></span>
+          </span>
+          <span class="trophy-category__name">{{ shelf.category.name }}</span>
+          <span class="trophy-category__count">{% blocktranslate count counter=shelf.total with earned=shelf.earned %}{{ earned }} of {{ counter }} challenge{% plural %}{{ earned }} of {{ counter }} challenges{% endblocktranslate %}</span>
+          <span class="trophy-progress" aria-hidden="true">
+            <span class="trophy-progress__bar{% if shelf.complete %} is-complete{% elif shelf.earned %} is-partial{% endif %}" style="width: {{ shelf.percent }}%"></span>
+          </span>
+          <span class="trophy-category__percent">{{ shelf.percent }}%</span>
+        </button>
+      {% endfor %}
+      {% for shelf in achievements.categories %}
+        <section class="trophy-panel" id="trophy-panel-{{ shelf.category.pk }}" aria-labelledby="trophy-panel-title-{{ shelf.category.pk }}" hidden>
+          <h3 class="trophy-panel__title" id="trophy-panel-title-{{ shelf.category.pk }}">{{ shelf.category.name }}</h3>
+          {% if shelf.category.description %}<p class="md-body-medium">{{ shelf.category.description }}</p>{% endif %}
+          {% if shelf.retos %}
+            <ul class="reto-list">
+              {% for reto in shelf.retos %}{% include 'profiles/includes/achievement_reto.html' %}{% endfor %}
+            </ul>
+          {% else %}
+            <p class="md-body-medium mb-0">{% translate "Nothing earned in this category yet." %}</p>
+          {% endif %}
+        </section>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="md-body-medium mb-0">{% translate "No achievements yet." %}</p>
+  {% endif %}
 </section>
-<script src="{% static 'js/custom/achievement_medals.js' %}" defer></script>
+<script src="{% static 'js/custom/achievement_trophies.js' %}" defer></script>

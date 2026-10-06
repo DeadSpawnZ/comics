@@ -1750,10 +1750,6 @@ msgid "This profile is private."
 msgstr "Este perfil es privado."
 
 #: comics/models.py
-msgid "Use a Material Symbols icon name: lowercase letters, digits and _."
-msgstr "Usa un nombre de ícono de Material Symbols: minúsculas, dígitos y _."
-
-#: comics/models.py
 msgid "Community"
 msgstr "Comunidad"
 
@@ -1824,10 +1820,6 @@ msgid "Category"
 msgstr "Categoría"
 
 #: comics/forms.py
-msgid "Icon (Material Symbols name)"
-msgstr "Ícono (nombre de Material Symbols)"
-
-#: comics/forms.py
 msgid "Order"
 msgstr "Orden"
 
@@ -1879,11 +1871,6 @@ msgstr "Logro guardado: %(name)s"
 #: comics/views/manage_home.py
 msgid "Achievement"
 msgstr "Logro"
-
-#: comics/templates/profiles/includes/achievements.html
-#, python-format
-msgid "%(earned)s of %(total)s"
-msgstr "%(earned)s de %(total)s"
 
 #: comics/templates/profiles/includes/achievements.html
 #, python-format
@@ -1947,10 +1934,6 @@ msgstr "Las pistas se muestran en lugar de la descripción mientras un logro sec
 #: comics/templates/manage/achievement_form.html
 msgid "Appearance"
 msgstr "Apariencia"
-
-#: comics/templates/manage/achievement_form.html
-msgid "Icon image (PNG, JPEG or WebP, up to 2 MB; replaces the icon)"
-msgstr "Imagen del ícono (PNG, JPEG o WebP, hasta 2 MB; reemplaza al ícono)"
 
 #: comics/templates/manage/achievement_form.html
 msgid "Levels"
@@ -2043,53 +2026,6 @@ msgctxt "rarities"
 msgid "All"
 msgstr "Todas"
 
-#: comics/templates/profiles/includes/achievements.html
-msgid "Earned"
-msgstr "Conseguidos"
-
-#: comics/templates/profiles/includes/achievements.html
-msgid "Not yet earned"
-msgstr "Por conseguir"
-
-#: comics/templates/profiles/includes/achievements.html
-msgid "Only you can see these."
-msgstr "Solo tú los ves."
-
-#: comics/templates/profiles/includes/achievement_button.html
-#, python-format
-msgid "Secret achievement. Hint: %(hint)s"
-msgstr "Logro secreto. Pista: %(hint)s"
-
-#: comics/templates/profiles/includes/achievement_button.html
-#, python-format
-msgid "%(name)s, level %(level)s of %(max)s. Earned on %(date)s"
-msgstr "%(name)s, nivel %(level)s de %(max)s. Obtenido el %(date)s"
-
-#: comics/templates/profiles/includes/achievement_button.html
-#, python-format
-msgid "%(name)s. Earned on %(date)s"
-msgstr "%(name)s. Obtenido el %(date)s"
-
-#: comics/templates/profiles/includes/achievement_button.html
-#, python-format
-msgid "%(name)s, not earned yet. Progress: %(progress)s of %(goal)s"
-msgstr "%(name)s, aún sin conseguir. Progreso: %(progress)s de %(goal)s"
-
-#: comics/templates/profiles/includes/achievement_button.html
-#, python-format
-msgid "%(name)s, not earned yet."
-msgstr "%(name)s, aún sin conseguir."
-
-#: comics/templates/profiles/includes/achievement_button.html
-#, python-format
-msgid "Level %(level)s of %(max)s · %(rim)s (%(measure)s: %(threshold)s)"
-msgstr "Nivel %(level)s de %(max)s · %(rim)s (%(measure)s: %(threshold)s)"
-
-#: comics/templates/profiles/includes/achievement_button.html
-#, python-format
-msgid "Next level at %(threshold)s"
-msgstr "Siguiente nivel: %(threshold)s"
-
 #: comics/templates/profiles/includes/achievement_button.html
 #, python-format
 msgid "Progress: %(progress)s / %(goal)s"
@@ -2118,10 +2054,6 @@ msgstr "La medalla usa la imagen subida."
 #: comics/templates/manage/achievement_form.html
 msgid "The medal uses the artwork included with Comi; an uploaded image replaces it."
 msgstr "La medalla usa la ilustración incluida en Comi; una imagen subida la reemplaza."
-
-#: comics/templates/manage/achievement_form.html
-msgid "The medal uses the icon; an uploaded image replaces it."
-msgstr "La medalla usa el ícono; una imagen subida lo reemplaza."
 
 #: comics/achievements/windows.py
 msgid "No date window"
@@ -2393,3 +2325,85 @@ msgstr "Imagen del ícono (PNG, JPEG o WebP, hasta 2 MB; reemplaza la ilustraci�
 #: comics/templates/manage/achievement_form.html
 msgid "The medal uses the generic artwork until it has its own; an uploaded image replaces it."
 msgstr "La medalla usa la ilustración genérica hasta tener la suya; una imagen subida la reemplaza."
+
+#: comics/achievements/registry.py
+#, python-format
+msgid "%(measure)s: %(count)s"
+msgstr "%(measure)s: %(count)s"
+
+#: comics/templates/profiles/includes/achievements.html
+msgid "Nothing earned in this category yet."
+msgstr "Todavía no hay nada conseguido en esta categoría."
+
+#: comics/templates/profiles/includes/achievement_reto.html
+msgctxt "challenge"
+msgid "Earned"
+msgstr "Conseguido"
+
+#: comics/templates/profiles/includes/achievement_reto.html
+msgctxt "challenge"
+msgid "Not earned yet"
+msgstr "Aún no conseguido"
+
+#: comics/templates/profiles/includes/achievements.html
+#, python-format
+msgid "%(earned)s of %(counter)s challenge"
+msgid_plural "%(earned)s of %(counter)s challenges"
+msgstr[0] "%(earned)s de %(counter)s reto"
+msgstr[1] "%(earned)s de %(counter)s retos"
+
+#: comics/achievements/rules.py
+#, python-format
+msgid "Have at least %(count)s comic in your collection"
+msgid_plural "Have at least %(count)s comics in your collection"
+msgstr[0] "Ten al menos %(count)s cómic en tu colección"
+msgstr[1] "Ten al menos %(count)s cómics en tu colección"
+
+#: comics/achievements/rules.py
+#, python-format
+msgid "Be a member for at least %(count)s full year"
+msgid_plural "Be a member for at least %(count)s full years"
+msgstr[0] "Sé miembro durante al menos %(count)s año completo"
+msgstr[1] "Sé miembro durante al menos %(count)s años completos"
+
+#: comics/achievements/rules.py
+#, python-format
+msgid "Own at least %(count)s very rare or legendary edition"
+msgid_plural "Own at least %(count)s very rare or legendary editions"
+msgstr[0] "Ten al menos %(count)s edición muy rara o legendaria"
+msgstr[1] "Ten al menos %(count)s ediciones muy raras o legendarias"
+
+#: comics/achievements/rules.py
+#, python-format
+msgid "Own at least %(count)s signed piece"
+msgid_plural "Own at least %(count)s signed pieces"
+msgstr[0] "Ten al menos %(count)s pieza firmada"
+msgstr[1] "Ten al menos %(count)s piezas firmadas"
+
+#: comics/achievements/rules.py
+#, python-format
+msgid "Own %(count)s different edition of the same issue"
+msgid_plural "Own %(count)s different editions of the same issue"
+msgstr[0] "Ten %(count)s edición distinta del mismo número"
+msgstr[1] "Ten %(count)s ediciones distintas del mismo número"
+
+#: comics/achievements/rules.py
+#, python-format
+msgid "Buy %(count)s comic on the same day"
+msgid_plural "Buy %(count)s comics on the same day"
+msgstr[0] "Compra %(count)s cómic el mismo día"
+msgstr[1] "Compra %(count)s cómics el mismo día"
+
+#: comics/achievements/rules.py
+#, python-format
+msgid "Complete %(count)s connecting"
+msgid_plural "Complete %(count)s connectings"
+msgstr[0] "Completa %(count)s connecting"
+msgstr[1] "Completa %(count)s connectings"
+
+#: comics/achievements/rules.py
+#, python-format
+msgid "Complete %(count)s reading arc"
+msgid_plural "Complete %(count)s reading arcs"
+msgstr[0] "Completa %(count)s arco de lectura"
+msgstr[1] "Completa %(count)s arcos de lectura"

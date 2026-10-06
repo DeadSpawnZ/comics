@@ -96,20 +96,11 @@ class Medal:
     rim: Rim
     level: int  # 0 when not earned
     locked: bool = False  # not earned yet (shown greyed out)
-    have: int | None = None  # progress shown on a locked medal
-    need: int | None = None
 
     @property
     def pill(self) -> int | None:
         """The "xN" mark, from level 2 up."""
         return self.level if self.level >= 2 and not self.locked else None
-
-    @property
-    def progress(self) -> str:
-        """The "have/need" mark of a locked medal ("" when there is none)."""
-        if not self.locked or not self.need:
-            return ""
-        return f"{self.have or 0}/{self.need}"
 
 
 def medal_for(
@@ -117,20 +108,18 @@ def medal_for(
     level: int,
     *,
     concealed: bool = False,
-    have: int | None = None,
-    need: int | None = None,
+    locked: bool | None = None,
 ) -> Medal:
     """The medal of `achievement` at `level` (0 = not earned). `concealed`: a secret not earned
-    yet, shown as the placeholder without anything of the real one."""
+    yet, shown as the placeholder without anything of the real one. `locked` (default: level 0)
+    greys it out, e.g. a level not reached yet shown with its own ring."""
     if concealed:
         return Medal(image_url=icon_url(achievement, concealed=True), rim=Rim.SECRET, level=0)
     return Medal(
         image_url=icon_url(achievement),
         rim=rim_for(level),
         level=level,
-        locked=level == 0,
-        have=have,
-        need=need,
+        locked=level == 0 if locked is None else locked,
     )
 
 

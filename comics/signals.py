@@ -69,17 +69,22 @@ def signature_changed(sender: type[Signature], instance: Signature, **kwargs: An
         schedule(Event.SIGNATURE, collector_id.first())
 
 
+# The User fields achievement rules read (aplicado).
+PERSONAL_INFO_FIELDS = frozenset({"first_name", "last_name", "email"})
+
+
 @receiver(post_save, sender=User, dispatch_uid="comics.achievements.user_saved")
 def user_saved(
     sender: type[User], instance: User, created: bool, raw: bool, update_fields: frozenset[str] | None, **kwargs: Any
 ) -> None:
     """A new account (registration, admin, createsuperuser), or changed personal info (names,
-    email). Signing in only updates last_login: that is the LOGIN event, not a profile change."""
+    email). A save limited to other fields (signing in updates last_login, a password change or
+    hash upgrade updates password) is not a profile change; a full save may be one."""
     if raw:
         return
     if created:
         schedule(Event.ACCOUNT, instance.pk)
-    elif update_fields is None or set(update_fields) != {"last_login"}:
+    elif update_fields is None or PERSONAL_INFO_FIELDS & set(update_fields):
         schedule(Event.PROFILE, instance.pk)
 
 

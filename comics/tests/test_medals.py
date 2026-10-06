@@ -94,7 +94,7 @@ class IconResolutionTests(ComiTestCase):
                 secret = achievement(code)
                 medal = medal_for(secret, 0, concealed=True)
                 self.assertEqual(medal.image_url, "/static/achievements/_secret.svg")
-                self.assertEqual((medal.rim, medal.pill, medal.progress), (Rim.SECRET, None, ""))
+                self.assertEqual((medal.rim, medal.pill, medal.locked), (Rim.SECRET, None, False))
                 # Not even an uploaded picture.
                 upload_icon(secret)
                 self.assertEqual(medal_for(secret, 0, concealed=True).image_url, "/static/achievements/_secret.svg")
@@ -190,13 +190,11 @@ class MedalLookTests(ComiTestCase):
         self.assertIn("medal medal--base", html)
         self.assertNotIn("medal__pill", html)
 
-    def test_locked_medal_is_greyed_out_with_its_progress(self) -> None:
-        medal = medal_for(achievement("infinity_gauntlet"), 0, have=2, need=6)
-        html = self.render(medal)
-        self.assertIn("medal medal--base is-locked", html)
-        self.assertIn('<span class="medal__progress">2/6</span>', html)
+    def test_a_level_not_reached_keeps_its_ring_greyed_out(self) -> None:
+        html = self.render(medal_for(achievement("great_power"), 3, locked=True))
+        self.assertIn("medal medal--gold is-locked", html)
         self.assertNotIn("medal__pill", html)
-        self.assertEqual(self.render(medal_for(achievement("origin"), 0)).count("medal__progress"), 0)
+        self.assertIn("medal medal--base is-locked", self.render(medal_for(achievement("origin"), 0)))
 
     def test_previews_cover_every_level(self) -> None:
         self.assertEqual([m.rim for m in preview_medals(achievement("great_power"))], ["base", "silver", "gold"])
@@ -222,30 +220,6 @@ class ProfileMedalTests(ComiTestCase):
         self.client.force_login(self.viewer)
         return self.client.get(reverse("user_profile", args=["owner"])).content.decode()
 
-    def test_owner_sees_both_rows_with_rings_marks_and_progress(self) -> None:
-        html = self.own_page()
-        self.assertIn("Earned", html)
-        self.assertIn("3 of 18", html)  # origin, great_power x2 and novato
-        self.assertIn("Not yet earned", html)
-        self.assertIn("medal medal--silver", html)
-        self.assertIn('<span class="medal__pill">x2</span>', html)
-        self.assertIn('<span class="medal__progress">0/6</span>', html)  # infinity_gauntlet
-        self.assertIn('aria-label="Infinity Gauntlet, not earned yet. Progress: 0 of 6"', html)
-        self.assertIn('aria-label="Origin. Earned on', html)
-        self.assertIn('aria-label="With great power…, level 2 of 3. Earned on', html)
-        self.assertIn("/static/achievements/_secret.svg", html)
-        self.assertIn('aria-label="Secret achievement. Hint: Some heroes prefer to stay in the shadows."', html)
-        self.assertIn("achievement_medals.js", html)
-
-    def test_detail_card_content(self) -> None:
-        html = self.own_page()
-        self.assertIn("Level 2 of 3 · Silver (comics in the collection: 2)", html)
-        self.assertIn("Next level at 5", html)
-        self.assertIn("Progress: 2 / 5", html)  # earned, towards the next level
-        self.assertIn("Progress: 0 / 6", html)
-        self.assertIn('<div class="medal-popover__name">???</div>', html)
-        self.assertIn("<span>Collection</span>", html)  # the category, now inside the card
-
     def test_owner_never_gets_the_real_secret_art_or_texts(self) -> None:
         for code in SECRET_CODES:
             upload_icon(achievement(code))
@@ -258,32 +232,10 @@ class ProfileMedalTests(ComiTestCase):
                 self.assertNotIn(target.name_en, html)
                 self.assertNotIn(target.description_en, html)
 
-    def test_other_users_get_only_earned_medals(self) -> None:
-        html = self.public_page()
-        self.assertIn("/static/achievements/origin.svg", html)
-        self.assertIn("/static/achievements/great_power.svg", html)
-        self.assertIn('<span class="medal__pill">x2</span>', html)
-        self.assertIn("Level 2 of 3 · Silver", html)
-        for leak in [
-            "Not yet earned",
-            "medal__progress",
-            "Progress",
-            "is-locked",
-            "???",
-            "_secret.svg",
-            "veteran.svg",
-            "infinity_gauntlet.svg",
-            "Some heroes",
-            "Secret achievement",
-            "Lois Lane",
-        ]:
-            with self.subTest(leak=leak):
-                self.assertNotIn(leak, html)
-
     def test_private_profiles_show_no_medals_to_others(self) -> None:
         Profile.objects.filter(user=self.owner).update(is_public=False)
         html = self.public_page()
-        self.assertNotIn("medal-btn", html)
+        self.assertNotIn("trophy-category", html)
         self.assertNotIn("origin.svg", html)
 
     def test_disabled_achievements_show_no_medal(self) -> None:

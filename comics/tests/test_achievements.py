@@ -456,8 +456,9 @@ class DisplayTests(ComiTestCase):
     def test_owner_sees_earned_locked_progress_and_concealed_secrets(self) -> None:
         html = self.own_page()
         self.assertIn("Origin", html)
-        self.assertIn('aria-label="With great power…, level 1 of 2.', html)
-        self.assertIn("2 / 3", html)  # progress to the next level
+        self.assertIn('With great power… <span class="reto__level">Base</span>', html)
+        self.assertIn("Have at least 1 comic in your collection", html)
+        self.assertIn("Progress: 2 / 3", html)  # towards the next level
         self.assertIn("Veteran", html)  # locked but visible
         self.assertIn("???", html)
         self.assertIn("Some heroes prefer to stay in the shadows.", html)  # the secret's hint
@@ -475,11 +476,19 @@ class DisplayTests(ComiTestCase):
         engine.evaluate(self.owner)
         self.assertIn("Secret identity", self.own_page())
 
-    def test_rows_count_completion(self) -> None:
+    def test_challenges_by_category(self) -> None:
         shown = showcase(self.owner, include_locked=True)
-        # Highest level first; at the same level, achievements with levels before the others.
-        self.assertEqual([card.achievement.code for card in shown.earned], ["great_power", "origin", "novato"])
-        self.assertEqual((shown.earned_count, len(shown.locked), shown.total), (3, 15, 18))
+        self.assertEqual(
+            [shelf.category.code for shelf in shown.categories],
+            ["collection", "treasures", "sagas", "community", "seniority", "random"],
+        )
+        # One challenge per level: great_power (2 levels), veteran, batcave_vault, speed_force,
+        # assemble and chronicler (3 each), the rest one each.
+        self.assertEqual((shown.earned, shown.total), (3, 29))
+        earned = [
+            (reto.achievement.code, reto.level) for shelf in shown.categories for reto in shelf.retos if reto.earned
+        ]
+        self.assertEqual(earned, [("origin", 1), ("great_power", 1), ("novato", 1)])
 
     def test_other_users_only_see_earned_achievements(self) -> None:
         self.client.force_login(self.viewer)
@@ -489,8 +498,8 @@ class DisplayTests(ComiTestCase):
         self.assertNotIn("???", html)
         self.assertNotIn(" / 3", html)
         shown = showcase(self.owner, include_locked=False)
-        self.assertEqual(shown.locked, [])
-        self.assertTrue(all(card.earned for card in shown.earned))
+        self.assertTrue(all(reto.earned for shelf in shown.categories for reto in shelf.retos))
+        self.assertEqual((shown.earned, shown.total), (3, 29))  # the counts stay the same
 
     def test_disabled_achievements_are_hidden_everywhere(self) -> None:
         Achievement.objects.filter(code__in=["origin", "veteran"]).update(is_enabled=False)

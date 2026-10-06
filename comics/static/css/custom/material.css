@@ -963,21 +963,6 @@ a.md-paginator__page:hover {
  * for level 2, gold from level 3. Proportions follow the artwork: a 62-unit medal whose disc has
  * a radius of 25.5 units, so the ring takes 5.5/62 of the size.
  */
-:root,
-:root[data-bs-theme="light"] {
-  --medal-popover-bg: #2f3036;
-  --medal-popover-fg: #f2f0f4;
-  --medal-popover-muted: #c4c6d0;
-  --medal-popover-accent: #abc7ff;
-}
-
-:root[data-bs-theme="dark"] {
-  --medal-popover-bg: #e3e2e6;
-  --medal-popover-fg: #1a1b1f;
-  --medal-popover-muted: #44474e;
-  --medal-popover-accent: #005cbb;
-}
-
 .medal {
   --medal-size: 64px;
   --rim-light: #f1ece2;
@@ -1037,8 +1022,7 @@ a.md-paginator__page:hover {
   opacity: 0.42;
 }
 
-.medal__pill,
-.medal__progress {
+.medal__pill {
   position: absolute;
   border-radius: 999px;
   border: 1px solid var(--md-outline-variant);
@@ -1047,9 +1031,6 @@ a.md-paginator__page:hover {
   line-height: 16px;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
-}
-
-.medal__pill {
   right: -4px;
   bottom: -2px;
   min-width: 26px;
@@ -1061,156 +1042,183 @@ a.md-paginator__page:hover {
   text-align: center;
 }
 
-.medal__progress {
-  left: 50%;
-  bottom: -8px;
-  transform: translateX(-50%);
-  padding: 0 6px;
-  background-color: var(--md-surface-container-high);
-  color: var(--md-on-surface-variant);
-  font-size: 10.5px;
-}
-
-/* Achievements (profile): rows of medal buttons and their floating detail card */
-.medal-shelves {
+/* Achievements (profile): category medallions with their challenges in a panel below their row */
+.trophy-grid {
   display: grid;
-  gap: 1.375rem;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.75rem;
 }
 
-.medal-shelf__title {
+.trophy-category {
   display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 0.625rem;
-  font-size: 1rem;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.75rem 0.5rem;
+  border: 1px solid transparent;
+  border-radius: 16px;
+  background: none;
+  color: inherit;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.trophy-category:hover,
+.trophy-category[aria-expanded="true"] {
+  background-color: var(--md-surface-container-high);
+}
+
+.trophy-category[aria-expanded="true"] {
+  border-color: var(--md-outline-variant);
+}
+
+.trophy-category:focus-visible {
+  outline: 3px solid var(--md-primary);
+  outline-offset: 2px;
+}
+
+.trophy-category__name {
   font-weight: 500;
 }
 
-.medal-shelf__note {
+.trophy-category__count,
+.trophy-category__percent {
   color: var(--md-on-surface-variant);
   font-size: 0.8125rem;
-  font-weight: 400;
   font-variant-numeric: tabular-nums;
 }
 
-.medal-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin: 0;
-  padding: 0 0 8px;
-  list-style: none;
-}
-
-.medal-btn {
+.trophy-progress {
   display: block;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: none;
-  cursor: pointer;
-  transition: transform 0.15s ease;
-}
-
-.medal-btn:hover {
-  transform: translateY(-2px);
-}
-
-.medal-btn:focus-visible {
-  outline: 3px solid var(--md-primary);
-  outline-offset: 3px;
-}
-
-.medal-popover {
-  position: absolute;
-  z-index: 1080;
-  width: 260px;
-  max-width: calc(100vw - 32px);
-  padding: 12px 14px;
-  border-radius: 12px;
-  background-color: var(--medal-popover-bg);
-  color: var(--medal-popover-fg);
-  box-shadow: 0 4px 8px 3px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.3);
-  font-size: 13px;
-  line-height: 1.45;
-  overflow-wrap: anywhere;
-}
-
-/* Transparent bridge over the gap to the medal, so the pointer can move onto the card. */
-.medal-popover::before {
-  content: "";
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  height: 12px;
-}
-
-.medal-popover.is-below::before {
-  top: auto;
-  bottom: 100%;
-}
-
-.medal-popover[hidden] {
-  display: none;
-}
-
-.medal-popover::after {
-  content: "";
-  position: absolute;
-  left: var(--arrow-x, 50%);
-  bottom: -6px;
-  width: 12px;
-  height: 12px;
-  border-radius: 2px;
-  background-color: var(--medal-popover-bg);
-  transform: translateX(-50%) rotate(45deg);
-}
-
-.medal-popover.is-below::after {
-  top: -6px;
-  bottom: auto;
-}
-
-.medal-popover__name {
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.medal-popover__desc {
-  margin-top: 4px;
-}
-
-.medal-popover__meta {
-  display: grid;
-  gap: 2px;
-  margin-top: 8px;
-  color: var(--medal-popover-muted);
-  font-variant-numeric: tabular-nums;
-}
-
-.medal-popover__bar {
-  height: 4px;
-  margin-top: 8px;
-  border-radius: 2px;
-  background-color: color-mix(in srgb, var(--medal-popover-muted) 35%, transparent);
+  width: 100%;
+  max-width: 140px;
+  height: 6px;
+  border-radius: 3px;
+  background-color: var(--md-surface-container-highest);
   overflow: hidden;
 }
 
-.medal-popover__bar span {
+.trophy-progress__bar {
   display: block;
   height: 100%;
-  background-color: var(--medal-popover-accent);
+}
+
+.trophy-progress__bar.is-partial {
+  background-color: var(--bs-warning);
+}
+
+.trophy-progress__bar.is-complete {
+  background-color: var(--bs-success);
+}
+
+.trophy-panel {
+  grid-column: 1 / -1;
+  padding: 1rem;
+  border-radius: 16px;
+  background-color: var(--md-surface-container-high);
+  animation: trophy-panel-in 0.15s ease-out;
+}
+
+.trophy-panel[hidden] {
+  display: none;
+}
+
+/* Moved to another row after it appeared (resize): no fade again. */
+.trophy-panel.is-settled {
+  animation: none;
+}
+
+.trophy-panel__title {
+  font-size: 1rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.reto-list {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.reto {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 12px;
+  background-color: var(--md-surface-container-low);
+}
+
+.reto__body {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.reto__name {
+  font-weight: 500;
+}
+
+.reto__level {
+  color: var(--md-on-surface-variant);
+  font-weight: 400;
+}
+
+.reto__requirement {
+  color: var(--md-on-surface-variant);
+  font-size: 0.875rem;
+}
+
+.reto__status {
+  flex-shrink: 0;
+  color: var(--md-on-surface-variant);
+  font-size: 0.8125rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.reto.is-locked .reto__name,
+.reto.is-locked .reto__requirement {
+  color: var(--md-on-surface-variant);
+  opacity: 0.75;
+}
+
+@media (max-width: 575.98px) {
+  .trophy-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .reto {
+    flex-wrap: wrap;
+  }
+
+  .reto__status {
+    flex-basis: 100%;
+    text-align: left;
+    padding-left: calc(40px + 0.75rem);
+  }
+}
+
+@keyframes trophy-panel-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .medal-btn {
+  .trophy-category {
     transition: none;
   }
 
-  .medal-btn:hover {
-    transform: none;
+  .trophy-panel {
+    animation: none;
   }
 }
 

@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING
 
 from django.contrib.auth.models import User
 from django.utils.functional import Promise
+from django.utils.translation import gettext as _
 
 from .windows import WindowKind
 
@@ -55,6 +56,9 @@ class Rule:
     # Generic rules that read the row's time windows: the kinds they use. A row needs at least one
     # of them, and no other kind (validated in Gestión; the rule itself never counts without them).
     window_kinds: frozenset[WindowKind] = frozenset()
+    # Count rules: what reaching a threshold means, plural-aware (ngettext_lazy with a "count" key),
+    # e.g. "Own at least %(count)s signed piece(s)". Without it: "<measure>: <threshold>".
+    requirement: Promise | None = None
 
     @property
     def generic(self) -> bool:
@@ -68,6 +72,12 @@ class Rule:
     def counted(self) -> bool:
         """Whether achievements with this rule have levels (tiers)."""
         return self.kind is Kind.COUNT
+
+    def requirement_for(self, threshold: int) -> str:
+        """The requirement of a level with this threshold, in the active language."""
+        if self.requirement is not None:
+            return str(self.requirement % {"count": threshold})
+        return _("%(measure)s: %(count)s") % {"measure": self.measure, "count": threshold}
 
     def progress_for(self, user: User, achievement: Achievement) -> int:
         if self.row_progress is not None:
@@ -86,12 +96,20 @@ def _register(item: Rule) -> None:
 
 
 def rule(
-    key: str, *, kind: Kind, events: Iterable[Event], measure: str | Promise
+    key: str,
+    *,
+    kind: Kind,
+    events: Iterable[Event],
+    measure: str | Promise,
+    requirement: Promise | None = None,
 ) -> Callable[[UserProgress], UserProgress]:
     """Register the decorated function as the progress of a built-in rule."""
 
     def register(progress: UserProgress) -> UserProgress:
-        _register(Rule(key=key, kind=kind, events=frozenset(events), measure=measure, progress=progress))
+        item = Rule(
+            key=key, kind=kind, events=frozenset(events), measure=measure, progress=progress, requirement=requirement
+        )
+        _register(item)
         return progress
 
     return register

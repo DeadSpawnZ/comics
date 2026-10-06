@@ -17,7 +17,7 @@ from django.utils.translation import gettext_lazy as _
 
 from .achievements.catalogue import BUILTIN_CODES
 from .achievements.registry import Rule, generic_rules
-from .achievements.windows import ALL_WINDOW_KINDS, CalendarWindow, WindowKind
+from .achievements.windows import ALL_WINDOW_KINDS, WindowKind, window_kinds_of
 from .helper import parse_date_or_none, parse_id_or_none
 from .models import (
     Achievement,
@@ -920,14 +920,9 @@ class AchievementForm(forms.ModelForm):
     def _check_window_kinds(self, cleaned: dict[str, Any], allowed: frozenset[WindowKind]) -> None:
         """The rule reads only some kinds of window: at least one of them is needed, and a kind it
         does not read would be misleading (it would be ignored)."""
-        calendar = cleaned.get("calendar_window")
-        used = set()
-        if calendar == CalendarWindow.YEARLY:
-            used.add(WindowKind.YEARLY)
-        elif calendar == CalendarWindow.ABSOLUTE:
-            used.add(WindowKind.ABSOLUTE)
-        if cleaned.get("window_start_time") is not None or cleaned.get("window_end_time") is not None:
-            used.add(WindowKind.TIME_OF_DAY)
+        used = window_kinds_of(
+            cleaned.get("calendar_window"), cleaned.get("window_start_time"), cleaned.get("window_end_time")
+        )
         # Non-field errors: a field error would drop the field from cleaned_data and the model's
         # own window checks would then report a misleading half-filled window.
         unused = [_("This rule does not use %(kind)s.") % {"kind": kind.label} for kind in sorted(used - allowed)]
