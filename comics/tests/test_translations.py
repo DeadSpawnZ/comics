@@ -64,6 +64,7 @@ NEW_TRANSLATIONS = {
     "Upload a new picture (JPEG, PNG, WebP or GIF, up to 5 MB)": "Sube una imagen nueva (JPEG, PNG, WebP o GIF, hasta 5 MB)",
     "Upload": "Subir",
     "Remove picture": "Quitar foto",
+    "Change profile picture": "Cambiar foto de perfil",
     "Change password": "Cambiar contraseña",
     "Achievements": "Logros",
     "No achievements yet.": "Todavía no hay logros.",

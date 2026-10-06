@@ -335,6 +335,21 @@ class AvatarTests(ComiTestCase):
         response = self.client.post(PROFILE_URL, {"section": "avatar"})
         self.assertIn("avatar", response.context["forms"]["avatar"].errors)
 
+    def test_picture_is_edited_from_a_dialog_opened_by_the_pencil(self) -> None:
+        html = self.client.get(PROFILE_URL).content.decode()
+        self.assertIn('data-bs-target="#avatarDialog"', html)
+        self.assertIn('id="avatarDialog"', html)
+        self.assertNotIn("data-open-on-load", html)
+        self.assertNotIn('id="removeAvatarForm"', html)  # nothing to remove yet
+        self.upload(picture())
+        html = self.client.get(PROFILE_URL).content.decode()
+        self.assertIn('id="removeAvatarForm"', html)
+        self.assertIn('form="removeAvatarForm"', html)
+
+    def test_a_rejected_upload_reopens_the_dialog(self) -> None:
+        response = self.client.post(PROFILE_URL, {"section": "avatar"})
+        self.assertContains(response, "data-open-on-load")
+
     def test_menu_shows_the_avatar_and_a_profile_link(self) -> None:
         html = self.client.get(reverse("comics")).content.decode()
         self.assertIn(f'href="{PROFILE_URL}"', html)

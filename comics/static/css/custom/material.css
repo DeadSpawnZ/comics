@@ -957,6 +957,62 @@ a.md-paginator__page:hover {
   font-size: 64px;
 }
 
+/* Pencil button on the profile picture: opens the picture dialog (same look as the edition cover) */
+.profile-avatar-edit {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.profile-avatar-edit__btn {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background-color: var(--md-primary-container);
+  color: var(--md-on-primary-container);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.profile-avatar-edit__btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.profile-avatar-edit__btn:focus-visible {
+  outline: 2px solid var(--md-primary);
+  outline-offset: 2px;
+}
+
+.profile-avatar-edit__btn .material-symbols-outlined {
+  font-size: 1.25rem;
+}
+
+.profile-avatar-preview {
+  display: flex;
+  justify-content: center;
+}
+
+.profile-avatar-preview img.md-avatar {
+  object-fit: cover;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .profile-avatar-edit__btn {
+    transition: none;
+  }
+  .profile-avatar-edit__btn:hover {
+    transform: none;
+  }
+}
+
 /*
  * Achievement medals: the picture (an <img>) inside a ring coloured by
  * level, as in the approved design: neutral for level 1 and achievements without levels, silver

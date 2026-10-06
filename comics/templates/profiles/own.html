@@ -1,11 +1,18 @@
 {% extends 'base.html' %}
-{% load i18n %}
+{% load i18n static %}
 {% comment %}The signed-in user's own profile: every section is a separate form posting its name in "section".{% endcomment %}
 
 {% block content %}
 <div class="my-4 d-flex flex-column gap-3">
   <div class="md-surface-card d-flex align-items-center gap-3 flex-wrap">
-    {% include 'profiles/includes/avatar.html' with avatar_class='md-avatar--lg' %}
+    <div class="profile-avatar-edit">
+      {% include 'profiles/includes/avatar.html' with avatar_class='md-avatar--lg' %}
+      {% translate "Change profile picture" as change_picture %}
+      <button type="button" class="profile-avatar-edit__btn" data-bs-toggle="modal" data-bs-target="#avatarDialog"
+              aria-label="{{ change_picture }}" title="{{ change_picture }}">
+        <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+      </button>
+    </div>
     <div class="flex-grow-1">
       <h1 class="md-headline-small mb-1">{{ user.username }}</h1>
       {% if user.get_full_name %}<p class="md-body-medium mb-1">{{ user.get_full_name }}</p>{% endif %}
@@ -61,39 +68,6 @@
     </div>
 
     <div class="col-12 col-xl-6 d-flex flex-column gap-3">
-      <section class="md-surface-card" id="avatar" aria-labelledby="avatar-title">
-        <h2 class="md-title-medium mb-3" id="avatar-title">{% translate "Profile picture" %}</h2>
-        {% with form=forms.avatar %}
-        {% include 'profiles/includes/section_errors.html' %}
-        <div class="d-flex align-items-center gap-3 flex-wrap">
-          {% include 'profiles/includes/avatar.html' with avatar_class='md-avatar--lg' %}
-          <form method="post" action="{% url 'profile' %}#avatar" enctype="multipart/form-data" class="d-flex flex-column gap-2 flex-grow-1">
-            {% csrf_token %}
-            <input type="hidden" name="section" value="avatar">
-            <label class="md-section-label" for="{{ form.avatar.id_for_label }}">{% translate "Upload a new picture (JPEG, PNG, WebP or GIF, up to 5 MB)" %}</label>
-            {{ form.avatar }}
-            {% for error in form.avatar.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
-            <div>
-              <button type="submit" class="md-btn md-btn--filled">
-                <span class="material-symbols-outlined" aria-hidden="true">upload</span>
-                {% translate "Upload" %}
-              </button>
-            </div>
-          </form>
-        </div>
-        {% if profile.avatar %}
-          <form method="post" action="{% url 'profile' %}#avatar" class="mt-3">
-            {% csrf_token %}
-            <input type="hidden" name="section" value="remove_avatar">
-            <button type="submit" class="md-btn md-btn--danger-outlined">
-              <span class="material-symbols-outlined" aria-hidden="true">delete</span>
-              {% translate "Remove picture" %}
-            </button>
-          </form>
-        {% endif %}
-        {% endwith %}
-      </section>
-
       <section class="md-surface-card" id="password" aria-labelledby="password-title">
         <h2 class="md-title-medium mb-3" id="password-title">{% translate "Change password" %}</h2>
         {% with form=forms.password %}
@@ -112,4 +86,58 @@
     </div>
   </div>
 </div>
+
+{% comment %}Profile picture dialog, opened by the pencil on the header picture (same pattern as the
+edition cover). It reopens by itself when an upload was rejected, so the error is visible.{% endcomment %}
+{% with form=forms.avatar %}
+<div class="modal fade md-dialog" id="avatarDialog" tabindex="-1" aria-labelledby="avatarDialogTitle" aria-hidden="true"
+     {% if form.errors %}data-open-on-load{% endif %}>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="post" action="{% url 'profile' %}" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="hidden" name="section" value="avatar">
+        <div class="modal-header">
+          <h2 class="modal-title md-headline-small" id="avatarDialogTitle">{% translate "Profile picture" %}</h2>
+        </div>
+        <div class="modal-body d-flex flex-column align-items-center gap-3">
+          {% include 'profiles/includes/section_errors.html' %}
+          <div class="profile-avatar-preview">
+            <span data-avatar-current>{% include 'profiles/includes/avatar.html' with avatar_class='md-avatar--lg' %}</span>
+            <img class="md-avatar md-avatar--lg" alt="" data-avatar-preview hidden>
+          </div>
+          <div class="w-100">
+            <label class="md-section-label" for="{{ form.avatar.id_for_label }}">{% translate "Upload a new picture (JPEG, PNG, WebP or GIF, up to 5 MB)" %}</label>
+            {{ form.avatar }}
+            {% for error in form.avatar.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+          </div>
+        </div>
+        <div class="modal-footer">
+          {% if profile.avatar %}
+            <button type="submit" form="removeAvatarForm" class="md-btn md-btn--danger-outlined me-auto">
+              <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+              {% translate "Remove picture" %}
+            </button>
+          {% endif %}
+          <button type="button" class="md-btn md-btn--text" data-bs-dismiss="modal">{% translate "Cancel" %}</button>
+          <button type="submit" class="md-btn md-btn--filled">
+            <span class="material-symbols-outlined" aria-hidden="true">upload</span>
+            {% translate "Upload" %}
+          </button>
+        </div>
+      </form>
+      {% if profile.avatar %}
+        <form method="post" action="{% url 'profile' %}" id="removeAvatarForm" hidden>
+          {% csrf_token %}
+          <input type="hidden" name="section" value="remove_avatar">
+        </form>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endwith %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/custom/profile_avatar.js' %}" defer></script>
 {% endblock %}

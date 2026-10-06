@@ -1726,6 +1726,10 @@ msgid "Remove picture"
 msgstr "Quitar foto"
 
 #: comics/templates/profiles/own.html
+msgid "Change profile picture"
+msgstr "Cambiar foto de perfil"
+
+#: comics/templates/profiles/own.html
 msgid "Change password"
 msgstr "Cambiar contraseña"
 
