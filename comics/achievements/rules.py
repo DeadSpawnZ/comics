@@ -16,7 +16,16 @@ from django.utils.translation import gettext_lazy as _
 from comics.models import Achievement, Collection, Connecting, Edition, Profile, ReadingArc
 
 from .registry import Event, Kind, generic_rule, rule
-from .windows import has_window, in_windows
+from .windows import (
+    ALL_WINDOW_KINDS,
+    CalendarWindow,
+    WindowKind,
+    has_window,
+    in_calendar_window,
+    in_windows,
+    year_occurrence,
+    yearly_months,
+)
 
 
 @rule("origin", kind=Kind.BOOLEAN, events=[Event.COLLECTION], measure=_("has registered a piece"))
@@ -163,6 +172,36 @@ def chronicler(user: User) -> int:
 # ---------- Community ----------
 
 
+# ---------- Random ----------
+
+
+@rule("novato", kind=Kind.BOOLEAN, events=[Event.ACCOUNT], measure=_("has registered"))
+def novato(user: User) -> int:
+    # Every registered user: awarded when the account is created (and retroactively by
+    # award_achievements for the accounts that already existed).
+    return 1
+
+
+@rule(
+    "aplicado",
+    kind=Kind.BOOLEAN,
+    events=[Event.PROFILE],
+    measure=_("has filled in first name, last name, email, phone and profile picture"),
+)
+def aplicado(user: User) -> int:
+    # Like every award, it is not taken away if the data is cleared later.
+    names_and_email = all(value.strip() for value in (user.first_name, user.last_name, user.email))
+    if not names_and_email:
+        return 0
+    complete = Profile.objects.filter(user=user).exclude(phone="").exclude(avatar="")
+    return int(complete.exists())
+
+
+@rule("fotogenico", kind=Kind.BOOLEAN, events=[Event.PROFILE], measure=_("has a profile picture"))
+def fotogenico(user: User) -> int:
+    return int(Profile.objects.filter(user=user).exclude(avatar="").exists())
+
+
 # ---------- Generic rules: Gestión creates achievements with them ----------
 
 
@@ -171,7 +210,7 @@ def chronicler(user: User) -> int:
     kind=Kind.BOOLEAN,
     events=[Event.LOGIN],
     measure=_("has signed in inside the achievement's time window"),
-    needs_window=True,
+    window_kinds=ALL_WINDOW_KINDS,
 )
 def login_in_window(user: User, achievement: Achievement) -> int:
     # The last sign-in, in the project's time zone (e.g. Halloween: a yearly 31/10 - 31/10 window).
@@ -181,3 +220,34 @@ def login_in_window(user: User, achievement: Achievement) -> int:
     if user.last_login is None or not has_window(achievement):
         return 0
     return int(in_windows(achievement, user.last_login))
+
+
+@generic_rule(
+    "purchases_each_month_in_window",
+    kind=Kind.BOOLEAN,
+    events=[Event.COLLECTION],
+    measure=_("has purchases in every month of the achievement's yearly window, in the same year"),
+    window_kinds=[WindowKind.YEARLY],
+)
+def purchases_each_month_in_window(user: User, achievement: Achievement) -> int:
+    # E.g. Summer: a yearly 01/07 - 31/08 window needs a purchase in July and another in August
+    # of the same year. Purchases count sold or not (buying them already happened), by trade date,
+    # so it is retroactive. Only the yearly window is read; a row without one never counts.
+    if achievement.calendar_window != CalendarWindow.YEARLY:
+        return 0
+    months = yearly_months(achievement)
+    if not months:
+        return 0
+    # One query: the distinct purchase dates in those months (a few per year at most).
+    days = (
+        Collection.objects.filter(
+            collector=user, trade_type=Collection.TradeChoices.BUYING, trade_date__month__in=months
+        )
+        .values_list("trade_date", flat=True)
+        .distinct()
+    )
+    covered: dict[int, set[int]] = {}
+    for day in days:
+        if in_calendar_window(achievement, day):
+            covered.setdefault(year_occurrence(achievement, day), set()).add(day.month)
+    return int(any(seen >= set(months) for seen in covered.values()))

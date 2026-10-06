@@ -17,7 +17,7 @@ from django.utils.translation import gettext_lazy as _
 
 from .achievements.catalogue import BUILTIN_CODES
 from .achievements.registry import Rule, generic_rules
-from .achievements.windows import CalendarWindow
+from .achievements.windows import ALL_WINDOW_KINDS, CalendarWindow, WindowKind
 from .helper import parse_date_or_none, parse_id_or_none
 from .models import (
     Achievement,
@@ -863,7 +863,6 @@ class AchievementForm(forms.ModelForm):
             "hint_en",
             "hint_es",
             "category",
-            "icon",
             "icon_image",
             "display_order",
             "is_secret",
@@ -878,7 +877,6 @@ class AchievementForm(forms.ModelForm):
             "hint_en": _("Hint (English)"),
             "hint_es": _("Hint (Spanish)"),
             "category": _("Category"),
-            "icon": _("Icon (Material Symbols name)"),
             "display_order": _("Order"),
             "is_secret": _("Secret"),
             "is_enabled": _("Enabled"),
@@ -916,14 +914,32 @@ class AchievementForm(forms.ModelForm):
     def clean(self) -> dict[str, Any]:
         cleaned = super().clean()
         if self.has_windows and self.rule is not None and self.rule.needs_window:
-            calendar = cleaned.get("calendar_window") not in (None, "", CalendarWindow.NONE)
-            times = cleaned.get("window_start_time") is not None or cleaned.get("window_end_time") is not None
-            if not (calendar or times):
-                raise ValidationError(
-                    _("This rule only counts inside a time window: set a date window, a time window or both."),
-                    code="window_required",
-                )
+            self._check_window_kinds(cleaned, self.rule.window_kinds)
         return cleaned
+
+    def _check_window_kinds(self, cleaned: dict[str, Any], allowed: frozenset[WindowKind]) -> None:
+        """The rule reads only some kinds of window: at least one of them is needed, and a kind it
+        does not read would be misleading (it would be ignored)."""
+        calendar = cleaned.get("calendar_window")
+        used = set()
+        if calendar == CalendarWindow.YEARLY:
+            used.add(WindowKind.YEARLY)
+        elif calendar == CalendarWindow.ABSOLUTE:
+            used.add(WindowKind.ABSOLUTE)
+        if cleaned.get("window_start_time") is not None or cleaned.get("window_end_time") is not None:
+            used.add(WindowKind.TIME_OF_DAY)
+        # Non-field errors: a field error would drop the field from cleaned_data and the model's
+        # own window checks would then report a misleading half-filled window.
+        unused = [_("This rule does not use %(kind)s.") % {"kind": kind.label} for kind in sorted(used - allowed)]
+        if unused:
+            raise ValidationError(unused, code="window_not_used")
+        if not used & allowed:
+            if allowed == ALL_WINDOW_KINDS:
+                message = _("This rule only counts inside a time window: set a date window, a time window or both.")
+            else:
+                kinds = ", ".join(str(kind.label) for kind in sorted(allowed))
+                message = _("This rule needs %(kinds)s.") % {"kinds": kinds}
+            raise ValidationError(message, code="window_required")
 
 
 class AchievementCreateForm(AchievementForm):

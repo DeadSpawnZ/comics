@@ -16,6 +16,8 @@ from typing import TYPE_CHECKING
 from django.contrib.auth.models import User
 from django.utils.functional import Promise
 
+from .windows import WindowKind
+
 if TYPE_CHECKING:
     from comics.models import Achievement
 
@@ -27,9 +29,10 @@ class Event(StrEnum):
     """What can change a user's progress. Each rule lists the events that re-evaluate it, so a
     save only evaluates the rules it can affect."""
 
+    ACCOUNT = "account"  # the user registered (the account was created)
     COLLECTION = "collection"  # a piece was added, changed or deleted
     SIGNATURE = "signature"  # a signature was added, changed or deleted
-    PROFILE = "profile"  # the profile changed (e.g. privacy)
+    PROFILE = "profile"  # the profile or the personal info changed (privacy, names, phone, picture)
     LOGIN = "login"  # the user signed in (date-based rules)
     EDITION_RARITY = "edition_rarity"  # an edition the user owns changed its rarity
     CONNECTING = "connecting"  # the pieces of a connecting with an edition the user owns changed
@@ -49,11 +52,17 @@ class Rule:
     measure: str | Promise  # what is counted, shown in Gestión and next to the levels
     progress: UserProgress | None = None  # built-in rules: a count, or 0/1 for BOOLEAN rules
     row_progress: RowProgress | None = None  # generic rules: also read the achievement row
-    needs_window: bool = False  # generic rules that only count inside the row's time windows
+    # Generic rules that read the row's time windows: the kinds they use. A row needs at least one
+    # of them, and no other kind (validated in Gestión; the rule itself never counts without them).
+    window_kinds: frozenset[WindowKind] = frozenset()
 
     @property
     def generic(self) -> bool:
         return self.row_progress is not None
+
+    @property
+    def needs_window(self) -> bool:
+        return bool(self.window_kinds)
 
     @property
     def counted(self) -> bool:
@@ -89,7 +98,12 @@ def rule(
 
 
 def generic_rule(
-    key: str, *, kind: Kind, events: Iterable[Event], measure: str | Promise, needs_window: bool = False
+    key: str,
+    *,
+    kind: Kind,
+    events: Iterable[Event],
+    measure: str | Promise,
+    window_kinds: Iterable[WindowKind] = (),
 ) -> Callable[[RowProgress], RowProgress]:
     """Register the decorated function as the progress of a generic rule (reads the row too)."""
 
@@ -100,7 +114,7 @@ def generic_rule(
             events=frozenset(events),
             measure=measure,
             row_progress=progress,
-            needs_window=needs_window,
+            window_kinds=frozenset(window_kinds),
         )
         _register(item)
         return progress

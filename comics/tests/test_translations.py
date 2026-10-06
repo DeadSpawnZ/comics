@@ -212,6 +212,18 @@ NEW_TRANSLATIONS = {
     "Medallion image (PNG, JPEG or WebP, up to 2 MB; replaces the generic medallion)": "Imagen del medallón (PNG, JPEG o WebP, hasta 2 MB; reemplaza al medallón genérico)",
     "A disabled category hides all its achievements from profiles and stops awarding them.": "Una categoría desactivada oculta todos sus logros de los perfiles y deja de otorgarlos.",
     "Delete category?": "¿Eliminar categoría?",
+    # The Random category, window kinds and the generic medal.
+    "a yearly date window": "una ventana anual de fechas",
+    "a window between two dates": "una ventana entre dos fechas",
+    "a time-of-day window": "una ventana de horas del día",
+    "has registered": "se ha registrado",
+    "has filled in first name, last name, email, phone and profile picture": "ha llenado nombre, apellidos, correo, teléfono y foto de perfil",
+    "has a profile picture": "tiene foto de perfil",
+    "has purchases in every month of the achievement's yearly window, in the same year": "tiene compras en cada mes de la ventana anual del logro, en el mismo año",
+    "This rule does not use %(kind)s.": "Esta regla no usa %(kind)s.",
+    "This rule needs %(kinds)s.": "Esta regla necesita %(kinds)s.",
+    "Icon image (PNG, JPEG or WebP, up to 2 MB; replaces the medal artwork)": "Imagen del ícono (PNG, JPEG o WebP, hasta 2 MB; reemplaza la ilustración de la medalla)",
+    "The medal uses the generic artwork until it has its own; an uploaded image replaces it.": "La medalla usa la ilustración genérica hasta tener la suya; una imagen subida la reemplaza.",
 }
 
 

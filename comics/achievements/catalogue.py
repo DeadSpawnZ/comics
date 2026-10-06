@@ -16,6 +16,8 @@ generated in Gestión (models.GENERATED_CODE_PREFIX), so the two can never colli
 
 from __future__ import annotations
 
+import datetime
+
 from django.db import transaction
 
 from comics.models import Achievement, AchievementCategory, AchievementTier
@@ -26,13 +28,13 @@ CATEGORIES = [
     {"code": "sagas", "name_en": "Sagas", "name_es": "Sagas", "display_order": 30},
     {"code": "community", "name_en": "Community", "name_es": "Comunidad", "display_order": 40},
     {"code": "seniority", "name_en": "Seniority", "name_es": "Antigüedad", "display_order": 50},
+    {"code": "random", "name_en": "Random", "name_es": "Random", "display_order": 60},
 ]
 
 ACHIEVEMENTS = [
     {
         "code": "origin",
         "category": "collection",
-        "icon": "auto_stories",
         "display_order": 10,
         "name_en": "Origin",
         "name_es": "Origen",
@@ -43,7 +45,6 @@ ACHIEVEMENTS = [
     {
         "code": "great_power",
         "category": "collection",
-        "icon": "collections_bookmark",
         "display_order": 20,
         "name_en": "With great power…",
         "name_es": "Un gran poder…",
@@ -54,7 +55,6 @@ ACHIEVEMENTS = [
     {
         "code": "veteran",
         "category": "seniority",
-        "icon": "military_tech",
         "display_order": 10,
         "name_en": "Veteran",
         "name_es": "Veterano",
@@ -65,7 +65,6 @@ ACHIEVEMENTS = [
     {
         "code": "secret_identity",
         "category": "community",
-        "icon": "visibility_off",
         "display_order": 10,
         "is_secret": True,
         "name_en": "Secret identity",
@@ -79,7 +78,6 @@ ACHIEVEMENTS = [
     {
         "code": "infinity_gauntlet",
         "category": "treasures",
-        "icon": "diamond",
         "display_order": 10,
         "name_en": "Infinity Gauntlet",
         "name_es": "Guantelete del Infinito",
@@ -90,7 +88,6 @@ ACHIEVEMENTS = [
     {
         "code": "batcave_vault",
         "category": "treasures",
-        "icon": "draw",
         "display_order": 20,
         "name_en": "Batman's vault",
         "name_es": "Bóveda de Batman",
@@ -101,7 +98,6 @@ ACHIEVEMENTS = [
     {
         "code": "multiverse",
         "category": "collection",
-        "icon": "auto_awesome_motion",
         "display_order": 30,
         "name_en": "Multiverse",
         "name_es": "Multiverso",
@@ -112,7 +108,6 @@ ACHIEVEMENTS = [
     {
         "code": "speed_force",
         "category": "collection",
-        "icon": "bolt",
         "display_order": 40,
         "name_en": "Speed Force",
         "name_es": "Speed Force",
@@ -123,7 +118,6 @@ ACHIEVEMENTS = [
     {
         "code": "lazarus_pit",
         "category": "collection",
-        "icon": "replay",
         "display_order": 50,
         "is_secret": True,
         "name_en": "Lazarus Pit",
@@ -137,7 +131,6 @@ ACHIEVEMENTS = [
     {
         "code": "assemble",
         "category": "sagas",
-        "icon": "grid_view",
         "display_order": 10,
         "name_en": "Avengers, assemble!",
         "name_es": "¡Vengadores, reuníos!",
@@ -148,7 +141,6 @@ ACHIEVEMENTS = [
     {
         "code": "chronicler",
         "category": "sagas",
-        "icon": "history_edu",
         "display_order": 20,
         "name_en": "Chronicler",
         "name_es": "Lector de crónicas",
@@ -159,7 +151,6 @@ ACHIEVEMENTS = [
     {
         "code": "halloween",
         "category": "community",
-        "icon": "skull",
         "display_order": 20,
         "is_secret": True,
         "name_en": "Halloween night",
@@ -176,6 +167,78 @@ ACHIEVEMENTS = [
             "window_start_month": 10,
             "window_end_day": 31,
             "window_end_month": 10,
+        },
+    },
+    {
+        "code": "novato",
+        "category": "random",
+        "display_order": 10,
+        "name_en": "Rookie",
+        "name_es": "Novato",
+        "description_en": "Register in Comi. Welcome to the team!",
+        "description_es": "Regístrate en Comi. ¡Bienvenido al equipo!",
+        "tiers": [],
+    },
+    {
+        "code": "aplicado",
+        "category": "random",
+        "display_order": 20,
+        "name_en": "Diligent",
+        "name_es": "Aplicado",
+        "description_en": "Fill in your whole profile: first name, last name, email, phone and profile picture.",
+        "description_es": "Completa todo tu perfil: nombre, apellidos, correo, teléfono y foto de perfil.",
+        "tiers": [],
+    },
+    {
+        "code": "fotogenico",
+        "category": "random",
+        "display_order": 30,
+        "name_en": "Photogenic",
+        "name_es": "Fotogénico",
+        "description_en": "Upload a profile picture.",
+        "description_es": "Sube una foto de perfil.",
+        "tiers": [],
+    },
+    {
+        "code": "madrugador",
+        "category": "random",
+        "display_order": 40,
+        "name_en": "Early bird",
+        "name_es": "Madrugador",
+        "description_en": "Sign in between 7:00 and 8:00 in the morning.",
+        "description_es": "Inicia sesión entre las 7:00 y las 8:00 de la mañana.",
+        "tiers": [],
+        "rule": "login_in_window",
+        "window": {"window_start_time": datetime.time(7, 0), "window_end_time": datetime.time(8, 0)},
+    },
+    {
+        "code": "ave_nocturna",
+        "category": "random",
+        "display_order": 50,
+        "name_en": "Night owl",
+        "name_es": "Ave nocturna",
+        "description_en": "Sign in between 1:00 and 3:00 at night.",
+        "description_es": "Inicia sesión entre la 1:00 y las 3:00 de la madrugada.",
+        "tiers": [],
+        "rule": "login_in_window",
+        "window": {"window_start_time": datetime.time(1, 0), "window_end_time": datetime.time(3, 0)},
+    },
+    {
+        "code": "verano",
+        "category": "random",
+        "display_order": 60,
+        "name_en": "Summer",
+        "name_es": "Verano",
+        "description_en": "Register a purchase in July and another in August of the same year.",
+        "description_es": "Registra una compra en julio y otra en agosto del mismo año.",
+        "tiers": [],
+        "rule": "purchases_each_month_in_window",
+        "window": {
+            "calendar_window": "yearly",
+            "window_start_day": 1,
+            "window_start_month": 7,
+            "window_end_day": 31,
+            "window_end_month": 8,
         },
     },
 ]

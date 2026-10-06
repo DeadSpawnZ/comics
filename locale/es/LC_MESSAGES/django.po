@@ -2347,3 +2347,49 @@ msgid "%(counter)s achievement"
 msgid_plural "%(counter)s achievements"
 msgstr[0] "%(counter)s logro"
 msgstr[1] "%(counter)s logros"
+
+#: comics/achievements/windows.py
+msgid "a yearly date window"
+msgstr "una ventana anual de fechas"
+
+#: comics/achievements/windows.py
+msgid "a window between two dates"
+msgstr "una ventana entre dos fechas"
+
+#: comics/achievements/windows.py
+msgid "a time-of-day window"
+msgstr "una ventana de horas del día"
+
+#: comics/achievements/rules.py
+msgid "has registered"
+msgstr "se ha registrado"
+
+#: comics/achievements/rules.py
+msgid "has filled in first name, last name, email, phone and profile picture"
+msgstr "ha llenado nombre, apellidos, correo, teléfono y foto de perfil"
+
+#: comics/achievements/rules.py
+msgid "has a profile picture"
+msgstr "tiene foto de perfil"
+
+#: comics/achievements/rules.py
+msgid "has purchases in every month of the achievement's yearly window, in the same year"
+msgstr "tiene compras en cada mes de la ventana anual del logro, en el mismo año"
+
+#: comics/forms.py
+#, python-format
+msgid "This rule does not use %(kind)s."
+msgstr "Esta regla no usa %(kind)s."
+
+#: comics/forms.py
+#, python-format
+msgid "This rule needs %(kinds)s."
+msgstr "Esta regla necesita %(kinds)s."
+
+#: comics/templates/manage/achievement_form.html
+msgid "Icon image (PNG, JPEG or WebP, up to 2 MB; replaces the medal artwork)"
+msgstr "Imagen del ícono (PNG, JPEG o WebP, hasta 2 MB; reemplaza la ilustración de la medalla)"
+
+#: comics/templates/manage/achievement_form.html
+msgid "The medal uses the generic artwork until it has its own; an uploaded image replaces it."
+msgstr "La medalla usa la ilustración genérica hasta tener la suya; una imagen subida la reemplaza."

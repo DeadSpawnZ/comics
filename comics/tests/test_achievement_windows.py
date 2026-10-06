@@ -227,7 +227,6 @@ class WindowFormTests(ComiTestCase):
             "name_en": "Christmas Eve",
             "name_es": "Nochebuena",
             "category": str(AchievementCategory.objects.get(code="community").pk),
-            "icon": "celebration",
             "display_order": "0",
             "is_enabled": "on",
             "calendar_window": "yearly",

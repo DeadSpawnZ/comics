@@ -1,10 +1,10 @@
-{% comment %}An achievement medal: its picture inside a ring drawn here, coloured by level. Expects
+{% comment %}An achievement medal: its picture (always an image) inside a ring drawn here, coloured by level. Expects
 `medal` (comics/achievements/medals.py Medal) and an optional `size` ("sm" or "lg"). Decorative:
 whatever wraps it gives it an accessible name. Pictures go in <img> (never inline) so the ids
 inside each SVG stay isolated.{% endcomment %}
 <span class="medal medal--{{ medal.rim }}{% if size %} medal--{{ size }}{% endif %}{% if medal.locked %} is-locked{% endif %}" aria-hidden="true">
   <span class="medal__disc">
-    {% if medal.image_url %}<img src="{{ medal.image_url }}" alt="" loading="lazy" decoding="async">{% else %}<span class="medal__symbol material-symbols-outlined">{{ medal.symbol }}</span>{% endif %}
+    <img src="{{ medal.image_url }}" alt="" loading="lazy" decoding="async">
   </span>
   {% if medal.pill %}<span class="medal__pill">x{{ medal.pill }}</span>{% endif %}
   {% if medal.progress %}<span class="medal__progress">{{ medal.progress }}</span>{% endif %}

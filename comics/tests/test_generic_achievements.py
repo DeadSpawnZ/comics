@@ -19,7 +19,7 @@ from django.urls import reverse
 from comics.achievements import engine, medals, registry
 from comics.achievements.catalogue import BUILTIN_CODES, CATEGORIES
 from comics.achievements.registry import Kind, builtin_rules, generic_rules, get_rule
-from comics.achievements.windows import CalendarWindow
+from comics.achievements.windows import ALL_WINDOW_KINDS, CalendarWindow, WindowKind
 from comics.forms import AchievementCreateForm
 from comics.models import (
     GENERATED_CODE_PREFIX,
@@ -56,10 +56,13 @@ def christmas(code: str = "christmas", **fields: object) -> Achievement:
 
 class RegistryTests(ComiTestCase):
     def test_generic_and_builtin_rules(self) -> None:
-        self.assertEqual(set(generic_rules()), {"login_in_window"})
+        self.assertEqual(set(generic_rules()), {"login_in_window", "purchases_each_month_in_window"})
         self.assertNotIn("login_in_window", builtin_rules())
         rule = get_rule("login_in_window")
         self.assertEqual((rule.kind, rule.needs_window, rule.counted), (Kind.BOOLEAN, True, False))
+        self.assertEqual(rule.window_kinds, ALL_WINDOW_KINDS)
+        summer = get_rule("purchases_each_month_in_window")
+        self.assertEqual(summer.window_kinds, {WindowKind.YEARLY})
 
     def test_halloween_is_a_window_on_the_generic_rule(self) -> None:
         halloween = achievement("halloween")
@@ -69,10 +72,9 @@ class RegistryTests(ComiTestCase):
             ("yearly", 31, 10),
         )
         self.assertEqual((halloween.window_end_day, halloween.window_end_month), (31, 10))
-        self.assertEqual(
-            set(Achievement.objects.exclude(code="halloween").values_list("code", flat=True)),
-            set(Achievement.objects.exclude(code="halloween").values_list("rule", flat=True)),
-        )
+        generic_rows = {"halloween", "madrugador", "ave_nocturna", "verano"}
+        others = Achievement.objects.exclude(code__in=generic_rows)
+        self.assertEqual(set(others.values_list("code", flat=True)), set(others.values_list("rule", flat=True)))
 
 
 class LoginInWindowTests(ComiTestCase):
@@ -163,7 +165,6 @@ class CreateGenericAchievementTests(ComiTestCase):
             "name_es": "Nochebuena",
             "description_en": "Sign in on Christmas Eve.",
             "category": str(AchievementCategory.objects.get(code="community").pk),
-            "icon": "celebration",
             "display_order": "30",
             "is_enabled": "on",
             "calendar_window": "yearly",
@@ -181,12 +182,15 @@ class CreateGenericAchievementTests(ComiTestCase):
         self.client.force_login(make_user())
         self.assertEqual(self.client.get(self.url).status_code, 403)
         self.assertEqual(self.client.post(self.url, self.data()).status_code, 403)
-        self.assertFalse(Achievement.objects.filter(rule="login_in_window").exclude(code="halloween").exists())
+        self.assertFalse(Achievement.objects.exclude(code__in=BUILTIN_CODES).exists())
 
     def test_the_form_offers_only_generic_rules_and_their_windows(self) -> None:
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual([key for key, _label in response.context["form"].fields["rule"].choices], ["login_in_window"])
+        self.assertEqual(
+            [key for key, _label in response.context["form"].fields["rule"].choices],
+            ["login_in_window", "purchases_each_month_in_window"],
+        )
         self.assertContains(response, 'name="calendar_window"')
         self.assertContains(response, "This achievement is earned or not: it has a single level.")
         self.assertContains(self.client.get(reverse("manage_achievements")), self.url)
@@ -197,8 +201,8 @@ class CreateGenericAchievementTests(ComiTestCase):
         self.assertRedirects(response, reverse("manage_achievements"), fetch_redirect_response=False)
         created = achievement("g_christmas_eve")
         self.assertEqual(
-            (created.rule, created.category.code, created.name_es, created.icon),
-            ("login_in_window", "community", "Nochebuena", "celebration"),
+            (created.rule, created.category.code, created.name_es),
+            ("login_in_window", "community", "Nochebuena"),
         )
         self.assertEqual((created.window_start_day, created.window_start_month), (24, 12))
         self.assertFalse(created.tiers.exists())
@@ -215,9 +219,9 @@ class CreateGenericAchievementTests(ComiTestCase):
         self.client.post(self.url, self.data())
         self.client.post(self.url, self.data())
         self.client.post(self.url, self.data(name_en="Origin"))  # never the built-in "origin"
-        codes = set(Achievement.objects.filter(rule="login_in_window").values_list("code", flat=True))
-        self.assertEqual(codes, {"halloween", "g_christmas_eve", "g_christmas_eve_2", "g_origin"})
-        self.assertEqual(medals.icon_source(achievement("g_origin")), medals.IconSource.SYMBOL)
+        codes = set(Achievement.objects.exclude(code__in=BUILTIN_CODES).values_list("code", flat=True))
+        self.assertEqual(codes, {"g_christmas_eve", "g_christmas_eve_2", "g_origin"})
+        self.assertEqual(medals.icon_source(achievement("g_origin")), medals.IconSource.GENERIC)
 
     def test_builtin_codes_never_use_the_generated_prefix(self) -> None:
         self.assertFalse([code for code in BUILTIN_CODES if code.startswith(GENERATED_CODE_PREFIX)])
@@ -255,7 +259,7 @@ class CreateGenericAchievementTests(ComiTestCase):
                 response = self.client.post(self.url, data)
                 self.assertEqual(response.status_code, 200)
                 self.assertTrue(response.context["form"].errors or response.context["tiers"].non_form_errors())
-        self.assertEqual(Achievement.objects.count(), 12)
+        self.assertEqual(Achievement.objects.count(), len(BUILTIN_CODES))
 
     def test_icon_image_on_create(self) -> None:
         response = self.client.post(self.url, {**self.data(), "icon_image": image_upload("icon.png")})
@@ -273,7 +277,6 @@ class EditAndDeleteGenericAchievementTests(ComiTestCase):
             "name_en": target.name_en,
             "name_es": target.name_es,
             "category": str(target.category_id),
-            "icon": target.icon,
             "display_order": str(target.display_order),
             "is_enabled": "on",
             "calendar_window": target.calendar_window,

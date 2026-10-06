@@ -958,7 +958,7 @@ a.md-paginator__page:hover {
 }
 
 /*
- * Achievement medals: the picture (an <img>, or a Material Symbols icon) inside a ring coloured by
+ * Achievement medals: the picture (an <img>) inside a ring coloured by
  * level, as in the approved design: neutral for level 1 and achievements without levels, silver
  * for level 2, gold from level 3. Proportions follow the artwork: a 62-unit medal whose disc has
  * a radius of 25.5 units, so the ring takes 5.5/62 of the size.
@@ -1023,23 +1023,13 @@ a.md-paginator__page:hover {
   background: linear-gradient(135deg, var(--rim-light), var(--rim-dark));
 }
 
-.medal__disc img,
-.medal__symbol {
+.medal__disc img {
   display: block;
   width: 100%;
   height: 100%;
   border-radius: 50%;
   /* The thin dark line between the ring and the disc. */
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--rim-dark) 35%, transparent);
-}
-
-.medal__symbol {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: var(--md-primary-container);
-  color: var(--md-primary);
-  font-size: calc(var(--medal-size) * 0.45);
 }
 
 .medal.is-locked .medal__disc {

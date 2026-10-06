@@ -1015,11 +1015,6 @@ def localized(obj: object, field: str) -> str:
     return ""
 
 
-validate_icon_name = RegexValidator(
-    r"^[a-z0-9_]{1,50}$", _("Use a Material Symbols icon name: lowercase letters, digits and _.")
-)
-
-
 # Codes generated in Gestión start with this, so they never collide with (nor pick up the bundled
 # artwork of) a built-in code a future data migration seeds. Built-in codes never use it.
 GENERATED_CODE_PREFIX = "g_"
@@ -1125,8 +1120,8 @@ class Achievement(PictureModel):
     hint_en = CharField(max_length=255, blank=True)
     hint_es = CharField(max_length=255, blank=True)
     category = ForeignKey(AchievementCategory, on_delete=PROTECT, related_name="achievements")
-    icon = CharField(max_length=50, default="emoji_events", validators=[validate_icon_name])
-    icon_image = ImageField(upload_to="achievements/", blank=True)  # replaces `icon` when set
+    # Replaces the bundled artwork (static/achievements/<code>.svg, else the generic medal) when set.
+    icon_image = ImageField(upload_to="achievements/", blank=True)
     is_secret = BooleanField(default=False)
     is_enabled = BooleanField(default=True)
     display_order = PositiveSmallIntegerField(default=0)

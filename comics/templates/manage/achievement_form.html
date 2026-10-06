@@ -90,11 +90,10 @@ is None). `rule` is the rule it uses (or the one picked while creating).{% endco
     <div class="md-surface-card">
       <h2 class="md-title-medium mb-3">{% translate "Appearance" %}</h2>
       <div class="row g-3 align-items-center">
-        <div class="col-12 col-md-4">{% include 'manage/includes/field.html' with field=form.category %}</div>
-        <div class="col-6 col-md-4">{% include 'manage/includes/field.html' with field=form.icon %}</div>
-        <div class="col-6 col-md-4">{% include 'manage/includes/field.html' with field=form.display_order %}</div>
+        <div class="col-12 col-md-6">{% include 'manage/includes/field.html' with field=form.category %}</div>
+        <div class="col-12 col-md-6">{% include 'manage/includes/field.html' with field=form.display_order %}</div>
         <div class="col-12 col-md-8">
-          <label class="md-section-label d-block" for="{{ form.icon_image.id_for_label }}">{% translate "Icon image (PNG, JPEG or WebP, up to 2 MB; replaces the icon)" %}</label>
+          <label class="md-section-label d-block" for="{{ form.icon_image.id_for_label }}">{% translate "Icon image (PNG, JPEG or WebP, up to 2 MB; replaces the medal artwork)" %}</label>
           {{ form.icon_image }}
           {% for error in form.icon_image.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
         </div>
@@ -116,7 +115,7 @@ is None). `rule` is the rule it uses (or the one picked while creating).{% endco
             <p class="md-body-medium mt-2 mb-0" data-icon-source="{{ icon_source }}">
               {% if icon_source == "upload" %}{% translate "The medal uses the uploaded image." %}
               {% elif icon_source == "bundled" %}{% translate "The medal uses the artwork included with Comi; an uploaded image replaces it." %}
-              {% else %}{% translate "The medal uses the icon; an uploaded image replaces it." %}{% endif %}
+              {% else %}{% translate "The medal uses the generic artwork until it has its own; an uploaded image replaces it." %}{% endif %}
             </p>
           </div>
         {% endif %}

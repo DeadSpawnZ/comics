@@ -52,6 +52,29 @@ class Windowed(Protocol):
     window_end_time: datetime.time | None
 
 
+class WindowKind(TextChoices):
+    """The kinds of window a row can have; a windowed rule says which ones it reads."""
+
+    YEARLY = "yearly", _("a yearly date window")
+    ABSOLUTE = "absolute", _("a window between two dates")
+    TIME_OF_DAY = "time_of_day", _("a time-of-day window")
+
+
+ALL_WINDOW_KINDS = frozenset(WindowKind)
+
+
+def window_kinds(item: Windowed) -> set[WindowKind]:
+    """The kinds of window `item` has set."""
+    kinds = set()
+    if item.calendar_window == CalendarWindow.YEARLY:
+        kinds.add(WindowKind.YEARLY)
+    elif item.calendar_window == CalendarWindow.ABSOLUTE:
+        kinds.add(WindowKind.ABSOLUTE)
+    if has_time_window(item):
+        kinds.add(WindowKind.TIME_OF_DAY)
+    return kinds
+
+
 def project_zone() -> zoneinfo.ZoneInfo:
     return zoneinfo.ZoneInfo(settings.TIME_ZONE)
 
@@ -104,6 +127,25 @@ def in_time_window(item: Windowed, moment: datetime.time) -> bool:
     if start < end:
         return start <= moment < end
     return moment >= start or moment < end  # wraps midnight
+
+
+def year_occurrence(item: Windowed, day: datetime.date) -> int:
+    """For a day inside `item`'s yearly window: the year that occurrence of the window starts in
+    (a 24/12 - 06/01 window starting in 2025 also holds 01/01/2026)."""
+    return day.year if (day.month, day.day) >= (item.window_start_month, item.window_start_day) else day.year - 1
+
+
+def yearly_months(item: Windowed) -> list[int]:
+    """The months a yearly window touches, in order from its start (July and August for
+    01/07 - 31/08; December and January for 24/12 - 06/01). A window that wraps within its own
+    month (15/07 - 10/07) touches all twelve."""
+    start, end = item.window_start_month, item.window_end_month
+    if start is None or end is None:
+        return []
+    count = (end - start) % 12 + 1
+    if start == end and (item.window_start_day or 0) > (item.window_end_day or 0):
+        count = 12
+    return [(start - 1 + offset) % 12 + 1 for offset in range(count)]
 
 
 def window_errors(item: Windowed) -> dict[str, list[str]]:

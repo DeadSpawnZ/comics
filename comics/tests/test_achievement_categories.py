@@ -24,6 +24,7 @@ from .factories import image_upload, make_achievement, make_category, make_colle
 from .test_achievements import SVG, achievement, held, png_bytes
 
 category_migration = importlib.import_module("comics.migrations.0101_seed_achievement_categories")
+random_migration = importlib.import_module("comics.migrations.0103_seed_random_achievements")
 
 
 def category(code: str) -> AchievementCategory:
@@ -32,7 +33,7 @@ def category(code: str) -> AchievementCategory:
 
 class SeededCategoryTests(ComiTestCase):
     def test_the_former_choices_are_rows_with_their_labels(self) -> None:
-        rows = list(AchievementCategory.objects.values_list("code", "name_en", "name_es"))
+        rows = list(AchievementCategory.objects.exclude(code="random").values_list("code", "name_en", "name_es"))
         self.assertEqual(
             rows,
             [
@@ -47,7 +48,7 @@ class SeededCategoryTests(ComiTestCase):
         self.assertEqual(achievement("halloween").category.code, "community")
 
     def test_frozen_categories_match_the_catalogue(self) -> None:
-        self.assertEqual(category_migration.CATEGORIES, catalogue.CATEGORIES)
+        self.assertEqual(category_migration.CATEGORIES + random_migration.CATEGORIES, catalogue.CATEGORIES)
 
     def test_ensure_catalogue_recreates_missing_categories(self) -> None:
         Achievement.objects.filter(category__code="seniority").delete()
@@ -84,7 +85,7 @@ class CategoryGestionTests(ComiTestCase):
         self.assertEqual(self.client.post(reverse("manage_achievement_category_new"), self.data()).status_code, 403)
         delete_url = reverse("manage_achievement_category_delete", args=[make_category().pk])
         self.assertEqual(self.client.post(delete_url).status_code, 403)
-        self.assertEqual(AchievementCategory.objects.count(), 6)
+        self.assertEqual(AchievementCategory.objects.count(), len(catalogue.CATEGORIES) + 1)
 
     def test_list_shows_the_achievement_counts(self) -> None:
         make_category(name_en="Empty one", display_order=99)
@@ -137,7 +138,7 @@ class CategoryGestionTests(ComiTestCase):
         response = self.client.post(reverse("manage_achievement_category_new"), self.data(name_en=""))
         self.assertEqual(response.status_code, 200)
         self.assertIn("name_en", response.context["form"].errors)
-        self.assertEqual(AchievementCategory.objects.count(), 5)
+        self.assertEqual(AchievementCategory.objects.count(), len(catalogue.CATEGORIES))
 
     def test_edit_keeps_the_code_and_normalizes_the_medallion(self) -> None:
         target = category("sagas")
@@ -186,7 +187,9 @@ class CategoryGestionTests(ComiTestCase):
         make_achievement(code="custom", name_en="Custom one", category=first)
         html = self.client.get(reverse("manage_achievements")).content.decode()
         headings = re.findall(r'id="achievement-category-\d+">([^<]+)</h2>', html)
-        self.assertEqual(headings, ["Zeta group", "Collection", "Treasures", "Sagas", "Community", "Seniority"])
+        self.assertEqual(
+            headings, ["Zeta group", "Collection", "Treasures", "Sagas", "Community", "Seniority", "Random"]
+        )
         self.assertLess(html.index("Custom one"), html.index('">Collection</h2>'))
 
     def test_achievement_edit_moves_it_to_another_category(self) -> None:
@@ -198,7 +201,6 @@ class CategoryGestionTests(ComiTestCase):
             "name_en": target.name_en,
             "name_es": target.name_es,
             "category": str(category("treasures").pk),
-            "icon": target.icon,
             "display_order": "1",
             "is_enabled": "on",
             "tiers-TOTAL_FORMS": "0",
@@ -227,7 +229,7 @@ class DisabledCategoryTests(ComiTestCase):
         codes = {card.achievement.code for card in [*shown.earned, *shown.locked]}
         self.assertNotIn("origin", codes)
         self.assertIn("veteran", codes)
-        self.assertEqual(shown.total, 7)
+        self.assertEqual(shown.total, Achievement.objects.exclude(category__code="collection").count())
 
     def test_announcements_skip_disabled_categories(self) -> None:
         UserAchievement.objects.award(self.user, achievement("origin"), 1)

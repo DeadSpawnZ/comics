@@ -40,7 +40,16 @@ SEEDED = {
     "assemble",
     "chronicler",
     "halloween",
+    "novato",
+    "aplicado",
+    "fotogenico",
+    "madrugador",
+    "ave_nocturna",
+    "verano",
 }
+# Rows whose rule is a generic one (the others: rule = code).
+GENERIC_ROWS = {"halloween", "madrugador", "ave_nocturna", "verano"}
+PROFILE_RULES = {"secret_identity", "aplicado", "fotogenico"}
 COLLECTION_RULES = {
     "origin",
     "great_power",
@@ -51,11 +60,13 @@ COLLECTION_RULES = {
     "lazarus_pit",
     "assemble",
     "chronicler",
+    "purchases_each_month_in_window",
 }
 # What a browser sends when it loads a page (notices are only announced on page loads).
 PAGE = {"accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"}
 seed_migration = importlib.import_module("comics.migrations.0097_seed_achievements")
 more_seed_migration = importlib.import_module("comics.migrations.0099_seed_more_achievements")
+random_seed_migration = importlib.import_module("comics.migrations.0103_seed_random_achievements")
 
 
 def achievement(code: str) -> Achievement:
@@ -84,19 +95,25 @@ class SeedTests(ComiTestCase):
         self.assertEqual(set(Achievement.objects.values_list("code", flat=True)), SEEDED)
         # Every rule serves a seeded row; halloween is the generic login_in_window with a window.
         self.assertEqual(set(Achievement.objects.values_list("rule", flat=True)), set(all_rules()))
-        self.assertEqual(set(all_rules()), SEEDED - {"halloween"} | {"login_in_window"})
+        self.assertEqual(
+            set(all_rules()), SEEDED - GENERIC_ROWS | {"login_in_window", "purchases_each_month_in_window"}
+        )
         self.assertEqual(list(achievement("great_power").tiers.values_list("threshold", flat=True)), [100, 500, 1000])
         self.assertEqual(list(achievement("veteran").tiers.values_list("threshold", flat=True)), [1, 3, 5])
         self.assertTrue(achievement("secret_identity").is_secret)
         self.assertFalse(achievement("origin").tiers.exists())
 
     def test_frozen_seed_matches_the_catalogue(self) -> None:
-        # Rules and windows came later (0101): the first seeds froze everything else.
-        seeded = [
-            {key: value for key, value in item.items() if key not in ("rule", "window")}
-            for item in catalogue.ACHIEVEMENTS
-        ]
-        self.assertEqual(seed_migration.ACHIEVEMENTS + more_seed_migration.ACHIEVEMENTS, seeded)
+        # The first seeds froze icons (dropped by 0104); rules and windows came later (0101).
+        first = seed_migration.ACHIEVEMENTS + more_seed_migration.ACHIEVEMENTS
+        self.assertEqual(
+            [{key: value for key, value in item.items() if key != "icon"} for item in first],
+            [
+                {key: value for key, value in item.items() if key not in ("rule", "window")}
+                for item in catalogue.ACHIEVEMENTS[: len(first)]
+            ],
+        )
+        self.assertEqual(random_seed_migration.ACHIEVEMENTS, catalogue.ACHIEVEMENTS[len(first) :])
 
     def test_ensure_catalogue_only_creates_what_is_missing(self) -> None:
         Achievement.objects.filter(code="origin").delete()
@@ -122,10 +139,10 @@ class EngineTests(ComiTestCase):
 
     def test_awards_are_idempotent(self) -> None:
         buy(self.user)
-        self.assertEqual(sorted(engine.evaluate(self.user)), ["great_power", "origin"])
+        self.assertEqual(sorted(engine.evaluate(self.user)), ["great_power", "novato", "origin"])
         first = UserAchievement.objects.get(user=self.user, achievement__code="origin")
         self.assertEqual(engine.evaluate(self.user), [])
-        self.assertEqual(UserAchievement.objects.filter(user=self.user).count(), 2)
+        self.assertEqual(UserAchievement.objects.filter(user=self.user).count(), 3)
         self.assertEqual(UserAchievement.objects.get(pk=first.pk).awarded_at, first.awarded_at)
 
     def test_tiers_progress_and_keep_the_first_date(self) -> None:
@@ -251,7 +268,8 @@ class TriggerTests(ComiTestCase):
 
     def test_login_evaluates_date_based_rules(self) -> None:
         self.user.date_joined = timezone.now() - datetime.timedelta(days=400)
-        self.user.save()
+        with self.committed():
+            self.user.save()  # a user save is a profile event too
         with self.captureOnCommitCallbacks(execute=True):
             self.assertTrue(self.client.login(username="hero", password="pass-1234"))
         self.assertEqual(held(self.user, "veteran"), 1)
@@ -277,7 +295,7 @@ class TriggerTests(ComiTestCase):
             Profile.objects.get(user=self.user).save()  # another event of the same user joins
         self.assertEqual(len(callbacks), 2)
         calls = {call.args[0].pk: set(call.args[1]) for call in evaluate.call_args_list}
-        self.assertEqual(calls, {self.user.pk: COLLECTION_RULES | {"secret_identity"}, other.pk: COLLECTION_RULES})
+        self.assertEqual(calls, {self.user.pk: COLLECTION_RULES | PROFILE_RULES, other.pk: COLLECTION_RULES})
 
     def test_unexpected_pending_callback_shapes_fall_back_to_a_new_evaluation(self) -> None:
         unexpected = ("not", "the", "expected", "shape", "at", "all")
@@ -326,7 +344,8 @@ class RetroactiveAndNoticeTests(ComiTestCase):
 
     def test_command_awards_existing_activity_once(self) -> None:
         other = make_user()
-        self.assertIn("awarded or raised: 2.", self.run_command())
+        # hero: origin, great_power and novato; other: novato (every registered user).
+        self.assertIn("awarded or raised: 4.", self.run_command())
         self.assertEqual((held(self.user, "origin"), held(self.user, "great_power")), (1, 2))
         self.assertTrue(UserAchievement.objects.filter(user=self.user).first().bulk_awarded)
         self.assertEqual(held(other, "origin"), 0)
@@ -342,20 +361,28 @@ class RetroactiveAndNoticeTests(ComiTestCase):
 
     def test_retroactive_awards_are_announced_in_one_message(self) -> None:
         self.run_command()
-        self.assertEqual(engine.take_notices(self.user), ["You unlocked 2 achievements: see them on your profile."])
+        self.assertEqual(engine.take_notices(self.user), ["You unlocked 3 achievements: see them on your profile."])
         self.assertEqual(engine.take_notices(self.user), [])
 
     def test_live_awards_are_announced_one_by_one(self) -> None:
         engine.evaluate(self.user)
         notices = engine.take_notices(self.user)
         self.assertCountEqual(
-            notices, ["Achievement unlocked: Origin", "Achievement unlocked: With great power… (level 2)"]
+            notices,
+            [
+                "Achievement unlocked: Origin",
+                "Achievement unlocked: With great power… (level 2)",
+                "Achievement unlocked: Rookie",
+            ],
         )
 
     def test_disabled_achievements_are_not_announced(self) -> None:
         engine.evaluate(self.user)
         Achievement.objects.filter(code="origin").update(is_enabled=False)
-        self.assertEqual(engine.take_notices(self.user), ["Achievement unlocked: With great power… (level 2)"])
+        self.assertCountEqual(
+            engine.take_notices(self.user),
+            ["Achievement unlocked: With great power… (level 2)", "Achievement unlocked: Rookie"],
+        )
         self.assertFalse(UserAchievement.objects.filter(user=self.user, notified=False).exists())
 
     def test_nothing_pending_costs_one_query(self) -> None:
@@ -409,7 +436,7 @@ class RetroactiveAndNoticeTests(ComiTestCase):
         engine.evaluate(self.user)
         first = engine.take_notices(self.user)
         second = engine.take_notices(self.user)
-        self.assertEqual(len(first), 2)
+        self.assertEqual(len(first), 3)  # origin, great_power, novato
         self.assertEqual(second, [])
 
 
@@ -451,8 +478,8 @@ class DisplayTests(ComiTestCase):
     def test_rows_count_completion(self) -> None:
         shown = showcase(self.owner, include_locked=True)
         # Highest level first; at the same level, achievements with levels before the others.
-        self.assertEqual([card.achievement.code for card in shown.earned], ["great_power", "origin"])
-        self.assertEqual((shown.earned_count, len(shown.locked), shown.total), (2, 10, 12))
+        self.assertEqual([card.achievement.code for card in shown.earned], ["great_power", "origin", "novato"])
+        self.assertEqual((shown.earned_count, len(shown.locked), shown.total), (3, 15, 18))
 
     def test_other_users_only_see_earned_achievements(self) -> None:
         self.client.force_login(self.viewer)
@@ -508,7 +535,6 @@ class GestionTests(ComiTestCase):
             "hint_en": target.hint_en,
             "hint_es": target.hint_es,
             "category": str(target.category_id),
-            "icon": target.icon,
             "display_order": str(target.display_order),
         }
         if target.is_enabled:
@@ -602,10 +628,10 @@ class GestionTests(ComiTestCase):
         self.assertEqual(self.client.post(url, self.form_data(origin)).status_code, 302)
 
     def test_rejected_post_keeps_the_saved_name_in_the_header(self) -> None:
-        response = self.client.post(self.url, self.form_data(self.great_power, name_en="", icon="Bad Icon!"))
+        response = self.client.post(self.url, self.form_data(self.great_power, name_en="", display_order="-1"))
         self.assertEqual(response.status_code, 200)
         self.assertIn("name_en", response.context["form"].errors)
-        self.assertIn("icon", response.context["form"].errors)
+        self.assertIn("display_order", response.context["form"].errors)
         self.assertEqual(response.context["achievement"].name_en, "With great power…")
 
     def test_icon_image_is_normalized_to_a_square_png(self) -> None:

@@ -38,6 +38,21 @@ from .test_achievements import achievement, set_thresholds
 
 ARTWORK_DIR = Path(settings.BASE_DIR) / "comics" / "static" / "achievements"
 EXTERNAL_URL = re.compile(r"url\((?!\s*['\"]?#)")
+# Achievements with their own artwork; the other catalogue codes use _generic.svg.
+BUNDLED_ART = {
+    "origin",
+    "great_power",
+    "veteran",
+    "secret_identity",
+    "infinity_gauntlet",
+    "batcave_vault",
+    "multiverse",
+    "speed_force",
+    "lazarus_pit",
+    "assemble",
+    "chronicler",
+    "halloween",
+}
 SECRET_CODES = ["secret_identity", "lazarus_pit", "halloween"]
 
 
@@ -63,15 +78,15 @@ class IconResolutionTests(ComiTestCase):
         self.assertEqual(medal_for(origin, 1).image_url, origin.icon_image.url)
         self.assertEqual(icon_source(origin), IconSource.UPLOAD)
 
-    def test_icon_is_the_last_resort(self) -> None:
-        ghost = Achievement(code="ghost", icon="bolt", name_en="Ghost", name_es="Fantasma")
-        self.assertIsNone(icon_url(ghost))
-        medal = medal_for(ghost, 1)
-        self.assertEqual((medal.image_url, medal.symbol), (None, "bolt"))
-        self.assertEqual(icon_source(ghost), IconSource.SYMBOL)
-        html = render_to_string("includes/achievement_medal.html", {"medal": medal})
-        self.assertIn('<span class="medal__symbol material-symbols-outlined">bolt</span>', html)
-        self.assertNotIn("<img", html)
+    def test_the_generic_medal_is_the_last_resort(self) -> None:
+        for target in [Achievement(code="ghost", name_en="Ghost", name_es="Fantasma"), achievement("novato")]:
+            with self.subTest(code=target.code):
+                self.assertEqual(icon_url(target), "/static/achievements/_generic.svg")
+                self.assertEqual(icon_source(target), IconSource.GENERIC)
+                medal = medal_for(target, 1)
+                html = render_to_string("includes/achievement_medal.html", {"medal": medal})
+                self.assertIn('<img src="/static/achievements/_generic.svg"', html)
+                self.assertNotIn("material-symbols", html)
 
     def test_secret_placeholder_never_reveals_the_real_picture(self) -> None:
         for code in SECRET_CODES:
@@ -79,7 +94,7 @@ class IconResolutionTests(ComiTestCase):
                 secret = achievement(code)
                 medal = medal_for(secret, 0, concealed=True)
                 self.assertEqual(medal.image_url, "/static/achievements/_secret.svg")
-                self.assertEqual((medal.symbol, medal.rim, medal.pill, medal.progress), ("help", Rim.SECRET, None, ""))
+                self.assertEqual((medal.rim, medal.pill, medal.progress), (Rim.SECRET, None, ""))
                 # Not even an uploaded picture.
                 upload_icon(secret)
                 self.assertEqual(medal_for(secret, 0, concealed=True).image_url, "/static/achievements/_secret.svg")
@@ -113,16 +128,21 @@ class IconResolutionTests(ComiTestCase):
 
 
 class BundledArtworkTests(ComiTestCase):
-    def test_every_catalogue_code_has_its_artwork(self) -> None:
-        # Fails when an achievement is added without its medal: add comics/static/achievements/<code>.svg.
+    def test_which_catalogue_codes_have_their_own_artwork(self) -> None:
+        # The rest use the generic medal until their artwork exists: when adding one, add its code here.
         codes = {item["code"] for item in catalogue.ACHIEVEMENTS}
-        for code in sorted(codes) + ["_secret", "_category"]:
+        self.assertLessEqual(BUNDLED_ART, codes)
+        for code in sorted(BUNDLED_ART) + ["_secret", "_category", "_generic"]:
             with self.subTest(code=code):
                 self.assertIsNotNone(finders.find(f"achievements/{code}.svg"), f"missing achievements/{code}.svg")
+        for code in sorted(codes - BUNDLED_ART):
+            with self.subTest(code=code):
+                self.assertIsNone(finders.find(f"achievements/{code}.svg"), f"add {code} to BUNDLED_ART")
+                self.assertEqual(icon_url(achievement(code)), "/static/achievements/_generic.svg")
 
     def test_artwork_is_plain_svg(self) -> None:
         files = sorted(ARTWORK_DIR.glob("*.svg"))
-        self.assertGreaterEqual(len(files), 14)
+        self.assertGreaterEqual(len(files), len(BUNDLED_ART) + 3)
         for path in files:
             with self.subTest(file=path.name):
                 root = ET.parse(path).getroot()
@@ -205,7 +225,7 @@ class ProfileMedalTests(ComiTestCase):
     def test_owner_sees_both_rows_with_rings_marks_and_progress(self) -> None:
         html = self.own_page()
         self.assertIn("Earned", html)
-        self.assertIn("2 of 12", html)
+        self.assertIn("3 of 18", html)  # origin, great_power x2 and novato
         self.assertIn("Not yet earned", html)
         self.assertIn("medal medal--silver", html)
         self.assertIn('<span class="medal__pill">x2</span>', html)
@@ -336,8 +356,9 @@ class GestionMedalTests(ComiTestCase):
         self.assertNotIn("/static/achievements/origin.svg", html)
         self.assertIn('data-icon-source="upload"', html)
 
-    def test_edit_page_falls_back_to_the_icon(self) -> None:
-        ghost = make_achievement(code="ghost", icon="bolt", name_en="Ghost", name_es="Fantasma")
+    def test_edit_page_falls_back_to_the_generic_medal(self) -> None:
+        ghost = make_achievement(code="ghost", name_en="Ghost", name_es="Fantasma")
         html = self.edit_page(ghost)
-        self.assertIn('<span class="medal__symbol material-symbols-outlined">bolt</span>', html)
-        self.assertIn('data-icon-source="symbol"', html)
+        self.assertIn('<img src="/static/achievements/_generic.svg"', html)
+        self.assertIn('data-icon-source="generic"', html)
+        self.assertNotIn('name="icon"', html)

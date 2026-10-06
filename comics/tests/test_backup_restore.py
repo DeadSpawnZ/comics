@@ -120,7 +120,8 @@ class RestoreTests(TransactionTestCase):
         self.assertEqual(list(great_power.tiers.values_list("level", "threshold")), [(1, 10), (2, 500), (3, 1000)])
         hero = User.objects.get(username="hero")
         levels = dict(UserAchievement.objects.filter(user=hero).values_list("achievement__code", "level"))
-        self.assertEqual(levels, {"great_power": 2, "origin": 1})
+        # novato came from the account's creation, committed right away (no TestCase transaction).
+        self.assertEqual(levels, {"great_power": 2, "origin": 1, "novato": 1})
 
     def test_restore_keeps_categories_and_gestion_achievements_by_code(self) -> None:
         hero = make_user(username="hero")

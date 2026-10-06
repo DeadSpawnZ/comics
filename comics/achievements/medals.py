@@ -1,8 +1,9 @@
 """How an achievement medal looks: its picture and the ring of the level reached.
 
 The picture comes, in this order, from the image uploaded in Gestión, the artwork bundled for the
-achievement's code (static/achievements/<code>.svg) or its Material Symbols icon. A secret
-achievement not earned yet always shows the bundled placeholder, never its real picture. The ring
+achievement's code (static/achievements/<code>.svg) or the generic medal (_generic.svg), so there
+is always a picture. A secret achievement not earned yet always shows the secret placeholder,
+never its real picture. The ring
 is drawn by the page (CSS) around the picture: neutral for level 1 and achievements without
 levels, silver for level 2 and gold from level 3 up."""
 
@@ -23,7 +24,7 @@ from comics.models import Achievement, AchievementCategory
 STATIC_DIR = "achievements"
 SECRET_ICON = f"{STATIC_DIR}/_secret.svg"
 CATEGORY_ICON = f"{STATIC_DIR}/_category.svg"  # generic category medallion
-SECRET_SYMBOL = "help"
+GENERIC_ICON = f"{STATIC_DIR}/_generic.svg"  # achievements without their own artwork yet
 # Codes are seeded by migrations, but only well-formed ones are turned into a static path (no
 # separators, no leading "_": "_secret" is the placeholder, not an achievement).
 _CODE = re.compile(r"^[a-z0-9][a-z0-9_]*$")
@@ -41,7 +42,7 @@ class Rim(TextChoices):
 class IconSource(StrEnum):
     UPLOAD = "upload"
     BUNDLED = "bundled"
-    SYMBOL = "symbol"
+    GENERIC = "generic"
 
 
 def rim_for(level: int) -> Rim:
@@ -69,18 +70,17 @@ def icon_source(achievement: Achievement) -> IconSource:
         return IconSource.UPLOAD
     if bundled_icon(achievement.code):
         return IconSource.BUNDLED
-    return IconSource.SYMBOL
+    return IconSource.GENERIC
 
 
-def icon_url(achievement: Achievement, *, concealed: bool = False) -> str | None:
-    """URL of the medal's picture, or None to use the Material Symbols icon instead."""
+def icon_url(achievement: Achievement, *, concealed: bool = False) -> str:
+    """URL of the medal's picture (never missing: the generic medal is the last resort)."""
     if concealed:
         return static(SECRET_ICON)
     if achievement.icon_image:
         return achievement.icon_image.url
-    path = bundled_icon(achievement.code)
     # static() goes through the configured storage: hashed names with the manifest storage.
-    return static(path) if path else None
+    return static(bundled_icon(achievement.code) or GENERIC_ICON)
 
 
 def category_icon_url(category: AchievementCategory) -> str:
@@ -92,8 +92,7 @@ def category_icon_url(category: AchievementCategory) -> str:
 
 @dataclass(frozen=True)
 class Medal:
-    image_url: str | None  # None: show `symbol` instead
-    symbol: str
+    image_url: str
     rim: Rim
     level: int  # 0 when not earned
     locked: bool = False  # not earned yet (shown greyed out)
@@ -124,10 +123,9 @@ def medal_for(
     """The medal of `achievement` at `level` (0 = not earned). `concealed`: a secret not earned
     yet, shown as the placeholder without anything of the real one."""
     if concealed:
-        return Medal(image_url=icon_url(achievement, concealed=True), symbol=SECRET_SYMBOL, rim=Rim.SECRET, level=0)
+        return Medal(image_url=icon_url(achievement, concealed=True), rim=Rim.SECRET, level=0)
     return Medal(
         image_url=icon_url(achievement),
-        symbol=achievement.icon,
         rim=rim_for(level),
         level=level,
         locked=level == 0,

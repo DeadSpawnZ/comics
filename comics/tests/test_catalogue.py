@@ -12,7 +12,7 @@ from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django.utils import timezone
 
-from comics.achievements import engine
+from comics.achievements import catalogue, engine
 from comics.achievements.display import showcase
 from comics.achievements.registry import get_rule
 from comics.forms import EditionForm, EditionManageForm
@@ -463,7 +463,7 @@ class CatalogueTests(ComiTestCase):
         response = self.client.get(reverse("manage_achievements"))
         self.assertEqual(response.context["rules_without_row"], [])
         rows = response.context["achievements"]
-        self.assertEqual(len(rows), 12)
+        self.assertEqual(len(rows), len(catalogue.ACHIEVEMENTS))
         self.assertTrue(all(row.rule_info is not None and not row.missing_tiers for row in rows))
         self.assertNotContains(response, "No rule in code")
 
@@ -489,7 +489,7 @@ class CatalogueTests(ComiTestCase):
             own(user, make_edition(), trade_date=DAY)
         call_command("award_achievements", stdout=StringIO(), stderr=StringIO())
         levels = dict(UserAchievement.objects.filter(user=user).values_list("achievement__code", "level"))
-        self.assertEqual(levels, {"origin": 1, "multiverse": 1, "speed_force": 1})
+        self.assertEqual(levels, {"origin": 1, "multiverse": 1, "speed_force": 1, "novato": 1})
         self.assertTrue(all(UserAchievement.objects.filter(user=user).values_list("bulk_awarded", flat=True)))
 
     def test_showcase_cost_does_not_grow_with_the_collection(self) -> None:
@@ -515,7 +515,8 @@ class CatalogueTests(ComiTestCase):
         with CaptureQueriesContext(connection) as captured:
             engine.evaluate(owner)
         evaluate_all = len(captured)
-        self.assertLessEqual(evaluate_all, 30)
+        # Each award is a few queries (savepoint, get_or_create); the Random rules add three reads.
+        self.assertLessEqual(evaluate_all, 36)
         with CaptureQueriesContext(connection) as captured:
             engine.evaluate(owner)
         self.assertLessEqual(len(captured), 15)  # nothing new to award: only the rule queries
