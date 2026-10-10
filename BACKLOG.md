@@ -27,8 +27,9 @@ approve. Design agreed with the user:
   withdraw), permissions for Reviewers/Administrators (migration `0110`), review area `/revisiones/`
   for reviewers without Gestión access, conflict detection against the base version, notifications
   to the author, achievement "Reportero" (`0111`). Service: `comics/change_requests.py`.
-- **Not deployed yet:** migrations `0107`–`0111` must be rehearsed on `comic_refactor`, then applied
-  to the real DB with the user's approval; the `web` image must be rebuilt (new dependency).
+- **Deployed locally on 2026-10-10:** migrations `0107`–`0111` rehearsed on `comic_refactor` and
+  applied to the real DB (backup `backups/comic-20261010-013936.sql`, previous image tagged
+  `comi:pre-requests`). Pending: Ruff pass and the PRs `feat/change-requests` → `develop` → `master`.
 - **Decisions taken by the implementer, awaiting user confirmation:** nobody reviews their own
   request; reviewers can't reject a request once it is validated; authors don't see reviewer names.
 - **v1 scope cuts (widen later if wanted):** no cover image proposals; no editing of a compilation's
