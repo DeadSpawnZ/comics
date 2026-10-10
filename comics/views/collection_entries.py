@@ -8,7 +8,6 @@ from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION
-from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
@@ -22,6 +21,7 @@ from django.urls import reverse
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_GET, require_POST
 
+from comics.decorators import management_required
 from comics.forms import (
     CollectionEntryForm,
     SignatureFormSet,
@@ -32,7 +32,9 @@ from comics.forms import (
 )
 from comics.helper import parse_date_or_none, parse_id_or_none
 from comics.models import Collection, Edition
-from comics.views.manage_editions import PAGE_SIZE, RECENT_COUNT, _log, _safe_next
+from comics.roles import can_access_management
+from comics.views.manage_editions import PAGE_SIZE, RECENT_COUNT
+from comics.views.utils import log_action, safe_next_url
 
 # Values carried over by "Save and add another" (a batch bought the same day from the same person).
 CARRY_OVER = ("publishing", "trade_date", "trade_type", "participant", "collector")
@@ -66,7 +68,9 @@ def _save_entry(
         form.add_error(None, exc)
         return None
     origin = "Gestión" if request.resolver_match.url_name.startswith("manage_") else "Mis comics"
-    _log(request, piece, ADDITION if created else CHANGE, f"{'Creado' if created else 'Modificado'} desde {origin}.")
+    log_action(
+        request, piece, ADDITION if created else CHANGE, f"{'Creado' if created else 'Modificado'} desde {origin}."
+    )
     message = _("Piece added: %(piece)s") if created else _("Piece saved: %(piece)s")
     messages.success(request, message % {"piece": piece.edition})
     return piece
@@ -120,9 +124,9 @@ def api_editions(request: HttpRequest) -> JsonResponse:
 @login_required
 @require_GET
 def api_purchases(request: HttpRequest) -> JsonResponse:
-    """Purchases a sale can point to. Only staff may ask about another collector's pieces."""
+    """Purchases a sale can point to. Only Gestión users may ask about another collector's pieces."""
     collector = request.user
-    if request.user.is_staff and request.GET.get("collector", "").isdigit():
+    if can_access_management(request.user) and request.GET.get("collector", "").isdigit():
         collector = User.objects.filter(pk=request.GET["collector"]).first() or collector
     try:
         edition_id = int(request.GET.get("edition", ""))
@@ -157,7 +161,7 @@ def my_piece_new(request: HttpRequest) -> HttpResponse:
 # ---------- Gestión: pieces of every collector ----------
 
 
-@staff_member_required
+@management_required
 def collection_list(request: HttpRequest) -> HttpResponse:
     query = request.GET.get("q", "").strip()
     collector_filter = request.GET.get("collector", "")
@@ -208,10 +212,10 @@ def collection_list(request: HttpRequest) -> HttpResponse:
     )
 
 
-@staff_member_required
+@management_required
 def collection_form(request: HttpRequest, pk: int | None = None) -> HttpResponse:
     piece = get_object_or_404(Collection.objects.select_related("edition"), pk=pk) if pk else None
-    back_url = _safe_next(request, reverse("manage_collections"))
+    back_url = safe_next_url(request, reverse("manage_collections"))
     initial = {} if piece else {"collector": request.user.pk, **_carried_initial(request)}
     form = CollectionEntryForm(request.POST or None, instance=piece, initial=initial)
     signatures = _signature_formset(request, form)
@@ -229,15 +233,15 @@ def collection_form(request: HttpRequest, pk: int | None = None) -> HttpResponse
     return render(request, "manage/collection_form.html", context)
 
 
-@staff_member_required
+@management_required
 @require_POST
 def collection_delete(request: HttpRequest, pk: int) -> HttpResponseRedirect:
     piece = get_object_or_404(Collection.objects.select_related("edition"), pk=pk)
     label = str(piece.edition)
-    back_url = _safe_next(request, reverse("manage_collections"))
+    back_url = safe_next_url(request, reverse("manage_collections"))
     try:
         with transaction.atomic():
-            _log(request, piece, DELETION, "Eliminado desde Gestión.")
+            log_action(request, piece, DELETION, "Eliminado desde Gestión.")
             piece.delete()
     except ProtectedError:
         messages.error(request, _("“%(name)s” cannot be deleted: it has signatures registered.") % {"name": label})

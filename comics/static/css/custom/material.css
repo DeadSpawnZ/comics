@@ -925,3 +925,397 @@ a.md-paginator__page:hover {
   color: var(--md-on-surface);
   font-size: 0.9375rem;
 }
+
+/* Avatars (user profile pictures) */
+.md-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.md-avatar--sm {
+  width: 28px;
+  height: 28px;
+}
+
+.md-avatar--lg {
+  width: 128px;
+  height: 128px;
+}
+
+.md-avatar--placeholder {
+  background-color: var(--md-surface-container-high);
+  color: var(--md-on-surface-variant);
+}
+
+.md-avatar--lg .material-symbols-outlined {
+  font-size: 64px;
+}
+
+/* Pencil button on the profile picture: opens the picture dialog (same look as the edition cover) */
+.profile-avatar-edit {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.profile-avatar-edit__btn {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background-color: var(--md-primary-container);
+  color: var(--md-on-primary-container);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.profile-avatar-edit__btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.profile-avatar-edit__btn:focus-visible {
+  outline: 2px solid var(--md-primary);
+  outline-offset: 2px;
+}
+
+.profile-avatar-edit__btn .material-symbols-outlined {
+  font-size: 1.25rem;
+}
+
+.profile-avatar-preview {
+  display: flex;
+  justify-content: center;
+}
+
+.profile-avatar-preview img.md-avatar {
+  object-fit: cover;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .profile-avatar-edit__btn {
+    transition: none;
+  }
+  .profile-avatar-edit__btn:hover {
+    transform: none;
+  }
+}
+
+/*
+ * Achievement medals: the picture (an <img>) inside a ring coloured by
+ * level, as in the approved design: neutral for level 1 and achievements without levels, silver
+ * for level 2, gold from level 3. Proportions follow the artwork: a 62-unit medal whose disc has
+ * a radius of 25.5 units, so the ring takes 5.5/62 of the size.
+ */
+.medal {
+  --medal-size: 64px;
+  --rim-light: #f1ece2;
+  --rim-dark: #b9b2a3;
+  position: relative;
+  display: inline-block;
+  flex-shrink: 0;
+  width: var(--medal-size);
+  height: var(--medal-size);
+}
+
+.medal--sm {
+  --medal-size: 40px;
+}
+
+.medal--lg {
+  --medal-size: 88px;
+}
+
+.medal--silver {
+  --rim-light: #e4e9ef;
+  --rim-dark: #6f7a87;
+}
+
+.medal--gold {
+  --rim-light: #ffd866;
+  --rim-dark: #a5760f;
+}
+
+.medal--secret {
+  --rim-light: #d5d8de;
+  --rim-dark: #8b9099;
+}
+
+.medal__disc {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: calc(var(--medal-size) * 5.5 / 62);
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--rim-light), var(--rim-dark));
+}
+
+.medal__disc img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  /* The thin dark line between the ring and the disc. */
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--rim-dark) 35%, transparent);
+}
+
+.medal.is-locked .medal__disc {
+  filter: grayscale(1);
+  opacity: 0.42;
+}
+
+.medal__pill {
+  position: absolute;
+  border-radius: 999px;
+  border: 1px solid var(--md-outline-variant);
+  font-family: "Roboto Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-weight: 500;
+  line-height: 16px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  right: -4px;
+  bottom: -2px;
+  min-width: 26px;
+  padding: 0 6px;
+  background-color: var(--md-surface);
+  color: var(--md-on-surface);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  font-size: 11px;
+  text-align: center;
+}
+
+/* Achievements (profile): category medallions with their challenges in a panel below their row */
+.trophy-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.75rem;
+}
+
+.trophy-category {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.75rem 0.5rem;
+  border: 1px solid transparent;
+  border-radius: 16px;
+  background: none;
+  color: inherit;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.trophy-category:hover,
+.trophy-category[aria-expanded="true"] {
+  background-color: var(--md-surface-container-high);
+}
+
+.trophy-category[aria-expanded="true"] {
+  border-color: var(--md-outline-variant);
+}
+
+.trophy-category:focus-visible {
+  outline: 3px solid var(--md-primary);
+  outline-offset: 2px;
+}
+
+.trophy-category__name {
+  font-weight: 500;
+}
+
+.trophy-category__count,
+.trophy-category__percent {
+  color: var(--md-on-surface-variant);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.trophy-progress {
+  display: block;
+  width: 100%;
+  max-width: 140px;
+  height: 6px;
+  border-radius: 3px;
+  background-color: var(--md-surface-container-highest);
+  overflow: hidden;
+}
+
+.trophy-progress__bar {
+  display: block;
+  height: 100%;
+}
+
+.trophy-progress__bar.is-partial {
+  background-color: var(--bs-warning);
+}
+
+.trophy-progress__bar.is-complete {
+  background-color: var(--bs-success);
+}
+
+.trophy-panel {
+  grid-column: 1 / -1;
+  padding: 1rem;
+  border-radius: 16px;
+  background-color: var(--md-surface-container-high);
+  animation: trophy-panel-in 0.15s ease-out;
+}
+
+.trophy-panel[hidden] {
+  display: none;
+}
+
+/* Moved to another row after it appeared (resize): no fade again. */
+.trophy-panel.is-settled {
+  animation: none;
+}
+
+.trophy-panel__title {
+  font-size: 1rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.reto-list {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.reto {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 12px;
+  background-color: var(--md-surface-container-low);
+}
+
+.reto__body {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.reto__name {
+  font-weight: 500;
+}
+
+.reto__level {
+  color: var(--md-on-surface-variant);
+  font-weight: 400;
+}
+
+.reto__requirement {
+  color: var(--md-on-surface-variant);
+  font-size: 0.875rem;
+}
+
+.reto__status {
+  flex-shrink: 0;
+  color: var(--md-on-surface-variant);
+  font-size: 0.8125rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.reto.is-locked .reto__name,
+.reto.is-locked .reto__requirement {
+  color: var(--md-on-surface-variant);
+  opacity: 0.75;
+}
+
+@media (max-width: 575.98px) {
+  .trophy-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .reto {
+    flex-wrap: wrap;
+  }
+
+  .reto__status {
+    flex-basis: 100%;
+    text-align: left;
+    padding-left: calc(40px + 0.75rem);
+  }
+}
+
+@keyframes trophy-panel-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trophy-category {
+    transition: none;
+  }
+
+  .trophy-panel {
+    animation: none;
+  }
+}
+
+/* Edition rarity (rare and above) */
+.rarity-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.05rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+  vertical-align: middle;
+  border: 1px solid currentColor;
+}
+
+.rarity-badge .material-symbols-outlined {
+  font-size: 0.9rem;
+}
+
+.rarity-badge--rare {
+  color: #1565c0;
+}
+
+.rarity-badge--very_rare {
+  color: #7b1fa2;
+}
+
+.rarity-badge--legendary {
+  color: #b26a00;
+}
+
+:root[data-bs-theme="dark"] .rarity-badge--rare {
+  color: #90caf9;
+}
+
+:root[data-bs-theme="dark"] .rarity-badge--very_rare {
+  color: #ce93d8;
+}
+
+:root[data-bs-theme="dark"] .rarity-badge--legendary {
+  color: #ffcc80;
+}

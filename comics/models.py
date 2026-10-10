@@ -2,42 +2,58 @@ from __future__ import annotations
 
 import io
 import logging
+import re
+import secrets
+import unicodedata
 from collections.abc import Iterable
 from datetime import datetime
 from typing import Any, Self
 
-from django.contrib.auth.models import User
+from django.conf import settings
+from django.contrib.auth.models import Group, User
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
+from django.db import transaction
 from django.db.models import (
     CASCADE,
     PROTECT,
     SET_NULL,
     BooleanField,
     CharField,
+    CheckConstraint,
     DateField,
+    DateTimeField,
     DecimalField,
     F,
     ForeignKey,
     ImageField,
+    Index,
     IntegerField,
+    Manager,
     ManyToManyField,
     Min,
     Model,
+    OneToOneField,
+    PositiveIntegerField,
     PositiveSmallIntegerField,
     Q,
     QuerySet,
     TextChoices,
     TextField,
+    TimeField,
     UniqueConstraint,
 )
+from django.urls import reverse
+from django.utils import timezone
 from django.utils.functional import Promise
-from django.utils.translation import gettext, ngettext
+from django.utils.http import url_has_allowed_host_and_scheme
+from django.utils.translation import get_language, gettext, ngettext
 from django.utils.translation import gettext_lazy as _
 from PIL import Image
 
-from .helper import generate_image_jpeg
+from .achievements.windows import CalendarWindow, clear_unused, window_errors
+from .helper import generate_image_jpeg, square_jpeg, square_png
 
 logger = logging.getLogger(__name__)
 
@@ -215,6 +231,15 @@ class Edition(Model):
         DIGITAL = "digital", _("Digital")
         MAGAZINE = "magazine", _("Magazine")
 
+    class RarityChoices(TextChoices):
+        COMMON = "common", _("Common")
+        RARE = "rare", _("Rare")
+        VERY_RARE = "very_rare", _("Very rare")
+        LEGENDARY = "legendary", _("Legendary")
+
+    # "Great rarity": what the Infinity Gauntlet achievement counts.
+    GREAT_RARITY = (RarityChoices.VERY_RARE, RarityChoices.LEGENDARY)
+
     class PrintingChoices(TextChoices):
         FIRST = "1st", _("1st")
         SECOND = "2nd", _("2nd")
@@ -257,6 +282,8 @@ class Edition(Model):
     )
     cover_price = DecimalField(max_digits=8, decimal_places=2, default=0.00)
     format = CharField(max_length=20, choices=FormatChoices, default=FormatChoices.SINGLE_ISSUE)
+    # How hard the edition is to find, set in Gestión (not computed from ratio or print run).
+    rarity = CharField(max_length=20, choices=RarityChoices, default=RarityChoices.COMMON)
     release_date = DateField(default=datetime.now)
     image = ImageField(upload_to="images/originals/", null=True, blank=True)
     thumbnail = ImageField(upload_to="images/thumbnails/", null=True, blank=True)
@@ -313,6 +340,18 @@ class Edition(Model):
         # Issue change (automatic or manual link): the previous one is deleted if left without editions.
         if old_issue_id and old_issue_id != self.issue_id:
             Issue.objects.filter(pk=old_issue_id).delete_orphans()
+
+    @classmethod
+    def from_db(cls, db: str, field_names: Iterable[str], values: Iterable[Any]) -> Self:
+        instance = super().from_db(db, field_names, values)
+        # The rarity as loaded, to tell after a save whether it changed (see comics.signals).
+        instance.loaded_rarity = instance.__dict__.get("rarity")
+        return instance
+
+    @property
+    def is_notable_rarity(self) -> bool:
+        """Rare or above: collectors see it with a badge (common editions show nothing)."""
+        return self.rarity != self.RarityChoices.COMMON
 
     COVER_KINDS = (
         ("regular", _("Regular covers")),
@@ -838,3 +877,588 @@ class GeekCollectable(Model):
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         base_name = f"{self.name}_{timestamp}".replace(" ", "_")
         self.image = generate_image_jpeg(base_name, self.image)
+
+
+class AreaAccess(Model):
+    """Holder of the permissions that open a whole area of the site instead of acting on one model.
+
+    Django ties every permission to a content type, so area permissions need a model to hang from.
+    It has no default add/change/delete/view permissions: it exists only so `comics.access_management`
+    is declared in code, created by Django's own post_migrate handler on every database, and listed
+    in the admin like any other permission. Its table stays empty; it is a real (managed) table so
+    every model Django iterates (dumpdata, flush) exists in the database. See comics/roles.py for
+    the groups that use these permissions."""
+
+    class Meta:
+        default_permissions = ()
+        permissions = [("access_management", "Can access the management area (Gestión)")]
+        verbose_name = "area access"
+        verbose_name_plural = "area access"
+
+    def __str__(self) -> str:
+        return str(self._meta.verbose_name)
+
+
+PHONE_ALLOWED = re.compile(r"^\+?[0-9 ().-]+$")
+
+
+def validate_phone(value: str) -> None:
+    """Light phone check (no library): digits with the usual separators, an optional leading +,
+    and 7 to 15 digits (15 is the international maximum, E.164)."""
+    digits = sum(char.isdigit() for char in value)
+    if not PHONE_ALLOWED.match(value) or not 7 <= digits <= 15:
+        raise ValidationError(_("Enter a valid phone number."), code="invalid_phone")
+
+
+class PictureModel(Model):
+    """Base for models with one uploaded picture that is re-encoded when it changes.
+
+    Subclasses name the field (PICTURE_FIELD) and implement normalize_picture(). Saving re-encodes
+    a new picture and, once the save is committed, deletes the file it replaced. A save whose
+    update_fields leave the picture out does neither: a stale in-memory value must not be
+    re-encoded nor replace (and delete) the picture stored now."""
+
+    PICTURE_FIELD = ""
+
+    class Meta:
+        abstract = True
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        update_fields = kwargs.get("update_fields")
+        if update_fields is not None and self.PICTURE_FIELD not in update_fields:
+            super().save(*args, **kwargs)
+            return
+        old_name = self._stored_picture()
+        picture = getattr(self, self.PICTURE_FIELD)
+        if picture and picture.name != old_name:
+            setattr(self, self.PICTURE_FIELD, self.normalize_picture(picture))
+        super().save(*args, **kwargs)
+        picture = getattr(self, self.PICTURE_FIELD)
+        if old_name and old_name != picture.name:
+            storage = picture.storage
+            transaction.on_commit(lambda: storage.delete(old_name))
+
+    def normalize_picture(self, upload: Any) -> InMemoryUploadedFile:
+        raise NotImplementedError
+
+    def remove_picture(self) -> None:
+        """Drop the picture (save() deletes the file once committed)."""
+        if getattr(self, self.PICTURE_FIELD):
+            setattr(self, self.PICTURE_FIELD, "")
+            self.save(update_fields=[self.PICTURE_FIELD])
+
+    def _stored_picture(self) -> str:
+        """File name currently saved in the database ("" when none or not saved yet)."""
+        if not self.pk:
+            return ""
+        stored = type(self)._default_manager.filter(pk=self.pk).values_list(self.PICTURE_FIELD, flat=True)
+        return stored.first() or ""
+
+
+def _random_name(prefix: str) -> str:
+    # Random file names: media files are served without a session check.
+    return f"{prefix}_{secrets.token_hex(8)}"
+
+
+class ProfileManager(Manager["Profile"]):
+    def for_user(self, user: User) -> Profile:
+        """The user's profile, created on the spot when missing. New users get one from a signal
+        and existing ones from a migration, but loaddata skips signals (an old dump restores users
+        without profiles), so reads go through here and never fail."""
+        profile, _created = self.get_or_create(user=user)
+        return profile
+
+    def get_by_natural_key(self, username: str) -> Profile:
+        return self.get(user__username=username)
+
+
+class Profile(PictureModel):
+    """What a user adds about themselves. Email and phone are private: only the owner sees them."""
+
+    AVATAR_SIZE = 512  # pixels, square
+    PICTURE_FIELD = "avatar"
+
+    user = OneToOneField(User, on_delete=CASCADE, related_name="profile")
+    avatar = ImageField(upload_to="avatars/", blank=True)
+    phone = CharField(max_length=30, blank=True, validators=[validate_phone])
+    is_public = BooleanField(default=True)  # other signed-in users can see the profile
+
+    objects = ProfileManager()
+
+    def __str__(self) -> str:
+        return self.user.username
+
+    def natural_key(self) -> tuple[str]:
+        # Dumps refer to the profile by its user's username, like the user itself (see dump.py).
+        return self.user.natural_key()
+
+    natural_key.dependencies = ["auth.user"]
+
+    def normalize_picture(self, upload: Any) -> InMemoryUploadedFile:
+        return square_jpeg(_random_name(f"user{self.user_id}"), upload, self.AVATAR_SIZE)
+
+    def remove_avatar(self) -> None:
+        self.remove_picture()
+
+
+# ---------- Achievements ----------
+# What an achievement is called, looks like, when it can be earned and how its levels are set
+# lives here (editable in Gestión); how it is earned lives in code (comics/achievements), tied by
+# the achievement's `rule`.
+
+
+def localized(obj: object, field: str) -> str:
+    """`obj.<field>_<language>` in the active language, falling back to the other languages."""
+    active = (get_language() or settings.LANGUAGE_CODE).split("-")[0]
+    codes = [active] + [code for code, _name in settings.LANGUAGES if code != active]
+    for code in codes:
+        value = getattr(obj, f"{field}_{code}", "")
+        if value:
+            return value
+    return ""
+
+
+# Codes generated in Gestión start with this, so they never collide with (nor pick up the bundled
+# artwork of) a built-in code a future data migration seeds. Built-in codes never use it.
+GENERATED_CODE_PREFIX = "g_"
+
+
+def unique_code(name: str, taken: Iterable[str], *, max_length: int = 50) -> str:
+    """A code made from `name` (lowercase ASCII letters, digits and _, after GENERATED_CODE_PREFIX)
+    that is not in `taken`: "Noche de brujas" -> "g_noche_de_brujas", then "g_noche_de_brujas_2"...
+    Codes are identifiers (natural keys, bundled artwork names), so they never change once given."""
+    ascii_name = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode()
+    room = max_length - len(GENERATED_CODE_PREFIX)
+    base = re.sub(r"[^a-z0-9]+", "_", ascii_name.lower()).strip("_")[:room].strip("_") or "item"
+    taken = set(taken)
+    code, number = f"{GENERATED_CODE_PREFIX}{base}", 1
+    while code in taken:
+        number += 1
+        suffix = f"_{number}"
+        code = f"{GENERATED_CODE_PREFIX}{base[: room - len(suffix)].rstrip('_')}{suffix}"
+    return code
+
+
+class AchievementCategoryManager(Manager["AchievementCategory"]):
+    def get_by_natural_key(self, code: str) -> AchievementCategory:
+        return self.get(code=code)
+
+
+class AchievementCategory(PictureModel):
+    """A group of achievements, managed in Gestión: its name, order and medallion. A disabled
+    category hides (and stops awarding) all its achievements. It cannot be deleted while it has
+    achievements (PROTECT)."""
+
+    IMAGE_SIZE = 256  # pixels, square
+    PICTURE_FIELD = "image"
+
+    code = CharField(max_length=30, unique=True)  # natural key; generated from the name, never changed
+    name_en = CharField(max_length=80)
+    name_es = CharField(max_length=80)
+    description_en = CharField(max_length=255, blank=True)
+    description_es = CharField(max_length=255, blank=True)
+    display_order = PositiveSmallIntegerField(default=0)
+    is_enabled = BooleanField(default=True)
+    image = ImageField(upload_to="achievement_categories/", blank=True)  # else the bundled medallion
+
+    objects = AchievementCategoryManager()
+
+    class Meta:
+        ordering = ["display_order", "code"]
+        verbose_name_plural = "achievement categories"
+
+    def __str__(self) -> str:
+        return self.name or self.code
+
+    def natural_key(self) -> tuple[str]:
+        return (self.code,)
+
+    def normalize_picture(self, upload: Any) -> InMemoryUploadedFile:
+        return square_png(_random_name(f"category_{self.code}"), upload, self.IMAGE_SIZE)
+
+    @property
+    def name(self) -> str:
+        return localized(self, "name")
+
+    @property
+    def description(self) -> str:
+        return localized(self, "description")
+
+
+class AchievementQuerySet(QuerySet["Achievement"]):
+    def active(self) -> AchievementQuerySet:
+        """Shown and awarded: enabled, in an enabled category."""
+        return self.filter(is_enabled=True, category__is_enabled=True)
+
+
+class AchievementManager(Manager.from_queryset(AchievementQuerySet)):  # type: ignore[misc]
+    def get_by_natural_key(self, code: str) -> Achievement:
+        return self.get(code=code)
+
+
+def _day_validators() -> list[Any]:
+    return [MinValueValidator(1), MaxValueValidator(31)]
+
+
+def _month_validators() -> list[Any]:
+    return [MinValueValidator(1), MaxValueValidator(12)]
+
+
+class Achievement(PictureModel):
+    """An achievement as users see it. `code` identifies the row (natural key, bundled artwork);
+    `rule` names the rule in code that awards it, so several rows can share one rule. Built-in
+    rows come from data migrations; Gestión creates rows only for generic rules, which read their
+    parameters (the time windows) from the row."""
+
+    ICON_SIZE = 256  # pixels, square
+    PICTURE_FIELD = "icon_image"
+
+    code = CharField(max_length=50, unique=True)  # never changed; generated from the name in Gestión
+    rule = CharField(max_length=50)  # registry key (comics/achievements/rules.py); fixed once created
+    name_en = CharField(max_length=80)
+    name_es = CharField(max_length=80)
+    description_en = CharField(max_length=255, blank=True)
+    description_es = CharField(max_length=255, blank=True)
+    # Shown instead of the description while a secret achievement is not earned (optional).
+    hint_en = CharField(max_length=255, blank=True)
+    hint_es = CharField(max_length=255, blank=True)
+    category = ForeignKey(AchievementCategory, on_delete=PROTECT, related_name="achievements")
+    # Replaces the bundled artwork (static/achievements/<code>.svg, else the generic medal) when set.
+    icon_image = ImageField(upload_to="achievements/", blank=True)
+    is_secret = BooleanField(default=False)
+    is_enabled = BooleanField(default=True)
+    display_order = PositiveSmallIntegerField(default=0)
+    # Time windows (comics/achievements/windows.py), read by windowed rules, in the project time zone.
+    calendar_window = CharField(max_length=10, choices=CalendarWindow.choices, default=CalendarWindow.NONE)
+    window_start_day = PositiveSmallIntegerField(null=True, blank=True, validators=_day_validators())
+    window_start_month = PositiveSmallIntegerField(null=True, blank=True, validators=_month_validators())
+    window_end_day = PositiveSmallIntegerField(null=True, blank=True, validators=_day_validators())
+    window_end_month = PositiveSmallIntegerField(null=True, blank=True, validators=_month_validators())
+    window_start_date = DateField(null=True, blank=True)
+    window_end_date = DateField(null=True, blank=True)
+    window_start_time = TimeField(null=True, blank=True)
+    window_end_time = TimeField(null=True, blank=True)
+
+    objects = AchievementManager()
+
+    class Meta:
+        # "category" follows the category's own ordering (display_order, code).
+        ordering = ["category", "display_order", "code"]
+
+    def __str__(self) -> str:
+        return self.name or self.code
+
+    def natural_key(self) -> tuple[str]:
+        return (self.code,)
+
+    natural_key.dependencies = ["comics.achievementcategory"]
+
+    def clean(self) -> None:
+        super().clean()
+        clear_unused(self)
+        errors = window_errors(self)
+        if errors:
+            raise ValidationError(errors)
+
+    def normalize_picture(self, upload: Any) -> InMemoryUploadedFile:
+        return square_png(_random_name(f"achievement_{self.code}"), upload, self.ICON_SIZE)
+
+    @property
+    def name(self) -> str:
+        return localized(self, "name")
+
+    @property
+    def description(self) -> str:
+        return localized(self, "description")
+
+    @property
+    def hint(self) -> str:
+        return localized(self, "hint")
+
+    @property
+    def is_active(self) -> bool:
+        return self.is_enabled and self.category.is_enabled
+
+
+class AchievementTierManager(Manager["AchievementTier"]):
+    def get_by_natural_key(self, code: str, level: int) -> AchievementTier:
+        return self.get(achievement__code=code, level=level)
+
+
+class AchievementTier(Model):
+    """A level of a count-based achievement: reached when the count gets to `threshold`."""
+
+    achievement = ForeignKey(Achievement, on_delete=CASCADE, related_name="tiers")
+    level = PositiveSmallIntegerField(validators=[MinValueValidator(1)])
+    threshold = PositiveIntegerField(validators=[MinValueValidator(1)])
+    label_en = CharField(max_length=40, blank=True)
+    label_es = CharField(max_length=40, blank=True)
+
+    objects = AchievementTierManager()
+
+    class Meta:
+        ordering = ["achievement", "level"]
+        constraints = [UniqueConstraint(fields=["achievement", "level"], name="unique_achievement_tier_level")]
+
+    def __str__(self) -> str:
+        return f"{self.achievement.code} x{self.level} ({self.threshold})"
+
+    def natural_key(self) -> tuple[str, int]:
+        return (*self.achievement.natural_key(), self.level)
+
+    natural_key.dependencies = ["comics.achievement"]
+
+    @property
+    def label(self) -> str:
+        return localized(self, "label")
+
+
+class UserAchievementManager(Manager["UserAchievement"]):
+    def get_by_natural_key(self, username: str, code: str) -> UserAchievement:
+        return self.get(user__username=username, achievement__code=code)
+
+    def award(self, user: User, achievement: Achievement, level: int, *, bulk: bool = False) -> bool:
+        """Give `user` `level` of `achievement` unless they already have it or a higher one.
+        Safe under concurrency: one row per user and achievement (unique constraint, get_or_create)
+        and the level only moves up (conditional UPDATE). True when something changed."""
+        now = timezone.now()
+        values = {"level": level, "level_reached_at": now, "notified": False, "bulk_awarded": bulk}
+        award, created = self.get_or_create(user=user, achievement=achievement, defaults={**values, "awarded_at": now})
+        if created:
+            return True
+        return bool(self.filter(pk=award.pk, level__lt=level).update(**values))
+
+
+class UserAchievement(Model):
+    """An achievement a user earned and the highest level reached. Never revoked: losing what
+    earned it (e.g. selling comics) does not take it away."""
+
+    user = ForeignKey(User, on_delete=CASCADE, related_name="achievements")
+    achievement = ForeignKey(Achievement, on_delete=PROTECT, related_name="awards")
+    level = PositiveSmallIntegerField(default=1)
+    awarded_at = DateTimeField()  # first earned
+    level_reached_at = DateTimeField()  # current level reached
+    # Pending "unlocked" notice. Retroactive awards (bulk_awarded) are announced together in one.
+    notified = BooleanField(default=False)
+    bulk_awarded = BooleanField(default=False)
+
+    objects = UserAchievementManager()
+
+    class Meta:
+        constraints = [UniqueConstraint(fields=["user", "achievement"], name="unique_user_achievement")]
+        indexes = [Index(fields=["user", "notified"], name="user_achievement_pending")]
+
+    def __str__(self) -> str:
+        return f"{self.user} - {self.achievement.code} x{self.level}"
+
+    def natural_key(self) -> tuple[str, str]:
+        return (*self.user.natural_key(), *self.achievement.natural_key())
+
+    natural_key.dependencies = ["auth.user", "comics.achievement"]
+
+
+# ---------- Notifications ----------
+# What users are told about (achievements, announcements from Gestión), shown under the navbar
+# bell. A notification stores references, never texts: it is rendered in the viewer's language
+# from the achievement or announcement it points to, so later edits show up in it.
+
+
+def validate_site_path(value: str) -> None:
+    """Links stay on this site: a path starting with a single "/" (no scheme, no host)."""
+    if not value.startswith("/") or not url_has_allowed_host_and_scheme(value, allowed_hosts=None):
+        raise ValidationError(
+            _("Enter a path on this site that starts with “/”, e.g. /comics/."), code="external_link"
+        )
+
+
+class Announcement(Model):
+    """A message from Gestión to everyone or to some roles. Publishing it creates one notification
+    per active user in the audience at that moment; editing it changes what those notifications
+    show and deleting it removes them."""
+
+    class Audience(TextChoices):
+        EVERYONE = "everyone", _("Everyone")
+        ROLES = "roles", _("Some roles")
+
+    title_en = CharField(max_length=120)
+    title_es = CharField(max_length=120)
+    body_en = TextField(max_length=2000, blank=True)
+    body_es = TextField(max_length=2000, blank=True)
+    link = CharField(max_length=300, blank=True, validators=[validate_site_path])
+    # Chosen when it is created (the notifications are created then) and never changed afterwards.
+    audience = CharField(max_length=10, choices=Audience.choices, default=Audience.EVERYONE)
+    roles = ManyToManyField(Group, blank=True, related_name="announcements")
+    created_by = ForeignKey(User, on_delete=SET_NULL, null=True, blank=True, related_name="announcements_created")
+    created_at = DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+
+    def __str__(self) -> str:
+        return self.title
+
+    @property
+    def title(self) -> str:
+        return localized(self, "title")
+
+    @property
+    def body(self) -> str:
+        return localized(self, "body")
+
+    def recipients(self) -> QuerySet[User]:
+        """Active users in the audience now (for ROLES, members of any of its roles)."""
+        users = User.objects.filter(is_active=True)
+        if self.audience == self.Audience.ROLES:
+            users = users.filter(groups__in=self.roles.all()).distinct()
+        return users
+
+    def publish(self) -> int:
+        """Notify every recipient once; returns how many. Call it once, right after creating the
+        announcement (and its roles), inside the same transaction."""
+        recipient_ids = list(self.recipients().values_list("pk", flat=True))
+        Notification.objects.bulk_create(
+            [
+                Notification(recipient_id=pk, kind=Notification.Kind.ANNOUNCEMENT, announcement=self)
+                for pk in recipient_ids
+            ],
+            batch_size=500,
+        )
+        return len(recipient_ids)
+
+
+class NotificationQuerySet(QuerySet["Notification"]):
+    def for_display(self) -> NotificationQuerySet:
+        """With what rendering them reads (achievement and its category, announcement)."""
+        return self.select_related("achievement__category", "announcement")
+
+    def unread(self) -> NotificationQuerySet:
+        return self.filter(read_at__isnull=True)
+
+    def mark_read(self) -> int:
+        """Mark the unread ones read now; returns how many."""
+        return self.unread().update(read_at=timezone.now())
+
+
+class NotificationManager(Manager.from_queryset(NotificationQuerySet)):  # type: ignore[misc]
+    def unread_count(self, user: User, *, limit: int) -> int:
+        """Unread notifications of `user`, counted up to `limit` (the badge caps the number
+        anyway): one query on the (recipient, read_at) index that never counts more rows."""
+        # order_by() drops Meta.ordering, so MySQL does not sort every unread row before the LIMIT.
+        return self.filter(recipient=user, read_at__isnull=True).order_by()[:limit].count()
+
+    def achievement_unlocked(self, user: User, achievement: Achievement, level: int) -> Notification:
+        return self.create(recipient=user, kind=Notification.Kind.ACHIEVEMENT, achievement=achievement, level=level)
+
+    def achievements_unlocked(self, user: User, count: int) -> Notification:
+        """The summary of a retroactive run (one per user and run instead of one per award)."""
+        return self.create(recipient=user, kind=Notification.Kind.ACHIEVEMENT_SUMMARY, count=count)
+
+    def add_to_summary(self, pk: int, count: int = 1) -> None:
+        self.filter(pk=pk).update(count=F("count") + count)
+
+
+class Notification(Model):
+    """Something a user is told about. `kind` says which references it uses: an achievement and
+    the level reached, an announcement, or a number of achievements (summaries)."""
+
+    class Kind(TextChoices):
+        ACHIEVEMENT = "achievement"  # a live award or level-up
+        ACHIEVEMENT_SUMMARY = "achievement_summary"  # a retroactive run: "you unlocked N"
+        ACHIEVEMENTS_HELD = "achievements_held"  # what users held when notifications arrived (migration)
+        ANNOUNCEMENT = "announcement"
+
+    recipient = ForeignKey(User, on_delete=CASCADE, related_name="notifications")
+    kind = CharField(max_length=30, choices=Kind.choices)
+    # Achievements with awards cannot be deleted (UserAchievement PROTECTs them), so in practice
+    # this cascade never fires; it keeps a hand-made deletion from failing on notifications.
+    achievement = ForeignKey(Achievement, on_delete=CASCADE, null=True, blank=True, related_name="notifications")
+    announcement = ForeignKey(Announcement, on_delete=CASCADE, null=True, blank=True, related_name="notifications")
+    level = PositiveSmallIntegerField(null=True, blank=True)
+    count = PositiveIntegerField(null=True, blank=True)
+    created_at = DateTimeField(default=timezone.now)
+    read_at = DateTimeField(null=True, blank=True)
+
+    objects = NotificationManager()
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+        indexes = [
+            Index(fields=["recipient", "read_at"], name="notification_unread"),
+            Index(fields=["recipient", "-created_at"], name="notification_recent"),
+        ]
+        constraints = [
+            CheckConstraint(
+                condition=Q(kind="achievement", achievement__isnull=False, level__isnull=False)
+                | Q(kind__in=["achievement_summary", "achievements_held"], count__isnull=False)
+                | Q(kind="announcement", announcement__isnull=False),
+                name="notification_kind_references",
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.recipient_id} - {self.kind}"
+
+    @property
+    def is_unread(self) -> bool:
+        return self.read_at is None
+
+    @property
+    def icon(self) -> str:
+        """Material Symbols name."""
+        if self.kind == self.Kind.ANNOUNCEMENT:
+            return "campaign"
+        if self.kind == self.Kind.ACHIEVEMENT:
+            return "emoji_events"
+        return "military_tech"
+
+    @property
+    def text(self) -> str:
+        """The headline, in the active language (plain text: templates escape it)."""
+        if self.kind == self.Kind.ACHIEVEMENT:
+            achievement = self.achievement
+            # Disabled achievements are hidden everywhere else: do not name them here either.
+            if achievement is None or not achievement.is_active:
+                return gettext("An achievement you unlocked is no longer available.")
+            if self.level and self.level > 1:
+                return gettext("Achievement unlocked: %(name)s (level %(level)s)") % {
+                    "name": achievement.name,
+                    "level": self.level,
+                }
+            return gettext("Achievement unlocked: %(name)s") % {"name": achievement.name}
+        if self.kind == self.Kind.ACHIEVEMENT_SUMMARY:
+            count = self.count or 0
+            return ngettext(
+                "You unlocked %(count)d achievement: see it on your profile.",
+                "You unlocked %(count)d achievements: see them on your profile.",
+                count,
+            ) % {"count": count}
+        if self.kind == self.Kind.ACHIEVEMENTS_HELD:
+            count = self.count or 0
+            return ngettext(
+                "You have %(count)d achievement: see it on your profile.",
+                "You have %(count)d achievements: see them on your profile.",
+                count,
+            ) % {"count": count}
+        if self.announcement is not None:
+            return self.announcement.title
+        return ""
+
+    @property
+    def detail(self) -> str:
+        """Longer text shown on the notifications page (an announcement's body)."""
+        if self.kind == self.Kind.ANNOUNCEMENT and self.announcement is not None:
+            return self.announcement.body
+        return ""
+
+    @property
+    def target_url(self) -> str | None:
+        """Where opening it leads (a path on this site), or None."""
+        if self.kind == self.Kind.ANNOUNCEMENT:
+            return (self.announcement.link or None) if self.announcement is not None else None
+        return f"{reverse('profile')}#achievements"
+
+    def mark_read(self) -> None:
+        """Mark it read (once: a notification already read keeps its first read time)."""
+        if self.read_at is None:
+            self.read_at = timezone.now()
+            Notification.objects.filter(pk=self.pk, read_at__isnull=True).update(read_at=self.read_at)

@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% comment %}A private profile seen by someone else: nothing beyond the username.{% endcomment %}
+
+{% block content %}
+<div class="my-4">
+  <div class="md-surface-card text-center py-5">
+    <span class="material-symbols-outlined d-block mb-2 empty-state-icon" aria-hidden="true">lock</span>
+    <h1 class="md-headline-small mb-2">{{ owner_username }}</h1>
+    <p class="md-body-medium mb-0">{% translate "This profile is private." %}</p>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,6 @@
+{% comment %}Small rarity chip for an edition; nothing for common ones. Needs `edition`.{% endcomment %}
+{% if edition.is_notable_rarity %}
+  <span class="rarity-badge rarity-badge--{{ edition.rarity }}" title="{{ edition.get_rarity_display }}">
+    <span class="material-symbols-outlined" aria-hidden="true">diamond</span>{{ edition.get_rarity_display }}
+  </span>
+{% endif %}

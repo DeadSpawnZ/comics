@@ -1551,14 +1551,1035 @@ msgstr ""
 msgid "Publishing deleted: %(publishing)s"
 msgstr "Publishing eliminado: %(publishing)s"
 
-#: comics/templates/login.html:9
+#: comics/forms.py
 msgid "Your username and password didn't match."
 msgstr "El usuario y la contraseña no coinciden."
 
-#: comics/templates/login.html:11
+#: comics/templates/accounts/login.html:6
 msgid "Log in to continue."
 msgstr "Inicia sesión para continuar."
 
 #: comics/views/collection.py:176
 msgid "Unknown"
 msgstr "Desconocido"
+
+#: comics/forms.py
+msgid "Email"
+msgstr "Correo electrónico"
+
+#: comics/forms.py
+msgid "Confirm password"
+msgstr "Confirmar contraseña"
+
+#: comics/forms.py
+msgid "A user with that email already exists."
+msgstr "Ya existe un usuario con ese correo electrónico."
+
+#: comics/templates/accounts/login.html:23
+msgid "Don't have an account?"
+msgstr "¿No tienes cuenta?"
+
+#: comics/templates/accounts/login.html:24 comics/templates/accounts/register.html:5
+msgid "Create account"
+msgstr "Crear cuenta"
+
+#: comics/templates/accounts/register.html:6
+msgid "Register to keep track of your collection."
+msgstr "Regístrate para llevar el control de tu colección."
+
+#: comics/templates/accounts/register.html:27
+msgid "Already have an account?"
+msgstr "¿Ya tienes cuenta?"
+
+#: comics/templates/error_page.html:12
+msgid "Go to my comics"
+msgstr "Ir a mis comics"
+
+#: comics/templates/403.html:4
+msgid "Access denied"
+msgstr "Acceso denegado"
+
+#: comics/templates/403.html:5
+msgid "You don't have permission to open this page."
+msgstr "No tienes permiso para abrir esta página."
+
+#: comics/templates/404.html:4
+msgid "Page not found"
+msgstr "Página no encontrada"
+
+#: comics/templates/404.html:5
+msgid "This page doesn't exist or was moved."
+msgstr "Esta página no existe o se movió."
+
+#: comics/models.py
+msgid "Enter a valid phone number."
+msgstr "Introduce un número de teléfono válido."
+
+#: comics/forms.py
+msgid "Phone"
+msgstr "Teléfono"
+
+#: comics/forms.py
+msgid "First name"
+msgstr "Nombre"
+
+#: comics/forms.py
+msgid "Last name"
+msgstr "Apellidos"
+
+#: comics/forms.py
+#, python-format
+msgid "The picture is too large (maximum %(size)s MB)."
+msgstr "La imagen es demasiado grande (máximo %(size)s MB)."
+
+#: comics/forms.py
+msgid "Upload a JPEG, PNG, WebP or GIF picture."
+msgstr "Sube una imagen JPEG, PNG, WebP o GIF."
+
+#: comics/forms.py
+msgid "The picture has too many pixels."
+msgstr "La imagen tiene demasiados píxeles."
+
+#: comics/forms.py comics/templates/profiles/own.html
+msgid "Profile picture"
+msgstr "Foto de perfil"
+
+#: comics/forms.py comics/templates/profiles/own.html
+msgid "Public profile"
+msgstr "Perfil público"
+
+#: comics/forms.py
+msgid "Current password"
+msgstr "Contraseña actual"
+
+#: comics/forms.py
+msgid "New password"
+msgstr "Nueva contraseña"
+
+#: comics/forms.py
+msgid "Confirm new password"
+msgstr "Confirmar nueva contraseña"
+
+#: comics/views/profiles.py
+msgid "Personal information saved."
+msgstr "Información personal guardada."
+
+#: comics/views/profiles.py
+msgid "Profile picture updated."
+msgstr "Foto de perfil actualizada."
+
+#: comics/views/profiles.py
+msgid "Privacy settings saved."
+msgstr "Privacidad guardada."
+
+#: comics/views/profiles.py
+msgid "Password changed."
+msgstr "Contraseña cambiada."
+
+#: comics/views/profiles.py
+msgid "Profile picture removed."
+msgstr "Foto de perfil eliminada."
+
+#: comics/templates/base.html
+msgid "Profile"
+msgstr "Perfil"
+
+#: comics/templates/profiles/own.html comics/templates/profiles/public.html
+#, python-format
+msgid "Member since %(date)s"
+msgstr "Miembro desde %(date)s"
+
+#: comics/templates/profiles/own.html
+msgid "Private profile"
+msgstr "Perfil privado"
+
+#: comics/templates/profiles/own.html
+msgid "View my profile"
+msgstr "Ver mi perfil"
+
+#: comics/templates/profiles/own.html
+msgid "Personal information"
+msgstr "Información personal"
+
+#: comics/templates/profiles/own.html
+msgid "Your email and phone are only visible to you."
+msgstr "Tu correo y tu teléfono solo los ves tú."
+
+#: comics/templates/profiles/own.html
+msgid "Privacy"
+msgstr "Privacidad"
+
+#: comics/templates/profiles/own.html
+msgid "A public profile can be seen by other signed-in users; a private one only shows your username."
+msgstr "Un perfil público lo pueden ver los demás usuarios con sesión iniciada; uno privado solo muestra tu nombre de usuario."
+
+#: comics/templates/profiles/own.html
+msgid "Upload a new picture (JPEG, PNG, WebP or GIF, up to 5 MB)"
+msgstr "Sube una imagen nueva (JPEG, PNG, WebP o GIF, hasta 5 MB)"
+
+#: comics/templates/profiles/own.html
+msgid "Upload"
+msgstr "Subir"
+
+#: comics/templates/profiles/own.html
+msgid "Remove picture"
+msgstr "Quitar foto"
+
+#: comics/templates/profiles/own.html
+msgid "Change profile picture"
+msgstr "Cambiar foto de perfil"
+
+#: comics/templates/profiles/own.html
+msgid "Change password"
+msgstr "Cambiar contraseña"
+
+#: comics/templates/profiles/includes/achievements.html
+msgid "Achievements"
+msgstr "Logros"
+
+#: comics/templates/profiles/includes/achievements.html
+msgid "No achievements yet."
+msgstr "Todavía no hay logros."
+
+#: comics/templates/profiles/public.html
+msgid "Edit profile"
+msgstr "Editar perfil"
+
+#: comics/templates/profiles/public.html
+msgid "Your profile is private: other users only see your username."
+msgstr "Tu perfil es privado: los demás usuarios solo ven tu nombre de usuario."
+
+#: comics/templates/profiles/private.html
+msgid "This profile is private."
+msgstr "Este perfil es privado."
+
+#: comics/models.py
+msgid "Community"
+msgstr "Comunidad"
+
+#: comics/models.py
+msgid "Seniority"
+msgstr "Antigüedad"
+
+#: comics/achievements/rules.py
+msgid "has registered a piece"
+msgstr "ha registrado una pieza"
+
+#: comics/achievements/rules.py
+msgid "comics in the collection"
+msgstr "cómics en la colección"
+
+#: comics/achievements/rules.py
+msgid "full years as a member"
+msgstr "años completos como miembro"
+
+#: comics/achievements/rules.py
+msgid "has made the profile private"
+msgstr "ha hecho privado su perfil"
+
+#: comics/achievements/engine.py
+#, python-format
+msgid "Achievement unlocked: %(name)s (level %(level)s)"
+msgstr "Logro desbloqueado: %(name)s (nivel %(level)s)"
+
+#: comics/achievements/engine.py
+#, python-format
+msgid "Achievement unlocked: %(name)s"
+msgstr "Logro desbloqueado: %(name)s"
+
+#: comics/forms.py
+msgid "Upload a JPEG, PNG or WebP picture."
+msgstr "Sube una imagen JPEG, PNG o WebP."
+
+#: comics/forms.py
+msgid "Icon image"
+msgstr "Imagen del ícono"
+
+#: comics/forms.py
+msgid "Name (English)"
+msgstr "Nombre (inglés)"
+
+#: comics/forms.py
+msgid "Name (Spanish)"
+msgstr "Nombre (español)"
+
+#: comics/forms.py
+msgid "Description (English)"
+msgstr "Descripción (inglés)"
+
+#: comics/forms.py
+msgid "Description (Spanish)"
+msgstr "Descripción (español)"
+
+#: comics/forms.py
+msgid "Hint (English)"
+msgstr "Pista (inglés)"
+
+#: comics/forms.py
+msgid "Hint (Spanish)"
+msgstr "Pista (español)"
+
+#: comics/forms.py
+msgid "Category"
+msgstr "Categoría"
+
+#: comics/forms.py
+msgid "Order"
+msgstr "Orden"
+
+#: comics/forms.py comics/templates/manage/achievement_list.html
+msgid "Secret"
+msgstr "Secreto"
+
+#: comics/forms.py
+msgid "Enabled"
+msgstr "Activo"
+
+#: comics/forms.py
+msgid "Level"
+msgstr "Nivel"
+
+#: comics/forms.py
+msgid "Threshold"
+msgstr "Umbral"
+
+#: comics/forms.py
+msgid "Label (English)"
+msgstr "Etiqueta (inglés)"
+
+#: comics/forms.py
+msgid "Label (Spanish)"
+msgstr "Etiqueta (español)"
+
+#: comics/forms.py
+msgid "This achievement is earned or not: it has no levels."
+msgstr "Este logro se gana o no: no tiene niveles."
+
+#: comics/forms.py
+msgid "Add at least one level."
+msgstr "Agrega al menos un nivel."
+
+#: comics/forms.py
+msgid "Levels must be numbered 1, 2, 3… with no gaps or repeats."
+msgstr "Los niveles deben ir numerados 1, 2, 3… sin huecos ni repeticiones."
+
+#: comics/forms.py
+msgid "Each level needs a higher threshold than the previous one."
+msgstr "Cada nivel necesita un umbral mayor que el anterior."
+
+#: comics/views/manage_achievements.py
+#, python-format
+msgid "Achievement saved: %(name)s"
+msgstr "Logro guardado: %(name)s"
+
+#: comics/views/manage_home.py
+msgid "Achievement"
+msgstr "Logro"
+
+#: comics/templates/profiles/includes/achievements.html
+#, python-format
+msgid "Level %(level)s"
+msgstr "Nivel %(level)s"
+
+#: comics/templates/profiles/includes/achievements.html
+msgid "Secret achievement."
+msgstr "Logro secreto."
+
+#: comics/templates/profiles/includes/achievements.html
+#, python-format
+msgid "Earned on %(date)s"
+msgstr "Obtenido el %(date)s"
+
+#: comics/templates/manage/achievement_list.html
+msgid "Names, texts, icons and levels are edited here; how each one is earned is defined in code."
+msgstr "Aquí se editan nombres, textos, íconos y niveles; cómo se gana cada uno está definido en el código."
+
+#: comics/templates/manage/achievement_list.html
+msgid "Rules in code without an achievement (they award nothing):"
+msgstr "Reglas en el código sin logro (no otorgan nada):"
+
+#: comics/templates/manage/achievement_list.html
+msgid "Disabled"
+msgstr "Desactivado"
+
+#: comics/templates/manage/achievement_list.html
+msgid "No rule in code"
+msgstr "Sin regla en el código"
+
+#: comics/templates/manage/achievement_list.html
+msgid "No levels"
+msgstr "Sin niveles"
+
+#: comics/templates/manage/achievement_list.html
+msgid "There are no achievements yet."
+msgstr "Todavía no hay logros."
+
+#: comics/templates/manage/achievement_form.html
+msgid "Back to achievements"
+msgstr "Volver a logros"
+
+#: comics/templates/manage/achievement_form.html
+#, python-format
+msgid "Counts: %(measure)s"
+msgstr "Cuenta: %(measure)s"
+
+#: comics/templates/manage/achievement_form.html
+msgid "There is no rule in code for this achievement: it is never awarded."
+msgstr "No hay una regla en el código para este logro: nunca se otorga."
+
+#: comics/templates/manage/achievement_form.html
+msgid "Texts"
+msgstr "Textos"
+
+#: comics/templates/manage/achievement_form.html
+msgid "Hints are shown instead of the description while a secret achievement is not earned. Leave them empty to show nothing but ???."
+msgstr "Las pistas se muestran en lugar de la descripción mientras un logro secreto no se ha ganado. Déjalas vacías para mostrar solo ???."
+
+#: comics/templates/manage/achievement_form.html
+msgid "Appearance"
+msgstr "Apariencia"
+
+#: comics/templates/manage/achievement_form.html
+msgid "Levels"
+msgstr "Niveles"
+
+#: comics/templates/manage/achievement_form.html
+msgid "Each level is reached when the count gets to its threshold. To add a level, fill in the empty row."
+msgstr "Cada nivel se alcanza cuando la cuenta llega a su umbral. Para agregar un nivel, llena la fila vacía."
+
+#: comics/templates/manage/achievement_form.html
+msgid "This achievement is earned or not: it has a single level."
+msgstr "Este logro se gana o no: tiene un solo nivel."
+
+#: comics/achievements/engine.py
+#, python-format
+msgid "You unlocked %(count)d achievement: see it on your profile."
+msgid_plural "You unlocked %(count)d achievements: see them on your profile."
+msgstr[0] "Desbloqueaste %(count)d logro: míralo en tu perfil."
+msgstr[1] "Desbloqueaste %(count)d logros: míralos en tu perfil."
+
+#: comics/templates/manage/achievement_list.html
+#, python-format
+msgid "%(counter)s user"
+msgid_plural "%(counter)s users"
+msgstr[0] "%(counter)s usuario"
+msgstr[1] "%(counter)s usuarios"
+
+#: comics/models.py
+msgid "Common"
+msgstr "Común"
+
+#: comics/models.py
+msgid "Rare"
+msgstr "Rara"
+
+#: comics/models.py
+msgid "Very rare"
+msgstr "Muy rara"
+
+#: comics/models.py
+msgid "Legendary"
+msgstr "Legendaria"
+
+#: comics/models.py
+msgid "Treasures"
+msgstr "Tesoros"
+
+#: comics/models.py
+msgid "Sagas"
+msgstr "Sagas"
+
+#: comics/forms.py comics/templates/manage/edition_list.html
+msgid "Rarity"
+msgstr "Rareza"
+
+#: comics/achievements/rules.py
+msgid "very rare or legendary editions owned"
+msgstr "ediciones muy raras o legendarias en la colección"
+
+#: comics/achievements/rules.py
+msgid "signed pieces owned"
+msgstr "piezas firmadas en la colección"
+
+#: comics/achievements/rules.py
+msgid "most editions owned of one issue"
+msgstr "máximo de ediciones de un mismo número"
+
+#: comics/achievements/rules.py
+msgid "most purchases on a single day"
+msgstr "máximo de compras en un solo día"
+
+#: comics/achievements/rules.py
+msgid "has bought again an issue they sold"
+msgstr "ha vuelto a comprar un número que vendió"
+
+#: comics/achievements/rules.py
+msgid "connectings completed"
+msgstr "connectings completos"
+
+#: comics/achievements/rules.py
+msgid "reading arcs completed"
+msgstr "arcos de lectura completos"
+
+#: comics/achievements/rules.py
+msgid "has signed in on October 31"
+msgstr "ha iniciado sesión un 31 de octubre"
+
+#: comics/templates/manage/edition_list.html
+msgctxt "rarities"
+msgid "All"
+msgstr "Todas"
+
+#: comics/templates/profiles/includes/achievement_button.html
+#, python-format
+msgid "Progress: %(progress)s / %(goal)s"
+msgstr "Progreso: %(progress)s / %(goal)s"
+
+#: comics/achievements/medals.py
+msgid "Base"
+msgstr "Base"
+
+#: comics/achievements/medals.py
+msgid "Silver"
+msgstr "Plata"
+
+#: comics/achievements/medals.py
+msgid "Gold"
+msgstr "Oro"
+
+#: comics/templates/manage/achievement_form.html
+msgid "Medal"
+msgstr "Medalla"
+
+#: comics/templates/manage/achievement_form.html
+msgid "The medal uses the uploaded image."
+msgstr "La medalla usa la imagen subida."
+
+#: comics/templates/manage/achievement_form.html
+msgid "The medal uses the artwork included with Comi; an uploaded image replaces it."
+msgstr "La medalla usa la ilustración incluida en Comi; una imagen subida la reemplaza."
+
+#: comics/achievements/windows.py
+msgid "No date window"
+msgstr "Sin ventana de fechas"
+
+#: comics/achievements/windows.py
+msgid "Every year, between two days"
+msgstr "Cada año, entre dos días"
+
+#: comics/achievements/windows.py
+msgid "Between two dates"
+msgstr "Entre dos fechas"
+
+#: comics/achievements/windows.py
+msgid "Enter the day and the month."
+msgstr "Indica el día y el mes."
+
+#: comics/achievements/windows.py
+msgid "That day does not exist in that month."
+msgstr "Ese día no existe en ese mes."
+
+#: comics/achievements/windows.py
+msgid "Enter the start date."
+msgstr "Indica la fecha de inicio."
+
+#: comics/achievements/windows.py
+msgid "Enter the end date."
+msgstr "Indica la fecha de fin."
+
+#: comics/achievements/windows.py
+msgid "The end date cannot be before the start date."
+msgstr "La fecha de fin no puede ser anterior a la de inicio."
+
+#: comics/achievements/windows.py
+msgid "Enter both times, or neither."
+msgstr "Indica ambas horas, o ninguna."
+
+#: comics/achievements/windows.py
+msgid "The end time must be different from the start time."
+msgstr "La hora de fin debe ser distinta de la de inicio."
+
+#: comics/achievements/rules.py
+msgid "has signed in inside the achievement's time window"
+msgstr "ha iniciado sesión dentro de la ventana de tiempo del logro"
+
+#: comics/forms.py
+msgid "Medallion image"
+msgstr "Imagen del medallón"
+
+#: comics/forms.py
+msgid "Start month"
+msgstr "Mes de inicio"
+
+#: comics/forms.py
+msgid "End month"
+msgstr "Mes de fin"
+
+#: comics/forms.py
+msgid "Start day"
+msgstr "Día de inicio"
+
+#: comics/forms.py
+msgid "End day"
+msgstr "Día de fin"
+
+#: comics/forms.py
+msgid "End date"
+msgstr "Fecha de fin"
+
+#: comics/forms.py
+msgid "Date window"
+msgstr "Ventana de fechas"
+
+#: comics/forms.py
+msgid "From (time)"
+msgstr "Desde (hora)"
+
+#: comics/forms.py
+msgid "Until (time)"
+msgstr "Hasta (hora)"
+
+#: comics/forms.py
+msgid "Rule"
+msgstr "Regla"
+
+#: comics/forms.py
+msgid "This rule only counts inside a time window: set a date window, a time window or both."
+msgstr "Esta regla solo cuenta dentro de una ventana de tiempo: indica una ventana de fechas, de horas o ambas."
+
+#: comics/achievements/gestion.py
+msgid "Built-in achievements cannot be deleted: disable it instead."
+msgstr "Los logros incluidos no se pueden eliminar: desactívalo en su lugar."
+
+#: comics/achievements/gestion.py
+msgid "Someone has already earned it, so it cannot be deleted: disable it instead."
+msgstr "Alguien ya lo consiguió, así que no se puede eliminar: desactívalo en su lugar."
+
+#: comics/achievements/gestion.py
+msgid "It has achievements: move them to another category first."
+msgstr "Tiene logros: muévelos antes a otra categoría."
+
+#: comics/views/manage_achievements.py
+#, python-format
+msgid "Achievement created: %(name)s"
+msgstr "Logro creado: %(name)s"
+
+#: comics/views/manage_achievements.py
+#, python-format
+msgid "Achievement deleted: %(name)s"
+msgstr "Logro eliminado: %(name)s"
+
+#: comics/views/manage_achievements.py
+#, python-format
+msgid "“%(name)s” cannot be deleted. %(reason)s"
+msgstr "“%(name)s” no se puede eliminar. %(reason)s"
+
+#: comics/views/manage_achievement_categories.py
+#, python-format
+msgid "Category created: %(name)s"
+msgstr "Categoría creada: %(name)s"
+
+#: comics/views/manage_achievement_categories.py
+#, python-format
+msgid "Category saved: %(name)s"
+msgstr "Categoría guardada: %(name)s"
+
+#: comics/views/manage_achievement_categories.py
+#, python-format
+msgid "Category deleted: %(name)s"
+msgstr "Categoría eliminada: %(name)s"
+
+#: comics/views/manage_home.py
+msgid "Achievement categories"
+msgstr "Categorías de logros"
+
+#: comics/views/manage_home.py
+msgid "Achievement category"
+msgstr "Categoría de logros"
+
+#: comics/templates/manage/achievement_list.html
+msgid "Categories"
+msgstr "Categorías"
+
+#: comics/templates/manage/achievement_list.html
+msgid "New achievement"
+msgstr "Nuevo logro"
+
+#: comics/templates/manage/achievement_list.html
+msgid "rule"
+msgstr "regla"
+
+#: comics/templates/manage/achievement_list.html
+msgid "Created in Gestión"
+msgstr "Creado en Gestión"
+
+#: comics/templates/manage/achievement_list.html
+msgid "No time window"
+msgstr "Sin ventana de tiempo"
+
+#: comics/templates/manage/achievement_form.html
+msgid "Its code is made from the name and cannot be changed later."
+msgstr "Su código se genera a partir del nombre y no se puede cambiar después."
+
+#: comics/templates/manage/achievement_form.html
+msgid "Only generic rules can be used here: they take their settings (such as the time window) from the achievement."
+msgstr "Aquí solo se pueden usar reglas genéricas: toman su configuración (como la ventana de tiempo) del logro."
+
+#: comics/templates/manage/achievement_form.html
+msgid "Time window"
+msgstr "Ventana de tiempo"
+
+#: comics/templates/manage/achievement_form.html
+msgid "The achievement only counts inside its windows (both, when both are set), in the project's time zone. A yearly window may wrap the end of the year (24/12 to 06/01) and a time window may wrap midnight (23:00 to 02:00; the end time is not included)."
+msgstr "El logro solo cuenta dentro de sus ventanas (ambas, si se indican las dos), en la zona horaria del proyecto. Una ventana anual puede cruzar el fin de año (24/12 a 06/01) y una de horas puede cruzar la medianoche (23:00 a 02:00; la hora de fin no se incluye)."
+
+#: comics/templates/manage/achievement_form.html
+msgid "Every year: the start and end day and month. 29 February only exists in leap years: in other years a window starting on it starts on 1 March, and one ending on it ends on 28 February."
+msgstr "Cada año: el día y mes de inicio y de fin. El 29 de febrero solo existe en años bisiestos: los demás años una ventana que empieza ese día empieza el 1 de marzo, y una que termina ese día termina el 28 de febrero."
+
+#: comics/templates/manage/achievement_form.html
+msgid "Between two dates: a one-off event; both days are included."
+msgstr "Entre dos fechas: un evento único; ambos días se incluyen."
+
+#: comics/templates/manage/achievement_form.html
+msgid "Time of day (optional): leave both empty for the whole day."
+msgstr "Horas del día (opcional): deja ambas vacías para todo el día."
+
+#: comics/templates/manage/achievement_form.html
+msgid "Delete achievement?"
+msgstr "¿Eliminar logro?"
+
+#: comics/templates/manage/achievement_category_list.html
+msgid "Categories group achievements on profiles. A category can only be deleted when it has no achievements."
+msgstr "Las categorías agrupan los logros en los perfiles. Una categoría solo se puede eliminar si no tiene logros."
+
+#: comics/templates/manage/achievement_category_list.html
+msgid "New category"
+msgstr "Nueva categoría"
+
+#: comics/templates/manage/achievement_category_list.html
+msgid "There are no categories yet."
+msgstr "Todavía no hay categorías."
+
+#: comics/templates/manage/achievement_category_form.html
+msgid "Back to categories"
+msgstr "Volver a categorías"
+
+#: comics/templates/manage/achievement_category_form.html
+msgid "Medallion image (PNG, JPEG or WebP, up to 2 MB; replaces the generic medallion)"
+msgstr "Imagen del medallón (PNG, JPEG o WebP, hasta 2 MB; reemplaza al medallón genérico)"
+
+#: comics/templates/manage/achievement_category_form.html
+msgid "A disabled category hides all its achievements from profiles and stops awarding them."
+msgstr "Una categoría desactivada oculta todos sus logros de los perfiles y deja de otorgarlos."
+
+#: comics/templates/manage/achievement_category_form.html
+msgid "Delete category?"
+msgstr "¿Eliminar categoría?"
+
+#: comics/templates/manage/achievement_category_list.html
+#, python-format
+msgid "%(counter)s achievement"
+msgid_plural "%(counter)s achievements"
+msgstr[0] "%(counter)s logro"
+msgstr[1] "%(counter)s logros"
+
+#: comics/achievements/windows.py
+msgid "a yearly date window"
+msgstr "una ventana anual de fechas"
+
+#: comics/achievements/windows.py
+msgid "a window between two dates"
+msgstr "una ventana entre dos fechas"
+
+#: comics/achievements/windows.py
+msgid "a time-of-day window"
+msgstr "una ventana de horas del día"
+
+#: comics/achievements/rules.py
+msgid "has registered"
+msgstr "se ha registrado"
+
+#: comics/achievements/rules.py
+msgid "has filled in first name, last name, email, phone and profile picture"
+msgstr "ha llenado nombre, apellidos, correo, teléfono y foto de perfil"
+
+#: comics/achievements/rules.py
+msgid "has a profile picture"
+msgstr "tiene foto de perfil"
+
+#: comics/achievements/rules.py
+msgid "has purchases in every month of the achievement's yearly window, in the same year"
+msgstr "tiene compras en cada mes de la ventana anual del logro, en el mismo año"
+
+#: comics/forms.py
+#, python-format
+msgid "This rule does not use %(kind)s."
+msgstr "Esta regla no usa %(kind)s."
+
+#: comics/forms.py
+#, python-format
+msgid "This rule needs %(kinds)s."
+msgstr "Esta regla necesita %(kinds)s."
+
+#: comics/templates/manage/achievement_form.html
+msgid "Icon image (PNG, JPEG or WebP, up to 2 MB; replaces the medal artwork)"
+msgstr "Imagen del ícono (PNG, JPEG o WebP, hasta 2 MB; reemplaza la ilustración de la medalla)"
+
+#: comics/templates/manage/achievement_form.html
+msgid "The medal uses the generic artwork until it has its own; an uploaded image replaces it."
+msgstr "La medalla usa la ilustración genérica hasta tener la suya; una imagen subida la reemplaza."
+
+#: comics/achievements/registry.py
+#, python-format
+msgid "%(measure)s: %(count)s"
+msgstr "%(measure)s: %(count)s"
+
+#: comics/templates/profiles/includes/achievements.html
+msgid "Nothing earned in this category yet."
+msgstr "Todavía no hay nada conseguido en esta categoría."
+
+#: comics/templates/profiles/includes/achievement_reto.html
+msgctxt "challenge"
+msgid "Earned"
+msgstr "Conseguido"
+
+#: comics/templates/profiles/includes/achievement_reto.html
+msgctxt "challenge"
+msgid "Not earned yet"
+msgstr "Aún no conseguido"
+
+#: comics/templates/profiles/includes/achievements.html
+#, python-format
+msgid "%(earned)s of %(counter)s challenge"
+msgid_plural "%(earned)s of %(counter)s challenges"
+msgstr[0] "%(earned)s de %(counter)s reto"
+msgstr[1] "%(earned)s de %(counter)s retos"
+
+#: comics/achievements/rules.py
+#, python-format
+msgid "Have at least %(count)s comic in your collection"
+msgid_plural "Have at least %(count)s comics in your collection"
+msgstr[0] "Ten al menos %(count)s cómic en tu colección"
+msgstr[1] "Ten al menos %(count)s cómics en tu colección"
+
+#: comics/achievements/rules.py
+#, python-format
+msgid "Be a member for at least %(count)s full year"
+msgid_plural "Be a member for at least %(count)s full years"
+msgstr[0] "Sé miembro durante al menos %(count)s año completo"
+msgstr[1] "Sé miembro durante al menos %(count)s años completos"
+
+#: comics/achievements/rules.py
+#, python-format
+msgid "Own at least %(count)s very rare or legendary edition"
+msgid_plural "Own at least %(count)s very rare or legendary editions"
+msgstr[0] "Ten al menos %(count)s edición muy rara o legendaria"
+msgstr[1] "Ten al menos %(count)s ediciones muy raras o legendarias"
+
+#: comics/achievements/rules.py
+#, python-format
+msgid "Own at least %(count)s signed piece"
+msgid_plural "Own at least %(count)s signed pieces"
+msgstr[0] "Ten al menos %(count)s pieza firmada"
+msgstr[1] "Ten al menos %(count)s piezas firmadas"
+
+#: comics/achievements/rules.py
+#, python-format
+msgid "Own %(count)s different edition of the same issue"
+msgid_plural "Own %(count)s different editions of the same issue"
+msgstr[0] "Ten %(count)s edición distinta del mismo número"
+msgstr[1] "Ten %(count)s ediciones distintas del mismo número"
+
+#: comics/achievements/rules.py
+#, python-format
+msgid "Buy %(count)s comic on the same day"
+msgid_plural "Buy %(count)s comics on the same day"
+msgstr[0] "Compra %(count)s cómic el mismo día"
+msgstr[1] "Compra %(count)s cómics el mismo día"
+
+#: comics/achievements/rules.py
+#, python-format
+msgid "Complete %(count)s connecting"
+msgid_plural "Complete %(count)s connectings"
+msgstr[0] "Completa %(count)s connecting"
+msgstr[1] "Completa %(count)s connectings"
+
+#: comics/achievements/rules.py
+#, python-format
+msgid "Complete %(count)s reading arc"
+msgid_plural "Complete %(count)s reading arcs"
+msgstr[0] "Completa %(count)s arco de lectura"
+msgstr[1] "Completa %(count)s arcos de lectura"
+
+#: comics/models.py
+msgid "Enter a path on this site that starts with “/”, e.g. /comics/."
+msgstr "Introduce una ruta de este sitio que empiece por “/”, p. ej. /comics/."
+
+#: comics/models.py
+msgid "Everyone"
+msgstr "Todos"
+
+#: comics/models.py
+msgid "Some roles"
+msgstr "Algunos roles"
+
+#: comics/models.py
+msgid "An achievement you unlocked is no longer available."
+msgstr "Un logro que desbloqueaste ya no está disponible."
+
+#: comics/roles.py
+msgid "Collectors"
+msgstr "Coleccionistas"
+
+#: comics/roles.py
+msgid "Reviewers"
+msgstr "Revisores"
+
+#: comics/roles.py
+msgid "Administrators"
+msgstr "Administradores"
+
+#: comics/forms.py
+msgid "Title (English)"
+msgstr "Título (inglés)"
+
+#: comics/forms.py
+msgid "Title (Spanish)"
+msgstr "Título (español)"
+
+#: comics/forms.py
+msgid "Message (English)"
+msgstr "Mensaje (inglés)"
+
+#: comics/forms.py
+msgid "Message (Spanish)"
+msgstr "Mensaje (español)"
+
+#: comics/forms.py
+msgid "Link (optional)"
+msgstr "Enlace (opcional)"
+
+#: comics/forms.py
+msgid "A page of this site, e.g. /comics/. Opening the notification goes there."
+msgstr "Una página de este sitio, p. ej. /comics/. Al abrir la notificación se va ahí."
+
+#: comics/forms.py
+msgid "Roles"
+msgstr "Roles"
+
+#: comics/forms.py
+msgid "Send to"
+msgstr "Enviar a"
+
+#: comics/forms.py
+msgid "Choose at least one role."
+msgstr "Elige al menos un rol."
+
+#: comics/views/manage_announcements.py
+#, python-format
+msgid "Announcement saved: %(title)s"
+msgstr "Aviso guardado: %(title)s"
+
+#: comics/views/manage_announcements.py
+#, python-format
+msgid "Announcement deleted: %(title)s"
+msgstr "Aviso eliminado: %(title)s"
+
+#: comics/views/manage_home.py
+msgid "Announcements"
+msgstr "Avisos"
+
+#: comics/views/manage_home.py
+msgid "Announcement"
+msgstr "Aviso"
+
+#: comics/templates/base.html
+#, python-format
+msgid "Notifications (%(badge)s unread)"
+msgstr "Notificaciones (%(badge)s sin leer)"
+
+#: comics/templates/base.html
+msgid "Notifications"
+msgstr "Notificaciones"
+
+#: comics/templates/base.html
+msgid "The notifications could not be loaded."
+msgstr "No se pudieron cargar las notificaciones."
+
+#: comics/templates/base.html
+msgid "Loading…"
+msgstr "Cargando…"
+
+#: comics/templates/base.html
+msgid "See all"
+msgstr "Ver todas"
+
+#: comics/templates/notifications/includes/item.html
+msgid "Unread"
+msgstr "Sin leer"
+
+#: comics/templates/notifications/includes/menu.html
+msgid "Mark all as read"
+msgstr "Marcar todas como leídas"
+
+#: comics/templates/notifications/includes/menu.html
+msgid "You have no notifications."
+msgstr "No tienes notificaciones."
+
+#: comics/templates/manage/announcement_list.html
+msgid "Announcements reach their recipients as notifications. Edits to the texts show up in the notifications already sent. Deleting one also removes its notifications."
+msgstr "Los avisos llegan a sus destinatarios como notificaciones. Los cambios en los textos se ven en las notificaciones ya enviadas. Al eliminar uno también se eliminan sus notificaciones."
+
+#: comics/templates/manage/announcement_list.html
+msgid "New announcement"
+msgstr "Nuevo aviso"
+
+#: comics/templates/manage/announcement_list.html
+msgid "There are no announcements yet."
+msgstr "Todavía no hay avisos."
+
+#: comics/templates/manage/announcement_list.html
+msgid "Delete announcement?"
+msgstr "¿Eliminar aviso?"
+
+#: comics/templates/manage/announcement_form.html
+msgid "Back to announcements"
+msgstr "Volver a avisos"
+
+#: comics/templates/manage/announcement_form.html
+msgid "It is sent when you save it: one notification for each active user in its audience."
+msgstr "Se envía al guardarlo: una notificación para cada usuario activo de su audiencia."
+
+#: comics/templates/manage/announcement_form.html
+msgid "Send"
+msgstr "Enviar"
+
+#: comics/templates/manage/announcement_form.html
+msgid "Audience"
+msgstr "Audiencia"
+
+#: comics/templates/manage/announcement_form.html
+msgid "Only used when sending to some roles. Users in several roles get it once."
+msgstr "Solo se usa al enviar a algunos roles. Quien tenga varios roles lo recibe una vez."
+
+#: comics/models.py
+#, python-format
+msgid "You have %(count)d achievement: see it on your profile."
+msgid_plural "You have %(count)d achievements: see them on your profile."
+msgstr[0] "Tienes %(count)d logro: míralo en tu perfil."
+msgstr[1] "Tienes %(count)d logros: míralos en tu perfil."
+
+#: comics/views/manage_announcements.py
+#, python-format
+msgid "Announcement sent to %(count)d user."
+msgid_plural "Announcement sent to %(count)d users."
+msgstr[0] "Aviso enviado a %(count)d usuario."
+msgstr[1] "Aviso enviado a %(count)d usuarios."
+
+#: comics/templates/manage/announcement_list.html
+#, python-format
+msgid "Read by %(read)s of %(counter)s recipient"
+msgid_plural "Read by %(read)s of %(counter)s recipients"
+msgstr[0] "Leído por %(read)s de %(counter)s destinatario"
+msgstr[1] "Leído por %(read)s de %(counter)s destinatarios"

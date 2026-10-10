@@ -7,19 +7,28 @@ from decimal import Decimal
 from typing import Any
 from unittest import mock
 
-from django.contrib.auth.models import User
+from django.contrib.auth.models import Group, User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from PIL import Image
 
-from comics.models import Collection, Dealer, Edition, Editorial, Publishing
+from comics.models import Achievement, AchievementCategory, Collection, Dealer, Edition, Editorial, Publishing
 
 _sequence = itertools.count(1)
 
 
-def make_user(*, staff: bool = False, password: str = "secret-pass", **fields: Any) -> User:
+def make_user(*, role: str | None = None, password: str = "secret-pass", **fields: Any) -> User:
+    """A registered user, i.e. a Collector (the post_save signal adds that role), plus `role` if given
+    (one of the group names in comics.roles, e.g. ADMINISTRATORS for Gestión access)."""
     username = fields.pop("username", f"user{next(_sequence)}")
-    user = User.objects.create_user(username=username, password=password, is_staff=staff, **fields)
+    user = User.objects.create_user(username=username, password=password, **fields)
+    if role:
+        user.groups.add(Group.objects.get(name=role))
     return user
+
+
+def make_superuser(**fields: Any) -> User:
+    """A superuser with no extra group: whatever it can do comes from the superuser flag alone."""
+    return make_user(is_staff=True, is_superuser=True, **fields)
 
 
 def make_editorial(**fields: Any) -> Editorial:
@@ -63,3 +72,27 @@ def image_upload(name: str = "cover.png", *, mode: str = "RGBA", fmt: str = "PNG
     buffer = io.BytesIO()
     Image.new(mode, (4, 4), (255, 0, 0, 128) if mode == "RGBA" else (255, 0, 0)).save(buffer, format=fmt)
     return SimpleUploadedFile(name, buffer.getvalue(), content_type=f"image/{fmt.lower()}")
+
+
+def make_category(**fields: Any) -> AchievementCategory:
+    """An achievement category (like the ones Gestión creates)."""
+    number = next(_sequence)
+    values = {"code": f"category{number}", "name_en": f"Category {number}", "name_es": f"Categoría {number}"}
+    values.update(fields)
+    return AchievementCategory.objects.create(**values)
+
+
+def make_achievement(*, category: AchievementCategory | None = None, **fields: Any) -> Achievement:
+    """An achievement row; its rule defaults to its code (like the built-in ones), in the seeded
+    "collection" category unless another one is given."""
+    number = next(_sequence)
+    values = {"code": f"achievement{number}", "name_en": f"Achievement {number}", "name_es": f"Logro {number}"}
+    values.update(fields)
+    values.setdefault("rule", values["code"])
+    category = (
+        category
+        or AchievementCategory.objects.get_or_create(
+            code="collection", defaults={"name_en": "Collection", "name_es": "Colección"}
+        )[0]
+    )
+    return Achievement.objects.create(category=category, **values)

@@ -38,11 +38,20 @@
         <label for="filter-format">{% translate "Format" %}</label>
       </div>
       <div class="form-floating md-field">
+        <select class="form-select" id="filter-rarity" name="rarity" onchange="this.form.submit()">
+          <option value="">{% translate "All" context "rarities" %}</option>
+          {% for value, label in rarity_choices %}
+            <option value="{{ value }}" {% if value == rarity_filter %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+        <label for="filter-rarity">{% translate "Rarity" %}</label>
+      </div>
+      <div class="form-floating md-field">
         <input type="search" class="form-control" id="filter-q" name="q" value="{{ query }}" placeholder="{% translate 'Search' %}">
         <label for="filter-q">{% translate "Search title or number" %}</label>
       </div>
-      {% if query or format_filter %}
-        <a class="md-btn md-btn--text" href="{% querystring q=None format=None page=None %}">{% translate "Clear" %}</a>
+      {% if query or format_filter or rarity_filter %}
+        <a class="md-btn md-btn--text" href="{% querystring q=None format=None rarity=None page=None %}">{% translate "Clear" %}</a>
       {% endif %}
     </form>
   </div>
@@ -72,6 +81,7 @@
           </div>
         </div>
         <div class="manage-row__chips">
+          {% include 'includes/rarity_badge.html' %}
           <span class="md-assist-chip">{{ edition.get_format_display }}</span>
           {% if edition.compiled_count %}
             <span class="md-assist-chip">

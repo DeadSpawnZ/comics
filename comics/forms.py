@@ -1,16 +1,42 @@
 from __future__ import annotations
 
 import datetime
+from collections.abc import Iterable
 from typing import Any
 
 from django import forms
-from django.contrib.auth.models import User
-from django.core.exceptions import NON_FIELD_ERRORS
+from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm, UserCreationForm
+from django.contrib.auth.models import Group, User
+from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
+from django.db import transaction
 from django.db.models import QuerySet, prefetch_related_objects
+from django.forms.models import BaseModelFormSet
+from django.utils.dates import MONTHS
+from django.utils.functional import Promise
 from django.utils.translation import gettext_lazy as _
 
+from .achievements.catalogue import BUILTIN_CODES
+from .achievements.registry import Rule, generic_rules
+from .achievements.windows import ALL_WINDOW_KINDS, WindowKind, window_kinds_of
 from .helper import parse_date_or_none, parse_id_or_none
-from .models import Collection, Dealer, Edition, Editorial, Publishing, ReadingArc, Signature, Title
+from .models import (
+    Achievement,
+    AchievementCategory,
+    AchievementTier,
+    Announcement,
+    Collection,
+    Dealer,
+    Edition,
+    Editorial,
+    Profile,
+    Publishing,
+    ReadingArc,
+    Signature,
+    Title,
+    unique_code,
+    validate_phone,
+)
+from .roles import ROLE_PERMISSIONS, role_label
 
 
 class CollectionForm(forms.ModelForm):
@@ -121,6 +147,7 @@ class EditionForm(forms.ModelForm):
             "event_exclusive",
             "cover_price",
             "format",
+            "rarity",
             "release_date",
             "image",
             "thumbnail",
@@ -189,6 +216,7 @@ class EditionManageForm(forms.ModelForm):
             "variant",
             "printing",
             "format",
+            "rarity",
             "release_date",
             "cover_price",
             "ratio",
@@ -205,6 +233,7 @@ class EditionManageForm(forms.ModelForm):
             "variant": _("Variant"),
             "printing": _("Printing"),
             "format": _("Format"),
+            "rarity": _("Rarity"),
             "release_date": _("Release date"),
             "cover_price": _("Cover price"),
             "ratio": "Ratio",
@@ -576,3 +605,527 @@ class SignatureForm(forms.ModelForm):
 SignatureFormSet = forms.inlineformset_factory(
     Collection, Signature, form=SignatureForm, fk_name="collectable", extra=0, can_delete=True
 )
+
+
+def save_formset_reinserting(formset: BaseModelFormSet) -> None:
+    """Save an inline whose rows have UniqueConstraints (position, order, etc.).
+    Swapping values between rows violates the constraints if rows are updated one by
+    one (MySQL checks every UPDATE and does not support deferred constraints), so the
+    changed rows are deleted and inserted again with their final values. The formset
+    already validated that the final state has no duplicates."""
+    instances = formset.save(commit=False)
+    for obj in formset.deleted_objects:
+        obj.delete()
+    formset.model.objects.filter(pk__in=[obj.pk for obj in instances if obj.pk]).delete()
+    for obj in instances:
+        obj.pk = None
+        obj._state.adding = True
+        obj.save()
+    formset.save_m2m()
+
+
+# ---------- Accounts: sign in, self-registration and profile ----------
+
+
+DUPLICATE_EMAIL = _("A user with that email already exists.")
+
+
+def _outlined_text_fields(form: forms.BaseForm) -> None:
+    """Material/Bootstrap outlined fields: floating labels need a placeholder."""
+    for field in form.fields.values():
+        field.widget.attrs.update({"class": "form-control", "placeholder": field.label})
+
+
+def unique_email(value: str, *, exclude: User | None = None) -> str:
+    """Normalize an email (EmailField already stripped it; the domain part is lowercased) and check
+    that no other user has it, ignoring case. The rule lives in forms and not in the database because
+    existing accounts have no email (several empty values).
+
+    Telling that an email is taken is unavoidable without sending emails (and the same holds for
+    usernames); with SMTP this can become a notice sent to that address instead."""
+    email = User.objects.normalize_email(value)
+    others = User.objects.exclude(pk=exclude.pk) if exclude else User.objects.all()
+    if others.filter(email__iexact=email).exists():
+        raise ValidationError(DUPLICATE_EMAIL, code="duplicate_email")
+    return email
+
+
+class LoginForm(AuthenticationForm):
+    """Django's sign-in form (inactive users and wrong passwords get the same message, so the form
+    does not reveal which accounts exist), with the app's labels and message."""
+
+    error_messages = {
+        **AuthenticationForm.error_messages,
+        "invalid_login": _("Your username and password didn't match."),
+    }
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.fields["username"].label = _("Username")
+        self.fields["password"].label = _("Password")
+        _outlined_text_fields(self)
+
+
+class RegistrationForm(UserCreationForm):
+    """Self-registration: username, email and password (checked by AUTH_PASSWORD_VALIDATORS).
+
+    The email is required and unique ignoring case (see unique_email). Without SMTP there is no email
+    verification yet: when there is, the account can be created inactive here and activated from
+    the emailed link."""
+
+    email = forms.EmailField(label=_("Email"), max_length=254)
+
+    class Meta(UserCreationForm.Meta):
+        model = User
+        fields = ("username", "email")
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.fields["username"].label = _("Username")
+        self.fields["password1"].label = _("Password")
+        self.fields["password2"].label = _("Confirm password")
+        self.fields["email"].widget.attrs["autocomplete"] = "email"
+        _outlined_text_fields(self)
+
+    def clean_email(self) -> str:
+        return unique_email(self.cleaned_data["email"])
+
+    def save(self, commit: bool = True) -> User:
+        # The user and its default role (added by the post_save signal) are saved together.
+        with transaction.atomic():
+            return super().save(commit=commit)
+
+
+class PersonalInfoForm(forms.ModelForm):
+    """Name, email and phone of the signed-in user (the phone lives on the profile)."""
+
+    phone = forms.CharField(label=_("Phone"), required=False, max_length=30, validators=[validate_phone])
+
+    class Meta:
+        model = User
+        fields = ("first_name", "last_name", "email")
+
+    def __init__(self, *args: Any, profile: Profile, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.profile = profile
+        self.fields["first_name"].label = _("First name")
+        self.fields["last_name"].label = _("Last name")
+        self.fields["email"].label = _("Email")
+        self.fields["email"].required = True  # every account needs one since self-registration
+        self.fields["phone"].initial = profile.phone
+        self.fields["phone"].widget.attrs.update({"autocomplete": "tel", "inputmode": "tel"})
+        self.fields["email"].widget.attrs["autocomplete"] = "email"
+        _outlined_text_fields(self)
+
+    def clean_email(self) -> str:
+        return unique_email(self.cleaned_data["email"], exclude=self.instance)
+
+    def clean_phone(self) -> str:
+        return " ".join(self.cleaned_data["phone"].split())
+
+    def save(self, commit: bool = True) -> User:
+        """Save the user and the profile's phone together. With commit=False nothing is written:
+        both objects are only updated in memory (the caller saves them)."""
+        self.profile.phone = self.cleaned_data["phone"]
+        if not commit:
+            return super().save(commit=False)
+        with transaction.atomic():
+            user = super().save()
+            self.profile.save(update_fields=["phone"])
+        return user
+
+
+class LimitedImageField(forms.ImageField):
+    """An uploaded picture with limits: checked by size before Pillow parses it, then by format
+    and pixel count (a small file can still decode to a huge image). Only raster formats Pillow
+    decodes can pass, so SVG (which can carry scripts) never does."""
+
+    MAX_BYTES = 5 * 1024 * 1024
+    MAX_PIXELS = 25_000_000
+    FORMATS: tuple[str, ...] = ("JPEG", "PNG", "WEBP")
+    FORMAT_ERROR = _("Upload a JPEG, PNG or WebP picture.")
+
+    def to_python(self, data: Any) -> Any:
+        if data and getattr(data, "size", 0) > self.MAX_BYTES:
+            raise ValidationError(
+                _("The picture is too large (maximum %(size)s MB).") % {"size": self.MAX_BYTES // (1024 * 1024)},
+                code="too_large",
+            )
+        upload = super().to_python(data)
+        if upload is not None:
+            image = upload.image
+            if image.format not in self.FORMATS:
+                raise ValidationError(self.FORMAT_ERROR, code="invalid_format")
+            if image.width * image.height > self.MAX_PIXELS:
+                raise ValidationError(_("The picture has too many pixels."), code="too_many_pixels")
+        return upload
+
+
+class AvatarField(LimitedImageField):
+    FORMATS = ("JPEG", "PNG", "WEBP", "GIF")
+    FORMAT_ERROR = _("Upload a JPEG, PNG, WebP or GIF picture.")
+
+
+class AvatarForm(forms.ModelForm):
+    avatar = AvatarField(label=_("Profile picture"))
+
+    class Meta:
+        model = Profile
+        fields = ("avatar",)
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        widget = self.fields["avatar"].widget
+        widget.attrs.update({"class": "form-control", "accept": "image/jpeg,image/png,image/webp,image/gif"})
+
+
+class PrivacyForm(forms.ModelForm):
+    class Meta:
+        model = Profile
+        fields = ("is_public",)
+        labels = {"is_public": _("Public profile")}
+        widgets = {"is_public": forms.CheckboxInput(attrs={"class": "form-check-input", "role": "switch"})}
+
+
+class ProfilePasswordForm(PasswordChangeForm):
+    """Django's password change (current password + validated new one), with the app's labels."""
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.fields["old_password"].label = _("Current password")
+        self.fields["new_password1"].label = _("New password")
+        self.fields["new_password2"].label = _("Confirm new password")
+        _outlined_text_fields(self)
+
+
+# ---------- Gestión: achievements ----------
+
+
+class AchievementIconField(LimitedImageField):
+    MAX_BYTES = 2 * 1024 * 1024
+
+
+def _icon_field(label: str | Promise) -> AchievementIconField:
+    return AchievementIconField(
+        label=label,
+        required=False,
+        widget=forms.ClearableFileInput(attrs={"accept": "image/png,image/jpeg,image/webp", "class": "form-control"}),
+    )
+
+
+def _material_widgets(form: forms.BaseForm, skip: Iterable[str] = ()) -> None:
+    """Bootstrap/Material classes: switches, selects and outlined fields (with placeholders)."""
+    for name, field in form.fields.items():
+        widget = field.widget
+        if name in skip:
+            continue
+        if isinstance(widget, forms.CheckboxInput):
+            widget.attrs["class"] = "form-check-input"
+        elif isinstance(widget, forms.Select):
+            widget.attrs["class"] = "form-select"
+        else:
+            widget.attrs.update({"class": "form-control", "placeholder": field.label})
+
+
+WINDOW_FIELDS = (
+    "calendar_window",
+    "window_start_day",
+    "window_start_month",
+    "window_end_day",
+    "window_end_month",
+    "window_start_date",
+    "window_end_date",
+    "window_start_time",
+    "window_end_time",
+)
+
+
+def _month_field(label: str | Promise) -> forms.TypedChoiceField:
+    return forms.TypedChoiceField(
+        label=label, choices=[("", "---------"), *MONTHS.items()], coerce=int, empty_value=None, required=False
+    )
+
+
+class AchievementForm(forms.ModelForm):
+    """What Gestión edits of an achievement. The code and the rule are fixed once it exists; the
+    time windows only appear for rules that read them (`rule.needs_window`), and such a rule
+    needs at least one window. Window consistency is validated by Achievement.clean()."""
+
+    icon_image = _icon_field(_("Icon image"))
+    window_start_month = _month_field(_("Start month"))
+    window_end_month = _month_field(_("End month"))
+
+    class Meta:
+        model = Achievement
+        fields = (
+            "name_en",
+            "name_es",
+            "description_en",
+            "description_es",
+            "hint_en",
+            "hint_es",
+            "category",
+            "icon_image",
+            "display_order",
+            "is_secret",
+            "is_enabled",
+            *WINDOW_FIELDS,
+        )
+        labels = {
+            "name_en": _("Name (English)"),
+            "name_es": _("Name (Spanish)"),
+            "description_en": _("Description (English)"),
+            "description_es": _("Description (Spanish)"),
+            "hint_en": _("Hint (English)"),
+            "hint_es": _("Hint (Spanish)"),
+            "category": _("Category"),
+            "display_order": _("Order"),
+            "is_secret": _("Secret"),
+            "is_enabled": _("Enabled"),
+            "calendar_window": _("Date window"),
+            "window_start_day": _("Start day"),
+            "window_end_day": _("End day"),
+            "window_start_date": _("Start date"),
+            "window_end_date": _("End date"),
+            "window_start_time": _("From (time)"),
+            "window_end_time": _("Until (time)"),
+        }
+        widgets = {
+            "description_en": forms.Textarea(attrs={"rows": 2}),
+            "description_es": forms.Textarea(attrs={"rows": 2}),
+            "hint_en": forms.Textarea(attrs={"rows": 2}),
+            "hint_es": forms.Textarea(attrs={"rows": 2}),
+            "window_start_date": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+            "window_end_date": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+            "window_start_time": forms.TimeInput(attrs={"type": "time"}, format="%H:%M"),
+            "window_end_time": forms.TimeInput(attrs={"type": "time"}, format="%H:%M"),
+        }
+
+    def __init__(self, *args: Any, rule: Rule | None = None, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.rule = rule
+        if rule is None or not rule.needs_window:
+            for name in WINDOW_FIELDS:
+                del self.fields[name]
+        _material_widgets(self, skip=("icon_image",))
+
+    @property
+    def has_windows(self) -> bool:
+        return "calendar_window" in self.fields
+
+    def clean(self) -> dict[str, Any]:
+        cleaned = super().clean()
+        if self.has_windows and self.rule is not None and self.rule.needs_window:
+            self._check_window_kinds(cleaned, self.rule.window_kinds)
+        return cleaned
+
+    def _check_window_kinds(self, cleaned: dict[str, Any], allowed: frozenset[WindowKind]) -> None:
+        """The rule reads only some kinds of window: at least one of them is needed, and a kind it
+        does not read would be misleading (it would be ignored)."""
+        used = window_kinds_of(
+            cleaned.get("calendar_window"), cleaned.get("window_start_time"), cleaned.get("window_end_time")
+        )
+        # Non-field errors: a field error would drop the field from cleaned_data and the model's
+        # own window checks would then report a misleading half-filled window.
+        unused = [_("This rule does not use %(kind)s.") % {"kind": kind.label} for kind in sorted(used - allowed)]
+        if unused:
+            raise ValidationError(unused, code="window_not_used")
+        if not used & allowed:
+            if allowed == ALL_WINDOW_KINDS:
+                message = _("This rule only counts inside a time window: set a date window, a time window or both.")
+            else:
+                kinds = ", ".join(str(kind.label) for kind in sorted(allowed))
+                message = _("This rule needs %(kinds)s.") % {"kinds": kinds}
+            raise ValidationError(message, code="window_required")
+
+
+class AchievementCreateForm(AchievementForm):
+    """A new achievement made in Gestión: only with a generic rule (built-in rules have their own
+    seeded row). Its code is generated from the name, unique and never reused from the catalogue."""
+
+    rule = forms.ChoiceField(label=_("Rule"))
+
+    class Meta(AchievementForm.Meta):
+        fields = ("rule", *AchievementForm.Meta.fields)
+
+    def __init__(self, *args: Any, rule: Rule | None = None, **kwargs: Any) -> None:
+        super().__init__(*args, rule=rule, **kwargs)
+        self.fields["rule"].choices = [
+            (key, f"{key} · {item.measure}") for key, item in sorted(generic_rules().items())
+        ]
+        self.fields["rule"].widget.attrs["class"] = "form-select"
+
+    def clean(self) -> dict[str, Any]:
+        cleaned = super().clean()
+        self.assign_code()
+        return cleaned
+
+    def assign_code(self) -> None:
+        """Give the new achievement a free code made from its name (again after a collision)."""
+        name = self.cleaned_data.get("name_en") or self.cleaned_data.get("name_es")
+        if name:
+            taken = set(Achievement.objects.values_list("code", flat=True)) | BUILTIN_CODES
+            self.instance.code = unique_code(name, taken)
+
+
+class AchievementCategoryForm(forms.ModelForm):
+    """A category of achievements. Its code is generated from the name when it is created."""
+
+    image = _icon_field(_("Medallion image"))
+
+    class Meta:
+        model = AchievementCategory
+        fields = (
+            "name_en",
+            "name_es",
+            "description_en",
+            "description_es",
+            "display_order",
+            "is_enabled",
+            "image",
+        )
+        labels = {
+            "name_en": _("Name (English)"),
+            "name_es": _("Name (Spanish)"),
+            "description_en": _("Description (English)"),
+            "description_es": _("Description (Spanish)"),
+            "display_order": _("Order"),
+            "is_enabled": _("Enabled"),
+        }
+        widgets = {
+            "description_en": forms.Textarea(attrs={"rows": 2}),
+            "description_es": forms.Textarea(attrs={"rows": 2}),
+        }
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        _material_widgets(self, skip=("image",))
+
+    def clean(self) -> dict[str, Any]:
+        cleaned = super().clean()
+        if self.instance.pk is None:
+            self.assign_code()
+        return cleaned
+
+    def assign_code(self) -> None:
+        """Give a new category a free code made from its name (again after a collision)."""
+        name = self.cleaned_data.get("name_en") or self.cleaned_data.get("name_es")
+        if name:
+            taken = AchievementCategory.objects.values_list("code", flat=True)
+            self.instance.code = unique_code(name, taken, max_length=30)
+
+
+class AchievementTierForm(forms.ModelForm):
+    class Meta:
+        model = AchievementTier
+        fields = ("level", "threshold", "label_en", "label_es")
+        labels = {
+            "level": _("Level"),
+            "threshold": _("Threshold"),
+            "label_en": _("Label (English)"),
+            "label_es": _("Label (Spanish)"),
+        }
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        _outlined_text_fields(self)
+
+
+class BaseAchievementTierFormSet(forms.BaseInlineFormSet):
+    """Levels of an achievement. Count-based rules need at least one, numbered from 1 with no
+    gaps and thresholds growing with the level; yes/no rules have a single implicit level."""
+
+    def __init__(self, *args: Any, counted: bool, **kwargs: Any) -> None:
+        self.counted = counted
+        super().__init__(*args, **kwargs)
+
+    def clean(self) -> None:
+        super().clean()
+        if any(form.errors for form in self.forms):
+            return
+        kept = [form.cleaned_data for form in self.forms if form.cleaned_data and not form.cleaned_data.get("DELETE")]
+        if not self.counted:
+            if kept:
+                raise ValidationError(_("This achievement is earned or not: it has no levels."))
+            return
+        if not kept:
+            raise ValidationError(_("Add at least one level."))
+        kept.sort(key=lambda data: data["level"])
+        if [data["level"] for data in kept] != list(range(1, len(kept) + 1)):
+            raise ValidationError(_("Levels must be numbered 1, 2, 3… with no gaps or repeats."))
+        thresholds = [data["threshold"] for data in kept]
+        if any(lower >= higher for lower, higher in zip(thresholds, thresholds[1:], strict=False)):
+            raise ValidationError(_("Each level needs a higher threshold than the previous one."))
+
+
+AchievementTierFormSet = forms.inlineformset_factory(
+    Achievement,
+    AchievementTier,
+    form=AchievementTierForm,
+    formset=BaseAchievementTierFormSet,
+    extra=1,
+    can_delete=True,
+)
+
+
+class AnnouncementForm(forms.ModelForm):
+    """An announcement's texts and link (what can be edited after publishing it)."""
+
+    class Meta:
+        model = Announcement
+        fields = ("title_en", "title_es", "body_en", "body_es", "link")
+        labels = {
+            "title_en": _("Title (English)"),
+            "title_es": _("Title (Spanish)"),
+            "body_en": _("Message (English)"),
+            "body_es": _("Message (Spanish)"),
+            "link": _("Link (optional)"),
+        }
+        help_texts = {"link": _("A page of this site, e.g. /comics/. Opening the notification goes there.")}
+        widgets = {
+            "body_en": forms.Textarea(attrs={"rows": 4}),
+            "body_es": forms.Textarea(attrs={"rows": 4}),
+        }
+
+    unstyled: tuple[str, ...] = ()  # fields that keep their own widget classes
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        _material_widgets(self, skip=self.unstyled)
+
+
+class RoleChoiceField(forms.ModelMultipleChoiceField):
+    def label_from_instance(self, obj: Group) -> str:
+        return role_label(obj.name)
+
+
+class AnnouncementCreateForm(AnnouncementForm):
+    """A new announcement, with its audience: everyone or the members of some roles. The audience
+    is fixed once published (the notifications are created then)."""
+
+    roles = RoleChoiceField(
+        queryset=Group.objects.none(),
+        required=False,
+        label=_("Roles"),
+        widget=forms.CheckboxSelectMultiple(attrs={"class": "form-check-input"}),
+    )
+
+    class Meta(AnnouncementForm.Meta):
+        fields = (*AnnouncementForm.Meta.fields, "audience", "roles")
+        labels = {**AnnouncementForm.Meta.labels, "audience": _("Send to")}
+        widgets = {**AnnouncementForm.Meta.widgets, "audience": forms.RadioSelect(attrs={"class": "form-check-input"})}
+
+    unstyled = ("audience", "roles")
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.fields["roles"].queryset = Group.objects.filter(name__in=ROLE_PERMISSIONS).order_by("name")
+
+    def clean(self) -> dict[str, Any]:
+        cleaned = super().clean()
+        if cleaned.get("audience") == Announcement.Audience.ROLES:
+            if not cleaned.get("roles"):
+                self.add_error("roles", _("Choose at least one role."))
+        else:
+            cleaned["roles"] = Group.objects.none()  # everyone: roles do not apply
+        return cleaned

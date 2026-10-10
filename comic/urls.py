@@ -22,16 +22,21 @@ from django.views.i18n import JavaScriptCatalog
 from django.views.static import serve as serve_static
 
 from comics.views import (
+    accounts,
     collectables,
     collection,
     collection_entries,
-    login,
     manage,
+    manage_achievement_categories,
+    manage_achievements,
+    manage_announcements,
     manage_arcs,
     manage_editions,
     manage_home,
     manage_publishings,
     my_comics,
+    notifications,
+    profiles,
     publishing,
 )
 
@@ -39,8 +44,19 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("i18n/", include("django.conf.urls.i18n")),
     path("jsi18n/", JavaScriptCatalog.as_view(), name="javascript-catalog"),
-    path("login/", login.login_view, name="login"),
-    path("logout/", login.logout_view, name="logout"),
+    path("login/", accounts.login_view, name="login"),
+    path("logout/", accounts.logout_view, name="logout"),
+    path("registro/", accounts.register_view, name="register"),
+    path("perfil/", profiles.own_profile, name="profile"),
+    path("u/<str:username>/", profiles.user_profile, name="user_profile"),
+    path("notificaciones/", notifications.notification_list, name="notifications"),
+    path("notificaciones/menu/", notifications.notification_menu, name="notification_menu"),
+    path("notificaciones/<int:pk>/abrir/", notifications.notification_open, name="notification_open"),
+    path(
+        "notificaciones/marcar-leidas/",
+        notifications.notification_mark_all_read,
+        name="notifications_mark_all_read",
+    ),
     path("ajax/get-publishing-date/<int:publishing_id>/", publishing.get_publishing_date, name="get_publishing_date"),
     path("ajax/get-comics/<int:publishing_id>/", publishing.get_comics_by_publishing, name="get_comics_by_publishing"),
     path("ajax/get-previous-trades/<int:edition_id>/", collection.get_previous_trades, name="get_previous_trades"),
@@ -81,6 +97,38 @@ urlpatterns = [
     path("gestion/connectings/nuevo/", manage.connecting_editor, name="manage_connecting_new"),
     path("gestion/connectings/<int:pk>/", manage.connecting_editor, name="manage_connecting_edit"),
     path("gestion/api/comics/", manage.publishing_comics, name="manage_publishing_comics"),
+    path("gestion/logros/", manage_achievements.achievement_list, name="manage_achievements"),
+    path("gestion/logros/nuevo/", manage_achievements.achievement_create, name="manage_achievement_new"),
+    path("gestion/logros/<int:pk>/", manage_achievements.achievement_form, name="manage_achievement_edit"),
+    path("gestion/logros/<int:pk>/eliminar/", manage_achievements.achievement_delete, name="manage_achievement_delete"),
+    path(
+        "gestion/logros/categorias/",
+        manage_achievement_categories.category_list,
+        name="manage_achievement_categories",
+    ),
+    path(
+        "gestion/logros/categorias/nueva/",
+        manage_achievement_categories.category_form,
+        name="manage_achievement_category_new",
+    ),
+    path(
+        "gestion/logros/categorias/<int:pk>/",
+        manage_achievement_categories.category_form,
+        name="manage_achievement_category_edit",
+    ),
+    path(
+        "gestion/logros/categorias/<int:pk>/eliminar/",
+        manage_achievement_categories.category_delete,
+        name="manage_achievement_category_delete",
+    ),
+    path("gestion/avisos/", manage_announcements.announcement_list, name="manage_announcements"),
+    path("gestion/avisos/nuevo/", manage_announcements.announcement_create, name="manage_announcement_new"),
+    path("gestion/avisos/<int:pk>/", manage_announcements.announcement_form, name="manage_announcement_edit"),
+    path(
+        "gestion/avisos/<int:pk>/eliminar/",
+        manage_announcements.announcement_delete,
+        name="manage_announcement_delete",
+    ),
 ]
 
 # Static files are served by WhiteNoise (see MIDDLEWARE), in dev and in local "production".

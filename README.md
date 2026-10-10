@@ -62,10 +62,67 @@ Si el archivo está solo en tu equipo (por ejemplo, uno generado con `backup-db.
 docker compose cp .\backups\dump-<fecha>.json web:/code/dump-<fecha>.json
 ```
 
+Un dump solo se puede cargar en una base con el mismo esquema que tenía la base de origen. En particular, **un dump tomado antes de la migración `0100`** (categorías de logros como filas, reglas y ventanas de tiempo) no se puede cargar en una base ya migrada: guarda la categoría de cada logro como texto y no trae las columnas nuevas. Para restaurarlo, deja la base en la migración que tenía el origen, carga el dump y luego aplica el resto de las migraciones, que convierten los datos:
+
+```bash
+docker compose exec web python manage.py migrate comics 0099
+docker compose exec web python manage.py loaddata /code/dump-<fecha>.json
+docker compose exec web python manage.py migrate
+```
+
+Volver a `0099` descarta lo que solo existe en el esquema nuevo (categorías editadas, ventanas de tiempo, reglas de logros creados en Gestión): saca antes el respaldo SQL de la base de destino. (Sobre una base vacía: `migrate comics 0099` crea las tablas hasta ese punto. Para saber en qué migración estaba el origen, busca la última de `comics` en su tabla `django_migrations`, o la fecha del dump frente a la de la migración.)
+
 Si aparece un error de integridad de datos al restaurar, limpia las tablas existentes antes de reintentar:
 
 ```bash
 docker compose exec web python manage.py flush
+```
+
+Los roles de usuario (grupos Collectors, Reviewers y Administrators) viajan dentro del dump. Si el dump es anterior a los roles, o si hiciste `flush` y el dump no los trae, vuelve a crearlos después de `loaddata` (se puede correr las veces que sea, no duplica nada):
+
+```bash
+docker compose exec web python manage.py ensure_roles
+```
+
+Crea los tres grupos con sus permisos, mete a todos los usuarios en Collectors y a los superusuarios también en Administrators. No quita membresías ni permisos que ya existan.
+
+Los logros también viajan en el dump. Si el dump es anterior a algún logro, o si hiciste `flush` y el dump no los trae, créalos y luego otórgalos según la actividad que ya existe (ambos se pueden correr las veces que sea):
+
+```bash
+docker compose exec web python manage.py ensure_achievements
+docker compose exec web python manage.py award_achievements
+```
+
+Si restauras sobre una base recién migrada (que ya trae los logros sembrados por las migraciones) sin hacer `flush`, `loaddata` solo agrega y actualiza: un nivel de un logro que se borró en Gestión en la base de origen vuelve a aparecer, porque la siembra lo creó y el dump no lo borra. Para evitarlo, vuelve a borrar ese nivel en Gestión después de restaurar, o haz `flush` antes (deja la base vacía). Otra opción es borrar los niveles antes de cargar el dump, **pero solo si el dump trae niveles** (busca `"comics.achievementtier"` en el archivo): si no los trae, los logros por conteo se quedarían sin niveles y nunca se otorgarían, porque `ensure_achievements` no vuelve a crear los niveles de logros que ya existen.
+
+```bash
+grep -q '"comics.achievementtier"' dump-<fecha>.json && echo "el dump trae niveles"
+docker compose exec web python manage.py shell -c "from comics.models import AchievementTier; AchievementTier.objects.all().delete()"
+docker compose exec web python manage.py loaddata /code/dump-<fecha>.json
+```
+
+## Logros
+
+Cómo se gana cada logro está en el código (`comics/achievements/rules.py`); nombre, textos, ícono, niveles con sus umbrales, si es secreto y si está activo se editan en Gestión → Logros. Cada logro nuevo llega con una migración que crea su registro.
+
+Después de aplicar una migración que agrega logros, otórgalos a quien ya los haya ganado con su actividad previa:
+
+```bash
+docker compose exec web python manage.py award_achievements
+```
+
+Es seguro correrlo varias veces: nunca quita logros ni baja niveles. Cada usuario ve un solo aviso con el total de logros desbloqueados. Opciones: `--user <usuario>` y `--code <código>` para limitarlo.
+
+Además, prográmalo para que corra solo una vez al día. Los logros por fecha (como «Veterano», por años de antigüedad) se revisan al iniciar sesión; con el comando programado también los reciben quienes no vuelven a iniciar sesión. Por ejemplo, con cron en Linux (todos los días a las 4:00):
+
+```cron
+0 4 * * * cd /ruta/al/proyecto && docker compose exec -T web python manage.py award_achievements
+```
+
+En Windows, con el Programador de tareas (desde PowerShell, en la raíz del repo):
+
+```powershell
+schtasks /Create /TN "Comi award_achievements" /SC DAILY /ST 04:00 /TR "cmd /c cd /d $PWD && docker compose exec -T web python manage.py award_achievements"
 ```
 
 ## Respaldo completo en SQL (`mysqldump`)

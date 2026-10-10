@@ -19,8 +19,9 @@
       <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
     </a>
     <h1 class="md-headline-small mb-0">{{ edition.short_name }}</h1>
+    {% include 'includes/rarity_badge.html' %}
   </div>
-  {% if user.is_staff %}
+  {% if perms.comics.access_management %}
     <a class="md-btn md-btn--tonal" href="{% url 'manage_edition_edit' edition.pk %}?next={{ request.get_full_path|urlencode }}">
       <span class="material-symbols-outlined" aria-hidden="true">edit</span>
       {% translate "Edit in Management" %}
@@ -39,6 +40,7 @@
         <dt>{% translate "Variant" %}</dt><dd>{{ edition.variant|default:"—" }}</dd>
         <dt>{% translate "Printing" %}</dt><dd>{{ edition.get_printing_display }}</dd>
         <dt>{% translate "Format" %}</dt><dd>{{ edition.get_format_display }}</dd>
+        <dt>{% translate "Rarity" %}</dt><dd>{{ edition.get_rarity_display }}</dd>
         <dt>{% translate "Release date" %}</dt><dd>{{ edition.release_date }}</dd>
         <dt>{% translate "Cover price" %}</dt><dd>${{ edition.cover_price }}</dd>
         {% if edition.ratio %}<dt>Ratio</dt><dd>{{ edition.ratio }} · {% translate "Incentive cover" %}</dd>{% endif %}

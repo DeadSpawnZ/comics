@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="6.5 6.5 51 51" width="128" height="128">
+  <!-- Comi achievement medal "batcave_vault": disc and pictogram only; the app draws the level ring. -->
+  <clipPath id="disc"><circle cx="32" cy="32" r="25.5"/></clipPath>
+  <circle cx="32" cy="32" r="25.5" fill="#263140"/>
+  <g clip-path="url(#disc)">
+  <path d="M5 6 L10 15 L13 8 L17 14.5 L20 7 L24 12 L27 5 Z M37 5 L40 11 L43 6.5 L46.5 13 L49 7 L53 12.5 L58 6 Z" fill="#141a22"/>
+  <path d="M52 21 C47.5 16 40 15 33.5 16.2 C29.5 17 26.6 19 26.1 21.6 C25.9 23.1 27 24.1 29 24.2 L37 24.6 L29 25.8 C27.1 26.2 26.7 28 28.1 29 C31 30.9 36.3 31.7 40.3 31.2 C42.8 33.7 44.3 37.2 44.8 41 L58 42 Z" fill="#6d8f5a"/>
+  <path d="M29.5 24.2 l.9 1.5 l.9 -1.5 Z M32.4 24.4 l.9 1.5 l.9 -1.5 Z M35.3 24.5 l.9 1.5 l.9 -1.5 Z M30 25.7 l.9 -1.3 l.9 1.3 Z M33 25.4 l.9 -1.3 l.9 1.3 Z" fill="#f4f1e6"/>
+  <circle cx="40.5" cy="20" r="1.4" fill="#f2c14e"/>
+  <path d="M28 21.2 h1.6" stroke="#3f5532" stroke-width="1" stroke-linecap="round"/>
+  <circle cx="23" cy="40" r="11.5" fill="#b8612c" stroke="#e08a52" stroke-width="1.6"/>
+  <circle cx="23" cy="40" r="8.4" fill="none" stroke="#8f4a22" stroke-width="1"/>
+  <text x="23" y="43.6" text-anchor="middle" font-family="Roboto, sans-serif" font-weight="700" font-size="9.5" fill="#f0b27f">1¢</text>
+  </g>
+</svg>

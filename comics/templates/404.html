@@ -1,0 +1,5 @@
+{% extends 'error_page.html' %}
+{% load i18n %}
+{% block error_icon %}search_off{% endblock %}
+{% block error_title %}{% translate "Page not found" %}{% endblock %}
+{% block error_message %}{% translate "This page doesn't exist or was moved." %}{% endblock %}

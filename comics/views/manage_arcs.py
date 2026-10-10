@@ -6,7 +6,6 @@ from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION
-from django.contrib.admin.views.decorators import staff_member_required
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
@@ -15,9 +14,11 @@ from django.urls import reverse
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 
+from comics.achievements.engine import schedule_reading_arc_owners
+from comics.decorators import management_required
 from comics.forms import ReadingArcForm, publishing_choices
 from comics.models import Issue, ReadingArc, ReadingArcEntry
-from comics.views.manage_editions import _log, _safe_next
+from comics.views.utils import log_action, safe_next_url
 
 COVER_STRIP_SIZE = 8
 
@@ -26,7 +27,7 @@ def _entry_payload(entry: ReadingArcEntry) -> dict[str, Any]:
     return {"id": entry.issue_id, "label": str(entry.issue), "cover": entry.cover_url}
 
 
-@staff_member_required
+@management_required
 def arc_list(request: HttpRequest) -> HttpResponse:
     cards = []
     for arc in ReadingArc.objects.all():
@@ -41,10 +42,10 @@ def arc_list(request: HttpRequest) -> HttpResponse:
     return render(request, "manage/arc_list.html", {"cards": cards})
 
 
-@staff_member_required
+@management_required
 def arc_form(request: HttpRequest, pk: int | None = None) -> HttpResponse:
     arc = get_object_or_404(ReadingArc, pk=pk) if pk else None
-    back_url = _safe_next(request, reverse("manage_arcs"))
+    back_url = safe_next_url(request, reverse("manage_arcs"))
     form = ReadingArcForm(request.POST or None, instance=arc)
     issue_errors = []
 
@@ -68,7 +69,9 @@ def arc_form(request: HttpRequest, pk: int | None = None) -> HttpResponse:
                 with transaction.atomic():
                     saved.save()
                     saved.set_issues(cleaned_ids)
-                    _log(
+                    # set_issues inserts in bulk (no signals): owners may have completed it.
+                    schedule_reading_arc_owners(saved.pk)
+                    log_action(
                         request,
                         saved,
                         ADDITION if created else CHANGE,
@@ -102,13 +105,13 @@ def arc_form(request: HttpRequest, pk: int | None = None) -> HttpResponse:
     )
 
 
-@staff_member_required
+@management_required
 @require_POST
 def arc_delete(request: HttpRequest, pk: int) -> HttpResponseRedirect:
     arc = get_object_or_404(ReadingArc, pk=pk)
     label = str(arc)
     with transaction.atomic():
-        _log(request, arc, DELETION, "Eliminado desde Gestión.")
+        log_action(request, arc, DELETION, "Eliminado desde Gestión.")
         arc.delete()
     messages.success(request, _("Reading arc deleted: %(arc)s") % {"arc": label})
-    return redirect(_safe_next(request, reverse("manage_arcs")))
+    return redirect(safe_next_url(request, reverse("manage_arcs")))

@@ -13,7 +13,8 @@ from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 
 from comics.models import Collection, Connecting, Edition, ReadingArc
-from comics.views.manage_editions import _safe_next, edition_catalog_context, sibling_editions_of
+from comics.views.manage_editions import edition_catalog_context, sibling_editions_of
+from comics.views.utils import safe_next_url
 
 COVER_STRIP_SIZE = 6
 ENTRY_FILTERS = ("all", "owned", "missing")
@@ -138,7 +139,7 @@ def edition_detail(request: HttpRequest, pk: int) -> HttpResponse:
         "my_comics/edition_detail.html",
         {
             "edition": edition,
-            "back_url": _safe_next(request, reverse("comics_editions")),
+            "back_url": safe_next_url(request, reverse("comics_editions")),
             "copies": copies,
             "cover_artists": edition.cover_artists.order_by("name"),
             "collected": edition.collected_entries.select_related("issue__publishing").order_by("order"),

@@ -16,8 +16,12 @@ from django.urls import URLPattern, path
 from django.utils.html import format_html
 from django.utils.safestring import SafeString
 
-from .forms import CollectionForm, EditionForm
+from .forms import CollectionForm, EditionForm, save_formset_reinserting
 from .models import (
+    Achievement,
+    AchievementCategory,
+    AchievementTier,
+    Announcement,
     Artist,
     CollectedIssue,
     Collection,
@@ -28,32 +32,81 @@ from .models import (
     Editorial,
     GeekCollectable,
     Issue,
+    Notification,
+    Profile,
     Publishing,
     ReadingArc,
     ReadingArcEntry,
     Signature,
     Title,
+    UserAchievement,
 )
 
-
-def save_formset_reinserting(formset: BaseModelFormSet) -> None:
-    """Save an inline whose rows have UniqueConstraints (position, order, etc.).
-    Swapping values between rows violates the constraints if rows are updated one by
-    one (MySQL checks every UPDATE and does not support deferred constraints), so the
-    changed rows are deleted and inserted again with their final values. The formset
-    already validated that the final state has no duplicates."""
-    instances = formset.save(commit=False)
-    for obj in formset.deleted_objects:
-        obj.delete()
-    formset.model.objects.filter(pk__in=[obj.pk for obj in instances if obj.pk]).delete()
-    for obj in instances:
-        obj.pk = None
-        obj._state.adding = True
-        obj.save()
-    formset.save_m2m()
-
-
 admin.site.register(Signature)
+
+
+class AchievementTierInline(admin.TabularInline):
+    model = AchievementTier
+    extra = 0
+
+
+@admin.register(Achievement)
+class AchievementAdmin(admin.ModelAdmin):
+    # Day-to-day editing happens in Gestión; the admin is the superusers' fallback.
+    list_display = ("code", "rule", "name_en", "name_es", "category", "is_secret", "is_enabled")
+    list_filter = ("category", "rule", "is_secret", "is_enabled")
+    inlines = [AchievementTierInline]
+
+    def save_formset(self, request: HttpRequest, form: ModelForm, formset: BaseModelFormSet, change: bool) -> None:
+        save_formset_reinserting(formset)
+
+
+@admin.register(AchievementCategory)
+class AchievementCategoryAdmin(admin.ModelAdmin):
+    list_display = ("code", "name_en", "name_es", "display_order", "is_enabled")
+
+
+@admin.register(UserAchievement)
+class UserAchievementAdmin(admin.ModelAdmin):
+    list_display = ("user", "achievement", "level", "awarded_at", "notified")
+    list_filter = ("achievement",)
+    list_select_related = ("user", "achievement")
+    search_fields = ("user__username",)
+    raw_id_fields = ("user",)
+
+
+@admin.register(Announcement)
+class AnnouncementAdmin(admin.ModelAdmin):
+    # Created in Gestión only: creating one there is what sends its notifications.
+    list_display = ("title_en", "title_es", "audience", "created_by", "created_at")
+    list_select_related = ("created_by",)
+    # The audience is fixed once the notifications were sent.
+    readonly_fields = ("audience", "roles", "created_by", "created_at")
+
+    def has_add_permission(self, request: HttpRequest) -> bool:
+        return False
+
+
+@admin.register(Notification)
+class NotificationAdmin(admin.ModelAdmin):
+    list_display = ("recipient", "kind", "achievement", "announcement", "level", "count", "created_at", "read_at")
+    list_filter = ("kind",)
+    list_select_related = ("recipient", "achievement", "announcement")
+    search_fields = ("recipient__username",)
+    raw_id_fields = ("recipient", "achievement", "announcement")
+
+    def has_add_permission(self, request: HttpRequest) -> bool:
+        # Notifications are only created by the app (achievements, announcements).
+        return False
+
+
+@admin.register(Profile)
+class ProfileAdmin(admin.ModelAdmin):
+    list_display = ("user", "is_public", "phone")
+    list_filter = ("is_public",)
+    list_select_related = ("user",)
+    search_fields = ("user__username", "user__email")
+    raw_id_fields = ("user",)
 
 
 @admin.register(Dealer)
@@ -170,6 +223,7 @@ class EditionAdmin(admin.ModelAdmin):
                     "event_exclusive",
                     "cover_price",
                     "format",
+                    "rarity",
                     "release_date",
                 )
             },
@@ -186,6 +240,7 @@ class EditionAdmin(admin.ModelAdmin):
         "number",
         "variant",
         "format",
+        "rarity",
         "get_serie",
         "printing",
         "get_release_date",

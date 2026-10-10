@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% comment %}Centered card shared by the account pages (sign in, registration).{% endcomment %}
+{% block content %}
+<div class="row justify-content-center my-4 my-md-5">
+  <div class="col-12 col-sm-10 col-md-7 col-lg-5 col-xl-4">
+    <div class="md-surface-card p-4">
+      <div class="text-center mb-4">
+        <span class="material-symbols-outlined d-block mb-2 empty-state-icon" aria-hidden="true">{% block accounts_icon %}lock{% endblock %}</span>
+        <h1 class="md-headline-small mb-1">{% block accounts_title %}{% endblock %}</h1>
+        <p class="md-body-medium mb-0">{% block accounts_subtitle %}{% endblock %}</p>
+      </div>
+
+      {% if form.non_field_errors %}
+        <div class="editor-errors mb-3" role="alert">
+          <span class="material-symbols-outlined" aria-hidden="true">error</span>
+          <ul>{% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}</ul>
+        </div>
+      {% endif %}
+
+      {% block accounts_form %}{% endblock %}
+
+      <p class="md-body-medium text-center mt-4 mb-0">{% block accounts_switch %}{% endblock %}</p>
+    </div>
+  </div>
+</div>
+{% endblock %}

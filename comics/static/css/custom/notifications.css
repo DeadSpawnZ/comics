@@ -1,0 +1,144 @@
+/* Notifications: the navbar bell, its menu and the notifications page. Uses the --md-* tokens
+ * of material.css, so it follows the light and dark themes. */
+
+/* Bell button and unread badge */
+.notif-bell__badge {
+  position: absolute;
+  top: 4px;
+  right: 2px;
+  z-index: 1;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background-color: var(--md-error);
+  color: var(--md-on-error);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  line-height: 18px;
+  text-align: center;
+  pointer-events: none;
+}
+
+/* Menu */
+.notif-menu {
+  width: min(360px, calc(100vw - 1rem));
+  padding-block: 0.25rem 0;
+}
+
+.notif-menu__list {
+  max-height: min(60vh, 420px);
+  overflow-y: auto;
+}
+
+.notif-menu__status {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  color: var(--md-on-surface-variant);
+  font-size: 0.875rem;
+}
+
+.notif-menu__actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 0.5rem 0.25rem;
+}
+
+.notif-menu__footer {
+  display: flex;
+  justify-content: center;
+  padding: 0.25rem 0.5rem;
+  border-top: 1px solid var(--md-outline-variant);
+}
+
+/* One notification (menu and page) */
+.notif-item__form {
+  margin: 0;
+}
+
+.md-menu .notif-item,
+.notif-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  width: 100%;
+  white-space: normal;
+  text-align: start;
+}
+
+.notif-item.is-unread {
+  background-color: rgba(var(--md-primary-rgb), 0.08);
+}
+
+.notif-item:focus-visible {
+  outline: 2px solid var(--md-primary);
+  outline-offset: -2px;
+}
+
+.notif-item__icon {
+  flex: none;
+  color: var(--md-on-surface-variant);
+}
+
+.notif-item.is-unread .notif-item__icon {
+  color: var(--md-primary);
+}
+
+.notif-item__main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.notif-item__text {
+  color: var(--md-on-surface);
+}
+
+.notif-item.is-unread .notif-item__text {
+  font-weight: 500;
+}
+
+.notif-item__detail {
+  color: var(--md-on-surface-variant);
+}
+
+.notif-item__time {
+  color: var(--md-on-surface-variant);
+  font-size: 0.75rem;
+}
+
+.notif-item__dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-top: 0.45rem;
+  margin-inline-start: auto;
+  border-radius: 50%;
+  background-color: var(--md-primary);
+}
+
+/* Notifications page: the same items, as a list in a card */
+.notif-page__card {
+  padding: 0.5rem 0;
+}
+
+.notif-page .notif-item {
+  padding: 0.875rem 1.25rem;
+  border: 0;
+  font-size: 0.9375rem;
+  color: var(--md-on-surface);
+}
+
+.notif-page .notif-item:hover {
+  background-color: rgba(var(--md-on-surface-rgb), 0.08);
+}
+
+.notif-page .notif-item.is-unread:hover {
+  background-color: rgba(var(--md-primary-rgb), 0.12);
+}
+
+.notif-page__list > li + li {
+  border-top: 1px solid var(--md-outline-variant);
+}

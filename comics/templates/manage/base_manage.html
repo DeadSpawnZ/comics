@@ -60,6 +60,22 @@
           Connectings
         </a>
       </li>
+      <li>
+        <a class="md-side-nav__link {% if 'achievement' in url_name %}is-active{% endif %}"
+           {% if 'achievement' in url_name %}aria-current="page"{% endif %}
+           href="{% url 'manage_achievements' %}">
+          <span class="material-symbols-outlined" aria-hidden="true">emoji_events</span>
+          {% translate "Achievements" %}
+        </a>
+      </li>
+      <li>
+        <a class="md-side-nav__link {% if 'announcement' in url_name %}is-active{% endif %}"
+           {% if 'announcement' in url_name %}aria-current="page"{% endif %}
+           href="{% url 'manage_announcements' %}">
+          <span class="material-symbols-outlined" aria-hidden="true">campaign</span>
+          {% translate "Announcements" %}
+        </a>
+      </li>
     </ul>
   </nav>
   </aside>
@@ -75,5 +91,4 @@
 </div>
 {% endwith %}
 
-{% include 'includes/snackbar.html' %}
 {% endblock %}
