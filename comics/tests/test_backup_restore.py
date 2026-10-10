@@ -3,7 +3,8 @@ group permissions travel by natural key, so they survive permission ids that dif
 databases. `ensure_roles` rebuilds the groups when a dump does not bring them. Profiles travel by
 their user's username too, achievements by their code and achievement categories by theirs.
 Notifications point to their user and achievement by natural key and to announcements by id
-(announcements are content, like pieces: nothing seeds them)."""
+(announcements are content, like pieces: nothing seeds them). The versions of issues and editions
+(comics.history) travel with them, their authors by username, so the history survives a restore."""
 
 import json
 import tempfile
@@ -18,16 +19,21 @@ from django.test import TransactionTestCase, override_settings
 
 import dump
 from comics.achievements.catalogue import ACHIEVEMENTS, ensure_catalogue
+from comics.history import versions_of
 from comics.models import (
     Achievement,
     AchievementCategory,
     AchievementTier,
     Announcement,
+    Artist,
     Collection,
+    Edition,
+    Issue,
     Notification,
     Profile,
     UserAchievement,
 )
+from comics.versions import revert_to_version
 from comics.roles import ACCESS_MANAGEMENT, ADMINISTRATORS, COLLECTORS, REVIEWERS, ROLE_PERMISSIONS, ensure_roles
 
 from .base import TEST_MEDIA_ROOT, TEST_STORAGES, ComiTestCase
@@ -277,6 +283,50 @@ class RestoreTests(TransactionTestCase):
         self.assertEqual(profile.avatar.name, "avatars/user1_0123456789abcdef.jpg")
         self.assertEqual((profile.phone, profile.is_public), ("811 234 5678", False))
         self.assertTrue(Profile.objects.filter(user__username="plain").exists())
+
+    def test_restore_keeps_the_versions(self) -> None:
+        manager = make_user(username="manager")
+        edition = make_edition(notes="first")
+        edition.cover_artists.add(Artist.objects.create(name="Todd McFarlane"))
+        edition._history_user = manager
+        edition._change_reason = "Typo"
+        edition.notes = "second"
+        edition.save()
+        history = Edition.history.model
+        dumped = [
+            (version.history_type, version.notes, getattr(version.history_user, "username", None))
+            for version in versions_of(Edition, edition.pk)
+        ]
+        issue_versions = versions_of(Issue, edition.issue_id).count()
+        with tempfile.TemporaryDirectory() as tmp:
+            dump_file = self.make_dump(tmp)
+            content = json.loads(dump_file.read_text(encoding="utf-8"))
+            entry = next(
+                item
+                for item in content
+                if item["model"] == "comics.historicaledition" and item["fields"]["history_change_reason"] == "Typo"
+            )
+            self.assertEqual(entry["fields"]["history_user"], ["manager"])
+
+            call_command("flush", interactive=False, verbosity=0)
+            make_user(username="other")  # the restored users get other ids
+            call_command("loaddata", str(dump_file), verbosity=0)
+
+        # Loading the rows (and setting their relations) wrote no versions of its own.
+        restored = [
+            (version.history_type, version.notes, getattr(version.history_user, "username", None))
+            for version in versions_of(Edition, edition.pk)
+        ]
+        self.assertEqual(restored, dumped)
+        self.assertEqual(versions_of(Issue, edition.issue_id).count(), issue_versions)
+        latest = versions_of(Edition, edition.pk).first()
+        self.assertEqual((latest.history_user.username, latest.history_change_reason), ("manager", "Typo"))
+        self.assertEqual(list(latest.cover_artists.values_list("artist__name", flat=True)), ["Todd McFarlane"])
+        self.assertEqual(history.cover_artists.model.objects.count(), 2)  # one row per version since the artist
+
+        revert_to_version(versions_of(Edition, edition.pk).last(), user=None)
+        edition = Edition.objects.get(pk=edition.pk)
+        self.assertEqual((edition.notes, edition.cover_artists.count()), ("first", 0))
 
     def test_ensure_roles_rebuilds_the_groups_after_flush(self) -> None:
         call_command("flush", interactive=False, verbosity=0)

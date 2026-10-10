@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "comics.apps.ComicsConfig",
     "django.contrib.humanize",
+    "simple_history",
 ]
 
 MIDDLEWARE = [
@@ -54,6 +55,8 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    # After auth: the signed-in user writes the versions of what a request changes (comics.history).
+    "comics.history.HistoryMiddleware",
     # After auth and messages: turns newly earned achievements into messages.
     "comics.middleware.AchievementNoticeMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",

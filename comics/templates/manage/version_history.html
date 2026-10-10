@@ -1,0 +1,67 @@
+{% extends 'manage/base_manage.html' %}
+{% load i18n %}
+
+{% block breadcrumb %}
+<a href="{% url 'manage_editions' %}">{% translate "Editions" %}</a>
+<span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+<a href="{{ back_url }}">{{ object_label }}</a>
+<span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+<span class="is-current">{% translate "History" %}</span>
+{% endblock %}
+
+{% block manage_content %}
+<div class="d-flex align-items-center gap-2 mb-3">
+  <a class="md-icon-btn" href="{{ back_url }}" aria-label="{% translate 'Back' %}" title="{% translate 'Back' %}">
+    <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+  </a>
+  <h1 class="md-headline-small mb-0">
+    {% if is_edition %}{% blocktranslate with name=object_label %}History of the edition {{ name }}{% endblocktranslate %}{% else %}{% blocktranslate with name=object_label %}History of the issue {{ name }}{% endblocktranslate %}{% endif %}
+  </h1>
+</div>
+
+<div class="md-surface-card manage-table">
+  <h2 class="visually-hidden">{% translate "Versions" %}</h2>
+  <ul class="history-list">
+    {% for entry in entries %}
+      <li class="history-entry version-entry">
+        <span class="history-entry__icon material-symbols-outlined {% if entry.kind == 'created' or entry.kind == 'initial' %}is-addition{% elif entry.kind == 'deleted' %}is-deletion{% else %}is-change{% endif %}"
+              aria-hidden="true">{% if entry.kind == 'reverted' %}history{% elif entry.kind == 'deleted' %}delete{% elif entry.kind == 'changed' %}edit{% else %}add_circle{% endif %}</span>
+        <div class="history-entry__main">
+          <div class="history-entry__title">{{ entry.kind_label }}</div>
+          {% if entry.reason %}<div class="md-body-medium version-entry__reason">{% translate "Reason:" %} {{ entry.reason }}</div>{% endif %}
+          {% if entry.changes or entry.relation_changes %}
+            <ul class="version-changes md-body-medium">
+              {% for change in entry.changes %}
+                <li><strong>{{ change.label }}:</strong> <del>{{ change.old|truncatechars:200 }}</del> → <ins>{{ change.new|truncatechars:200 }}</ins></li>
+              {% endfor %}
+              {% for change in entry.relation_changes %}
+                <li>
+                  <strong>{{ change.label }}:</strong>
+                  {% if change.added %}{% translate "added" %} <ins>{{ change.added|join:", " }}</ins>{% endif %}
+                  {% if change.added and change.removed %}·{% endif %}
+                  {% if change.removed %}{% translate "removed" %} <del>{{ change.removed|join:", " }}</del>{% endif %}
+                  {% if change.reordered %}{% if change.added or change.removed %}·{% endif %} {% translate "order changed" %}{% endif %}
+                </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+        <div class="history-entry__meta md-body-medium">
+          <span>{{ entry.user_label }}</span>
+          <span title="{{ entry.version.history_date|date:'DATETIME_FORMAT' }}">{{ entry.version.history_date|date:"SHORT_DATETIME_FORMAT" }}</span>
+          {% if entry.can_revert %}
+            <button type="button" class="md-btn md-btn--text" data-bs-toggle="modal" data-bs-target="#revertDialog"
+                    data-revert-url="{% url revert_url_name object_pk entry.version.history_id %}"
+                    data-revert-date="{{ entry.version.history_date|date:'DATETIME_FORMAT' }}">
+              <span class="material-symbols-outlined" aria-hidden="true">history</span>
+              {% translate "Revert to this version" %}
+            </button>
+          {% endif %}
+        </div>
+      </li>
+    {% endfor %}
+  </ul>
+</div>
+
+{% include 'manage/includes/revert_dialog.html' with form=revert_form next=back_url %}
+{% endblock %}

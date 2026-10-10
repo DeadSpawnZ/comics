@@ -3,3 +3,4 @@ mysqlclient==2.2.4
 Pillow==9.4.0
 gunicorn==23.0.0
 whitenoise==6.8.2
+django-simple-history==3.12.0

@@ -2583,3 +2583,132 @@ msgid "Read by %(read)s of %(counter)s recipient"
 msgid_plural "Read by %(read)s of %(counter)s recipients"
 msgstr[0] "Leído por %(read)s de %(counter)s destinatario"
 msgstr[1] "Leído por %(read)s de %(counter)s destinatarios"
+
+#: comics/templates/manage/edition_form.html
+#: comics/templates/manage/version_history.html
+msgid "History"
+msgstr "Historial"
+
+#: comics/templates/manage/edition_form.html
+msgid "Issue history"
+msgstr "Historial del issue"
+
+#: comics/templates/manage/version_history.html
+msgid "Back"
+msgstr "Volver"
+
+#: comics/templates/manage/version_history.html
+#, python-format
+msgid "History of the edition %(name)s"
+msgstr "Historial de la edición %(name)s"
+
+#: comics/templates/manage/version_history.html
+#, python-format
+msgid "History of the issue %(name)s"
+msgstr "Historial del issue %(name)s"
+
+#: comics/templates/manage/version_history.html
+msgid "Versions"
+msgstr "Versiones"
+
+#: comics/templates/manage/version_history.html
+msgid "Reason:"
+msgstr "Motivo:"
+
+#: comics/templates/manage/version_history.html
+msgid "added"
+msgstr "añadidos"
+
+#: comics/templates/manage/version_history.html
+msgid "removed"
+msgstr "quitados"
+
+#: comics/templates/manage/version_history.html
+msgid "order changed"
+msgstr "orden cambiado"
+
+#: comics/templates/manage/version_history.html
+msgid "Revert to this version"
+msgstr "Volver a esta versión"
+
+#: comics/templates/manage/includes/revert_dialog.html
+msgid "Revert to this version?"
+msgstr "¿Volver a esta versión?"
+
+#: comics/templates/manage/includes/revert_dialog.html
+msgid ""
+"Everything goes back to how it was on <strong id=\"revertDialogDate\"></"
+"strong>. The current state stays in the history, so this can be undone too."
+msgstr ""
+"Todo vuelve a como estaba el <strong id=\"revertDialogDate\"></strong>. El "
+"estado actual se queda en el historial, así que esto también se puede "
+"deshacer."
+
+#: comics/templates/manage/includes/revert_dialog.html
+msgid "Revert"
+msgstr "Volver a esta versión"
+
+#: comics/forms.py
+msgid "Reason (optional)"
+msgstr "Motivo (opcional)"
+
+#: comics/views/manage_history.py
+#, python-format
+msgid "Restored the version of %(date)s."
+msgstr "Se restauró la versión del %(date)s."
+
+#: comics/versions.py
+#, python-format
+msgid "This version cannot be restored: %(reason)s"
+msgstr "Esta versión no se puede restaurar: %(reason)s"
+
+#: comics/versions.py
+#, python-format
+msgid "its %(field)s (#%(id)s) no longer exists."
+msgstr "su %(field)s (#%(id)s) ya no existe."
+
+#: comics/versions.py
+msgid "A deleted state cannot be restored: choose an earlier version."
+msgstr "No se puede restaurar un estado eliminado: elige una versión anterior."
+
+#: comics/versions.py
+#, python-format
+msgid "#%(id)s (deleted)"
+msgstr "#%(id)s (eliminado)"
+
+#: comics/versions.py
+msgid "System"
+msgstr "Sistema"
+
+#: comics/versions.py
+msgid "Reverted"
+msgstr "Restaurada"
+
+#: comics/versions.py
+#, python-format
+msgid "Reverted to the version of %(date)s"
+msgstr "Restaurada la versión del %(date)s"
+
+#: comics/versions.py
+msgid "Initial version"
+msgstr "Versión inicial"
+
+#: comics/versions.py
+msgid "Created"
+msgstr "Creado"
+
+#: comics/versions.py
+msgid "Thumbnail"
+msgstr "Miniatura"
+
+#: comics/versions.py
+msgid "Collected issues"
+msgstr "Issues recopilados"
+
+#: comics/versions.py
+msgid "Synopsis"
+msgstr "Sinopsis"
+
+#: comics/versions.py
+msgid "Creators"
+msgstr "Creadores"

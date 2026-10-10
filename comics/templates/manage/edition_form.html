@@ -21,6 +21,16 @@
     </div>
     <div class="d-flex align-items-center gap-2 flex-wrap">
       {% if edition %}
+        <a class="md-btn md-btn--text" href="{% url 'manage_edition_history' edition.pk %}?next={{ request.get_full_path|urlencode }}">
+          <span class="material-symbols-outlined" aria-hidden="true">history</span>
+          {% translate "History" %}
+        </a>
+        {% if edition.issue_id %}
+          <a class="md-btn md-btn--text" href="{% url 'manage_issue_history' edition.issue_id %}?next={{ request.get_full_path|urlencode }}">
+            <span class="material-symbols-outlined" aria-hidden="true">history_edu</span>
+            {% translate "Issue history" %}
+          </a>
+        {% endif %}
         <button type="button" class="md-btn md-btn--danger-outlined" data-bs-toggle="modal" data-bs-target="#deleteDialog"
                 data-delete-url="{% url 'manage_edition_delete' edition.pk %}"
                 data-delete-name="{{ edition.short_name }}">

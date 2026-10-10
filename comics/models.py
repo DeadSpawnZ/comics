@@ -50,10 +50,12 @@ from django.utils.functional import Promise
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import get_language, gettext, ngettext
 from django.utils.translation import gettext_lazy as _
+import simple_history
 from PIL import Image
 
 from .achievements.windows import CalendarWindow, clear_unused, window_errors
 from .helper import generate_image_jpeg, square_jpeg, square_png
+from .history import TrackedHistory, record_change
 
 logger = logging.getLogger(__name__)
 
@@ -207,6 +209,8 @@ class Issue(Model):
     creators = ManyToManyField(Artist, blank=True, related_name="issues")
 
     objects = IssueQuerySet.as_manager()
+    # Versions of every saved state, with its creators (see comics.history).
+    history = TrackedHistory(m2m_fields=["creators"])
 
     class Meta:
         ordering = ["publishing__publishing_title", "number"]
@@ -299,6 +303,7 @@ class Edition(Model):
         "extranjera o de aniversario de un issue de otra serie. Vacio en compilaciones.",
     )
     collected_issues = ManyToManyField(Issue, through="CollectedIssue", blank=True, related_name="collected_in")
+    # `history` (its versions) is registered after CollectedIssue, see below.
 
     class Meta:
         constraints = [
@@ -326,14 +331,18 @@ class Edition(Model):
 
         return comic_name
 
-    def save(self, *args: Any, **kwargs: Any) -> None:
+    def save(self, *args: Any, restoring: bool = False, **kwargs: Any) -> None:
+        """`restoring`: the values come from a saved version (comics.versions.revert_to_version), so
+        its image paths and its issue are kept as they were, not reprocessed or reassigned."""
         self.process_variant()
         self.validate()
-        self.process_image()
+        if not restoring:
+            self.process_image()
         old_issue_id = (
             Edition.objects.filter(pk=self.pk).values_list("issue_id", flat=True).first() if self.pk else None
         )
-        self.assign_default_issue()
+        if not restoring:
+            self.assign_default_issue()
 
         super().save(*args, **kwargs)
 
@@ -406,10 +415,12 @@ class Edition(Model):
             previous_id = self.issue_id
             Edition.objects.filter(pk=self.pk).update(issue=None)
             self.issue = None
+            record_change(Edition, self.pk)  # update() saves no version by itself
             Issue.objects.filter(pk=previous_id).delete_orphans()
         elif self.issue_id is None:
             self.issue, _ = Issue.objects.get_or_create(publishing_id=self.publishing_id, number=self.number.strip())
             Edition.objects.filter(pk=self.pk).update(issue=self.issue)
+            record_change(Edition, self.pk)
 
     def validate_duplicate(self) -> None:
         coincidences = (
@@ -545,6 +556,12 @@ class CollectedIssue(Model):
 
     def __str__(self) -> str:
         return f"{self.edition.short_name} #{self.order}: {self.issue}"
+
+
+# Versions of every saved state of an edition, with its cover artists and collected issues (and their
+# order); see comics.history. Registered here because the history of the collected issues needs
+# their through model (CollectedIssue) to exist.
+simple_history.register(Edition, records_class=TrackedHistory, m2m_fields=["cover_artists", "collected_issues"])
 
 
 class Dealer(Model):

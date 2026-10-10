@@ -607,6 +607,12 @@ SignatureFormSet = forms.inlineformset_factory(
 )
 
 
+class RevertForm(forms.Form):
+    """Going back to a version from the Gestión history: an optional reason, kept with the new version."""
+
+    reason = forms.CharField(label=_("Reason (optional)"), max_length=255, required=False)
+
+
 def save_formset_reinserting(formset: BaseModelFormSet) -> None:
     """Save an inline whose rows have UniqueConstraints (position, order, etc.).
     Swapping values between rows violates the constraints if rows are updated one by

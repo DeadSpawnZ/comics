@@ -691,6 +691,29 @@
   white-space: nowrap;
 }
 
+/* Version history of an edition or an issue (Gestión): what changed in each version. */
+.version-entry {
+  align-items: start;
+}
+
+.version-changes {
+  margin: 0.25rem 0 0;
+  padding-left: 1.125rem;
+}
+
+.version-changes del {
+  color: var(--md-error);
+}
+
+.version-changes ins {
+  text-decoration: none;
+  color: var(--md-primary);
+}
+
+.version-entry__reason {
+  font-style: italic;
+}
+
 /* Latest additions listed above the A-Z catalog */
 .manage-rows--recent {
   background-color: var(--md-surface-container-low);
