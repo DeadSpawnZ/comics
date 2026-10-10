@@ -60,6 +60,15 @@
           Connectings
         </a>
       </li>
+      {% if review_badge.visible %}
+      <li>
+        <a class="md-side-nav__link" href="{% url 'review_queue' %}">
+          <span class="material-symbols-outlined" aria-hidden="true">rate_review</span>
+          {% translate "Change requests" %}
+          {% if review_badge.open_count %}<span class="manage-tab__count">{{ review_badge.open_count }}</span>{% endif %}
+        </a>
+      </li>
+      {% endif %}
       <li>
         <a class="md-side-nav__link {% if 'achievement' in url_name %}is-active{% endif %}"
            {% if 'achievement' in url_name %}aria-current="page"{% endif %}

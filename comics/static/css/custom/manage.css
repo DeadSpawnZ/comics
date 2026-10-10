@@ -735,3 +735,46 @@
 .signature-row:first-child {
   border-top: 0;
 }
+
+/* Change requests: status chips, steps and the requested fields */
+.request-status--validated {
+  border-color: transparent;
+  background-color: var(--md-secondary-container);
+  color: var(--md-on-secondary-container);
+}
+
+.request-status--approved {
+  border-color: transparent;
+  background-color: var(--md-primary-container);
+  color: var(--md-on-primary-container);
+}
+
+.request-status--rejected {
+  border-color: transparent;
+  background-color: var(--md-error-container);
+  color: var(--md-on-error-container);
+}
+
+.request-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.request-step {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.request-step__icon {
+  color: var(--md-primary);
+}
+
+.request-step__title {
+  font-weight: 500;
+}
+
+.request-fields ins {
+  text-decoration: none;
+  color: var(--md-primary);
+}

@@ -1,0 +1,2 @@
+{% comment %}The status of a change request as a chip. Expects `change_request`.{% endcomment %}
+<span class="md-assist-chip request-status request-status--{{ change_request.status }}">{{ change_request.get_status_display }}</span>

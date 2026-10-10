@@ -21,12 +21,24 @@
     <h1 class="md-headline-small mb-0">{{ edition.short_name }}</h1>
     {% include 'includes/rarity_badge.html' %}
   </div>
-  {% if perms.comics.access_management %}
-    <a class="md-btn md-btn--tonal" href="{% url 'manage_edition_edit' edition.pk %}?next={{ request.get_full_path|urlencode }}">
-      <span class="material-symbols-outlined" aria-hidden="true">edit</span>
-      {% translate "Edit in Management" %}
+  <div class="d-flex align-items-center gap-2 flex-wrap">
+    <a class="md-btn md-btn--text" href="{% url 'comics_edition_suggest' edition.pk %}?next={{ request.get_full_path|urlencode }}">
+      <span class="material-symbols-outlined" aria-hidden="true">edit_note</span>
+      {% translate "Suggest a correction" %}
     </a>
-  {% endif %}
+    {% if edition.issue_id %}
+      <a class="md-btn md-btn--text" href="{% url 'comics_issue_suggest' edition.issue_id %}?next={{ request.get_full_path|urlencode }}">
+        <span class="material-symbols-outlined" aria-hidden="true">history_edu</span>
+        {% translate "Suggest a correction to the issue" %}
+      </a>
+    {% endif %}
+    {% if perms.comics.access_management %}
+      <a class="md-btn md-btn--tonal" href="{% url 'manage_edition_edit' edition.pk %}?next={{ request.get_full_path|urlencode }}">
+        <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+        {% translate "Edit in Management" %}
+      </a>
+    {% endif %}
+  </div>
 </div>
 
 <div class="row g-3">

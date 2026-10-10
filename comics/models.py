@@ -10,10 +10,10 @@ from datetime import datetime
 from typing import Any, Self
 
 from django.conf import settings
-from django.contrib.auth.models import Group, User
+from django.contrib.auth.models import AnonymousUser, Group, User
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import InMemoryUploadedFile
-from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
+from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator, URLValidator
 from django.db import transaction
 from django.db.models import (
     CASCADE,
@@ -30,11 +30,13 @@ from django.db.models import (
     ImageField,
     Index,
     IntegerField,
+    JSONField,
     Manager,
     ManyToManyField,
     Min,
     Model,
     OneToOneField,
+    PositiveBigIntegerField,
     PositiveIntegerField,
     PositiveSmallIntegerField,
     Q,
@@ -43,6 +45,7 @@ from django.db.models import (
     TextField,
     TimeField,
     UniqueConstraint,
+    URLField,
 )
 from django.urls import reverse
 from django.utils import timezone
@@ -50,12 +53,14 @@ from django.utils.functional import Promise
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import get_language, gettext, ngettext
 from django.utils.translation import gettext_lazy as _
+from django.utils.translation import pgettext_lazy
 import simple_history
 from PIL import Image
 
 from .achievements.windows import CalendarWindow, clear_unused, window_errors
 from .helper import generate_image_jpeg, square_jpeg, square_png
 from .history import TrackedHistory, record_change
+from .roles import APPROVE_CHANGE_REQUESTS, VALIDATE_CHANGE_REQUESTS
 
 logger = logging.getLogger(__name__)
 
@@ -1274,10 +1279,156 @@ class UserAchievement(Model):
     natural_key.dependencies = ["auth.user", "comics.achievement"]
 
 
+# ---------- Change requests ----------
+# Collectors propose new issues and editions, or corrections to existing ones; Reviewers validate
+# the proposals and Administrators approve them (see comics.change_requests). The history of the
+# catalogue (comics.history) knows nothing about requests: an approved request is applied through
+# comics.versions and points to the version it produced, so auditing requests is querying this table.
+
+
+class ChangeRequestQuerySet(QuerySet["ChangeRequest"]):
+    def open(self) -> ChangeRequestQuerySet:
+        """Waiting for a decision: pending or validated."""
+        return self.filter(status__in=ChangeRequest.OPEN_STATUSES)
+
+
+class ChangeRequest(Model):
+    """A proposal to create an issue or an edition, or to change some fields of an existing one.
+
+    Rows are referenced by id (`target_pk`, and the versions by their `history_id`), not by foreign
+    keys, as the versions themselves reference them: a request is an audit record that outlives its
+    target (an edition deleted since keeps its requests, which then cannot be approved; restoring it
+    from its history, with the same id, makes them applicable again).
+
+    `changes` maps field names to proposed values as JSON (foreign keys and many-to-many fields by
+    id, dates in ISO format, decimals as strings): for UPDATE only the fields that differ from the
+    values when it was submitted, for CREATE every field of the proposed object. `base_history_id`
+    is the latest version of the target when it was submitted: what reviewers compare against to
+    tell whether the target changed since (conflicts). Each step keeps who took it, when and an
+    optional note: the validation (`validated_*`) and the outcome (`decided_*`: approved, rejected,
+    or withdrawn by its author)."""
+
+    class Kind(TextChoices):
+        EDITION = "edition", _("Edition")
+        ISSUE = "issue", _("Issue")
+
+    class Action(TextChoices):
+        CREATE = "create", pgettext_lazy("change request", "New")
+        UPDATE = "update", _("Correction")
+
+    class Status(TextChoices):
+        PENDING = "pending", _("Pending")
+        VALIDATED = "validated", _("Validated")
+        APPROVED = "approved", _("Approved")
+        REJECTED = "rejected", _("Rejected")
+        WITHDRAWN = "withdrawn", _("Withdrawn")
+
+    OPEN_STATUSES = (Status.PENDING, Status.VALIDATED)
+
+    kind = CharField(max_length=10, choices=Kind.choices)
+    action = CharField(max_length=10, choices=Action.choices)
+    status = CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
+    # The issue or edition: the one to change (UPDATE), or the one created on approval (CREATE).
+    target_pk = PositiveBigIntegerField(null=True, blank=True)
+    # Its name when the request was submitted (and when it was approved), so lists need no lookups
+    # and still name a target deleted since.
+    target_label = CharField(max_length=200, blank=True)
+    changes = JSONField(default=dict)
+    base_history_id = PositiveBigIntegerField(null=True, blank=True)
+    applied_history_id = PositiveBigIntegerField(null=True, blank=True)  # the version the approval wrote
+    reason = TextField(max_length=1000)
+    evidence_url = URLField(max_length=500, blank=True, validators=[URLValidator(schemes=["http", "https"])])
+    author = ForeignKey(User, on_delete=SET_NULL, null=True, blank=True, related_name="change_requests")
+    created_at = DateTimeField(default=timezone.now)
+    validated_by = ForeignKey(User, on_delete=SET_NULL, null=True, blank=True, related_name="+")
+    validated_at = DateTimeField(null=True, blank=True)
+    validation_note = TextField(max_length=1000, blank=True)
+    decided_by = ForeignKey(User, on_delete=SET_NULL, null=True, blank=True, related_name="+")
+    decided_at = DateTimeField(null=True, blank=True)
+    decision_note = TextField(max_length=1000, blank=True)
+
+    objects = ChangeRequestQuerySet.as_manager()
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+        permissions = [
+            ("validate_changerequest", "Can validate or reject pending change requests"),
+            ("approve_changerequest", "Can approve or reject change requests"),
+        ]
+        indexes = [
+            Index(fields=["status", "-created_at"], name="change_request_status"),
+            Index(fields=["author", "-created_at"], name="change_request_author"),
+        ]
+        constraints = [
+            CheckConstraint(
+                condition=Q(action="create") | Q(target_pk__isnull=False),
+                name="change_request_update_has_target",
+            ),
+            CheckConstraint(
+                condition=~Q(status="approved") | Q(target_pk__isnull=False, applied_history_id__isnull=False),
+                name="change_request_approved_has_version",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"#{self.pk} {self.title}"
+
+    @property
+    def model(self) -> type[Model]:
+        return Edition if self.kind == self.Kind.EDITION else Issue
+
+    @property
+    def title(self) -> str:
+        """What the request is about, e.g. "Correction to the edition Spawn #1 A"."""
+        titles = {
+            (self.Action.UPDATE, self.Kind.EDITION): gettext("Correction to the edition %(name)s"),
+            (self.Action.UPDATE, self.Kind.ISSUE): gettext("Correction to the issue %(name)s"),
+            (self.Action.CREATE, self.Kind.EDITION): gettext("New edition %(name)s"),
+            (self.Action.CREATE, self.Kind.ISSUE): gettext("New issue %(name)s"),
+        }
+        return titles[(self.action, self.kind)] % {"name": self.target_label}
+
+    @property
+    def is_open(self) -> bool:
+        return self.status in self.OPEN_STATUSES
+
+    def target(self) -> Model | None:
+        """The issue or edition it is about; None if it does not exist (yet, or any more)."""
+        if self.target_pk is None:
+            return None
+        return self.model._default_manager.filter(pk=self.target_pk).first()
+
+    def allowed_actions(self, user: User | AnonymousUser) -> frozenset[str]:
+        """What `user` may do with it now: the state machine of a request.
+
+        pending -> validated (validate permission) -> approved or rejected (approve permission). An
+        approver can also approve or reject straight from pending, and a validator can reject a
+        pending request. Only its author can withdraw it, while it is pending. Nobody reviews their
+        own request (it would let them award themselves the Reportero achievement)."""
+        if not user.is_authenticated:
+            return frozenset()
+        actions: set[str] = set()
+        own = self.author_id is not None and self.author_id == user.pk
+        if own:
+            if self.status == self.Status.PENDING:
+                actions.add("withdraw")
+            return frozenset(actions)
+        can_validate = user.has_perm(VALIDATE_CHANGE_REQUESTS)
+        can_approve = user.has_perm(APPROVE_CHANGE_REQUESTS)
+        if self.status == self.Status.PENDING:
+            if can_validate:
+                actions |= {"validate", "reject"}
+            if can_approve:
+                actions |= {"approve", "reject"}
+        elif self.status == self.Status.VALIDATED and can_approve:
+            actions |= {"approve", "reject"}
+        return frozenset(actions)
+
+
 # ---------- Notifications ----------
-# What users are told about (achievements, announcements from Gestión), shown under the navbar
-# bell. A notification stores references, never texts: it is rendered in the viewer's language
-# from the achievement or announcement it points to, so later edits show up in it.
+# What users are told about (achievements, announcements from Gestión, the steps of their change
+# requests), shown under the navbar bell. A notification stores references, never texts: it is
+# rendered in the viewer's language from what it points to, so later edits show up in it.
 
 
 def validate_site_path(value: str) -> None:
@@ -1345,8 +1496,8 @@ class Announcement(Model):
 
 class NotificationQuerySet(QuerySet["Notification"]):
     def for_display(self) -> NotificationQuerySet:
-        """With what rendering them reads (achievement and its category, announcement)."""
-        return self.select_related("achievement__category", "announcement")
+        """With what rendering them reads (achievement and its category, announcement, request)."""
+        return self.select_related("achievement__category", "announcement", "change_request")
 
     def unread(self) -> NotificationQuerySet:
         return self.filter(read_at__isnull=True)
@@ -1373,16 +1524,34 @@ class NotificationManager(Manager.from_queryset(NotificationQuerySet)):  # type:
     def add_to_summary(self, pk: int, count: int = 1) -> None:
         self.filter(pk=pk).update(count=F("count") + count)
 
+    def change_request_step(self, change_request: ChangeRequest) -> Notification | None:
+        """Tell the author of `change_request` about the step it just took (validated, approved or
+        rejected: its current status). None when the request has no author any more."""
+        if change_request.author_id is None:
+            return None
+        kind = Notification.CHANGE_REQUEST_KINDS[change_request.status]
+        return self.create(recipient_id=change_request.author_id, kind=kind, change_request=change_request)
+
 
 class Notification(Model):
     """Something a user is told about. `kind` says which references it uses: an achievement and
-    the level reached, an announcement, or a number of achievements (summaries)."""
+    the level reached, an announcement, a number of achievements (summaries) or a change request."""
 
     class Kind(TextChoices):
         ACHIEVEMENT = "achievement"  # a live award or level-up
         ACHIEVEMENT_SUMMARY = "achievement_summary"  # a retroactive run: "you unlocked N"
         ACHIEVEMENTS_HELD = "achievements_held"  # what users held when notifications arrived (migration)
         ANNOUNCEMENT = "announcement"
+        CHANGE_REQUEST_VALIDATED = "change_request_validated"  # the author's request steps
+        CHANGE_REQUEST_APPROVED = "change_request_approved"
+        CHANGE_REQUEST_REJECTED = "change_request_rejected"
+
+    # The kind telling a request's author about each status their request can reach.
+    CHANGE_REQUEST_KINDS = {
+        ChangeRequest.Status.VALIDATED: Kind.CHANGE_REQUEST_VALIDATED,
+        ChangeRequest.Status.APPROVED: Kind.CHANGE_REQUEST_APPROVED,
+        ChangeRequest.Status.REJECTED: Kind.CHANGE_REQUEST_REJECTED,
+    }
 
     recipient = ForeignKey(User, on_delete=CASCADE, related_name="notifications")
     kind = CharField(max_length=30, choices=Kind.choices)
@@ -1390,6 +1559,9 @@ class Notification(Model):
     # this cascade never fires; it keeps a hand-made deletion from failing on notifications.
     achievement = ForeignKey(Achievement, on_delete=CASCADE, null=True, blank=True, related_name="notifications")
     announcement = ForeignKey(Announcement, on_delete=CASCADE, null=True, blank=True, related_name="notifications")
+    change_request = ForeignKey(
+        ChangeRequest, on_delete=CASCADE, null=True, blank=True, related_name="notifications"
+    )
     level = PositiveSmallIntegerField(null=True, blank=True)
     count = PositiveIntegerField(null=True, blank=True)
     created_at = DateTimeField(default=timezone.now)
@@ -1407,7 +1579,11 @@ class Notification(Model):
             CheckConstraint(
                 condition=Q(kind="achievement", achievement__isnull=False, level__isnull=False)
                 | Q(kind__in=["achievement_summary", "achievements_held"], count__isnull=False)
-                | Q(kind="announcement", announcement__isnull=False),
+                | Q(kind="announcement", announcement__isnull=False)
+                | Q(
+                    kind__in=["change_request_validated", "change_request_approved", "change_request_rejected"],
+                    change_request__isnull=False,
+                ),
                 name="notification_kind_references",
             )
         ]
@@ -1424,6 +1600,12 @@ class Notification(Model):
         """Material Symbols name."""
         if self.kind == self.Kind.ANNOUNCEMENT:
             return "campaign"
+        if self.kind == self.Kind.CHANGE_REQUEST_VALIDATED:
+            return "fact_check"
+        if self.kind == self.Kind.CHANGE_REQUEST_APPROVED:
+            return "task_alt"
+        if self.kind == self.Kind.CHANGE_REQUEST_REJECTED:
+            return "cancel"
         if self.kind == self.Kind.ACHIEVEMENT:
             return "emoji_events"
         return "military_tech"
@@ -1456,6 +1638,13 @@ class Notification(Model):
                 "You have %(count)d achievements: see them on your profile.",
                 count,
             ) % {"count": count}
+        if self.change_request is not None:
+            texts = {
+                self.Kind.CHANGE_REQUEST_VALIDATED: gettext("Your request was validated: %(title)s"),
+                self.Kind.CHANGE_REQUEST_APPROVED: gettext("Your request was approved: %(title)s"),
+                self.Kind.CHANGE_REQUEST_REJECTED: gettext("Your request was rejected: %(title)s"),
+            }
+            return texts[self.kind] % {"title": self.change_request.title}
         if self.announcement is not None:
             return self.announcement.title
         return ""
@@ -1465,6 +1654,11 @@ class Notification(Model):
         """Longer text shown on the notifications page (an announcement's body)."""
         if self.kind == self.Kind.ANNOUNCEMENT and self.announcement is not None:
             return self.announcement.body
+        if self.change_request is not None:
+            # The note of the step it tells about.
+            if self.kind == self.Kind.CHANGE_REQUEST_VALIDATED:
+                return self.change_request.validation_note
+            return self.change_request.decision_note
         return ""
 
     @property
@@ -1472,6 +1666,8 @@ class Notification(Model):
         """Where opening it leads (a path on this site), or None."""
         if self.kind == self.Kind.ANNOUNCEMENT:
             return (self.announcement.link or None) if self.announcement is not None else None
+        if self.change_request_id is not None:
+            return reverse("comics_request_detail", args=[self.change_request_id])
         return f"{reverse('profile')}#achievements"
 
     def mark_read(self) -> None:

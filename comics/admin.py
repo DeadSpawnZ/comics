@@ -23,6 +23,7 @@ from .models import (
     AchievementTier,
     Announcement,
     Artist,
+    ChangeRequest,
     CollectedIssue,
     Collection,
     Connecting,
@@ -97,6 +98,23 @@ class NotificationAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request: HttpRequest) -> bool:
         # Notifications are only created by the app (achievements, announcements).
+        return False
+
+
+@admin.register(ChangeRequest)
+class ChangeRequestAdmin(admin.ModelAdmin):
+    """Read-only: requests move only through their steps (the review area), which notify the
+    author and apply approved changes through the history."""
+
+    list_display = ("id", "kind", "action", "target_label", "status", "author", "created_at", "decided_at")
+    list_filter = ("status", "kind", "action")
+    list_select_related = ("author",)
+    search_fields = ("target_label", "author__username", "reason")
+
+    def has_add_permission(self, request: HttpRequest) -> bool:
+        return False
+
+    def has_change_permission(self, request: HttpRequest, obj: ChangeRequest | None = None) -> bool:
         return False
 
 

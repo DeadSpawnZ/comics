@@ -2712,3 +2712,319 @@ msgstr "Sinopsis"
 #: comics/versions.py
 msgid "Creators"
 msgstr "Creadores"
+
+#: comics/models.py
+msgctxt "change request"
+msgid "New"
+msgstr "Nueva"
+
+#: comics/models.py
+msgid "Issue"
+msgstr "Issue"
+
+#: comics/models.py
+msgid "Correction"
+msgstr "Corrección"
+
+#: comics/models.py
+msgid "Pending"
+msgstr "Pendiente"
+
+#: comics/models.py
+msgid "Validated"
+msgstr "Validada"
+
+#: comics/models.py
+msgid "Approved"
+msgstr "Aprobada"
+
+#: comics/models.py
+msgid "Rejected"
+msgstr "Rechazada"
+
+#: comics/models.py
+msgid "Withdrawn"
+msgstr "Retirada"
+
+#: comics/models.py
+#, python-format
+msgid "Correction to the edition %(name)s"
+msgstr "Corrección de la edición %(name)s"
+
+#: comics/models.py
+#, python-format
+msgid "Correction to the issue %(name)s"
+msgstr "Corrección del issue %(name)s"
+
+#: comics/models.py
+#, python-format
+msgid "New edition %(name)s"
+msgstr "Nueva edición %(name)s"
+
+#: comics/models.py
+#, python-format
+msgid "New issue %(name)s"
+msgstr "Nuevo issue %(name)s"
+
+#: comics/models.py
+#, python-format
+msgid "Your request was validated: %(title)s"
+msgstr "Tu solicitud fue validada: %(title)s"
+
+#: comics/models.py
+#, python-format
+msgid "Your request was approved: %(title)s"
+msgstr "Tu solicitud fue aprobada: %(title)s"
+
+#: comics/models.py
+#, python-format
+msgid "Your request was rejected: %(title)s"
+msgstr "Tu solicitud fue rechazada: %(title)s"
+
+#: comics/change_requests.py
+#, python-format
+msgid "This request cannot be changed that way: it is %(status)s."
+msgstr "Esta solicitud no se puede cambiar así: está %(status)s."
+
+#: comics/change_requests.py
+#, python-format
+msgid "The %(kind)s this request changes no longer exists: it can only be rejected."
+msgstr "El elemento (%(kind)s) que cambia esta solicitud ya no existe: solo se puede rechazar."
+
+#: comics/change_requests.py
+#, python-format
+msgid "Change request #%(id)s: %(reason)s"
+msgstr "Solicitud de cambio #%(id)s: %(reason)s"
+
+#: comics/change_requests.py
+#, python-format
+msgid "%(field)s: #%(id)s no longer exists."
+msgstr "%(field)s: #%(id)s ya no existe."
+
+#: comics/achievements/rules.py
+msgid "has had a change request approved"
+msgstr "le han aprobado una solicitud de cambio"
+
+#: comics/forms.py
+msgid "Why this change?"
+msgstr "¿Por qué este cambio?"
+
+#: comics/forms.py
+msgid "Tell the reviewers what is wrong or missing, and where you checked it."
+msgstr "Cuéntales a los revisores qué está mal o qué falta, y dónde lo comprobaste."
+
+#: comics/forms.py
+msgid "Evidence link (optional)"
+msgstr "Enlace de evidencia (opcional)"
+
+#: comics/forms.py
+msgid "A page that confirms the data, e.g. the publisher's catalogue."
+msgstr "Una página que confirme los datos, p. ej. el catálogo de la editorial."
+
+#: comics/forms.py
+msgid "Change at least one value: this is the current data."
+msgstr "Cambia al menos un valor: estos son los datos actuales."
+
+#: comics/forms.py
+msgid "An issue with that publishing and number already exists."
+msgstr "Ya existe un issue con ese publishing y número."
+
+#: comics/forms.py
+msgid "Note for the author (optional)"
+msgstr "Nota para el autor (opcional)"
+
+#: comics/views/change_requests.py
+msgid "Request sent: a reviewer will look at it soon."
+msgstr "Solicitud enviada: un revisor la verá pronto."
+
+#: comics/views/change_requests.py
+msgid "Request withdrawn."
+msgstr "Solicitud retirada."
+
+#: comics/views/reviews.py
+msgid "To review"
+msgstr "Por revisar"
+
+#: comics/views/reviews.py
+msgctxt "requests"
+msgid "All"
+msgstr "Todas"
+
+#: comics/views/reviews.py
+msgid "Request validated."
+msgstr "Solicitud validada."
+
+#: comics/views/reviews.py
+msgid "Request approved: the change is applied."
+msgstr "Solicitud aprobada: el cambio ya está aplicado."
+
+#: comics/views/reviews.py
+msgid "Request rejected."
+msgstr "Solicitud rechazada."
+
+#: comics/templates/change_requests/includes/field_table.html
+msgid "Field"
+msgstr "Campo"
+
+#: comics/templates/change_requests/includes/field_table.html
+msgid "When requested"
+msgstr "Al solicitarla"
+
+#: comics/templates/change_requests/includes/field_table.html
+msgid "Now"
+msgstr "Ahora"
+
+#: comics/templates/change_requests/includes/field_table.html
+msgid "Proposed"
+msgstr "Propuesto"
+
+#: comics/templates/change_requests/includes/field_table.html
+msgid "This field changed after the request was submitted."
+msgstr "Este campo cambió después de enviarse la solicitud."
+
+#: comics/templates/change_requests/includes/field_table.html
+msgid "Conflict"
+msgstr "Conflicto"
+
+#: comics/templates/change_requests/includes/field_table.html
+msgid "Already the current value."
+msgstr "Ya es el valor actual."
+
+#: comics/templates/change_requests/includes/steps.html
+msgid "Submitted"
+msgstr "Enviada"
+
+#: comics/templates/change_requests/includes/steps.html
+msgid "deleted user"
+msgstr "usuario eliminado"
+
+#: comics/templates/change_requests/includes/steps.html
+msgid "Evidence:"
+msgstr "Evidencia:"
+
+#: comics/templates/change_requests/proposal_form.html
+msgid "My requests"
+msgstr "Mis solicitudes"
+
+#: comics/templates/change_requests/proposal_form.html
+msgid "Suggest a correction"
+msgstr "Sugerir una corrección"
+
+#: comics/templates/change_requests/proposal_form.html
+msgid "New request"
+msgstr "Nueva solicitud"
+
+#: comics/templates/change_requests/proposal_form.html
+#, python-format
+msgid "Suggest a correction to the edition %(name)s"
+msgstr "Sugerir una corrección de la edición %(name)s"
+
+#: comics/templates/change_requests/proposal_form.html
+#, python-format
+msgid "Suggest a correction to the issue %(name)s"
+msgstr "Sugerir una corrección del issue %(name)s"
+
+#: comics/templates/change_requests/proposal_form.html
+msgid "Propose a new edition"
+msgstr "Proponer una edición nueva"
+
+#: comics/templates/change_requests/proposal_form.html
+msgid "Propose a new issue"
+msgstr "Proponer un issue nuevo"
+
+#: comics/templates/change_requests/proposal_form.html
+msgid "Send request"
+msgstr "Enviar solicitud"
+
+#: comics/templates/change_requests/proposal_form.html
+msgid "Change the values that are wrong: only what you change is sent. A reviewer checks the request and an administrator applies it."
+msgstr "Cambia los valores que están mal: solo se envía lo que cambies. Un revisor comprueba la solicitud y un administrador la aplica."
+
+#: comics/templates/change_requests/proposal_form.html
+msgid "Fill in the data you know. A reviewer checks the request and an administrator adds it to the catalogue."
+msgstr "Llena los datos que conozcas. Un revisor comprueba la solicitud y un administrador lo agrega al catálogo."
+
+#: comics/templates/change_requests/proposal_form.html
+msgid "Issue data"
+msgstr "Datos del issue"
+
+#: comics/templates/change_requests/proposal_form.html
+msgid "Your request"
+msgstr "Tu solicitud"
+
+#: comics/templates/change_requests/my_requests.html
+msgid "Corrections and new issues or editions you proposed for the catalogue."
+msgstr "Correcciones e issues o ediciones nuevas que propusiste para el catálogo."
+
+#: comics/templates/change_requests/my_requests.html
+msgid "You have not sent any request yet. Use “Suggest a correction” on an edition, or propose a new one."
+msgstr "Todavía no has enviado ninguna solicitud. Usa “Sugerir una corrección” en una edición, o propón una nueva."
+
+#: comics/templates/change_requests/detail.html
+msgid "Back to my requests"
+msgstr "Volver a mis solicitudes"
+
+#: comics/templates/change_requests/detail.html
+msgid "Withdraw request"
+msgstr "Retirar solicitud"
+
+#: comics/templates/change_requests/detail.html
+msgid "Proposed changes"
+msgstr "Cambios propuestos"
+
+#: comics/templates/reviews/queue.html
+msgid "Change requests"
+msgstr "Solicitudes de cambio"
+
+#: comics/templates/reviews/queue.html
+msgid "Corrections and new issues or editions proposed by collectors."
+msgstr "Correcciones e issues o ediciones nuevas propuestas por los coleccionistas."
+
+#: comics/templates/reviews/queue.html
+msgid "Status"
+msgstr "Estado"
+
+#: comics/templates/reviews/queue.html
+msgid "No requests here."
+msgstr "No hay solicitudes aquí."
+
+#: comics/templates/reviews/detail.html
+msgid "Back to the requests"
+msgstr "Volver a las solicitudes"
+
+#: comics/templates/reviews/detail.html
+msgid "What this request changes no longer exists: it cannot be approved, only rejected."
+msgstr "Lo que cambia esta solicitud ya no existe: no se puede aprobar, solo rechazar."
+
+#: comics/templates/reviews/detail.html
+msgid "Some requested fields changed after the request was submitted (highlighted). Approving overwrites them with the proposed values."
+msgstr "Algunos campos solicitados cambiaron después de enviarse la solicitud (resaltados). Aprobarla los sobrescribe con los valores propuestos."
+
+#: comics/templates/reviews/detail.html
+msgid "Decision"
+msgstr "Decisión"
+
+#: comics/templates/reviews/detail.html
+msgid "Approve and apply"
+msgstr "Aprobar y aplicar"
+
+#: comics/templates/reviews/detail.html
+msgid "Validate"
+msgstr "Validar"
+
+#: comics/templates/reviews/detail.html
+msgid "Reject"
+msgstr "Rechazar"
+
+#: comics/templates/base.html
+msgid "Reviews"
+msgstr "Revisiones"
+
+#: comics/templates/my_comics/edition_detail.html
+msgid "Suggest a correction to the issue"
+msgstr "Sugerir una corrección del issue"
+
+#: comics/change_requests.py
+#, python-format
+msgid "Another %(kind)s with these values was just saved: review the request again."
+msgstr "Acaba de guardarse otro elemento (%(kind)s) con estos valores: revisa la solicitud de nuevo."

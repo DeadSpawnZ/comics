@@ -23,6 +23,7 @@ from django.views.static import serve as serve_static
 
 from comics.views import (
     accounts,
+    change_requests,
     collectables,
     collection,
     collection_entries,
@@ -39,6 +40,7 @@ from comics.views import (
     notifications,
     profiles,
     publishing,
+    reviews,
 )
 
 urlpatterns = [
@@ -67,11 +69,30 @@ urlpatterns = [
     path("comics/api/compras/", collection_entries.api_purchases, name="comics_api_purchases"),
     path("comics/ediciones/", my_comics.edition_list, name="comics_editions"),
     path("comics/ediciones/<int:pk>/", my_comics.edition_detail, name="comics_edition_detail"),
+    path(
+        "comics/ediciones/<int:pk>/sugerir/",
+        change_requests.suggest_edition_change,
+        name="comics_edition_suggest",
+    ),
+    path("comics/issues/<int:pk>/sugerir/", change_requests.suggest_issue_change, name="comics_issue_suggest"),
+    path("comics/solicitudes/", change_requests.my_requests, name="comics_requests"),
+    path("comics/solicitudes/nueva/<str:kind>/", change_requests.propose_new, name="comics_request_new"),
+    path("comics/solicitudes/<int:pk>/", change_requests.my_request_detail, name="comics_request_detail"),
+    path(
+        "comics/solicitudes/<int:pk>/retirar/",
+        change_requests.withdraw_request,
+        name="comics_request_withdraw",
+    ),
     path("comics/arcos/", my_comics.arc_list, name="comics_arcs"),
     path("comics/arcos/<int:pk>/", my_comics.arc_detail, name="comics_arc_detail"),
     path("comics/connectings/", my_comics.connecting_list, name="comics_connectings"),
     path("comics/connectings/<int:pk>/", my_comics.connecting_detail, name="comics_connecting_detail"),
     path("collectables/", collectables.collectables_view, name="collectables"),
+    path("revisiones/", reviews.review_queue, name="review_queue"),
+    path("revisiones/<int:pk>/", reviews.review_detail, name="review_detail"),
+    path("revisiones/<int:pk>/validar/", reviews.review_validate, name="review_validate"),
+    path("revisiones/<int:pk>/aprobar/", reviews.review_approve, name="review_approve"),
+    path("revisiones/<int:pk>/rechazar/", reviews.review_reject, name="review_reject"),
     path("gestion/", manage_home.manage_home, name="manage_home"),
     path("gestion/ediciones/", manage_editions.edition_list, name="manage_editions"),
     path("gestion/ediciones/nueva/", manage_editions.edition_form, name="manage_edition_new"),

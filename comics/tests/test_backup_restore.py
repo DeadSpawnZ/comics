@@ -4,7 +4,8 @@ databases. `ensure_roles` rebuilds the groups when a dump does not bring them. P
 their user's username too, achievements by their code and achievement categories by theirs.
 Notifications point to their user and achievement by natural key and to announcements by id
 (announcements are content, like pieces: nothing seeds them). The versions of issues and editions
-(comics.history) travel with them, their authors by username, so the history survives a restore."""
+(comics.history) travel with them, their authors by username, so the history survives a restore;
+change requests point to them (and to their targets) by id, so they keep pointing to them."""
 
 import json
 import tempfile
@@ -18,6 +19,7 @@ from django.utils import timezone
 from django.test import TransactionTestCase, override_settings
 
 import dump
+from comics import change_requests
 from comics.achievements.catalogue import ACHIEVEMENTS, ensure_catalogue
 from comics.history import versions_of
 from comics.models import (
@@ -26,6 +28,7 @@ from comics.models import (
     AchievementTier,
     Announcement,
     Artist,
+    ChangeRequest,
     Collection,
     Edition,
     Issue,
@@ -102,7 +105,7 @@ class RestoreTests(TransactionTestCase):
             call_command("loaddata", str(dump_file), verbosity=0)
 
         self.assertEqual(Group.objects.filter(name__in=ROLE_PERMISSIONS).count(), 3)
-        self.assertEqual(group_permissions(ADMINISTRATORS), {ACCESS_MANAGEMENT})
+        self.assertEqual(group_permissions(ADMINISTRATORS), set(ROLE_PERMISSIONS[ADMINISTRATORS]))
         manager = User.objects.get(username="manager")
         self.assertTrue(manager.has_perm(ACCESS_MANAGEMENT))
         self.assertEqual(set(manager.groups.values_list("name", flat=True)), {COLLECTORS, ADMINISTRATORS})
@@ -327,6 +330,51 @@ class RestoreTests(TransactionTestCase):
         revert_to_version(versions_of(Edition, edition.pk).last(), user=None)
         edition = Edition.objects.get(pk=edition.pk)
         self.assertEqual((edition.notes, edition.cover_artists.count()), ("first", 0))
+
+    def test_restore_keeps_the_change_requests(self) -> None:
+        author = make_user(username="author")
+        manager = make_user(username="manager", role=ADMINISTRATORS)
+        edition = make_edition(notes="old")
+        pending = change_requests.submit(
+            author=author, model=Edition, changes={"notes": "new"}, label="x", reason="Typo", target=edition
+        )
+        approved = change_requests.submit(
+            author=author,
+            model=Edition,
+            changes={"notes": "applied"},
+            label="x",
+            reason="Typo",
+            evidence_url="https://example.com/",
+            target=edition,
+        )
+        version = change_requests.approve(approved, user=manager, note="Thanks")
+        with tempfile.TemporaryDirectory() as tmp:
+            dump_file = self.make_dump(tmp)
+            content = json.loads(dump_file.read_text(encoding="utf-8"))
+            entry = next(
+                item for item in content if item["model"] == "comics.changerequest" and item["pk"] == approved.pk
+            )
+            self.assertEqual((entry["fields"]["author"], entry["fields"]["decided_by"]), (["author"], ["manager"]))
+
+            call_command("flush", interactive=False, verbosity=0)
+            make_user(username="other")  # the restored users get other ids
+            call_command("loaddata", str(dump_file), verbosity=0)
+
+        restored = ChangeRequest.objects.get(pk=approved.pk)
+        self.assertEqual(
+            (restored.status, restored.author.username, restored.decided_by.username, restored.decision_note),
+            (ChangeRequest.Status.APPROVED, "author", "manager", "Thanks"),
+        )
+        self.assertEqual((restored.changes, restored.evidence_url), ({"notes": "applied"}, "https://example.com/"))
+        # It still points to the version it produced, which was restored with its id.
+        applied = versions_of(Edition, edition.pk).get(history_id=restored.applied_history_id)
+        self.assertEqual((applied.history_id, applied.notes), (version.history_id, "applied"))
+        self.assertEqual(ChangeRequest.objects.get(pk=pending.pk).status, ChangeRequest.Status.PENDING)
+        notification = Notification.objects.get(change_request=restored)
+        self.assertEqual(
+            (notification.recipient.username, notification.kind),
+            ("author", Notification.Kind.CHANGE_REQUEST_APPROVED),
+        )
 
     def test_ensure_roles_rebuilds_the_groups_after_flush(self) -> None:
         call_command("flush", interactive=False, verbosity=0)

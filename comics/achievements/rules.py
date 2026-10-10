@@ -14,7 +14,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext_lazy
 
-from comics.models import Achievement, Collection, Connecting, Edition, Profile, ReadingArc
+from comics.models import Achievement, ChangeRequest, Collection, Connecting, Edition, Profile, ReadingArc
 
 from .registry import Event, Kind, generic_rule, rule
 from .windows import (
@@ -241,6 +241,11 @@ def aplicado(user: User) -> int:
 @rule("fotogenico", kind=Kind.BOOLEAN, events=[Event.PROFILE], measure=_("has a profile picture"))
 def fotogenico(user: User) -> int:
     return int(Profile.objects.filter(user=user).exclude(avatar="").exists())
+
+
+@rule("reportero", kind=Kind.BOOLEAN, events=[Event.CHANGE_REQUEST], measure=_("has had a change request approved"))
+def reportero(user: User) -> int:
+    return int(ChangeRequest.objects.filter(author=user, status=ChangeRequest.Status.APPROVED).exists())
 
 
 # ---------- Generic rules: Gestión creates achievements with them ----------

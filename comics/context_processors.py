@@ -6,7 +6,8 @@ from django.contrib.auth.models import AnonymousUser, User
 from django.http import HttpRequest
 from django.utils.functional import SimpleLazyObject, cached_property
 
-from comics.models import Notification
+from comics.models import ChangeRequest, Notification
+from comics.roles import can_review_change_requests
 
 
 class NotificationBadge:
@@ -30,6 +31,28 @@ class NotificationBadge:
         return f"{self.CAP}+" if self.unread > self.CAP else str(self.unread)
 
 
+class ReviewBadge:
+    """The review area's link for users who review change requests, and how many requests wait for
+    a decision (pending or validated). Lazy like NotificationBadge: the count runs once, and only
+    when a template reads it."""
+
+    def __init__(self, user: User | AnonymousUser) -> None:
+        self._user = user
+
+    @cached_property
+    def visible(self) -> bool:
+        return can_review_change_requests(self._user)
+
+    @cached_property
+    def open_count(self) -> int:
+        if not self.visible:
+            return 0
+        return ChangeRequest.objects.open().order_by().count()
+
+
 def notifications(request: HttpRequest) -> dict[str, object]:
-    # Lazy as well: building the badge reads request.user, which may not be needed by the page.
-    return {"notification_badge": SimpleLazyObject(lambda: NotificationBadge(request.user))}
+    # Lazy as well: building the badges reads request.user, which may not be needed by the page.
+    return {
+        "notification_badge": SimpleLazyObject(lambda: NotificationBadge(request.user)),
+        "review_badge": SimpleLazyObject(lambda: ReviewBadge(request.user)),
+    }

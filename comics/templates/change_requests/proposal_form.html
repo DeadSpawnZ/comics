@@ -1,0 +1,104 @@
+{% extends 'my_comics/base_comics.html' %}
+{% load static i18n %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/custom/manage.css' %}">
+{% endblock %}
+
+{% block breadcrumb %}
+<a href="{% url 'comics_requests' %}">{% translate "My requests" %}</a>
+<span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+<span class="is-current">{% if target %}{% translate "Suggest a correction" %}{% else %}{% translate "New request" %}{% endif %}</span>
+{% endblock %}
+
+{% block comics_content %}
+<form method="post" novalidate>
+  {% csrf_token %}
+  <input type="hidden" name="next" value="{{ back_url }}">
+
+  <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <a class="md-icon-btn" href="{{ back_url }}" aria-label="{% translate 'Back' %}" title="{% translate 'Back' %}">
+        <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+      </a>
+      <h1 class="md-headline-small mb-0">
+        {% if target %}
+          {% if is_edition %}{% blocktranslate with name=target_label %}Suggest a correction to the edition {{ name }}{% endblocktranslate %}{% else %}{% blocktranslate with name=target_label %}Suggest a correction to the issue {{ name }}{% endblocktranslate %}{% endif %}
+        {% else %}
+          {% if is_edition %}{% translate "Propose a new edition" %}{% else %}{% translate "Propose a new issue" %}{% endif %}
+        {% endif %}
+      </h1>
+    </div>
+    <button type="submit" class="md-btn md-btn--filled">
+      <span class="material-symbols-outlined" aria-hidden="true">send</span>
+      {% translate "Send request" %}
+    </button>
+  </div>
+
+  <p class="md-body-medium">
+    {% if target %}
+      {% translate "Change the values that are wrong: only what you change is sent. A reviewer checks the request and an administrator applies it." %}
+    {% else %}
+      {% translate "Fill in the data you know. A reviewer checks the request and an administrator adds it to the catalogue." %}
+    {% endif %}
+  </p>
+
+  {% if form.non_field_errors or form.errors %}
+    <div class="editor-errors mb-3" role="alert">
+      <span class="material-symbols-outlined" aria-hidden="true">error</span>
+      <ul>
+        {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+        {% if form.errors and not form.non_field_errors %}<li>{% translate "Check the highlighted fields." %}</li>{% endif %}
+      </ul>
+    </div>
+  {% endif %}
+
+  <div class="row g-3">
+    <div class="col-12 col-xl-8">
+      <div class="md-surface-card h-100">
+        <h2 class="md-title-medium mb-3">{% if is_edition %}{% translate "Edition data" %}{% else %}{% translate "Issue data" %}{% endif %}</h2>
+        <div class="row g-3">
+          {% for field in model_fields %}
+            {% if field.widget_type == "checkboxselectmultiple" %}
+              <div class="col-12">
+                <div class="md-section-label">{{ field.label }}</div>
+                {% if field.field.queryset.exists %}
+                  <div class="d-flex flex-wrap gap-3">
+                    {% for checkbox in field %}
+                      <div class="form-check">
+                        {{ checkbox.tag }}
+                        <label class="form-check-label" for="{{ checkbox.id_for_label }}">{{ checkbox.choice_label }}</label>
+                      </div>
+                    {% endfor %}
+                  </div>
+                {% else %}
+                  <p class="md-body-medium mb-0">{% translate "There are no artists yet." %}</p>
+                {% endif %}
+                {% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+              </div>
+            {% else %}
+              <div class="col-12 {% if field.widget_type != 'textarea' and field.name != 'publishing' %}col-md-6{% endif %}">
+                {% include 'manage/includes/field.html' %}
+              </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-xl-4">
+      <div class="md-surface-card h-100">
+        <h2 class="md-title-medium mb-3">{% translate "Your request" %}</h2>
+        <div class="d-flex flex-column gap-3">
+          {% for field in request_fields %}
+            <div>
+              {% include 'manage/includes/field.html' %}
+              {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock %}

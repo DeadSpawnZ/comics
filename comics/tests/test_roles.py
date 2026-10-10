@@ -31,6 +31,7 @@ from .base import ComiTestCase
 from .factories import make_collection, make_edition, make_superuser, make_user
 
 roles_migration = importlib.import_module("comics.migrations.0093_roles")
+change_request_roles_migration = importlib.import_module("comics.migrations.0110_change_request_permissions")
 
 ROLES = ["anonymous", "collector", "reviewer", "administrator", "superuser"]
 
@@ -342,11 +343,12 @@ class EnsureRolesTests(ComiTestCase):
         self.assertEqual(set(extra.groups.values_list("name", flat=True)), {COLLECTORS, REVIEWERS})
         self.assertTrue(User.objects.get(pk=superuser.pk).has_perm(ACCESS_MANAGEMENT))
         self.assertEqual(
-            {p.codename for p in Group.objects.get(name=ADMINISTRATORS).permissions.all()}, {"access_management"}
+            {p.codename for p in Group.objects.get(name=ADMINISTRATORS).permissions.all()},
+            {"access_management", "validate_changerequest", "approve_changerequest"},
         )
 
     def test_ensure_roles_matches_the_migration(self) -> None:
-        """Same result as 0093's forward step on the same users."""
+        """Same result as the forward steps of 0093 and 0110 on the same users."""
         make_superuser()
         make_user()
         Group.objects.all().delete()
@@ -354,6 +356,7 @@ class EnsureRolesTests(ComiTestCase):
         by_command = {g.name: (set(g.user_set.all()), set(g.permissions.all())) for g in Group.objects.all()}
         Group.objects.all().delete()
         roles_migration.create_roles(apps, SimpleNamespace(connection=connection))
+        change_request_roles_migration.grant(apps, SimpleNamespace(connection=connection))
         by_migration = {g.name: (set(g.user_set.all()), set(g.permissions.all())) for g in Group.objects.all()}
         self.assertEqual(by_command, by_migration)
 
@@ -378,6 +381,8 @@ class RolesMigrationTests(ComiTestCase):
             name: {f"{app_label}.{codename}" for app_label, _model, codename, _label in permissions}
             for name, permissions in roles_migration.ROLE_PERMISSIONS.items()
         }
+        for name, permissions in change_request_roles_migration.ROLE_PERMISSIONS.items():
+            frozen[name] |= {f"{app_label}.{codename}" for app_label, _model, codename, _label in permissions}
         self.assertEqual(frozen, {name: set(perms) for name, perms in ROLE_PERMISSIONS.items()})
 
     def run_migration(self, function_name: str) -> None:

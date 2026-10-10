@@ -9,9 +9,15 @@
 {% block breadcrumb %}<span class="is-current">{% translate "Editions" %}</span>{% endblock %}
 
 {% block comics_content %}
-<div class="mb-3">
-  <h1 class="md-headline-small mb-0">{% translate "Editions" %}</h1>
-  <span class="md-body-medium">{% blocktranslate count counter=page_obj.paginator.count %}{{ counter }} edition{% plural %}{{ counter }} editions{% endblocktranslate %}</span>
+<div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+  <div>
+    <h1 class="md-headline-small mb-0">{% translate "Editions" %}</h1>
+    <span class="md-body-medium">{% blocktranslate count counter=page_obj.paginator.count %}{{ counter }} edition{% plural %}{{ counter }} editions{% endblocktranslate %}</span>
+  </div>
+  <a class="md-btn md-btn--tonal" href="{% url 'comics_request_new' 'edicion' %}?next={{ request.get_full_path|urlencode }}">
+    <span class="material-symbols-outlined" aria-hidden="true">add</span>
+    {% translate "Propose a new edition" %}
+  </a>
 </div>
 
 <div class="md-surface-card manage-table">

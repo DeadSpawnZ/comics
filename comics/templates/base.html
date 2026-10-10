@@ -103,6 +103,17 @@
                 Collectables
               </a>
             </li>
+            {% if review_badge.visible %}
+            <li class="nav-item">
+              <a class="nav-link md-nav-link {% if url_name|slice:':7' == 'review_' %}active{% endif %}"
+                 {% if url_name|slice:':7' == 'review_' %}aria-current="page"{% endif %}
+                 href="{% url 'review_queue' %}">
+                <span class="material-symbols-outlined" aria-hidden="true">rate_review</span>
+                {% translate "Reviews" %}
+                {% if review_badge.open_count %}<span class="manage-tab__count">{{ review_badge.open_count }}</span>{% endif %}
+              </a>
+            </li>
+            {% endif %}
             {% if perms.comics.access_management %}
             <li class="nav-item">
               <a class="nav-link md-nav-link {% if url_name|slice:':7' == 'manage_' %}active{% endif %}"

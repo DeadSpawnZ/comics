@@ -3,17 +3,17 @@
 - Collectors: every registered user. Mis comics and collectables only need a signed-in user, so
   the group carries no permissions; it makes the role explicit and is where collector-only
   permissions will go.
-- Reviewers: no permissions yet. Placeholder for the change-request feature (Reviewers validate
-  changes to issues/editions/connectings, Administrators approve them); its permissions will be
-  declared on the change-request model and added here and in a migration.
-- Administrators: access to Gestión (`comics.access_management`).
+- Reviewers: validate (or reject) the change requests collectors submit (`comics.validate_changerequest`),
+  in the review area. They do not get Gestión.
+- Administrators: access to Gestión (`comics.access_management`), and validate and approve change
+  requests (`comics.approve_changerequest`).
 - Superusers (a user flag, not a group): implicitly hold every permission, so they also pass
   Gestión checks; they are the only users allowed into the Django admin (see comics/admin_site.py).
 
 Views check permissions, never group names, so a role can change its permissions (in a migration
 or in the admin) without touching code.
 
-The groups are created by migration 0093 and can be rebuilt with `manage.py ensure_roles`
+The groups are created by migration 0093 (the change-request permissions are added by 0110) and can be rebuilt with `manage.py ensure_roles`
 (after restoring a dump taken before the roles existed, or after `flush`)."""
 
 from __future__ import annotations
@@ -29,6 +29,8 @@ REVIEWERS = "Reviewers"
 ADMINISTRATORS = "Administrators"
 
 ACCESS_MANAGEMENT = "comics.access_management"
+VALIDATE_CHANGE_REQUESTS = "comics.validate_changerequest"
+APPROVE_CHANGE_REQUESTS = "comics.approve_changerequest"
 
 # How each role is called on screen (group names are identifiers and stay in English).
 ROLE_LABELS = {
@@ -37,12 +39,12 @@ ROLE_LABELS = {
     ADMINISTRATORS: _("Administrators"),
 }
 
-# Permissions ("app_label.codename") each role grants. The data migration that creates the groups
-# keeps its own frozen copy; a test checks the database still matches this table.
+# Permissions ("app_label.codename") each role grants. The data migrations that grant them (0093,
+# 0110) keep their own frozen copies; a test checks the database still matches this table.
 ROLE_PERMISSIONS: dict[str, tuple[str, ...]] = {
     COLLECTORS: (),
-    REVIEWERS: (),
-    ADMINISTRATORS: (ACCESS_MANAGEMENT,),
+    REVIEWERS: (VALIDATE_CHANGE_REQUESTS,),
+    ADMINISTRATORS: (ACCESS_MANAGEMENT, VALIDATE_CHANGE_REQUESTS, APPROVE_CHANGE_REQUESTS),
 }
 
 
@@ -63,6 +65,21 @@ def role_label(name: str) -> str:
 def can_access_management(user: User | AnonymousUser) -> bool:
     """Whether `user` may open Gestión (superusers always may; anonymous and inactive users never)."""
     return user.has_perm(ACCESS_MANAGEMENT)
+
+
+def can_validate_change_requests(user: User | AnonymousUser) -> bool:
+    """Whether `user` may validate or reject pending change requests (Reviewers, Administrators)."""
+    return user.has_perm(VALIDATE_CHANGE_REQUESTS)
+
+
+def can_approve_change_requests(user: User | AnonymousUser) -> bool:
+    """Whether `user` may approve or reject change requests, pending or validated (Administrators)."""
+    return user.has_perm(APPROVE_CHANGE_REQUESTS)
+
+
+def can_review_change_requests(user: User | AnonymousUser) -> bool:
+    """Whether `user` may open the review area (the change-request queue): either permission."""
+    return can_validate_change_requests(user) or can_approve_change_requests(user)
 
 
 def ensure_roles() -> None:

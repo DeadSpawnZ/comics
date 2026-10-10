@@ -69,8 +69,9 @@ def field_label(model: type[Model], name: str) -> str:
 
 
 def apply_changes(instance: Model, changes: Mapping[str, Any], *, user: User | None, reason: str = "") -> Model:
-    """Apply `changes` to a tracked row (an Issue or an Edition, saved) and return the version
-    this wrote.
+    """Apply `changes` to a tracked row (an Issue or an Edition) and return the version this wrote.
+    The row may also be unsaved (e.g. `Edition()`): it is then created with `changes`, and the
+    version is a "created" one (only the fields in `changes` are validated, so give them all).
 
     `changes` maps field names to their new values: for foreign keys the related object or its id;
     for the versioned many-to-many fields (creators, cover_artists, collected_issues) an iterable of
