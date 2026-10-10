@@ -23,11 +23,17 @@ approve. Design agreed with the user:
   (`apply_changes`, `revert_to_version`), Gestión history pages, migrations `0107`/`0108`.
 - **Requests are a separate model** that points to the history version its approval produced.
   Auditing requests means querying the request model; the history never refers to requests.
-- **Task 2 (in progress):** request workflow (pending → validated → approved/rejected, withdraw),
-  permissions for Reviewers/Administrators, review area for reviewers without Gestión access,
-  conflict detection against the base version, notifications to the author, achievement "Reportero".
-- **Not deployed yet:** migrations `0107`+ must be rehearsed on `comic_refactor`, then applied to the
-  real DB with the user's approval; the `web` image must be rebuilt (new dependency).
+- **Task 2, done in commit `1e1990d`:** request workflow (pending → validated → approved/rejected,
+  withdraw), permissions for Reviewers/Administrators (migration `0110`), review area `/revisiones/`
+  for reviewers without Gestión access, conflict detection against the base version, notifications
+  to the author, achievement "Reportero" (`0111`). Service: `comics/change_requests.py`.
+- **Not deployed yet:** migrations `0107`–`0111` must be rehearsed on `comic_refactor`, then applied
+  to the real DB with the user's approval; the `web` image must be rebuilt (new dependency).
+- **Decisions taken by the implementer, awaiting user confirmation:** nobody reviews their own
+  request; reviewers can't reject a request once it is validated; authors don't see reviewer names.
+- **v1 scope cuts (widen later if wanted):** no cover image proposals; no editing of a compilation's
+  collected issues; issue corrections limited to synopsis and creators (series/number are corrected
+  through the edition).
 
 ## Next features
 
@@ -35,7 +41,8 @@ approve. Design agreed with the user:
 - Requests for **Connectings**.
 - **Strikes** for users whose requests are rejected as unfounded (keep the decider and outcome on
   each request so strikes can be computed from them).
-- Image (cover) proposals in requests, if v1 leaves them out.
+- Image (cover) proposals and compilation-content edits in requests (left out of v1).
+- `ReadingArcForm` still duplicates the widget-styling loop now in `MaterialFieldsMixin`.
 
 ### ComicVine integration (agreed order)
 1. **Prefill in the Gestión edition form:** an optional ComicVine id field with a button that loads
