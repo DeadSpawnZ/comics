@@ -11,6 +11,7 @@
 <form method="post" enctype="multipart/form-data" novalidate>
   {% csrf_token %}
   <input type="hidden" name="next" value="{{ back_url }}">
+  {{ form.catalog_cover_url }}
 
   <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
     <div class="d-flex align-items-center gap-2">
@@ -46,16 +47,69 @@
     </div>
   </div>
 
-  {% if form.non_field_errors or form.errors or content_errors %}
+  {% if form.non_field_errors or form.errors or content_errors or issue_form.errors %}
     <div class="editor-errors mb-3" role="alert">
       <span class="material-symbols-outlined" aria-hidden="true">error</span>
       <ul>
         {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
         {% for error in content_errors %}<li>{{ error }}</li>{% endfor %}
-        {% if form.errors and not form.non_field_errors %}<li>{% translate "Check the highlighted fields." %}</li>{% endif %}
+        {% if form.errors and not form.non_field_errors or issue_form.errors %}<li>{% translate "Check the highlighted fields." %}</li>{% endif %}
       </ul>
     </div>
   {% endif %}
+
+  <!-- Import from an external catalogue (fills the form; nothing is saved until the form is) -->
+  <section class="md-surface-card mb-3 catalog-import" aria-labelledby="catalog-import-title">
+    <div class="d-flex align-items-center gap-2 mb-2">
+      <span class="material-symbols-outlined" aria-hidden="true">cloud_download</span>
+      <h2 class="md-title-medium mb-0" id="catalog-import-title">{% translate "Import from a catalogue" %}</h2>
+    </div>
+    {% if catalog_enabled %}
+      <p class="md-body-medium">{% translate "Fill in the form with an issue from Metron or Comic Vine. Check the values: nothing is saved until you save the form." %}</p>
+      <div class="row g-2 align-items-center">
+        <div class="col-12 col-md-3">
+          <div class="form-floating md-field">
+            <select class="form-select" id="catalog-source">
+              {% for source in catalog_sources %}
+                <option value="{{ source.key }}" {% if not source.enabled %}disabled{% endif %}>{{ source.name }}{% if not source.enabled %} · {% translate "not configured" %}{% endif %}</option>
+              {% endfor %}
+            </select>
+            <label for="catalog-source">{% translate "Source" %}</label>
+          </div>
+        </div>
+        <div class="col-8 col-md-4">
+          <div class="form-floating md-field">
+            <input type="text" class="form-control" id="catalog-id" inputmode="numeric" autocomplete="off" maxlength="20" placeholder="{% translate 'Issue ID in the catalogue' %}">
+            <label for="catalog-id">{% translate "Issue ID in the catalogue" %}</label>
+          </div>
+        </div>
+        <div class="col-4 col-md-2">
+          <button type="button" class="md-btn md-btn--tonal w-100" id="catalog-load">
+            <span class="material-symbols-outlined" aria-hidden="true">download</span>
+            {% translate "Load" %}
+          </button>
+        </div>
+      </div>
+      <div class="catalog-import__status mt-2" id="catalog-status" role="status" aria-live="polite"></div>
+      <div class="catalog-import__result mt-3" id="catalog-result" hidden>
+        <div class="row g-2 align-items-center mb-2" id="catalog-variant-row" hidden>
+          <div class="col-12 col-md-7">
+            <div class="form-floating md-field">
+              <select class="form-select" id="catalog-variant"></select>
+              <label for="catalog-variant">{% translate "Cover to fill in" %}</label>
+            </div>
+          </div>
+        </div>
+        <ul class="catalog-import__summary mb-0" id="catalog-summary"></ul>
+        <a class="md-btn md-btn--text mt-1" id="catalog-source-link" target="_blank" rel="noopener noreferrer" hidden>
+          <span class="material-symbols-outlined" aria-hidden="true">open_in_new</span>
+          <span id="catalog-source-link-text"></span>
+        </a>
+      </div>
+    {% else %}
+      <p class="md-body-medium mb-0">{% translate "Importing is off: set METRON_USERNAME and METRON_PASSWORD (or COMICVINE_API_KEY) in the .env file and restart the app." %}</p>
+    {% endif %}
+  </section>
 
   <div class="row g-3">
     <!-- Edition data -->
@@ -91,45 +145,8 @@
           <div class="col-12">{% include 'manage/includes/field.html' with field=form.notes %}</div>
 
           <div class="col-12">
-            <div class="md-section-label">{{ form.cover_artists.label }}</div>
-            {% if form.cover_artists.field.queryset.exists %}
-              <div class="row g-3 align-items-center">
-                <div class="col-12 col-md-8">
-                  {# One chip per artist; its hidden checkbox is what gets submitted. Only checked ones are shown. #}
-                  <ul class="artist-list" id="artist-list">
-                    {% for checkbox in form.cover_artists %}
-                      {% with artist=checkbox.data.value.instance %}
-                      <li class="artist-list__item" data-artist-id="{{ artist.pk }}" data-artist-name="{{ artist.name }}" {% if not checkbox.data.selected %}hidden{% endif %}>
-                        <span hidden>{{ checkbox.tag }}</span>
-                        {% if artist.photo %}
-                          <img class="artist-list__photo" src="{{ artist.photo.url }}" alt="" loading="lazy">
-                        {% else %}
-                          <span class="artist-list__photo material-symbols-outlined" aria-hidden="true">person</span>
-                        {% endif %}
-                        <span class="artist-list__name">{{ artist.name }}</span>
-                        <button type="button" class="artist-list__remove" data-artist-remove
-                                aria-label="{% blocktranslate with name=artist.name %}Remove {{ name }}{% endblocktranslate %}"
-                                title="{% blocktranslate with name=artist.name %}Remove {{ name }}{% endblocktranslate %}">
-                          <span class="material-symbols-outlined" aria-hidden="true">close</span>
-                        </button>
-                      </li>
-                      {% endwith %}
-                    {% endfor %}
-                  </ul>
-                  <p class="md-body-medium mb-0" id="artist-empty" hidden>{% translate "No cover artists yet." %}</p>
-                </div>
-                <div class="col-12 col-md-4">
-                  <div class="form-floating md-field">
-                    <select class="form-select" id="artist-add">
-                      <option value="">{% translate "Choose an artist…" %}</option>
-                    </select>
-                    <label for="artist-add">{% translate "Add artist" %}</label>
-                  </div>
-                </div>
-              </div>
-            {% else %}
-              <span class="md-body-medium">{% translate "There are no artists yet." %}</span>
-            {% endif %}
+            {% translate "No cover artists yet." as no_cover_artists %}
+            {% include 'manage/includes/artist_picker.html' with field=form.cover_artists empty_text=no_cover_artists %}
           </div>
         </div>
       </div>
@@ -154,6 +171,12 @@
         <div hidden>{{ form.image }}</div>
         {% for error in form.image.errors %}<div class="invalid-feedback d-block text-center">{{ error }}</div>{% endfor %}
         <div class="md-body-medium text-center mb-1" id="cover-file-name" hidden></div>
+        <div class="text-center mb-1">
+          <button type="button" class="md-btn md-btn--text" id="catalog-cover-discard" hidden>
+            <span class="material-symbols-outlined" aria-hidden="true">undo</span>
+            {% translate "Do not use the imported cover" %}
+          </button>
+        </div>
         <div class="md-body-medium text-center mb-3">{% translate "The thumbnail is generated automatically on save." %}</div>
 
         {% if sibling_editions %}
@@ -210,6 +233,23 @@
               </div>
             </div>
           </div>
+
+          <!-- What is saved on that issue -->
+          <input type="hidden" name="{{ issue_form.SHOWN_FIELD }}" value="{{ shown_issue_id }}">
+          <div class="md-section-label mt-4">{% translate "Issue data" %}</div>
+          <p class="md-body-medium">
+            {% translate "Saved on the issue above (the edition's own issue unless you chose another one). Only the values you change are written." %}
+          </p>
+          <div class="row g-3">
+            <div class="col-12 col-md-4">{% include 'manage/includes/field.html' with field=issue_form.metron_id %}</div>
+            <div class="col-12 col-md-4">{% include 'manage/includes/field.html' with field=issue_form.comicvine_id %}</div>
+            <div class="col-12 col-md-4">{% include 'manage/includes/field.html' with field=issue_form.gcd_id %}</div>
+            <div class="col-12">{% include 'manage/includes/field.html' with field=issue_form.synopsis %}</div>
+            <div class="col-12">
+              {% translate "No creators yet." as no_creators %}
+              {% include 'manage/includes/artist_picker.html' with field=issue_form.creators empty_text=no_creators %}
+            </div>
+          </div>
         </div>
 
         <div id="content-compilation" {% if content != 'compilation' %}hidden{% endif %}>
@@ -247,6 +287,12 @@
         </div>
       </div>
     </div>
+
+    {% if edition.issue %}
+      <div class="col-12 col-xl-6">
+        {% include 'includes/identification_numbers.html' with issue=edition.issue %}
+      </div>
+    {% endif %}
   </div>
 </form>
 
@@ -259,5 +305,7 @@
 {% block extra_js %}
 <script src="{% static 'js/custom/issue_picker.js' %}"></script>
 <script src="{% static 'js/custom/edition_form.js' %}"></script>
+<script src="{% static 'js/custom/catalog_import.js' %}"></script>
 <script src="{% static 'js/custom/force_uppercase_variant.js' %}"></script>
+<script src="{% static 'js/custom/copy_value.js' %}"></script>
 {% endblock %}

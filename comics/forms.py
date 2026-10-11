@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime
+import re
 from collections.abc import Iterable
 from typing import Any
 
@@ -8,10 +9,12 @@ from django import forms
 from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm, UserCreationForm
 from django.contrib.auth.models import Group, User
 from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.validators import URLValidator
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.db.models import QuerySet, prefetch_related_objects
 from django.forms.models import BaseModelFormSet
+from django.http import QueryDict
 from django.utils.dates import MONTHS
 from django.utils.functional import Promise
 from django.utils.translation import gettext_lazy as _
@@ -19,6 +22,9 @@ from django.utils.translation import gettext_lazy as _
 from .achievements.catalogue import BUILTIN_CODES
 from .achievements.registry import Rule, generic_rules
 from .achievements.windows import ALL_WINDOW_KINDS, WindowKind, window_kinds_of
+from .catalog_sources import comicvine, metron
+from .catalog_sources.errors import CoverRejected
+from .catalog_sources.http import MAX_COVER_BYTES, download_cover, is_allowed_cover_url
 from .change_requests import encode_value
 from .helper import parse_date_or_none, parse_id_or_none
 from .models import (
@@ -170,13 +176,9 @@ class EditionForm(forms.ModelForm):
 
 
 def publishing_label(publishing: Publishing) -> str:
-    """Label for publishing selects: title (year) series · language · editorials. The editorials
-    tell apart publishings with the same title; prefetch them (see publishing_choices) to avoid
-    one query per option."""
-    year = f" ({publishing.year})" if publishing.year else ""
-    editorials = "/".join(editorial.name for editorial in publishing.editorials.all())
-    label = f"{publishing.publishing_title}{year} {publishing.serie} · {publishing.language.upper()}"
-    return f"{label} · {editorials}" if editorials else label
+    """Publishing.select_label, as a function (label_from_instance); prefetch the editorials (see
+    publishing_choices) to avoid one query per option."""
+    return publishing.select_label
 
 
 def publishings_for_select() -> QuerySet[Publishing]:
@@ -238,6 +240,9 @@ class MaterialFieldsMixin:
 class EditionManageForm(MaterialFieldsMixin, forms.ModelForm):
     """Edition data for Gestion. The content (issue or collected issues) is
     handled separately in the view because they are not direct model fields."""
+
+    # Set by the import box (comics/catalog_sources) to a catalogue's cover; downloaded on save.
+    catalog_cover_url = forms.CharField(required=False, max_length=500, widget=forms.HiddenInput)
 
     class Meta:
         model = Edition
@@ -310,6 +315,141 @@ class EditionManageForm(MaterialFieldsMixin, forms.ModelForm):
         self.style_fields()
         self.fields["notes"].widget.attrs["style"] = "height: 90px"
 
+    def clean(self) -> dict[str, Any]:
+        """A cover imported from a catalogue (its URL, set by the import box) is downloaded here, once
+        the rest of the form is valid, unless a file was uploaded too: the uploaded file wins. It then
+        goes through the same processing as an uploaded cover when the edition is saved. Only URLs
+        on the catalogues' image hosts are ever requested (comics.catalog_sources.http). Its errors
+        are the form's (the field is hidden)."""
+        cleaned = super().clean()
+        url = (cleaned.get("catalog_cover_url") or "").strip()
+        if url and not is_allowed_cover_url(url):
+            self.add_error(None, ValidationError(_("Covers can only be downloaded from Metron or Comic Vine.")))
+        elif url and not self.errors and not self.files.get(self.add_prefix("image")):
+            try:
+                cleaned["image"] = catalog_cover(url)
+            except CoverRejected as exc:
+                self.add_error(None, exc.message)
+            except ValidationError as exc:
+                self.add_error(None, exc)
+        return cleaned
+
+
+COVER_EXTENSIONS = {"JPEG": "jpg", "PNG": "png", "WEBP": "webp"}
+
+
+def catalog_cover(url: str) -> SimpleUploadedFile:
+    """The cover at `url` (an allowlisted catalogue host) as an upload, checked like an uploaded
+    picture (size, format, pixels). Raises CoverRejected or ValidationError."""
+    # Named .jpg only to pass the extension check; the real format is known once Pillow opened it.
+    upload = CatalogCoverField(required=False).clean(SimpleUploadedFile("catalog_cover.jpg", download_cover(url)))
+    upload.name = f"catalog_cover.{COVER_EXTENSIONS[upload.image.format]}"
+    upload.seek(0)
+    return upload
+
+
+class IssueSectionForm(MaterialFieldsMixin, forms.ModelForm):
+    """The issue part of the Gestión edition form: what is saved on the issue the edition ends up
+    with (its own issue, or the one chosen in the content section). Issues have no Gestión page.
+
+    It is bound to the issue whose values the page showed (posted back as SHOWN_FIELD), so its
+    changed_data are the values the user changed (or the import filled in), and apply_to() writes
+    only those: choosing another issue in the content section never copies the shown values onto it."""
+
+    PREFIX = "issue_data"
+    SHOWN_FIELD = f"{PREFIX}-shown"
+
+    class Meta:
+        model = Issue
+        fields = ["synopsis", "creators", "metron_id", "comicvine_id", "gcd_id"]
+        labels = {
+            "synopsis": _("Synopsis"),
+            "creators": _("Creators"),
+            "metron_id": "Metron ID",
+            "comicvine_id": "Comic Vine ID",
+            "gcd_id": "GCD ID",
+        }
+        widgets = {
+            "synopsis": forms.Textarea(attrs={"rows": 4}),
+            "creators": forms.CheckboxSelectMultiple,
+        }
+        error_messages = {
+            "metron_id": {"unique": _("Another issue already has this Metron ID.")},
+            "comicvine_id": {"unique": _("Another issue already has this Comic Vine ID.")},
+        }
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        kwargs.setdefault("prefix", self.PREFIX)
+        super().__init__(*args, **kwargs)
+        self.fields["creators"].queryset = self.fields["creators"].queryset.order_by("name")
+        self.style_fields()
+        self.fields["synopsis"].widget.attrs["style"] = "height: 120px"
+
+    def validate_unique(self) -> None:
+        """Not against the shown issue: the values go to the issue the edition ends up with (e.g. a new
+        cover of an issue that already has these ids), so apply_to() checks them against that one."""
+
+    @classmethod
+    def shown_issue(cls, data: QueryDict | None, fallback: Issue | None) -> Issue:
+        """The issue whose values the submitted form showed (SHOWN_FIELD), or, when nothing was
+        submitted, `fallback` (what the page shows when it is opened); a blank issue otherwise."""
+        if data is not None:
+            raw = str(data.get(cls.SHOWN_FIELD, ""))
+            shown = Issue.objects.filter(pk=int(raw)).first() if raw.isdigit() else None
+            return shown or Issue()
+        return fallback or Issue()
+
+    def apply_to(self, issue: Issue) -> None:
+        """Write the changed values on `issue` (call after is_valid(), inside a transaction). The
+        creators are applied as a change too: the ones added and removed against the shown issue, so
+        another issue keeps its own creators. Raises ValidationError when one of its unique ids
+        belongs to another issue."""
+        changed = [name for name in self.changed_data if name in self.fields]
+        values = [name for name in changed if name != "creators"]
+        if values:
+            for name in values:
+                setattr(issue, name, self.cleaned_data[name])
+            try:
+                issue.validate_unique(exclude=[f.name for f in Issue._meta.fields if f.name not in values])
+            except ValidationError as exc:
+                raise ValidationError(
+                    [
+                        self._meta.error_messages.get(name, {}).get("unique", message)
+                        for name, messages in exc.message_dict.items()
+                        for message in messages
+                    ]
+                ) from exc
+            try:
+                with transaction.atomic():
+                    issue.save(update_fields=values)
+            except IntegrityError as exc:  # another request took the id in the meantime
+                raise ValidationError(_("Another issue already has one of these ids.")) from exc
+        if "creators" in changed:
+            initial = self.get_initial_for_field(self.fields["creators"], "creators") or []
+            shown = {getattr(item, "pk", item) for item in initial}
+            wanted = {artist.pk for artist in self.cleaned_data["creators"]}
+            issue.creators.add(*(wanted - shown))
+            issue.creators.remove(*(shown - wanted))
+
+
+CATALOG_ID_PATTERN = re.compile(r"^(?:4000-)?(\d{1,10})$")
+MAX_CATALOG_ID = 2_147_483_647  # the Issue id fields are PositiveIntegerField
+
+
+class CatalogLookupForm(forms.Form):
+    """What the import box asks a catalogue for: the source and the issue's id there (Comic Vine's
+    "4000-" prefix, as its URLs show it, is accepted too)."""
+
+    source = forms.ChoiceField(choices=[(metron.KEY, metron.NAME), (comicvine.KEY, comicvine.NAME)])
+    id = forms.CharField(max_length=20)
+
+    def clean_id(self) -> int:
+        match = CATALOG_ID_PATTERN.match(self.cleaned_data["id"].strip())
+        number = int(match.group(1)) if match else 0
+        if not 0 < number <= MAX_CATALOG_ID:
+            raise ValidationError(_("Enter the issue's number in the catalogue, e.g. 15439."), code="invalid_id")
+        return number
+
 
 # ---------- Change requests ----------
 
@@ -371,22 +511,28 @@ class EditionProposalForm(ProposalForm, EditionManageForm):
     have to be stored somewhere until the decision). Its content (own issue or collected issues)
     is not proposed either: a new edition gets its own issue, as in Gestión."""
 
+    catalog_cover_url = None  # requests carry no cover (see above)
+
     class Meta(EditionManageForm.Meta):
         fields = [name for name in EditionManageForm.Meta.fields if name != "image"]
 
 
 class IssueProposalForm(MaterialFieldsMixin, ProposalForm):
-    """An issue as collectors propose it. A correction only covers its synopsis and creators: its
-    series and number are what its editions follow, so those are corrected through an edition."""
+    """An issue as collectors propose it. A correction only covers its synopsis, creators and
+    external catalogue ids: its series and number are what its editions follow, so those are
+    corrected through an edition."""
 
     class Meta:
         model = Issue
-        fields = ["publishing", "number", "synopsis", "creators"]
+        fields = ["publishing", "number", "synopsis", "creators", "metron_id", "comicvine_id", "gcd_id"]
         labels = {
             "publishing": "Publishing",
             "number": _("Number"),
             "synopsis": _("Synopsis"),
             "creators": _("Creators"),
+            "metron_id": _("Metron ID (optional)"),
+            "comicvine_id": _("Comic Vine ID (optional)"),
+            "gcd_id": _("GCD ID (optional)"),
         }
         widgets = {
             "synopsis": forms.Textarea(attrs={"rows": 4}),
@@ -394,6 +540,8 @@ class IssueProposalForm(MaterialFieldsMixin, ProposalForm):
         }
         error_messages = {
             NON_FIELD_ERRORS: {"unique_together": _("An issue with that publishing and number already exists.")},
+            "metron_id": {"unique": _("Another issue already has this Metron ID.")},
+            "comicvine_id": {"unique": _("Another issue already has this Comic Vine ID.")},
         }
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -890,6 +1038,12 @@ class LimitedImageField(forms.ImageField):
             if image.width * image.height > self.MAX_PIXELS:
                 raise ValidationError(_("The picture has too many pixels."), code="too_many_pixels")
         return upload
+
+
+class CatalogCoverField(LimitedImageField):
+    """A cover downloaded from a catalogue (see catalog_cover)."""
+
+    MAX_BYTES = MAX_COVER_BYTES
 
 
 class AvatarField(LimitedImageField):

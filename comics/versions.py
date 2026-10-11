@@ -56,6 +56,9 @@ FIELD_LABELS: dict[str, str | Promise] = {
     "collected_issues": gettext_lazy("Collected issues"),
     "synopsis": gettext_lazy("Synopsis"),
     "creators": gettext_lazy("Creators"),
+    "metron_id": "Metron ID",
+    "comicvine_id": "Comic Vine ID",
+    "gcd_id": "GCD ID",
 }
 EMPTY = "—"
 
@@ -77,9 +80,9 @@ def apply_changes(instance: Model, changes: Mapping[str, Any], *, user: User | N
     for the versioned many-to-many fields (creators, cover_artists, collected_issues) an iterable of
     related objects or ids, in reading order for collected issues (an empty one makes the edition a
     single-issue edition again). The changed values are validated as the model does (field
-    validators, clean(), unique constraints, the model's own save() checks); on ValidationError the
-    database is left unchanged. A version (by `user`, with `reason`) is always written, even when the
-    values were already those: it is the record of the change."""
+    validators, clean(), unique fields and constraints, the model's own save() checks); on
+    ValidationError the database is left unchanged. A version (by `user`, with `reason`) is always
+    written, even when the values were already those: it is the record of the change."""
     model = instance._meta.concrete_model
     m2m_fields = {f.name: f for f in versioned_m2m_fields(model)}
     targets: dict[str, list[Any]] = {}
@@ -92,8 +95,10 @@ def apply_changes(instance: Model, changes: Mapping[str, Any], *, user: User | N
             setattr(instance, model_field.attname if use_id else model_field.name, value)
         else:
             raise ValueError(f"{model.__name__}.{name} cannot be changed with apply_changes()")
-    instance.clean_fields(exclude=[f.name for f in model._meta.fields if f.name not in changes])
+    untouched = [f.name for f in model._meta.fields if f.name not in changes]
+    instance.clean_fields(exclude=untouched)
     instance.clean()
+    instance.validate_unique(exclude=untouched)  # unique fields, e.g. an issue's Metron ID
     instance.validate_constraints()
 
     collected = targets.get("collected_issues")
@@ -187,6 +192,7 @@ def revert_to_version(version: Model, *, user: User | None, reason: str = "") ->
             for attname, value in values.items():
                 setattr(instance, attname, value)
             try:
+                instance.validate_unique()  # unique fields, e.g. an issue's Metron ID taken since
                 instance.validate_constraints()
             except ValidationError as exc:
                 raise cannot_restore(" ".join(exc.messages)) from exc

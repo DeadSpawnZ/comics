@@ -1,0 +1,44 @@
+{
+ "issue": {
+  "error": "OK",
+  "limit": 1,
+  "offset": 0,
+  "number_of_page_results": 1,
+  "number_of_total_results": 1,
+  "status_code": 1,
+  "results": {
+   "id": 21801,
+   "name": "And They Shall Call Him... Champion!",
+   "issue_number": "7",
+   "volume": {"id": 2865, "name": "Marvel Two-in-One Annual"},
+   "cover_date": "1982-10-01",
+   "store_date": null,
+   "description": "<p>The <em>Champion</em> challenges Earth&#39;s mightiest heroes &amp; more.</p><p>Second paragraph.<br/>Same paragraph, new line.</p>",
+   "image": {
+    "medium_url": "https://comicvine.gamespot.com/a/uploads/scale_medium/0/4/21801.jpg",
+    "super_url": "https://comicvine.gamespot.com/a/uploads/scale_large/0/4/21801.jpg",
+    "original_url": "https://comicvine.gamespot.com/a/uploads/original/0/4/21801.jpg"
+   },
+   "person_credits": [
+    {"id": 3493, "name": "Frank Giacoia", "role": "inker, cover"},
+    {"id": 1805, "name": "George Roussos", "role": "colorist"},
+    {"id": 46465, "name": "Jim Salicrup", "role": "editor"},
+    {"id": 7000, "name": "Ron Wilson", "role": "penciler, cover"},
+    {"id": 7001, "name": "Tom DeFalco", "role": "writer"}
+   ],
+   "site_detail_url": "https://comicvine.gamespot.com/marvel-two-in-one-annual-7/4000-21801/"
+  },
+  "version": "1.0"
+ },
+ "volume": {
+  "error": "OK",
+  "status_code": 1,
+  "results": {
+   "id": 2865,
+   "name": "Marvel Two-in-One Annual",
+   "start_year": "1976",
+   "publisher": {"id": 31, "name": "Marvel"}
+  },
+  "version": "1.0"
+ }
+}

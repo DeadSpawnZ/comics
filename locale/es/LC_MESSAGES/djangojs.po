@@ -169,3 +169,81 @@ msgstr "Elige primero una edición"
 #: comics/static/js/custom/piece_form.js:75
 msgid "No purchases of this edition to sell"
 msgstr "No hay compras de esta edición para vender"
+
+#: comics/static/js/custom/catalog_import.js
+#, python-format
+msgid "Cover from %(source)s (downloaded when you save)"
+msgstr "Portada de %(source)s (se descarga al guardar)"
+
+#: comics/static/js/custom/catalog_import.js
+#, python-format
+msgid "Publishing: %(name)s"
+msgstr "Publishing: %(name)s"
+
+#: comics/static/js/custom/catalog_import.js
+#, python-format
+msgid "Publishing not found in Comi: %(name)s. Choose it or create it first."
+msgstr "Publishing que no está en Comi: %(name)s. Elígelo o créalo antes."
+
+#: comics/static/js/custom/catalog_import.js
+#, python-format
+msgid "Use %(name)s"
+msgstr "Usar %(name)s"
+
+#: comics/static/js/custom/catalog_import.js
+#, python-format
+msgid "Issue already in Comi: %(name)s"
+msgstr "Issue que ya está en Comi: %(name)s"
+
+#: comics/static/js/custom/catalog_import.js
+msgid "Issue not in Comi yet: it is created when you save."
+msgstr "El issue todavía no está en Comi: se crea al guardar."
+
+#: comics/static/js/custom/catalog_import.js
+#, python-format
+msgid "Editorial not found in Comi: %(name)s"
+msgstr "Editorial que no está en Comi: %(name)s"
+
+#: comics/static/js/custom/catalog_import.js
+#, python-format
+msgid "Creators not found in Comi (not added): %(names)s"
+msgstr "Creadores que no están en Comi (no se añaden): %(names)s"
+
+#: comics/static/js/custom/catalog_import.js
+#, python-format
+msgid "Cover artists not found in Comi (not added): %(names)s"
+msgstr "Artistas de portada que no están en Comi (no se añaden): %(names)s"
+
+#: comics/static/js/custom/catalog_import.js
+msgid "A · Main cover"
+msgstr "A · Portada principal"
+
+#: comics/static/js/custom/catalog_import.js
+#, python-format
+msgid "Open in %(source)s"
+msgstr "Abrir en %(source)s"
+
+#: comics/static/js/custom/catalog_import.js
+#, python-format
+msgid "Loaded from %(source)s. Check the values, then save."
+msgstr "Cargado de %(source)s. Revisa los valores y guarda."
+
+#: comics/static/js/custom/catalog_import.js
+msgid "Enter the issue's ID in the catalogue."
+msgstr "Escribe el ID del issue en el catálogo."
+
+#: comics/static/js/custom/catalog_import.js
+msgid "The catalogue could not be read. Try again."
+msgstr "No se pudo leer el catálogo. Inténtalo de nuevo."
+
+#: comics/static/js/custom/copy_value.js
+msgid "Copied"
+msgstr "Copiado"
+
+#: comics/static/js/custom/copy_value.js
+msgid "Could not copy"
+msgstr "No se pudo copiar"
+
+#: comics/static/js/custom/catalog_import.js
+msgid "Imported cover (downloaded when you save)"
+msgstr "Portada importada (se descarga al guardar)"

@@ -174,3 +174,12 @@ LOGIN_URL = "/login/"
 LOGOUT_REDIRECT_URL = LOGIN_URL
 SESSION_COOKIE_AGE = 86400
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+
+# External catalogues the Gestión edition form imports from (comics/catalog_sources). The values
+# come from the environment (docker compose loads the git-ignored .env into the web service); an
+# empty value disables that source, and the import box says so instead of failing.
+METRON_USERNAME = os.getenv("METRON_USERNAME", "")
+METRON_PASSWORD = os.getenv("METRON_PASSWORD", "")
+COMICVINE_API_KEY = os.getenv("COMICVINE_API_KEY", "")
+# Both catalogues ask clients to identify themselves.
+CATALOG_USER_AGENT = os.getenv("CATALOG_USER_AGENT", "Comi/1.0 (personal comic collection catalogue)")

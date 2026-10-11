@@ -13,6 +13,16 @@ MYSQL_PASSWORD=<password del usuario>
 
 Opcionalmente puedes crear un `.env` en la raíz con `COMPOSE_PROJECT_NAME=<nombre>` para fijar el nombre del proyecto de Docker Compose. Ninguno de los dos archivos se sube al repositorio (están en `.gitignore`).
 
+El mismo `.env` (opcional) se carga en el servicio `web` con las credenciales de los catálogos externos que usa la importación del formulario de ediciones de Gestión. Sin ellas la importación queda desactivada (el recuadro lo indica); con cambios en `.env` hay que recrear el contenedor (`docker compose up -d web`):
+
+```
+METRON_USERNAME=<usuario de metron.cloud>
+METRON_PASSWORD=<contraseña de metron.cloud>
+COMICVINE_API_KEY=<API key de Comic Vine>
+```
+
+Ojo: **todas** las variables de `.env` (también `COMPOSE_PROJECT_NAME` y cualquier otra que se añada) llegan como variables de entorno al contenedor `web`; no pongas en ese archivo nada que la app no deba ver. La sintaxis larga de `env_file` (`path` + `required: false`) necesita Docker Compose 2.24 o posterior.
+
 ## Instalación
 
 Levanta el proyecto (esto construye la imagen del servicio `web` automáticamente, no hace falta un `docker build` manual aparte):

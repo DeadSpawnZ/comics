@@ -101,41 +101,43 @@
   labelParts.forEach((input) => input.addEventListener("input", renderLabelPreview));
   renderLabelPreview();
 
-  // ---------- Cover artists: visible list + selector to add more ----------
-  const artistList = document.getElementById("artist-list");
-  if (artistList) {
-    const artistAdd = document.getElementById("artist-add");
-    const artistEmpty = document.getElementById("artist-empty");
-    const rows = [...artistList.querySelectorAll(".artist-list__item")];
+  // ---------- Artists (cover artists, issue creators): visible chips + selector to add more ----------
+  // Checking a box from another script (the catalogue import) and dispatching "change" on it
+  // refreshes its list too.
+  function artistPicker(picker) {
+    const list = picker.querySelector("[data-artist-list]");
+    if (!list) return; // there are no artists yet
+    const add = picker.querySelector("[data-artist-add]");
+    const empty = picker.querySelector("[data-artist-empty]");
+    const rows = [...list.querySelectorAll(".artist-list__item")];
     const checkboxOf = (row) => row.querySelector("input[type=checkbox]");
 
-    const renderArtists = () => {
-      const placeholder = artistAdd.options[0];
+    const render = () => {
+      const placeholder = add.options[0];
       const available = rows.filter((row) => !checkboxOf(row).checked);
       for (const row of rows) row.hidden = !checkboxOf(row).checked;
-      artistAdd.replaceChildren(
-        placeholder,
-        ...available.map((row) => new Option(row.dataset.artistName, row.dataset.artistId))
-      );
-      artistAdd.value = "";
-      artistAdd.disabled = available.length === 0;
-      artistEmpty.hidden = available.length !== rows.length;
+      add.replaceChildren(placeholder, ...available.map((row) => new Option(row.dataset.artistName, row.dataset.artistId)));
+      add.value = "";
+      add.disabled = available.length === 0;
+      empty.hidden = available.length !== rows.length;
     };
 
-    artistAdd.addEventListener("change", () => {
-      const row = rows.find((item) => item.dataset.artistId === artistAdd.value);
+    add.addEventListener("change", () => {
+      const row = rows.find((item) => item.dataset.artistId === add.value);
       if (row) checkboxOf(row).checked = true;
-      renderArtists();
+      render();
     });
-    artistList.addEventListener("click", (event) => {
+    list.addEventListener("click", (event) => {
       const button = event.target.closest("[data-artist-remove]");
       if (!button) return;
       checkboxOf(button.closest(".artist-list__item")).checked = false;
-      renderArtists();
-      artistAdd.focus();
+      render();
+      add.focus();
     });
-    renderArtists();
+    list.addEventListener("change", render);
+    render();
   }
+  document.querySelectorAll("[data-artist-picker]").forEach(artistPicker);
 
   // ---------- Cover preview ----------
   const imageInput = document.querySelector("input[type=file][name=image]");
@@ -158,4 +160,22 @@
   }
 
   syncContent();
+
+  // What other scripts (catalog_import.js) use to drive the content section.
+  window.ComiEditionForm = {
+    useSingleIssue() {
+      const single = document.querySelector("input[name=content][value=single]");
+      single.checked = true;
+      syncContent();
+    },
+    // Link the edition to an issue of any publishing (an empty publishing goes back to the own issue).
+    async selectIssue(publishingId, issueId) {
+      issuePublishing.value = String(publishingId || "");
+      issuePublishing.dispatchEvent(new Event("change", { bubbles: true }));
+      listedIssues = publishingId ? await issuesOf(String(publishingId)) : [];
+      renderIssueOptions();
+      issueSelect.value = issueId ? String(issueId) : "";
+      if (!issueSelect.value) ownOption.selected = true;
+    },
+  };
 })();

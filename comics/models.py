@@ -6,6 +6,7 @@ import re
 import secrets
 import unicodedata
 from collections.abc import Iterable
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Self
 
@@ -151,6 +152,16 @@ class Publishing(Model):
             + "]"
         )
 
+    @property
+    def select_label(self) -> str:
+        """Label for publishing selects and lists: title (year) series · language · editorials. The
+        editorials tell apart publishings with the same title; prefetch them to avoid one query per
+        publishing."""
+        year = f" ({self.year})" if self.year else ""
+        editorials = "/".join(editorial.name for editorial in self.editorials.all())
+        label = f"{self.publishing_title}{year} {self.serie} · {self.language.upper()}"
+        return f"{label} · {editorials}" if editorials else label
+
     def save(self, *args: Any, **kwargs: Any) -> None:  # noqa: DJ012
         self.process_year()
         self.process_publishing_title()
@@ -204,17 +215,37 @@ class IssueQuerySet(QuerySet):
         )
 
 
+@dataclass(frozen=True)
+class ExternalIdentifier:
+    """An issue's number in an external catalogue, as the "Identification numbers" panel lists it."""
+
+    source: str
+    value: int
+    url: str  # its page in that catalogue; empty when the catalogue has no public page per id
+
+
 class Issue(Model):
     """The content (the story) of an issue. Its editions are the physical printings:
-    variants, reprints, foreign or anniversary editions, which may belong to another publishing."""
+    variants, reprints, foreign or anniversary editions, which may belong to another publishing.
+
+    The external catalogue ids identify the story too, not a variant or a foreign edition. Metron and
+    Comic Vine have one record per story, so their ids are unique when set (a second issue with the
+    same id is a duplicate). GCD has one record per printing (each variant and reprint is its own
+    issue there), so its id is only indexed: two Comi issues may legitimately point to related GCD
+    records, and a uniqueness rule on data we do not control would only block saves."""
 
     publishing = ForeignKey(Publishing, on_delete=PROTECT, related_name="issues", help_text="Serie original")
     number = CharField(max_length=5)
     synopsis = TextField(blank=True)
     creators = ManyToManyField(Artist, through="IssueCreator", blank=True, related_name="issues")
+    metron_id = PositiveIntegerField("Metron ID", null=True, blank=True, unique=True)
+    comicvine_id = PositiveIntegerField("Comic Vine ID", null=True, blank=True, unique=True)
+    gcd_id = PositiveIntegerField("GCD ID", null=True, blank=True, db_index=True)
 
     objects = IssueQuerySet.as_manager()
     # `history` (its versions) is registered after IssueCreator, see below.
+
+    IDENTIFIER_FIELDS = ("metron_id", "comicvine_id", "gcd_id")
 
     class Meta:
         ordering = ["publishing__publishing_title", "number"]
@@ -224,6 +255,20 @@ class Issue(Model):
 
     def __str__(self) -> str:
         return f"{self.publishing.publishing_title} #{self.number}"
+
+    def identification_numbers(self) -> list[ExternalIdentifier]:
+        """The external ids that are set, in a fixed order (Metron, Comic Vine, GCD). The URLs are
+        built from the integers alone, so no stored text ever ends up in a link."""
+        identifiers = []
+        if self.metron_id:
+            identifiers.append(ExternalIdentifier("Metron", self.metron_id, ""))
+        if self.comicvine_id:
+            url = f"https://comicvine.gamespot.com/issue/4000-{int(self.comicvine_id)}/"
+            identifiers.append(ExternalIdentifier("Comic Vine", self.comicvine_id, url))
+        if self.gcd_id:
+            url = f"https://www.comics.org/issue/{int(self.gcd_id)}/"
+            identifiers.append(ExternalIdentifier("GCD", self.gcd_id, url))
+        return identifiers
 
 
 class IssueCreator(Model):

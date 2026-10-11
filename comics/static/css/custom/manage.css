@@ -778,3 +778,111 @@
   text-decoration: none;
   color: var(--md-primary);
 }
+
+/* Import from a catalogue (Gestión edition form) */
+.catalog-import__status {
+  font-size: 0.875rem;
+  color: var(--md-on-surface-variant);
+}
+
+.catalog-import__status:empty {
+  display: none;
+}
+
+.catalog-import__status--error {
+  color: var(--md-error);
+}
+
+.catalog-import__summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding: 0;
+  list-style: none;
+  font-size: 0.875rem;
+}
+
+.catalog-import__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.5rem;
+  color: var(--md-on-surface);
+}
+
+.catalog-import__item > .material-symbols-outlined {
+  font-size: 1.125rem;
+}
+
+.catalog-import__item--ok > .material-symbols-outlined {
+  color: var(--md-primary);
+}
+
+.catalog-import__item--missing > .material-symbols-outlined,
+.catalog-import__item--warning > .material-symbols-outlined {
+  color: var(--md-error);
+}
+
+.catalog-import__choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  flex-basis: 100%;
+  padding-left: 1.625rem;
+}
+
+/* Identification numbers (external catalogue ids of an issue) */
+.identifiers__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.identifiers__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.25rem 0;
+  border-bottom: 1px solid var(--md-outline-variant);
+}
+
+.identifiers__row:last-child {
+  border-bottom: 0;
+}
+
+.identifiers__source {
+  margin: 0;
+  font-weight: 500;
+  color: var(--md-on-surface-variant);
+}
+
+.identifiers__value {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  color: var(--md-on-surface);
+}
+
+.identifiers__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--md-primary);
+  text-decoration: none;
+}
+
+.identifiers__link:hover,
+.identifiers__link:focus-visible {
+  text-decoration: underline;
+}
+
+.identifiers__link .material-symbols-outlined {
+  font-size: 1rem;
+}
+
+.identifiers__copy .material-symbols-outlined {
+  font-size: 1.125rem;
+}

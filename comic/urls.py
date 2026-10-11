@@ -123,6 +123,7 @@ urlpatterns = [
         "gestion/publishings/<int:pk>/eliminar/", manage_publishings.publishing_delete, name="manage_publishing_delete"
     ),
     path("gestion/api/issues/", manage_editions.publishing_issues, name="manage_publishing_issues"),
+    path("gestion/api/catalogo/", manage_editions.catalog_lookup, name="manage_catalog_lookup"),
     path("gestion/arcos/", manage_arcs.arc_list, name="manage_arcs"),
     path("gestion/arcos/nuevo/", manage_arcs.arc_form, name="manage_arc_new"),
     path("gestion/arcos/<int:pk>/", manage_arcs.arc_form, name="manage_arc_edit"),

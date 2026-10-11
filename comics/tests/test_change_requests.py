@@ -193,7 +193,16 @@ class SubmitTests(ChangeRequestTestCase):
         change_request = ChangeRequest.objects.get()
         self.assertEqual((change_request.kind, change_request.target_label), ("issue", "Spawn #300"))
         self.assertEqual(
-            change_request.changes, {"publishing": publishing.pk, "number": "300", "synopsis": "Big one", "creators": []}
+            change_request.changes,
+            {
+                "publishing": publishing.pk,
+                "number": "300",
+                "synopsis": "Big one",
+                "creators": [],
+                "metron_id": None,
+                "comicvine_id": None,
+                "gcd_id": None,
+            },
         )
 
         # An issue that already exists cannot be proposed again.

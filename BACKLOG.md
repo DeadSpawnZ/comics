@@ -57,18 +57,28 @@ Administradores aprueban. Diseño acordado con el usuario:
 - `ReadingArcForm` todavía duplica el bucle de estilos de los widgets que ahora está en
   `MaterialFieldsMixin`.
 
-### Integración con ComicVine (orden acordado)
-1. **Precarga en el formulario de edición de Gestión:** un campo opcional con el id de ComicVine y un
-   botón que carga los datos en el formulario; el issue se puede elegir antes o después de cargar.
-   El formulario es el paso de revisión, así que un mal mapeo se detecta antes de guardar.
-2. **Importación masiva** de un issue o de un volumen completo, convertida en **solicitudes de
-   cambio** para que cada cambio se pueda auditar y aprobar antes de aplicarse.
-- Ambas comparten un único mapeador (ComicVine → campos de Comi). Necesita una API key en una
-  variable de entorno (gratuita, unas 200 peticiones por recurso y hora, cabecera User-Agent).
-  Guardar `comicvine_id` en los modelos importados para evitar duplicados y poder volver a
-  sincronizar.
-- ComicVine no tiene datos de las variantes, impresiones, ratio, exclusivas de tienda/evento ni del
-  país/idioma de la edición de Comi: esos campos seguirán siendo manuales.
+### Catálogos externos: Metron (principal) y Comic Vine (respaldo)
+- **Hecho en la rama `feat/change-requests` (sin commitear ni desplegar):** precarga del formulario de
+  edición de Gestión desde Metron o Comic Vine (`comics/catalog_sources/`, endpoint
+  `/gestion/api/catalogo/`), ids externos en `Issue` (`metron_id`, `comicvine_id` únicos; `gcd_id`
+  indexado; migración `0113`, aditiva), sección "Datos del issue" en el formulario de edición
+  (ids, sinopsis y creadores) y panel "Números de identificación". Credenciales en `.env`
+  (`METRON_USERNAME`, `METRON_PASSWORD`, `COMICVINE_API_KEY`), cargado como `env_file` opcional del
+  servicio `web`.
+- **Siguiente:** **importación masiva** de un issue o de una serie completa convertida en
+  **solicitudes de cambio**, reutilizando el mismo mapeador (`comics/catalog_sources/mapper.py`).
+- **Limitaciones conocidas de la v1:** no se crean editoriales, publishings ni artistas que falten
+  (se listan como "no encontrados"); Metron lista juntos a los artistas de todas las portadas (para
+  la A se proponen los que también dibujan el interior, para las variantes los que aparecen en su
+  nombre); las letras de variante (B, C…) son una sugerencia; las impresiones a partir de la 7.ª no
+  existen en Comi; el límite propio de peticiones por minuto se cuenta en la caché local de cada
+  proceso. Comic Vine no tiene variantes, precio, idioma ni número de volumen.
+- Impresión, ratio (salvo cuando el nombre de la variante lo dice, p. ej. "1:25"), exclusivas de
+  tienda/evento y país siguen siendo manuales.
+- **Portada importada descargada de nuevo al reenviar:** la descarga ocurre en `clean()` del
+  formulario de edición, así que si el formulario vuelve con errores (p. ej. de la sección del issue)
+  la portada se descarga otra vez en cada envío. Valorar guardarla temporalmente (o en caché) la
+  primera vez, o descargarla solo cuando todo el formulario es válido.
 
 ### Logros que esperan otra feature
 - **Popular / Super Popular** (20 / 100 seguidores): necesitan un sistema de seguidores.

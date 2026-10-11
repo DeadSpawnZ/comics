@@ -3028,3 +3028,176 @@ msgstr "Sugerir una corrección del issue"
 #, python-format
 msgid "Another %(kind)s with these values was just saved: review the request again."
 msgstr "Acaba de guardarse otro elemento (%(kind)s) con estos valores: revisa la solicitud de nuevo."
+
+#: comics/catalog_sources/http.py
+#, python-format
+msgid "%(source)s rejected the credentials. Check them in the .env file."
+msgstr "%(source)s rechazó las credenciales. Revísalas en el archivo .env."
+
+#: comics/catalog_sources/http.py
+#, python-format
+msgid "%(source)s is receiving too many requests from Comi. Wait a minute and try again."
+msgstr "%(source)s está recibiendo demasiadas peticiones de Comi. Espera un minuto y vuelve a intentarlo."
+
+#: comics/catalog_sources/http.py
+#, python-format
+msgid "%(source)s is not working right now (error %(status)s). Try again later."
+msgstr "%(source)s no está funcionando en este momento (error %(status)s). Inténtalo más tarde."
+
+#: comics/catalog_sources/http.py
+#, python-format
+msgid "%(source)s sent an answer Comi cannot read."
+msgstr "%(source)s envió una respuesta que Comi no puede leer."
+
+#: comics/catalog_sources/http.py
+#, python-format
+msgid "%(source)s did not answer in time. Try again in a moment."
+msgstr "%(source)s no respondió a tiempo. Inténtalo de nuevo en un momento."
+
+#: comics/catalog_sources/http.py
+#, python-format
+msgid "%(source)s could not be reached. Try again later."
+msgstr "No se pudo conectar con %(source)s. Inténtalo más tarde."
+
+#: comics/catalog_sources/http.py
+#: comics/forms.py
+msgid "Covers can only be downloaded from Metron or Comic Vine."
+msgstr "Las portadas solo se pueden descargar de Metron o Comic Vine."
+
+#: comics/catalog_sources/http.py
+msgid "The cover could not be downloaded. Try again, or upload it yourself."
+msgstr "No se pudo descargar la portada. Inténtalo de nuevo o súbela tú."
+
+#: comics/catalog_sources/http.py
+#, python-format
+msgid "The cover is too large (maximum %(size)s MB)."
+msgstr "La portada es demasiado grande (máximo %(size)s MB)."
+
+#: comics/catalog_sources/service.py
+#, python-format
+msgid "%(source)s is not configured."
+msgstr "%(source)s no está configurado."
+
+#: comics/catalog_sources/metron.py
+#: comics/catalog_sources/comicvine.py
+#, python-format
+msgid "%(source)s has no issue with the id %(id)s."
+msgstr "%(source)s no tiene ningún issue con el id %(id)s."
+
+#: comics/catalog_sources/mapper.py
+#, python-format
+msgid "%(issue)s already has one of these ids: saving them on another issue will fail."
+msgstr "%(issue)s ya tiene uno de estos ids: guardarlos en otro issue fallará."
+
+#: comics/catalog_sources/mapper.py
+#, python-format
+msgid "%(source)s lists the artists of all the covers together: check the cover artists of the cover you save."
+msgstr "%(source)s lista juntos a los artistas de todas las portadas: revisa los artistas de la portada que guardes."
+
+#: comics/catalog_sources/mapper.py
+msgid "The cover is on a server Comi does not download from: upload it yourself."
+msgstr "La portada está en un servidor del que Comi no descarga: súbela tú."
+
+#: comics/catalog_sources/mapper.py
+#, python-format
+msgid "The number “%(number)s” is longer than Comi allows."
+msgstr "El número “%(number)s” es más largo de lo que Comi permite."
+
+#: comics/catalog_sources/mapper.py
+msgid "Only the cover date is known: the release date is usually a few months earlier."
+msgstr "Solo se conoce la fecha de portada: la fecha de salida suele ser unos meses antes."
+
+#: comics/catalog_sources/mapper.py
+#, python-format
+msgid "The cover price is in %(currency)s."
+msgstr "El precio de portada está en %(currency)s."
+
+#: comics/catalog_sources/mapper.py
+#, python-format
+msgid "The series type “%(type)s” has no matching format: choose it yourself."
+msgstr "El tipo de serie “%(type)s” no corresponde a ningún formato: elígelo tú."
+
+#: comics/forms.py
+msgid "Another issue already has this Metron ID."
+msgstr "Otro issue ya tiene este ID de Metron."
+
+#: comics/forms.py
+msgid "Another issue already has this Comic Vine ID."
+msgstr "Otro issue ya tiene este ID de Comic Vine."
+
+#: comics/forms.py
+msgid "Another issue already has one of these ids."
+msgstr "Otro issue ya tiene uno de estos ids."
+
+#: comics/forms.py
+msgid "Enter the issue's number in the catalogue, e.g. 15439."
+msgstr "Escribe el número del issue en el catálogo, p. ej. 15439."
+
+#: comics/forms.py
+msgid "Metron ID (optional)"
+msgstr "ID de Metron (opcional)"
+
+#: comics/forms.py
+msgid "Comic Vine ID (optional)"
+msgstr "ID de Comic Vine (opcional)"
+
+#: comics/forms.py
+msgid "GCD ID (optional)"
+msgstr "ID de GCD (opcional)"
+
+#: comics/templates/manage/edition_form.html
+msgid "Import from a catalogue"
+msgstr "Importar de un catálogo"
+
+#: comics/templates/manage/edition_form.html
+msgid "Fill in the form with an issue from Metron or Comic Vine. Check the values: nothing is saved until you save the form."
+msgstr "Rellena el formulario con un issue de Metron o Comic Vine. Revisa los valores: no se guarda nada hasta que guardes el formulario."
+
+#: comics/templates/manage/edition_form.html
+msgid "not configured"
+msgstr "sin configurar"
+
+#: comics/templates/manage/edition_form.html
+msgid "Source"
+msgstr "Fuente"
+
+#: comics/templates/manage/edition_form.html
+msgid "Issue ID in the catalogue"
+msgstr "ID del issue en el catálogo"
+
+#: comics/templates/manage/edition_form.html
+msgid "Load"
+msgstr "Cargar"
+
+#: comics/templates/manage/edition_form.html
+msgid "Cover to fill in"
+msgstr "Portada que se rellena"
+
+#: comics/templates/manage/edition_form.html
+msgid "Importing is off: set METRON_USERNAME and METRON_PASSWORD (or COMICVINE_API_KEY) in the .env file and restart the app."
+msgstr "La importación está desactivada: define METRON_USERNAME y METRON_PASSWORD (o COMICVINE_API_KEY) en el archivo .env y reinicia la app."
+
+#: comics/templates/manage/edition_form.html
+msgid "Do not use the imported cover"
+msgstr "No usar la portada importada"
+
+#: comics/templates/manage/edition_form.html
+msgid "Saved on the issue above (the edition's own issue unless you chose another one). Only the values you change are written."
+msgstr "Se guarda en el issue de arriba (el issue propio de la edición, salvo que hayas elegido otro). Solo se escriben los valores que cambies."
+
+#: comics/templates/manage/edition_form.html
+msgid "No creators yet."
+msgstr "Todavía no hay creadores."
+
+#: comics/templates/includes/identification_numbers.html
+msgid "Identification numbers"
+msgstr "Números de identificación"
+
+#: comics/templates/includes/identification_numbers.html
+msgid "(opens in a new tab)"
+msgstr "(se abre en una pestaña nueva)"
+
+#: comics/templates/includes/identification_numbers.html
+#, python-format
+msgid "Copy the %(source)s number"
+msgstr "Copiar el número de %(source)s"

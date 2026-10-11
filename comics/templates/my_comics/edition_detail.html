@@ -106,6 +106,10 @@
       {% endif %}
     </div>
 
+    {% if edition.issue %}
+      {% include 'includes/identification_numbers.html' with issue=edition.issue %}
+    {% endif %}
+
     <!-- The user's copies -->
     <div class="md-surface-card">
       <h2 class="md-title-medium mb-3">{% translate "In your collection" %}</h2>
@@ -155,4 +159,8 @@
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/custom/copy_value.js' %}"></script>
 {% endblock %}

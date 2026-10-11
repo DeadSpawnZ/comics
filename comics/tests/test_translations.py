@@ -17,6 +17,7 @@ from django.conf import settings
 from django.test import SimpleTestCase
 
 SPANISH_PO = Path(settings.BASE_DIR) / "locale" / "es" / "LC_MESSAGES" / "django.po"
+SPANISH_JS_PO = SPANISH_PO.with_name("djangojs.po")
 
 NEW_TRANSLATIONS = {
     "Unknown": "Desconocido",
@@ -314,6 +315,68 @@ NEW_TRANSLATIONS = {
     "Note for the author (optional)": "Nota para el autor (opcional)",
     "Suggest a correction to the edition %(name)s": "Sugerir una corrección de la edición %(name)s",
     "has had a change request approved": "le han aprobado una solicitud de cambio",
+    # External catalogues: import box of the edition form, identification numbers.
+    '%(source)s rejected the credentials. Check them in the .env file.': '%(source)s rechazó las credenciales. Revísalas en el archivo .env.',
+    '%(source)s is receiving too many requests from Comi. Wait a minute and try again.': '%(source)s está recibiendo demasiadas peticiones de Comi. Espera un minuto y vuelve a intentarlo.',
+    '%(source)s is not working right now (error %(status)s). Try again later.': '%(source)s no está funcionando en este momento (error %(status)s). Inténtalo más tarde.',
+    '%(source)s sent an answer Comi cannot read.': '%(source)s envió una respuesta que Comi no puede leer.',
+    '%(source)s did not answer in time. Try again in a moment.': '%(source)s no respondió a tiempo. Inténtalo de nuevo en un momento.',
+    '%(source)s could not be reached. Try again later.': 'No se pudo conectar con %(source)s. Inténtalo más tarde.',
+    'Covers can only be downloaded from Metron or Comic Vine.': 'Las portadas solo se pueden descargar de Metron o Comic Vine.',
+    'The cover could not be downloaded. Try again, or upload it yourself.': 'No se pudo descargar la portada. Inténtalo de nuevo o súbela tú.',
+    'The cover is too large (maximum %(size)s MB).': 'La portada es demasiado grande (máximo %(size)s MB).',
+    '%(source)s is not configured.': '%(source)s no está configurado.',
+    '%(source)s has no issue with the id %(id)s.': '%(source)s no tiene ningún issue con el id %(id)s.',
+    '%(issue)s already has one of these ids: saving them on another issue will fail.': '%(issue)s ya tiene uno de estos ids: guardarlos en otro issue fallará.',
+    '%(source)s lists the artists of all the covers together: check the cover artists of the cover you save.': '%(source)s lista juntos a los artistas de todas las portadas: revisa los artistas de la portada que guardes.',
+    'The cover is on a server Comi does not download from: upload it yourself.': 'La portada está en un servidor del que Comi no descarga: súbela tú.',
+    'The number “%(number)s” is longer than Comi allows.': 'El número “%(number)s” es más largo de lo que Comi permite.',
+    'Only the cover date is known: the release date is usually a few months earlier.': 'Solo se conoce la fecha de portada: la fecha de salida suele ser unos meses antes.',
+    'The cover price is in %(currency)s.': 'El precio de portada está en %(currency)s.',
+    'The series type “%(type)s” has no matching format: choose it yourself.': 'El tipo de serie “%(type)s” no corresponde a ningún formato: elígelo tú.',
+    'Another issue already has this Metron ID.': 'Otro issue ya tiene este ID de Metron.',
+    'Another issue already has this Comic Vine ID.': 'Otro issue ya tiene este ID de Comic Vine.',
+    'Another issue already has one of these ids.': 'Otro issue ya tiene uno de estos ids.',
+    "Enter the issue's number in the catalogue, e.g. 15439.": 'Escribe el número del issue en el catálogo, p. ej. 15439.',
+    'Metron ID (optional)': 'ID de Metron (opcional)',
+    'Comic Vine ID (optional)': 'ID de Comic Vine (opcional)',
+    'GCD ID (optional)': 'ID de GCD (opcional)',
+    'Import from a catalogue': 'Importar de un catálogo',
+    'Fill in the form with an issue from Metron or Comic Vine. Check the values: nothing is saved until you save the form.': 'Rellena el formulario con un issue de Metron o Comic Vine. Revisa los valores: no se guarda nada hasta que guardes el formulario.',
+    'not configured': 'sin configurar',
+    'Source': 'Fuente',
+    'Issue ID in the catalogue': 'ID del issue en el catálogo',
+    'Load': 'Cargar',
+    'Cover to fill in': 'Portada que se rellena',
+    'Importing is off: set METRON_USERNAME and METRON_PASSWORD (or COMICVINE_API_KEY) in the .env file and restart the app.': 'La importación está desactivada: define METRON_USERNAME y METRON_PASSWORD (o COMICVINE_API_KEY) en el archivo .env y reinicia la app.',
+    'Do not use the imported cover': 'No usar la portada importada',
+    "Saved on the issue above (the edition's own issue unless you chose another one). Only the values you change are written.": 'Se guarda en el issue de arriba (el issue propio de la edición, salvo que hayas elegido otro). Solo se escriben los valores que cambies.',
+    'No creators yet.': 'Todavía no hay creadores.',
+    'Identification numbers': 'Números de identificación',
+    '(opens in a new tab)': '(se abre en una pestaña nueva)',
+    'Copy the %(source)s number': 'Copiar el número de %(source)s',
+}
+
+
+# JavaScript texts (djangojs.po), checked the same way.
+NEW_JS_TRANSLATIONS = {
+    'Cover from %(source)s (downloaded when you save)': 'Portada de %(source)s (se descarga al guardar)',
+    'Publishing: %(name)s': 'Publishing: %(name)s',
+    'Publishing not found in Comi: %(name)s. Choose it or create it first.': 'Publishing que no está en Comi: %(name)s. Elígelo o créalo antes.',
+    'Use %(name)s': 'Usar %(name)s',
+    'Issue already in Comi: %(name)s': 'Issue que ya está en Comi: %(name)s',
+    'Issue not in Comi yet: it is created when you save.': 'El issue todavía no está en Comi: se crea al guardar.',
+    'Editorial not found in Comi: %(name)s': 'Editorial que no está en Comi: %(name)s',
+    'Creators not found in Comi (not added): %(names)s': 'Creadores que no están en Comi (no se añaden): %(names)s',
+    'Cover artists not found in Comi (not added): %(names)s': 'Artistas de portada que no están en Comi (no se añaden): %(names)s',
+    'A · Main cover': 'A · Portada principal',
+    'Open in %(source)s': 'Abrir en %(source)s',
+    'Loaded from %(source)s. Check the values, then save.': 'Cargado de %(source)s. Revisa los valores y guarda.',
+    "Enter the issue's ID in the catalogue.": 'Escribe el ID del issue en el catálogo.',
+    'The catalogue could not be read. Try again.': 'No se pudo leer el catálogo. Inténtalo de nuevo.',
+    'Copied': 'Copiado',
+    'Imported cover (downloaded when you save)': 'Portada importada (se descarga al guardar)',
+    'Could not copy': 'No se pudo copiar',
 }
 
 
@@ -417,3 +480,23 @@ class SpanishCatalogTests(SimpleTestCase):
             for count, spanish in [(1, forms[0]), (2, forms[1])]:
                 with self.subTest(msgid=singular, count=count):
                     self.assertEqual(catalog.ngettext(singular, plural, count), spanish)
+
+    def test_js_po_file_has_the_new_entries(self) -> None:
+        source = SPANISH_JS_PO.read_text(encoding="utf-8")
+        for msgid, msgstr in NEW_JS_TRANSLATIONS.items():
+            with self.subTest(msgid=msgid):
+                self.assertIn(f'\nmsgid "{msgid}"\nmsgstr "{msgstr}"\n', source)
+
+    @unittest.skipUnless(shutil.which("msgfmt"), "GNU gettext (msgfmt) is not installed")
+    def test_compiled_js_catalog_translates_the_new_texts(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            compiled = Path(tmp) / "djangojs.mo"
+            result = subprocess.run(
+                ["msgfmt", "--check", "-o", str(compiled), str(SPANISH_JS_PO)], capture_output=True, text=True
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            with compiled.open("rb") as fh:
+                catalog = gettext.GNUTranslations(fh)
+        for source, spanish in NEW_JS_TRANSLATIONS.items():
+            with self.subTest(msgid=source):
+                self.assertEqual(catalog.gettext(source), spanish)
