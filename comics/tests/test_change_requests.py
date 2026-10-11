@@ -9,6 +9,7 @@ from typing import Any
 from unittest import mock
 
 from django.apps import apps
+from django.contrib.admin.models import ADDITION, CHANGE, LogEntry
 from django.contrib.auth.models import Group, Permission, User
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import IntegrityError, connection
@@ -450,6 +451,12 @@ class ApprovalTests(ChangeRequestTestCase):
         self.assertEqual(change_request.applied_history_id, version.history_id)
         self.assertEqual(change_request.target_pk, edition.pk)
 
+    def test_an_approval_is_in_the_activity_log_like_any_other_change(self) -> None:
+        approve(self.update_request(notes="New notes"), user=self.admin)
+        entry = LogEntry.objects.get(content_type__model="edition", object_id=str(self.edition.pk))
+        self.assertEqual((entry.user, entry.action_flag, entry.change_message), (self.admin, CHANGE, "Modificada."))
+        self.assertNotIn("request", entry.change_message.lower())  # the log stays agnostic of the source
+
     def test_only_the_requested_fields_are_written(self) -> None:
         change_request = self.update_request(notes="New notes")
         apply_changes(Edition.objects.get(pk=self.edition.pk), {"variant": "C"}, user=self.admin)
@@ -482,6 +489,8 @@ class ApprovalTests(ChangeRequestTestCase):
         self.assertEqual(list(edition.cover_artists.all()), [self.artist])
         self.assertIsNotNone(edition.issue)  # its own issue, as in Gestión
         self.assertEqual((version.history_type, version.history_user, version.id), (CREATED, self.admin, edition.pk))
+        entry = LogEntry.objects.get(content_type__model="edition", object_id=str(edition.pk))
+        self.assertEqual((entry.user, entry.action_flag, entry.change_message), (self.admin, ADDITION, "Creada."))
         change_request = fresh(change_request)
         self.assertEqual((change_request.target_pk, change_request.applied_history_id), (edition.pk, version.history_id))
         self.assertEqual(change_request.target_label, edition.short_name)

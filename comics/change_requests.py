@@ -15,6 +15,7 @@ from datetime import date
 from decimal import Decimal
 from typing import Any
 
+from django.contrib.admin.models import ADDITION, CHANGE, LogEntry
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import IntegrityError, transaction
@@ -195,13 +196,33 @@ def approve(change_request: ChangeRequest, *, user: User, note: str = "") -> Mod
                 % {"kind": locked.get_kind_display().lower()},
                 code="duplicate",
             ) from exc
+        saved = model._default_manager.get(pk=instance.pk)
+        _log_activity(saved, created=locked.action == ChangeRequest.Action.CREATE, user=user)
         locked.target_pk = instance.pk
-        locked.target_label = target_label(model._default_manager.get(pk=instance.pk))
+        locked.target_label = target_label(saved)
         locked.applied_history_id = version.history_id
         _decide(locked, ChangeRequest.Status.APPROVED, user, note)
         Notification.objects.change_request_step(locked)
         schedule(Event.CHANGE_REQUEST, locked.author_id)  # Reportero, after the commit
     return version
+
+
+# Activity-log wording, like the other Gestión entries (feminine for editions, masculine for issues).
+_ACTIVITY_LABELS = {Edition: ("Creada.", "Modificada."), Issue: ("Creado.", "Modificado.")}
+
+
+def _log_activity(obj: Model, *, created: bool, user: User) -> None:
+    """Record the applied change in the admin's activity log (LogEntry: the admin's History and the
+    Gestión home), like any other change, so that log is complete whatever the change's origin. The
+    entry does not mention the request: auditing requests is done through the request model."""
+    created_label, changed_label = _ACTIVITY_LABELS[type(obj)]
+    LogEntry.objects.log_actions(
+        user_id=user.pk,
+        queryset=[obj],
+        action_flag=ADDITION if created else CHANGE,
+        change_message=created_label if created else changed_label,
+        single_object=True,
+    )
 
 
 def _decide(change_request: ChangeRequest, status: str, user: User, note: str) -> None:
