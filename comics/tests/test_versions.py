@@ -382,7 +382,7 @@ class HistoryPageTests(ComiTestCase):
         apply_changes(self.edition, {"publishing": other, "rarity": "legendary", "cover_artists": []}, user=self.manager)
         self.client.force_login(self.manager)
         response = self.client.get(self.url)
-        entries = response.context["entries"]
+        entries = response.context["page_obj"].object_list
         self.assertEqual([entry.kind for entry in entries], ["changed", "changed", "created"])
         self.assertEqual([entry.user_label for entry in entries], ["manager", "manager", "System"])
         latest, middle, _first = entries
@@ -398,6 +398,18 @@ class HistoryPageTests(ComiTestCase):
         self.assertIn("Revert to this version", html)
         self.assertIn(reverse("manage_edition_revert", args=[self.edition.pk, entries[1].version.history_id]), html)
 
+    def test_the_versions_are_paginated_ten_per_page(self) -> None:
+        for number in range(11):  # 12 versions with the initial one
+            apply_changes(self.edition, {"notes": f"note {number}"}, user=self.manager)
+        self.client.force_login(self.manager)
+        first_page = self.client.get(self.url)
+        self.assertEqual(len(first_page.context["page_obj"].object_list), 10)
+        self.assertEqual(first_page.context["page_obj"].object_list[0].changes[0].new, "note 10")  # newest first
+        second_page = self.client.get(self.url, {"page": 2})
+        entries = second_page.context["page_obj"].object_list
+        self.assertEqual([entry.kind for entry in entries], ["changed", "created"])
+        self.assertEqual(entries[0].changes[0].old, "first")  # the diff still spans the page break
+
     def test_reverting_from_the_page(self) -> None:
         first = edition_versions(self.edition)[0]
         apply_changes(self.edition, {"notes": "second"}, user=self.manager)
@@ -409,7 +421,7 @@ class HistoryPageTests(ComiTestCase):
         )
         self.assertEqual(Edition.objects.get(pk=self.edition.pk).notes, "first")
         self.assertRedirects(response, f"{self.url}?next=%2Fgestion%2Fediciones%2F")
-        self.assertEqual(response.context["entries"][0].kind, "reverted")
+        self.assertEqual(response.context["page_obj"].object_list[0].kind, "reverted")
         self.assertIn("Restored the version of", response.content.decode())
         reverted = edition_versions(self.edition)[0]
         self.assertEqual((reverted.history_user, reverted.history_change_reason), (self.manager, "Vandalism"))
@@ -438,7 +450,7 @@ class HistoryPageTests(ComiTestCase):
         self.assertIn(self.url, edit_page)
         response = self.client.get(reverse("manage_issue_history", args=[issue.pk]))
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context["entries"][0].changes[0].label, "Synopsis")
+        self.assertEqual(response.context["page_obj"].object_list[0].changes[0].label, "Synopsis")
         self.client.post(reverse("manage_issue_revert", args=[issue.pk, first.history_id]))
         self.assertEqual(Issue.objects.get(pk=issue.pk).synopsis, "")
 

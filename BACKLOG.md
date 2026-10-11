@@ -89,7 +89,6 @@ cron/`schtasks` y habrá que reescribirla cuando se haga.
   existe, el mensaje de rechazo menciona "Creators", lo que confunde en la reversión de una edición.
 - Revertir la serie/número de un Issue mientras hay ediciones que apuntan a él puede dejarlas
   desincronizadas; valorar impedirlo.
-- La página de historial no tiene paginación.
 - Borrar un Artista quita sus enlaces de artista de portada/creador sin crear una versión de las
   ediciones/issues afectados (el borrado en cascada no dispara señales).
 - No hay forma desde la interfaz de llegar al historial de una edición borrada (el servicio sí puede

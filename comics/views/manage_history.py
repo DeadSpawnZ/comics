@@ -7,6 +7,7 @@ from urllib.parse import urlencode
 from django.contrib import messages
 from django.contrib.admin.models import CHANGE
 from django.core.exceptions import ValidationError
+from django.core.paginator import Paginator
 from django.db.models import Model
 from django.http import Http404, HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
@@ -21,6 +22,9 @@ from comics.history import history_model
 from comics.models import Edition, Issue
 from comics.versions import object_label, revert_to_version, version_entries
 from comics.views.utils import log_action, safe_next_url
+
+# Versions per history page.
+PAGE_SIZE = 10
 
 # Per tracked model: the URL names of its history page and of the revert action.
 HISTORY_URLS = {
@@ -43,6 +47,8 @@ def _history_page(request: HttpRequest, model: type[Model], pk: int) -> HttpResp
         raise Http404
     back_url = safe_next_url(request, _back_fallback(model, pk))
     _history_url_name, revert_url_name = HISTORY_URLS[model]
+    # Each entry's diff needs the version before it, so the page is cut from the full list.
+    page_obj = Paginator(entries, PAGE_SIZE).get_page(request.GET.get("page"))
     return render(
         request,
         "manage/version_history.html",
@@ -50,7 +56,8 @@ def _history_page(request: HttpRequest, model: type[Model], pk: int) -> HttpResp
             "is_edition": model is Edition,
             "object_pk": pk,
             "object_label": object_label(model, pk),
-            "entries": entries,
+            "page_obj": page_obj,
+            "elided_page_range": page_obj.paginator.get_elided_page_range(page_obj.number, on_each_side=1, on_ends=1),
             "back_url": back_url,
             "revert_url_name": revert_url_name,
             "revert_form": RevertForm(),

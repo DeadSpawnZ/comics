@@ -22,7 +22,7 @@
 <div class="md-surface-card manage-table">
   <h2 class="visually-hidden">{% translate "Versions" %}</h2>
   <ul class="history-list">
-    {% for entry in entries %}
+    {% for entry in page_obj %}
       <li class="history-entry version-entry">
         <span class="history-entry__icon material-symbols-outlined {% if entry.kind == 'created' or entry.kind == 'initial' %}is-addition{% elif entry.kind == 'deleted' %}is-deletion{% else %}is-change{% endif %}"
               aria-hidden="true">{% if entry.kind == 'reverted' %}history{% elif entry.kind == 'deleted' %}delete{% elif entry.kind == 'changed' %}edit{% else %}add_circle{% endif %}</span>
@@ -61,6 +61,7 @@
       </li>
     {% endfor %}
   </ul>
+  {% include 'includes/paginator.html' %}
 </div>
 
 {% include 'manage/includes/revert_dialog.html' with form=revert_form next=back_url %}
