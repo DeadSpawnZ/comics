@@ -1,117 +1,135 @@
 # Backlog
 
-Pending work, open decisions and known limits of Comi. It is meant to give a new working session
-(human or AI) enough context to pick any item up without the conversation that produced it.
+Trabajo pendiente, decisiones abiertas y limitaciones conocidas de Comi. Sirve para que una sesión de
+trabajo nueva (humana o de IA) tenga contexto suficiente para retomar cualquier punto sin la
+conversación que lo originó.
 
-How to work on an item: follow `CLAUDE.md` (backend workflow with `backend-senior` → `code-reviewer`,
-MySQL tests only, Ruff once per feature, migrations rehearsed on `comic_refactor` before the real
-database). Remove an item from this file in the same commit that resolves it.
+Cómo trabajar un punto: seguir `CLAUDE.md` (flujo backend con `backend-senior` → `code-reviewer`,
+tests solo en MySQL, Ruff una vez por feature, migraciones ensayadas en `comic_refactor` antes de la
+base real). Quitar el punto de este archivo en el mismo commit que lo resuelve.
 
-Last updated: 2026-10-10, on branch `feat/change-requests`.
+Última actualización: 2026-10-10, en la rama `feat/change-requests`.
 
-## In progress
+## En curso
 
-### Change requests (branch `feat/change-requests`)
+### Solicitudes de cambio (rama `feat/change-requests`)
 
-Users request corrections or additions to Issues and Editions; Reviewers validate, Administrators
-approve. Design agreed with the user:
+Los usuarios solicitan correcciones o altas de Issues y Ediciones; los Revisores validan y los
+Administradores aprueban. Diseño acordado con el usuario:
 
-- **History is agnostic.** Every saved state of an Issue or Edition is a version (who, when, type,
-  reason, relations) via `django-simple-history` 3.12.0, whatever its source (Gestión, Django admin,
-  scripts or an approved request). Any version can be restored; a restore is itself a version.
-  Done in commit `2c68464` (task 1): `comics/history.py`, `comics/versions.py`
-  (`apply_changes`, `revert_to_version`), Gestión history pages, migrations `0107`/`0108`.
-- **Requests are a separate model** that points to the history version its approval produced.
-  Auditing requests means querying the request model; the history never refers to requests.
-- **Task 2, done in commit `1e1990d`:** request workflow (pending → validated → approved/rejected,
-  withdraw), permissions for Reviewers/Administrators (migration `0110`), review area `/revisiones/`
-  for reviewers without Gestión access, conflict detection against the base version, notifications
-  to the author, achievement "Reportero" (`0111`). Service: `comics/change_requests.py`.
-- **Deployed locally on 2026-10-10:** migrations `0107`–`0111` rehearsed on `comic_refactor` and
-  applied to the real DB (backup `backups/comic-20261010-013936.sql`, previous image tagged
-  `comi:pre-requests`). Pending: Ruff pass and the PRs `feat/change-requests` → `develop` → `master`.
-- **Decisions taken by the implementer, awaiting user confirmation:** nobody reviews their own
-  request; reviewers can't reject a request once it is validated; authors don't see reviewer names.
-- **v1 scope cuts (widen later if wanted):** no cover image proposals; no editing of a compilation's
-  collected issues; issue corrections limited to synopsis and creators (series/number are corrected
-  through the edition).
+- **El historial es agnóstico.** Cada estado guardado de un Issue o una Edición es una versión
+  (quién, cuándo, tipo, motivo, relaciones) mediante `django-simple-history` 3.12.0, sea cual sea su
+  origen (Gestión, admin de Django, scripts o una solicitud aprobada). Se puede restaurar cualquier
+  versión; una restauración es a su vez otra versión. Hecho en el commit `2c68464` (tarea 1):
+  `comics/history.py`, `comics/versions.py` (`apply_changes`, `revert_to_version`), páginas de
+  historial en Gestión, migraciones `0107`/`0108`.
+- **Las solicitudes son un modelo aparte** que apunta a la versión del historial que generó su
+  aprobación. Auditar solicitudes se hace consultando el modelo de solicitudes; el historial nunca
+  hace referencia a ellas.
+- **Tarea 2, hecha en el commit `1e1990d`:** flujo de solicitudes (pendiente → validada →
+  aprobada/rechazada, retirar), permisos para Revisores/Administradores (migración `0110`), área de
+  revisión `/revisiones/` para revisores sin acceso a Gestión, detección de conflictos contra la
+  versión base, notificaciones al autor, logro "Reportero" (`0111`). Servicio:
+  `comics/change_requests.py`.
+- **Desplegado en local el 2026-10-10:** migraciones `0107`–`0111` ensayadas en `comic_refactor` y
+  aplicadas a la base real (respaldo `backups/comic-20261010-013936.sql`, imagen anterior etiquetada
+  `comi:pre-requests`).
+- **Commiteado pero sin desplegar:** `d4d1dfd` (aprobar una solicitud también escribe en el registro
+  de actividad `LogEntry`, para que el cambio aparezca en el historial de la portada de Gestión y en
+  el "Historial" del admin). No tiene migraciones; basta con reconstruir y reiniciar `web`.
+- **Pendiente para cerrar la rama:** la pasada de Ruff y los PR `feat/change-requests` → `develop` →
+  `master`.
+- **Decisiones tomadas por el implementador, pendientes de confirmar por el usuario:** nadie revisa
+  sus propias solicitudes; los revisores no pueden rechazar una solicitud ya validada; el autor no ve
+  los nombres de quienes la revisaron.
+- **Recortes de alcance de la v1 (ampliar si se quiere):** no se proponen imágenes de portada; no se
+  editan los issues recopilados de una compilación; las correcciones de un issue se limitan a
+  sinopsis y creadores (la serie y el número se corrigen desde la edición).
 
-## Next features
+## Próximas features
 
-### Change requests, later iterations
-- Requests for **Connectings**.
-- **Strikes** for users whose requests are rejected as unfounded (keep the decider and outcome on
-  each request so strikes can be computed from them).
-- Image (cover) proposals and compilation-content edits in requests (left out of v1).
-- `ReadingArcForm` still duplicates the widget-styling loop now in `MaterialFieldsMixin`.
+### Solicitudes de cambio, siguientes iteraciones
+- Solicitudes para **Connectings**.
+- **Strikes** para los usuarios cuyas solicitudes se rechacen por infundadas (cada solicitud guarda
+  quién decidió y el resultado, así que los strikes se pueden calcular a partir de ellas).
+- Propuestas de imagen (portada) y edición del contenido de compilaciones en las solicitudes
+  (fuera de la v1).
+- `ReadingArcForm` todavía duplica el bucle de estilos de los widgets que ahora está en
+  `MaterialFieldsMixin`.
 
-### ComicVine integration (agreed order)
-1. **Prefill in the Gestión edition form:** an optional ComicVine id field with a button that loads
-   the data into the form; the issue can be chosen before or after loading. The form is the review
-   step, so a bad mapping is caught before saving.
-2. **Bulk import** of one issue or a whole volume, mapped into **change requests** so every change
-   can be audited and approved before it is applied.
-- Both share one mapper (ComicVine → Comi fields). Needs an API key in an environment variable
-  (free key, ~200 requests per resource per hour, a User-Agent header). Store `comicvine_id` on the
-  imported models to avoid duplicates and allow re-syncing.
-- ComicVine has no data for Comi's variants, printings, ratio, store/event exclusives, or the
-  edition's country/language: those stay manual.
+### Integración con ComicVine (orden acordado)
+1. **Precarga en el formulario de edición de Gestión:** un campo opcional con el id de ComicVine y un
+   botón que carga los datos en el formulario; el issue se puede elegir antes o después de cargar.
+   El formulario es el paso de revisión, así que un mal mapeo se detecta antes de guardar.
+2. **Importación masiva** de un issue o de un volumen completo, convertida en **solicitudes de
+   cambio** para que cada cambio se pueda auditar y aprobar antes de aplicarse.
+- Ambas comparten un único mapeador (ComicVine → campos de Comi). Necesita una API key en una
+  variable de entorno (gratuita, unas 200 peticiones por recurso y hora, cabecera User-Agent).
+  Guardar `comicvine_id` en los modelos importados para evitar duplicados y poder volver a
+  sincronizar.
+- ComicVine no tiene datos de las variantes, impresiones, ratio, exclusivas de tienda/evento ni del
+  país/idioma de la edición de Comi: esos campos seguirán siendo manuales.
 
-### Achievements waiting for a feature
-- **Popular / Super Popular** (20 / 100 followers): needs a follow system.
-- `GeekCollectable` has no owner, so there are no per-user collectable achievements.
+### Logros que esperan otra feature
+- **Popular / Super Popular** (20 / 100 seguidores): necesitan un sistema de seguidores.
+- `GeekCollectable` no tiene dueño, así que no hay logros de collectables por usuario.
 
-### Daily achievement evaluation (deferred by the user)
-Date-based achievements (Veterano) are only checked at sign-in or by `award_achievements`. The user
-does **not** want host schedulers (Windows Task Scheduler / host cron): any periodic job must live
-inside the app or the Docker stack. Options discussed: evaluate date-based rules on each user's first
-visit of the day (recommended), or a `scheduler` service in `docker-compose`. The README section
-"Logros" still shows cron/`schtasks` examples and should be rewritten when this is done.
+### Evaluación diaria de logros (aplazada por el usuario)
+Los logros por fecha (Veterano) solo se comprueban al iniciar sesión o con `award_achievements`. El
+usuario **no** quiere programadores del sistema (Programador de tareas de Windows / cron del host):
+cualquier tarea periódica debe vivir dentro de la app o del stack de Docker. Opciones comentadas:
+evaluar las reglas por fecha en la primera visita del día de cada usuario (recomendada) o un servicio
+`scheduler` en `docker-compose`. La sección "Logros" del README todavía muestra ejemplos de
+cron/`schtasks` y habrá que reescribirla cuando se haga.
 
-## Technical debt
+## Deuda técnica
 
-### History (from the task 1 review)
-- Reverting an edition can restore a deleted issue; if one of that issue's creators is gone the
-  refusal message names "Creators", which is confusing in an edition revert.
-- Reverting an Issue's publishing/number while editions point to it can leave them out of step;
-  consider refusing it.
-- The history page has no pagination.
-- Deleting an Artist removes cover-artist/creator links without writing a version of the affected
-  editions/issues (cascade skips signals).
-- No UI to reach the history of a deleted edition (the service can restore it).
-- Dumps taken before the history existed restore without an initial version; an `ensure_history`
-  command could create them.
+### Historial (de la revisión de la tarea 1)
+- Revertir una edición puede restaurar un issue borrado; si uno de los creadores de ese issue ya no
+  existe, el mensaje de rechazo menciona "Creators", lo que confunde en la reversión de una edición.
+- Revertir la serie/número de un Issue mientras hay ediciones que apuntan a él puede dejarlas
+  desincronizadas; valorar impedirlo.
+- La página de historial no tiene paginación.
+- Borrar un Artista quita sus enlaces de artista de portada/creador sin crear una versión de las
+  ediciones/issues afectados (el borrado en cascada no dispara señales).
+- No hay forma desde la interfaz de llegar al historial de una edición borrada (el servicio sí puede
+  restaurarla).
+- Los respaldos anteriores a la existencia del historial se restauran sin versión inicial; un comando
+  `ensure_history` podría crearlas.
 
 ### General
-- `Edition.process_image` logs a full traceback ("Error procesando imagen y thumbnail…") on every
-  save of an edition without an image (`comics/models.py`). Harmless but noisy.
-- Two JS files hardcode `/ajax/...` URLs instead of using `{% url %}`:
+- `Edition.process_image` registra un traceback completo ("Error procesando imagen y thumbnail…")
+  cada vez que se guarda una edición sin imagen (`comics/models.py`). Inofensivo pero ruidoso.
+- Dos archivos JS tienen las URLs `/ajax/...` escritas a mano en lugar de usar `{% url %}`:
   `comics/static/js/custom/collection_form_events.js`, `fill_release_date.js`.
-- `edition_form` and `_clean_content` in `comics/views/manage_editions.py` are too complex
-  (`# noqa: C901`); split them now that tests exist.
-- Achievement re-evaluation after edition content changes exists both in
-  `manage_editions._schedule_owners_after_content_change` and `versions.schedule_edition_owners`.
-- **Ruff pass pending** for everything merged since the last one (the `feat/user-profile` work went
-  into `develop` without it). Run it once at the end of the current feature and commit it as
-  `style: apply ruff format and fixes`.
+- `edition_form` y `_clean_content` en `comics/views/manage_editions.py` son demasiado complejas
+  (`# noqa: C901`); dividirlas ahora que hay tests.
+- La re-evaluación de logros tras cambiar el contenido de una edición está duplicada en
+  `manage_editions._schedule_owners_after_content_change` y `versions.schedule_edition_owners`.
+- **Pasada de Ruff pendiente** de todo lo fusionado desde la última (el trabajo de
+  `feat/user-profile` entró en `develop` sin ella). Hacerla una vez al terminar la feature actual y
+  commitearla como `style: apply ruff format and fixes`.
 
-## Known limits and security
+## Limitaciones conocidas y seguridad
 
-- **No SMTP:** no email verification on registration and no password reset by email.
-- **No rate limiting** on login or registration (brute force, spam sign-ups).
-- **`/media/` is served without authentication:** pictures of private profiles can be fetched by
-  anyone who has the (random, unguessable) URL.
-- **Upload size** is checked after the file arrives; a hard limit belongs in the web server/proxy.
-- **Production settings:** `DJANGO_DEBUG` defaults to `True` and `DJANGO_ALLOWED_HOSTS` to `*` when
-  the environment variables are unset (`comic/settings.py`); a real deployment must set both, plus
-  `DJANGO_SECRET_KEY`.
-- Gestión re-evaluations of achievements run inside the request (`schedule_for_everyone`); fine for
-  a few hundred users, beyond that move them to a background job.
+- **Sin SMTP:** no hay verificación de correo al registrarse ni recuperación de contraseña por correo.
+- **Sin límite de intentos** en el login ni en el registro (fuerza bruta, registros de spam).
+- **`/media/` se sirve sin autenticación:** cualquiera que tenga la URL (aleatoria, imposible de
+  adivinar) puede ver las fotos de perfiles privados.
+- **El tamaño de las subidas** se comprueba después de recibir el archivo; un límite duro debe ir en
+  el servidor web o proxy.
+- **Configuración de producción:** `DJANGO_DEBUG` vale `True` por defecto y `DJANGO_ALLOWED_HOSTS`
+  vale `*` si no se definen las variables de entorno (`comic/settings.py`); un despliegue real debe
+  definir ambas, además de `DJANGO_SECRET_KEY`.
+- Las re-evaluaciones de logros que lanza Gestión se ejecutan dentro de la propia petición
+  (`schedule_for_everyone`); vale para unos cientos de usuarios, más allá habría que pasarlas a una
+  tarea en segundo plano.
 
-## Open product decisions
+## Decisiones de producto abiertas
 
-- Profiles are **public by default**; the user may prefer private.
-- Django's own Spanish password messages use "usted" while the app uses "tú".
-- New superusers created with `createsuperuser` only join Collectors (they still pass Gestión).
-- `speed_force` counts purchases sharing a trade date, so cataloguing an old backlog in one sitting
-  can unlock it.
+- Los perfiles son **públicos por defecto**; el usuario quizá prefiera privados.
+- Los mensajes de contraseña de Django en español usan "usted", mientras que la app usa "tú".
+- Los superusuarios nuevos creados con `createsuperuser` solo entran en Coleccionistas (aun así
+  acceden a Gestión).
+- `speed_force` cuenta las compras que comparten fecha, así que catalogar de una sentada una
+  colección antigua puede desbloquearlo.
