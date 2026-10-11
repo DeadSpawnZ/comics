@@ -97,8 +97,6 @@ cron/`schtasks` y habrá que reescribirla cuando se haga.
   `ensure_history` podría crearlas.
 
 ### General
-- `Edition.process_image` registra un traceback completo ("Error procesando imagen y thumbnail…")
-  cada vez que se guarda una edición sin imagen (`comics/models.py`). Inofensivo pero ruidoso.
 - Dos archivos JS tienen las URLs `/ajax/...` escritas a mano en lugar de usar `{% url %}`:
   `comics/static/js/custom/collection_form_events.js`, `fill_release_date.js`.
 - `edition_form` y `_clean_content` en `comics/views/manage_editions.py` son demasiado complejas

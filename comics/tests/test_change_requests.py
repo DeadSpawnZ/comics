@@ -481,8 +481,7 @@ class ApprovalTests(ChangeRequestTestCase):
         change_request = submit(
             author=self.author, model=Edition, changes=changes, label="Spawn #7 B", reason="Missing"
         )
-        with mock.patch.object(Edition, "process_image"):  # no cover: nothing to process
-            version = approve(change_request, user=self.admin)
+        version = approve(change_request, user=self.admin)
 
         edition = Edition.objects.get(publishing=publishing, number="7")
         self.assertEqual((edition.variant, edition.cover_price), ("B", Decimal("4.99")))

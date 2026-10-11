@@ -456,11 +456,20 @@ class Edition(Model):
         self.event_exclusive = self.event_exclusive.strip()
 
     def process_image(self) -> None:
-        if self.pk:
-            old_instance = Edition.objects.get(pk=self.pk)
-            if self.image == old_instance.image:
-                logger.debug("Imagen sin cambios en la edicion %s; no se reprocesa.", self.pk)
-                return
+        """Convert a newly uploaded cover to JPEG and generate its thumbnail.
+
+        Nothing is processed when the cover did not change (it was converted when it was uploaded)
+        or when there is none. When the cover is removed, its thumbnail goes too: it is derived from
+        the cover, and keeping it would go on showing the old cover wherever thumbnails are listed.
+        Only the references are cleared; the files stay (versions may still point to them)."""
+        old_instance = Edition.objects.filter(pk=self.pk).first() if self.pk else None
+        if not self.image:
+            if old_instance is not None and old_instance.image:
+                self.thumbnail = None
+            return
+        if old_instance is not None and self.image == old_instance.image:
+            logger.debug("Imagen sin cambios en la edicion %s; no se reprocesa.", self.pk)
+            return
 
         max_thumb_width = 1080
         max_thumb_height = 1920
