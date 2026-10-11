@@ -125,7 +125,10 @@ class RecordingTests(ComiTestCase):
             "publishing": issue.publishing_id,
             "number": "7",
             "synopsis": "Origin story",
-            "creators": [self.artist.pk],
+            # The creators are edited as inline rows (IssueCreator).
+            "creator_entries-TOTAL_FORMS": "1",
+            "creator_entries-INITIAL_FORMS": "0",
+            "creator_entries-0-artist": self.artist.pk,
             "editions-TOTAL_FORMS": "0",
             "editions-INITIAL_FORMS": "0",
             "editions-MIN_NUM_FORMS": "0",

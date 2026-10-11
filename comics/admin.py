@@ -30,9 +30,11 @@ from .models import (
     ConnectingPiece,
     Dealer,
     Edition,
+    EditionCoverArtist,
     Editorial,
     GeekCollectable,
     Issue,
+    IssueCreator,
     Notification,
     Profile,
     Publishing,
@@ -180,6 +182,19 @@ class EditionInline(admin.TabularInline):
         return False
 
 
+class IssueCreatorInline(admin.TabularInline):
+    # The admin cannot show a many-to-many field with its own through model as a widget: the
+    # creators are edited as rows instead.
+    model = IssueCreator
+    extra = 0
+    autocomplete_fields = ["artist"]
+    verbose_name = "creador"
+    verbose_name_plural = "creadores"
+
+    def get_queryset(self, request: HttpRequest) -> QuerySet[IssueCreator]:
+        return super().get_queryset(request).select_related("artist")
+
+
 @admin.register(Issue)
 class IssueAdmin(admin.ModelAdmin):
     list_display = ["__str__", "publishing", "number", "edition_count", "first_release"]
@@ -187,9 +202,8 @@ class IssueAdmin(admin.ModelAdmin):
     ordering = ["publishing__publishing_title", "number"]
     search_fields = ["publishing__publishing_title", "number"]
     autocomplete_fields = ["publishing"]
-    filter_horizontal = ["creators"]
-    fields = ["publishing", "number", "synopsis", "creators"]
-    inlines = [EditionInline]
+    fields = ["publishing", "number", "synopsis"]
+    inlines = [IssueCreatorInline, EditionInline]
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[Issue]:
         return super().get_queryset(request).with_first_release().annotate(edition_count=Count("editions"))
@@ -214,6 +228,18 @@ class CollectedIssueInline(admin.TabularInline):
     def get_queryset(self, request: HttpRequest) -> QuerySet[CollectedIssue]:
         # Each row shows its issue (and its publishing) in the autocomplete and in __str__.
         return super().get_queryset(request).select_related("issue__publishing")
+
+
+class EditionCoverArtistInline(admin.TabularInline):
+    # Same as IssueCreatorInline: the cover artists are edited as rows.
+    model = EditionCoverArtist
+    extra = 0
+    autocomplete_fields = ["artist"]
+    verbose_name = "artista de portada"
+    verbose_name_plural = "artistas de portada"
+
+    def get_queryset(self, request: HttpRequest) -> QuerySet[EditionCoverArtist]:
+        return super().get_queryset(request).select_related("artist")
 
 
 @admin.register(Edition)
@@ -248,9 +274,9 @@ class EditionAdmin(admin.ModelAdmin):
         ),
         ("Issue", {"fields": ("issue",)}),
         ("Images", {"fields": ("image", "thumbnail_preview", "thumbnail")}),
-        ("Extras", {"fields": ("notes", "cover_artists"), "classes": ("collapse",)}),
+        ("Extras", {"fields": ("notes",), "classes": ("collapse",)}),
     )
-    inlines = [CollectedIssueInline]
+    inlines = [EditionCoverArtistInline, CollectedIssueInline]
     autocomplete_fields = ["issue"]
 
     list_display = [
@@ -267,7 +293,6 @@ class EditionAdmin(admin.ModelAdmin):
     ]
     ordering = ["publishing__publishing_title", "number", "variant"]
     search_fields = ["publishing__publishing_title"]
-    filter_horizontal = ("cover_artists",)
     readonly_fields = ["country", "thumbnail_preview"]
     list_select_related = ("publishing",)  # Optimize queries by selecting related publishing
 

@@ -211,11 +211,10 @@ class Issue(Model):
     publishing = ForeignKey(Publishing, on_delete=PROTECT, related_name="issues", help_text="Serie original")
     number = CharField(max_length=5)
     synopsis = TextField(blank=True)
-    creators = ManyToManyField(Artist, blank=True, related_name="issues")
+    creators = ManyToManyField(Artist, through="IssueCreator", blank=True, related_name="issues")
 
     objects = IssueQuerySet.as_manager()
-    # Versions of every saved state, with its creators (see comics.history).
-    history = TrackedHistory(m2m_fields=["creators"])
+    # `history` (its versions) is registered after IssueCreator, see below.
 
     class Meta:
         ordering = ["publishing__publishing_title", "number"]
@@ -225,6 +224,30 @@ class Issue(Model):
 
     def __str__(self) -> str:
         return f"{self.publishing.publishing_title} #{self.number}"
+
+
+class IssueCreator(Model):
+    """An artist credited on an issue (the rows of Issue.creators). An artist cannot be deleted
+    while it is credited anywhere (PROTECT); deleting the issue removes its credits.
+
+    It took over the table of the former auto-created relation (migration 0112), so it keeps that
+    table name and its unique (issue, artist) pair as `unique_together`, which is how the database
+    has it."""
+
+    issue = ForeignKey(Issue, on_delete=CASCADE, related_name="creator_entries")
+    artist = ForeignKey(Artist, on_delete=PROTECT, related_name="issue_credits")
+
+    class Meta:
+        db_table = "comics_issue_creators"
+        unique_together = [("issue", "artist")]
+
+    def __str__(self) -> str:
+        return f"{self.issue} – {self.artist}"
+
+
+# Versions of every saved state of an issue, with its creators; see comics.history. Registered here
+# because the history of the creators needs their through model (IssueCreator) to exist.
+simple_history.register(Issue, records_class=TrackedHistory, m2m_fields=["creators"])
 
 
 class Edition(Model):
@@ -297,7 +320,7 @@ class Edition(Model):
     image = ImageField(upload_to="images/originals/", null=True, blank=True)
     thumbnail = ImageField(upload_to="images/thumbnails/", null=True, blank=True)
     notes = TextField(max_length=500, blank=True)
-    cover_artists = ManyToManyField(Artist, blank=True, related_name="covers")
+    cover_artists = ManyToManyField(Artist, through="EditionCoverArtist", blank=True, related_name="covers")
     issue = ForeignKey(
         Issue,
         on_delete=PROTECT,
@@ -572,9 +595,28 @@ class CollectedIssue(Model):
         return f"{self.edition.short_name} #{self.order}: {self.issue}"
 
 
+class EditionCoverArtist(Model):
+    """An artist of an edition's cover (the rows of Edition.cover_artists). An artist cannot be
+    deleted while it is credited anywhere (PROTECT); deleting the edition removes its credits.
+
+    It took over the table of the former auto-created relation (migration 0112), so it keeps that
+    table name and its unique (edition, artist) pair as `unique_together`, which is how the
+    database has it."""
+
+    edition = ForeignKey(Edition, on_delete=CASCADE, related_name="cover_artist_entries")
+    artist = ForeignKey(Artist, on_delete=PROTECT, related_name="cover_credits")
+
+    class Meta:
+        db_table = "comics_edition_cover_artists"
+        unique_together = [("edition", "artist")]
+
+    def __str__(self) -> str:
+        return f"{self.edition.short_name} – {self.artist}"
+
+
 # Versions of every saved state of an edition, with its cover artists and collected issues (and their
-# order); see comics.history. Registered here because the history of the collected issues needs
-# their through model (CollectedIssue) to exist.
+# order); see comics.history. Registered here because the history of these relations needs their
+# through models (EditionCoverArtist, CollectedIssue) to exist.
 simple_history.register(Edition, records_class=TrackedHistory, m2m_fields=["cover_artists", "collected_issues"])
 
 

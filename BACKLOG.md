@@ -89,8 +89,15 @@ cron/`schtasks` y habrá que reescribirla cuando se haga.
   existe, el mensaje de rechazo menciona "Creators", lo que confunde en la reversión de una edición.
 - Revertir la serie/número de un Issue mientras hay ediciones que apuntan a él puede dejarlas
   desincronizadas; valorar impedirlo.
-- Borrar un Artista quita sus enlaces de artista de portada/creador sin crear una versión de las
-  ediciones/issues afectados (el borrado en cascada no dispara señales).
+- Crear o borrar directamente filas de `IssueCreator` / `EditionCoverArtist` (p. ej. en un script:
+  `IssueCreator.objects.filter(artist=a).delete()`, la forma natural de desvincular un artista ahora
+  que `PROTECT` lo exige) no escribe versión del issue/edición. Las rutas de la app sí lo hacen.
+  Añadir receptores `post_save`/`post_delete` como los de `CollectedIssue` (ojo: un `post_delete`
+  desactiva el borrado rápido y `.remove()` fuera de un lote escribiría dos versiones).
+- `IssueCreator.__str__` y `EditionCoverArtist.__str__` consultan la base (issue → publishing,
+  `edition.short_name`); la página de "objetos protegidos" del admin hace ~2 consultas por crédito.
+- Faltan tests de `process_image` para reemplazar una portada existente y para filas antiguas con
+  miniatura pero sin imagen.
 - No hay forma desde la interfaz de llegar al historial de una edición borrada (el servicio sí puede
   restaurarla).
 - Los respaldos anteriores a la existencia del historial se restauran sin versión inicial; un comando

@@ -70,6 +70,8 @@ docker compose exec web python manage.py loaddata /code/dump-<fecha>.json
 docker compose exec web python manage.py migrate
 ```
 
+Lo mismo pasa con **un dump tomado entre las migraciones `0107` y `0111`**: la `0112` renombró los modelos del historial de artistas de portada y creadores (`historicaledition_cover_artists` → `historicaleditioncoverartist`, `historicalissue_creators` → `historicalissuecreator`), así que ese dump se carga con la base en `0111` (`migrate comics 0111`, `loaddata`, `migrate`).
+
 Volver a `0099` descarta lo que solo existe en el esquema nuevo (categorías editadas, ventanas de tiempo, reglas de logros creados en Gestión): saca antes el respaldo SQL de la base de destino. (Sobre una base vacía: `migrate comics 0099` crea las tablas hasta ese punto. Para saber en qué migración estaba el origen, busca la última de `comics` en su tabla `django_migrations`, o la fecha del dump frente a la de la migración.)
 
 Si aparece un error de integridad de datos al restaurar, limpia las tablas existentes antes de reintentar:

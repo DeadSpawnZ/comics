@@ -137,7 +137,9 @@ def replace_relation(instance: Model, m2m_field: ManyToManyField, rows: list[dic
     current_rows = through._default_manager.filter(**{owner: instance.pk})
     if sorted(current_rows.values_list(*columns)) == sorted(tuple(row[c] for c in columns) for row in rows):
         return False
-    if through._meta.auto_created:
+    if len(columns) == 1:
+        # A plain link to the related row (creators, cover artists): the related manager keeps the
+        # unchanged rows and sends m2m_changed, which records the change.
         getattr(instance, m2m_field.name).set([row[columns[0]] for row in rows])
     else:
         # Delete and insert: rows swapping their order would violate the unique constraints if updated.
