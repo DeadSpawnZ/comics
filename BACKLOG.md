@@ -34,9 +34,10 @@ Administradores aprueban. Diseño acordado con el usuario:
 - **Desplegado en local el 2026-10-10:** migraciones `0107`–`0111` ensayadas en `comic_refactor` y
   aplicadas a la base real (respaldo `backups/comic-20261010-013936.sql`, imagen anterior etiquetada
   `comi:pre-requests`).
-- **Commiteado pero sin desplegar:** `d4d1dfd` (aprobar una solicitud también escribe en el registro
-  de actividad `LogEntry`, para que el cambio aparezca en el historial de la portada de Gestión y en
-  el "Historial" del admin). No tiene migraciones; basta con reconstruir y reiniciar `web`.
+- **Desplegado en local el 2026-10-11 (todo lo commiteado hasta `98cab5e`):** registro de actividad al
+  aprobar solicitudes, paginación del historial, miniatura sin imagen, artistas protegidos (`0112`)
+  e integración con Metron/Comic Vine (`0113`). Respaldo `backups/comic-20261010-220738.sql`, imagen
+  anterior `comi:pre-catalog`. Falta probar en el navegador el importador y el panel de identificadores.
 - **Pendiente para cerrar la rama:** la pasada de Ruff y los PR `feat/change-requests` → `develop` →
   `master`.
 - **Decisiones tomadas por el implementador, pendientes de confirmar por el usuario:** nadie revisa
