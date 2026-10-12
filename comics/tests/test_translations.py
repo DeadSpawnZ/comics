@@ -376,6 +376,8 @@ NEW_TRANSLATIONS = {
     'Create publishing': 'Crear publishing',
     'Check before creating': 'Revisa antes de crear',
     'Create title': 'Crear título',
+    'Edit title': 'Editar título',
+    'Update and continue editing': 'Actualizar y seguir editando',
     'Create editorial': 'Crear editorial',
     'The title groups publishings under a letter: choose it, or create it with +.': 'El título agrupa publishings bajo una letra: elígelo, o créalo con +.',
     'Create': 'Crear',
@@ -521,6 +523,7 @@ NEW_CONTEXT_TRANSLATIONS = {
     ("challenge", "Not earned yet"): "Aún no conseguido",
     ("change request", "New"): "Nueva",
     ("requests", "All"): "Todas",
+    ("save button", "Update"): "Actualizar",
 }
 
 

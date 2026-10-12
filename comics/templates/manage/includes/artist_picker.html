@@ -35,9 +35,9 @@
           <label for="{{ field.auto_id }}-add">{% translate "Add artist" %}</label>
         </div>
         {% if create_artist %}
-          <button type="button" class="md-icon-btn mt-2" data-open-dialog="artist-dialog" data-artist-target="{{ field.html_name }}"
+          <button type="button" class="md-icon-btn related-btn related-btn--add mt-2" data-open-dialog="artist-dialog" data-artist-target="{{ field.html_name }}"
                   aria-label="{% translate 'Create artist' %}" title="{% translate 'Create artist' %}">
-            <span class="material-symbols-outlined" aria-hidden="true">add</span>
+            <span class="material-symbols-outlined" aria-hidden="true">add_circle</span>
           </button>
         {% endif %}
       </div>

@@ -27,10 +27,21 @@
             <div class="col-12 col-md-5">
               <div class="d-flex align-items-start gap-1">
                 <div class="flex-grow-1">{% include 'manage/includes/field.html' with field=publishing_dialog.title %}</div>
-                <button type="button" class="md-icon-btn mt-2" data-open-dialog="title-dialog"
-                        aria-label="{% translate 'Create title' %}" title="{% translate 'Create title' %}">
-                  <span class="material-symbols-outlined" aria-hidden="true">add</span>
-                </button>
+                <div class="related-actions mt-2">
+                  <button type="button" class="md-icon-btn related-btn related-btn--add" data-open-dialog="title-dialog"
+                          aria-label="{% translate 'Create title' %}" title="{% translate 'Create title' %}">
+                    <span class="material-symbols-outlined" aria-hidden="true">add_circle</span>
+                  </button>
+                  {% if user.is_superuser %}
+                    {# Titles have no Gestión page: the pencil opens the Django admin (superusers only). #}
+                    {% url 'admin:comics_title_change' 0 as title_edit_url %}
+                    <a class="md-icon-btn related-btn related-btn--edit" data-related-edit data-for="{{ publishing_dialog.title.id_for_label }}"
+                       data-url-template="{{ title_edit_url }}" target="_blank" rel="noopener"
+                       aria-label="{% translate 'Edit title' %}" title="{% translate 'Edit title' %}">
+                      <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+                    </a>
+                  {% endif %}
+                </div>
               </div>
             </div>
             <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=publishing_dialog.serie %}</div>
@@ -42,9 +53,9 @@
             <div class="col-12{% if not editorials.value %} needs-value{% endif %}" data-required-field>
               <div class="d-flex align-items-center gap-1">
                 <label class="md-section-label d-block mb-0" for="{{ editorials.id_for_label }}">{{ editorials.label }}<span class="required-mark" aria-hidden="true"> *</span></label>
-                <button type="button" class="md-icon-btn" data-open-dialog="editorial-dialog"
+                <button type="button" class="md-icon-btn related-btn related-btn--add" data-open-dialog="editorial-dialog"
                         aria-label="{% translate 'Create editorial' %}" title="{% translate 'Create editorial' %}">
-                  <span class="material-symbols-outlined" aria-hidden="true">add</span>
+                  <span class="material-symbols-outlined" aria-hidden="true">add_circle</span>
                 </button>
               </div>
               {{ editorials }}

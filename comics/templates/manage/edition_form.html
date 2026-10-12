@@ -39,10 +39,11 @@
           {% translate "Delete" %}
         </button>
       {% endif %}
-      <button type="submit" name="save_continue" class="md-btn md-btn--tonal">{% translate "Save and continue editing" %}</button>
+      {# Once the edition exists the buttons say "Update", so it is clear it was already saved. #}
+      <button type="submit" name="save_continue" class="md-btn md-btn--tonal">{% if edition %}{% translate "Update and continue editing" %}{% else %}{% translate "Save and continue editing" %}{% endif %}</button>
       <button type="submit" class="md-btn md-btn--filled">
-        <span class="material-symbols-outlined" aria-hidden="true">save</span>
-        {% translate "Save" %}
+        <span class="material-symbols-outlined" aria-hidden="true">{% if edition %}sync{% else %}save{% endif %}</span>
+        {% if edition %}{% translate "Update" context "save button" %}{% else %}{% translate "Save" %}{% endif %}
       </button>
     </div>
   </div>
@@ -95,7 +96,7 @@
         </div>
         <div class="col-4 col-md-2">
           <button type="button" class="md-btn md-btn--tonal w-100" id="catalog-load">
-            <span class="material-symbols-outlined" aria-hidden="true">download</span>
+            <span class="material-symbols-outlined" aria-hidden="true">cloud_download</span>
             {% translate "Load" %}
           </button>
         </div>
@@ -130,10 +131,18 @@
           <div class="col-12">
             <div class="d-flex align-items-start gap-2">
               <div class="flex-grow-1">{% include 'manage/includes/field.html' with field=form.publishing %}</div>
-              <button type="button" class="md-btn md-btn--tonal mt-2 text-nowrap" id="create-publishing" data-open-dialog="publishing-dialog">
-                <span class="material-symbols-outlined" aria-hidden="true">add</span>
-                {% translate "Create publishing" %}
-              </button>
+              {% url 'manage_publishing_edit' 0 as publishing_edit_url %}
+              <div class="related-actions mt-2">
+                <button type="button" class="md-icon-btn related-btn related-btn--add" id="create-publishing" data-open-dialog="publishing-dialog"
+                        aria-label="{% translate 'Create publishing' %}" title="{% translate 'Create publishing' %}">
+                  <span class="material-symbols-outlined" aria-hidden="true">add_circle</span>
+                </button>
+                <a class="md-icon-btn related-btn related-btn--edit" data-related-edit data-for="id_publishing"
+                   data-url-template="{{ publishing_edit_url }}" target="_blank" rel="noopener"
+                   aria-label="{% translate 'Edit publishing' %}" title="{% translate 'Edit publishing' %}">
+                  <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+                </a>
+              </div>
             </div>
           </div>
           <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=form.number %}</div>
@@ -327,4 +336,5 @@
 <script src="{% static 'js/custom/force_uppercase_variant.js' %}"></script>
 <script src="{% static 'js/custom/copy_value.js' %}"></script>
 <script src="{% static 'js/custom/form_draft.js' %}"></script>
+<script src="{% static 'js/custom/related_links.js' %}"></script>
 {% endblock %}

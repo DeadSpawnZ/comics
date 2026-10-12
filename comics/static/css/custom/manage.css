@@ -1009,3 +1009,39 @@
   width: 32px;
   height: 32px;
 }
+
+/* Related-object actions next to a select, like the Django admin: a green "+" creates one, the
+   pencil edits the one selected (disabled while nothing is selected). */
+:root {
+  --related-add: #1e8e3e;
+}
+
+[data-bs-theme="dark"] {
+  --related-add: #81c995;
+}
+
+.related-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+  flex-shrink: 0;
+}
+
+.related-btn--add {
+  color: var(--related-add);
+}
+
+.related-btn--add:hover,
+.related-btn--add:focus-visible {
+  color: var(--related-add);
+  background-color: color-mix(in srgb, var(--related-add) 14%, transparent);
+}
+
+.related-btn--edit {
+  color: var(--md-primary);
+}
+
+.related-btn[aria-disabled="true"] {
+  opacity: 0.38;
+  pointer-events: none;
+}

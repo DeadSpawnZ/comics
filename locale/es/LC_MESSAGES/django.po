@@ -3414,3 +3414,16 @@ msgstr "Crear artista"
 #: comics/templates/manage/includes/publishing_dialogs.html
 msgid "It is added to the list you opened this from. If an artist already has that name, that one is added instead."
 msgstr "Se añade a la lista desde la que lo abriste. Si un artista ya tiene ese nombre, se añade ese."
+
+#: comics/templates/manage/edition_form.html
+msgid "Update and continue editing"
+msgstr "Actualizar y seguir editando"
+
+#: comics/templates/manage/edition_form.html
+msgctxt "save button"
+msgid "Update"
+msgstr "Actualizar"
+
+#: comics/templates/manage/includes/publishing_dialogs.html
+msgid "Edit title"
+msgstr "Editar título"
