@@ -1,43 +1,47 @@
 {% load i18n %}
-{# Artists of a many-to-many field as chips: one per artist, its hidden checkbox is what gets submitted and only checked ones are shown. edition_form.js wires every [data-artist-picker]. Parameters: field, empty_text. #}
-<div data-artist-picker>
+{# Artists of a many-to-many field as chips: one per artist, its hidden checkbox is what gets submitted and only checked ones are shown. edition_form.js wires every [data-artist-picker] (and adds the rows of artists created on the page). Parameters: field, empty_text, create_artist (show the "+" that opens the "Create artist" dialog). #}
+<div data-artist-picker data-field-name="{{ field.html_name }}" data-field-id="{{ field.auto_id }}">
   <div class="md-section-label">{{ field.label }}</div>
-  {% if field.field.queryset.exists %}
-    <div class="row g-3 align-items-center">
-      <div class="col-12 col-md-8">
-        <ul class="artist-list" data-artist-list>
-          {% for checkbox in field %}
-            {% with artist=checkbox.data.value.instance %}
-            <li class="artist-list__item" data-artist-id="{{ artist.pk }}" data-artist-name="{{ artist.name }}" {% if not checkbox.data.selected %}hidden{% endif %}>
-              <span hidden>{{ checkbox.tag }}</span>
-              {% if artist.photo %}
-                <img class="artist-list__photo" src="{{ artist.photo.url }}" alt="" loading="lazy">
-              {% else %}
-                <span class="artist-list__photo material-symbols-outlined" aria-hidden="true">person</span>
-              {% endif %}
-              <span class="artist-list__name">{{ artist.name }}</span>
-              <button type="button" class="artist-list__remove" data-artist-remove
-                      aria-label="{% blocktranslate with name=artist.name %}Remove {{ name }}{% endblocktranslate %}"
-                      title="{% blocktranslate with name=artist.name %}Remove {{ name }}{% endblocktranslate %}">
-                <span class="material-symbols-outlined" aria-hidden="true">close</span>
-              </button>
-            </li>
-            {% endwith %}
-          {% endfor %}
-        </ul>
-        <p class="md-body-medium mb-0" data-artist-empty hidden>{{ empty_text }}</p>
-      </div>
-      <div class="col-12 col-md-4">
-        <div class="form-floating md-field">
+  <div class="row g-3 align-items-center">
+    <div class="col-12 col-md-8">
+      <ul class="artist-list" data-artist-list>
+        {% for checkbox in field %}
+          {% with artist=checkbox.data.value.instance %}
+          <li class="artist-list__item" data-artist-id="{{ artist.pk }}" data-artist-name="{{ artist.name }}" {% if not checkbox.data.selected %}hidden{% endif %}>
+            <span hidden>{{ checkbox.tag }}</span>
+            {% if artist.photo %}
+              <img class="artist-list__photo" src="{{ artist.photo.url }}" alt="" loading="lazy">
+            {% else %}
+              <span class="artist-list__photo material-symbols-outlined" aria-hidden="true">person</span>
+            {% endif %}
+            <span class="artist-list__name">{{ artist.name }}</span>
+            <button type="button" class="artist-list__remove" data-artist-remove
+                    aria-label="{% blocktranslate with name=artist.name %}Remove {{ name }}{% endblocktranslate %}"
+                    title="{% blocktranslate with name=artist.name %}Remove {{ name }}{% endblocktranslate %}">
+              <span class="material-symbols-outlined" aria-hidden="true">close</span>
+            </button>
+          </li>
+          {% endwith %}
+        {% endfor %}
+      </ul>
+      <p class="md-body-medium mb-0" data-artist-empty hidden>{{ empty_text }}</p>
+    </div>
+    <div class="col-12 col-md-4">
+      <div class="d-flex align-items-start gap-1">
+        <div class="form-floating md-field flex-grow-1">
           <select class="form-select" id="{{ field.auto_id }}-add" data-artist-add>
             <option value="">{% translate "Choose an artist…" %}</option>
           </select>
           <label for="{{ field.auto_id }}-add">{% translate "Add artist" %}</label>
         </div>
+        {% if create_artist %}
+          <button type="button" class="md-icon-btn mt-2" data-open-dialog="artist-dialog" data-artist-target="{{ field.html_name }}"
+                  aria-label="{% translate 'Create artist' %}" title="{% translate 'Create artist' %}">
+            <span class="material-symbols-outlined" aria-hidden="true">add</span>
+          </button>
+        {% endif %}
       </div>
     </div>
-  {% else %}
-    <span class="md-body-medium">{% translate "There are no artists yet." %}</span>
-  {% endif %}
+  </div>
   {% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
 </div>

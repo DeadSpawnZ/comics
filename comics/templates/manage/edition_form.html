@@ -162,7 +162,7 @@
 
           <div class="col-12">
             {% translate "No cover artists yet." as no_cover_artists %}
-            {% include 'manage/includes/artist_picker.html' with field=form.cover_artists empty_text=no_cover_artists %}
+            {% include 'manage/includes/artist_picker.html' with field=form.cover_artists empty_text=no_cover_artists create_artist=True %}
           </div>
         </div>
       </div>
@@ -263,7 +263,7 @@
             <div class="col-12">{% include 'manage/includes/field.html' with field=issue_form.synopsis %}</div>
             <div class="col-12">
               {% translate "No creators yet." as no_creators %}
-              {% include 'manage/includes/artist_picker.html' with field=issue_form.creators empty_text=no_creators %}
+              {% include 'manage/includes/artist_picker.html' with field=issue_form.creators empty_text=no_creators create_artist=True %}
             </div>
           </div>
         </div>

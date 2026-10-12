@@ -264,3 +264,87 @@ msgstr "No se pudo crear. Revisa tu conexión e inténtalo de nuevo."
 #: comics/static/js/custom/form_draft.js
 msgid "Your changes were restored. Check them, then save."
 msgstr "Se recuperaron tus cambios. Revísalos y guarda."
+
+#: comics/static/js/custom/publishing_dialogs.js
+msgid "Choose an editorial…"
+msgstr "Elige una editorial…"
+
+#: comics/static/js/custom/publishing_dialogs.js
+msgid "Existing editorial"
+msgstr "Editorial existente"
+
+#: comics/static/js/custom/publishing_dialogs.js
+#, python-format
+msgid "Remember “%(source)s” as an alias of %(editorial)s"
+msgstr "Recordar “%(source)s” como alias de %(editorial)s"
+
+#: comics/static/js/custom/publishing_dialogs.js
+#, python-format
+msgid "Remember “%(source)s” as an alias of the chosen editorial"
+msgstr "Recordar “%(source)s” como alias de la editorial elegida"
+
+#: comics/static/js/custom/publishing_dialogs.js
+msgid "Use this editorial"
+msgstr "Usar esta editorial"
+
+#: comics/static/js/custom/publishing_dialogs.js
+msgid "Choose an editorial first."
+msgstr "Elige primero una editorial."
+
+#: comics/static/js/custom/publishing_dialogs.js
+msgid "It could not be saved. Check your session and try again."
+msgstr "No se pudo guardar. Revisa tu sesión e inténtalo de nuevo."
+
+#: comics/static/js/custom/publishing_dialogs.js
+msgid "It could not be saved. Check your connection and try again."
+msgstr "No se pudo guardar. Revisa tu conexión e inténtalo de nuevo."
+
+#: comics/static/js/custom/publishing_dialogs.js
+#, python-format
+msgid "The publisher “%(name)s” is not in Comi. Choose the editorial it is, or create it with +."
+msgstr "La editorial “%(name)s” del catálogo no está en Comi. Elige a cuál corresponde, o créala con +."
+
+#: comics/static/js/custom/catalog_import.js
+msgid "The artists could not be created. Check your session and try again."
+msgstr "No se pudieron crear los artistas. Revisa tu sesión e inténtalo de nuevo."
+
+#: comics/static/js/custom/catalog_import.js
+msgid "The artists could not be created. Check your connection and try again."
+msgstr "No se pudieron crear los artistas. Revisa tu conexión e inténtalo de nuevo."
+
+#: comics/static/js/custom/catalog_import.js
+#, python-format
+msgid "Added to the form: %(names)s."
+msgstr "Añadidos al formulario: %(names)s."
+
+#: comics/static/js/custom/catalog_import.js
+#, python-format
+msgid "Create artist %(name)s"
+msgstr "Crear el artista %(name)s"
+
+#: comics/static/js/custom/catalog_import.js
+#, python-format
+msgid "Editorial: %(name)s"
+msgstr "Editorial: %(name)s"
+
+#: comics/static/js/custom/catalog_import.js
+msgid "Creators not found in Comi (create them with +):"
+msgstr "Creadores que no están en Comi (créalos con +):"
+
+#: comics/static/js/custom/catalog_import.js
+msgid "Cover artists not found in Comi (create them with +):"
+msgstr "Artistas de portada que no están en Comi (créalos con +):"
+
+#: comics/static/js/custom/catalog_import.js
+msgid "Create all missing artists"
+msgstr "Crear todos los artistas que faltan"
+
+#: comics/static/js/custom/catalog_import.js
+#, python-format
+msgid "“%(source)s” is now an alias of %(editorial)s: next imports find it."
+msgstr "“%(source)s” ahora es un alias de %(editorial)s: las próximas importaciones la encuentran."
+
+#: comics/static/js/custom/catalog_import.js
+#, python-format
+msgid "Editorial chosen: %(editorial)s."
+msgstr "Editorial elegida: %(editorial)s."

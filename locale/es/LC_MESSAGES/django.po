@@ -3327,3 +3327,90 @@ msgstr "Elige un idioma"
 #, python-format
 msgid "The Metron series is %(metron)s, but its Comic Vine volume is %(comicvine)s: the first one is used. Check whether they are the same publishing."
 msgstr "La serie de Metron es %(metron)s, pero su volumen de Comic Vine es %(comicvine)s: se usa la primera. Comprueba si son el mismo publishing."
+
+#: comics/forms.py
+msgid "Required: choose a title or create one with +."
+msgstr "Obligatorio: elige un título o créalo con +."
+
+#: comics/forms.py
+msgid "Required: choose an editorial or create one with +."
+msgstr "Obligatorio: elige una editorial o créala con +."
+
+#: comics/forms.py
+msgid "Required: choose the language."
+msgstr "Obligatorio: elige el idioma."
+
+#: comics/forms.py
+msgid "Required: enter the start date."
+msgstr "Obligatorio: escribe la fecha de inicio."
+
+#: comics/forms.py
+msgid "Required: choose an option."
+msgstr "Obligatorio: elige una opción."
+
+#: comics/forms.py
+msgid "Required: fill in this field."
+msgstr "Obligatorio: rellena este campo."
+
+#: comics/forms.py
+msgid "Editorial"
+msgstr "Editorial"
+
+#: comics/forms.py
+#: comics/models.py
+msgid "Alias"
+msgstr "Alias"
+
+#: comics/forms.py
+msgid "Enter a name."
+msgstr "Escribe un nombre."
+
+#: comics/forms.py
+#, python-format
+msgid "“%(name)s” is longer than %(limit)d characters."
+msgstr "“%(name)s” tiene más de %(limit)d caracteres."
+
+#: comics/forms.py
+#, python-format
+msgid "Send at most %(limit)d names at a time."
+msgstr "Envía como máximo %(limit)d nombres a la vez."
+
+#: comics/models.py
+#, python-format
+msgid "“%(name)s” is an alias of %(editorial)s: delete the alias first."
+msgstr "“%(name)s” es un alias de %(editorial)s: borra primero el alias."
+
+#: comics/models.py
+#, python-format
+msgid "“%(name)s” is already an alias of %(editorial)s."
+msgstr "“%(name)s” ya es un alias de %(editorial)s."
+
+#: comics/models.py
+#, python-format
+msgid "“%(name)s” is the name of an editorial: it needs no alias."
+msgstr "“%(name)s” es el nombre de una editorial: no necesita alias."
+
+#: comics/models.py
+msgid "editorial alias"
+msgstr "alias de editorial"
+
+#: comics/models.py
+msgid "editorial aliases"
+msgstr "alias de editoriales"
+
+#: comics/views/manage_publishings.py
+msgid "That alias already exists."
+msgstr "Ese alias ya existe."
+
+#: comics/views/manage_publishings.py
+msgid "The artists could not be created. Try again."
+msgstr "No se pudieron crear los artistas. Inténtalo de nuevo."
+
+#: comics/templates/manage/includes/publishing_dialogs.html
+#: comics/templates/manage/includes/artist_picker.html
+msgid "Create artist"
+msgstr "Crear artista"
+
+#: comics/templates/manage/includes/publishing_dialogs.html
+msgid "It is added to the list you opened this from. If an artist already has that name, that one is added instead."
+msgstr "Se añade a la lista desde la que lo abriste. Si un artista ya tiene ese nombre, se añade ese."

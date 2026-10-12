@@ -32,6 +32,7 @@ from .models import (
     AchievementCategory,
     AchievementTier,
     Announcement,
+    Artist,
     Collection,
     Dealer,
     Edition,
@@ -594,6 +595,34 @@ class ReadingArcForm(forms.ModelForm):
                 widget.attrs["class"] = f"{widget.attrs.get('class', '')} is-invalid".strip()
 
 
+class RequiredHintsMixin:
+    """Makes the required fields of a Gestión dialog stand out while they are empty: the widget gets
+    aria-required and each field a short hint (`required_hint`, shown by
+    manage/includes/field.html with an asterisk on the label, and kept in sync with the value by
+    js/custom/publishing_dialogs.js). An empty field starts described by its hint. `required_hints`
+    gives a field its own hint; the rest get a generic one. Call mark_required() at the end of
+    __init__. The validation is the form's as usual: this is only how the page shows it."""
+
+    required_hints: dict[str, str | Promise] = {}
+    fields: dict[str, forms.Field]
+
+    def mark_required(self) -> None:
+        for name, field in self.fields.items():
+            if not field.required:
+                continue
+            bound: forms.BoundField = self[name]  # type: ignore[index]  # the form's __getitem__
+            if name in self.required_hints:
+                hint = self.required_hints[name]
+            elif isinstance(field.widget, forms.Select):
+                hint = _("Required: choose an option.")
+            else:
+                hint = _("Required: fill in this field.")
+            field.required_hint = hint  # type: ignore[attr-defined]
+            field.widget.attrs["aria-required"] = "true"
+            if bound.value() in (None, "", [], ()):
+                field.widget.attrs["aria-describedby"] = f"{bound.auto_id}-hint"
+
+
 class PublishingManageForm(forms.ModelForm):
     """Publishing data for Gestión. The title (the group used by the letter filter) is typed as
     text: an existing one is reused and a new one is created when needed."""
@@ -701,7 +730,7 @@ class PlaceholderSelect(forms.Select):
         return option
 
 
-class PublishingDialogForm(PublishingManageForm):
+class PublishingDialogForm(RequiredHintsMixin, PublishingManageForm):
     """The "Create publishing" dialog of the Gestión edition form (posted to an API, see
     comics.views.manage_publishings.publishing_create_api). The title is chosen from the existing
     ones (the "Create title" dialog adds new ones), never derived from the publishing title.
@@ -711,6 +740,12 @@ class PublishingDialogForm(PublishingManageForm):
     edition form's page."""
 
     PREFIX = "new_publishing"
+    required_hints = {
+        "title": _("Required: choose a title or create one with +."),
+        "editorials": _("Required: choose an editorial or create one with +."),
+        "language": _("Required: choose the language."),
+        "date": _("Required: enter the start date."),
+    }
 
     title_name = None  # replaced by the `title` select
     title = forms.ModelChoiceField(queryset=Title.objects.order_by("name"), label=_("Title (group)"))
@@ -728,6 +763,7 @@ class PublishingDialogForm(PublishingManageForm):
         kwargs["initial"] = {"language": "", "date": None, **(kwargs.get("initial") or {})}
         super().__init__(*args, **kwargs)
         self.fields["title"].widget.attrs["data-combobox"] = ""
+        self.mark_required()
 
     def chosen_title(self, publishing: Publishing) -> Title:
         return self.cleaned_data["title"]
@@ -750,7 +786,7 @@ class UniqueNameMixin:
         return name
 
 
-class TitleDialogForm(UniqueNameMixin, MaterialFieldsMixin, forms.ModelForm):
+class TitleDialogForm(UniqueNameMixin, RequiredHintsMixin, MaterialFieldsMixin, forms.ModelForm):
     """The "Create title" dialog (a Title groups publishings under a letter)."""
 
     PREFIX = "new_title"
@@ -765,9 +801,10 @@ class TitleDialogForm(UniqueNameMixin, MaterialFieldsMixin, forms.ModelForm):
         kwargs.setdefault("prefix", self.PREFIX)
         super().__init__(*args, **kwargs)
         self.style_fields()
+        self.mark_required()
 
 
-class EditorialDialogForm(UniqueNameMixin, MaterialFieldsMixin, forms.ModelForm):
+class EditorialDialogForm(UniqueNameMixin, RequiredHintsMixin, MaterialFieldsMixin, forms.ModelForm):
     """The "Create editorial" dialog."""
 
     PREFIX = "new_editorial"
@@ -782,6 +819,85 @@ class EditorialDialogForm(UniqueNameMixin, MaterialFieldsMixin, forms.ModelForm)
         kwargs.setdefault("prefix", self.PREFIX)
         super().__init__(*args, **kwargs)
         self.style_fields()
+        self.mark_required()
+
+
+class EditorialAliasForm(forms.Form):
+    """A catalogue's publisher name remembered as an alias of an existing editorial (offered by the
+    import box and the "Create publishing" dialog when the publisher matched no editorial), so the
+    next import matches it. The rules are the model's (EditorialAlias.clean)."""
+
+    editorial = forms.ModelChoiceField(queryset=Editorial.objects.all(), label=_("Editorial"))
+    name = forms.CharField(label=_("Alias"), max_length=100)
+
+
+class RepeatableTextInput(forms.TextInput):
+    """A text input whose name may be posted several times (e.g. by a script): every value is read."""
+
+    def value_from_datadict(self, data: Any, files: Any, name: str) -> list[str]:
+        if hasattr(data, "getlist"):
+            return data.getlist(name)
+        value = data.get(name)
+        if value is None:
+            return []
+        return list(value) if isinstance(value, (list, tuple)) else [value]
+
+    def format_value(self, value: Any) -> str | None:
+        if isinstance(value, (list, tuple)):
+            value = ", ".join(str(item) for item in value)
+        return super().format_value(value)
+
+
+class NameListField(forms.Field):
+    """One or more names (the same key posted several times), each stripped and with its inner
+    spaces collapsed. A blank or too long name, or too many of them, is an error."""
+
+    widget = RepeatableTextInput
+    default_error_messages = {
+        "blank": _("Enter a name."),
+        "too_long": _("“%(name)s” is longer than %(limit)d characters."),
+        "too_many": _("Send at most %(limit)d names at a time."),
+    }
+
+    def __init__(self, *, max_length: int, max_names: int, **kwargs: Any) -> None:
+        self.max_length = max_length
+        self.max_names = max_names
+        super().__init__(**kwargs)
+
+    def to_python(self, value: Any) -> list[str]:
+        if value in (None, ""):
+            return []
+        values = value if isinstance(value, (list, tuple)) else [value]
+        return [" ".join(str(item).split()) for item in values]
+
+    def validate(self, value: list[str]) -> None:
+        super().validate(value)
+        if len(value) > self.max_names:
+            raise ValidationError(self.error_messages["too_many"], code="too_many", params={"limit": self.max_names})
+        for name in value:
+            if not name:
+                raise ValidationError(self.error_messages["blank"], code="blank")
+            if len(name) > self.max_length:
+                raise ValidationError(
+                    self.error_messages["too_long"], code="too_long", params={"name": name, "limit": self.max_length}
+                )
+
+
+class ArtistCreateForm(RequiredHintsMixin, MaterialFieldsMixin, forms.Form):
+    """The artists to create: one from the "Create artist" dialog of the edition form, or several at
+    once from the import box (the names a catalogue credits and Comi does not have). A name an artist
+    already has is not an error: comics.models.ArtistQuerySet.ensure_named answers that artist."""
+
+    PREFIX = "new_artist"
+    MAX_NAMES = 100
+
+    name = NameListField(label=_("Name"), max_length=Artist._meta.get_field("name").max_length, max_names=MAX_NAMES)
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        kwargs.setdefault("prefix", self.PREFIX)
+        super().__init__(*args, **kwargs)
+        self.style_fields()
+        self.mark_required()
 
 
 def edition_label(edition: Edition) -> str:

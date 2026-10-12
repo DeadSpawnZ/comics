@@ -7,7 +7,8 @@ reviews the proposal, and saving the form is what writes it.
 
 Matching rules:
 
-- Editorial: by name, case-insensitively.
+- Editorial: by name or by one of its aliases (EditorialAlias, e.g. Metron's "Marvel" for "Marvel
+  Comics"), ignoring case, accents and repeated spaces; a name wins over an alias.
 - Publishing: by the series ids first (Metron, then Comic Vine, including the Comic Vine id the
   Metron series names; when the two point to different publishings, Metron's wins with a
   warning); else by title, case-insensitively;
@@ -24,7 +25,6 @@ Matching rules:
 from __future__ import annotations
 
 import re
-import unicodedata
 from collections.abc import Callable, Iterable
 from dataclasses import asdict, dataclass, field, replace
 from datetime import date
@@ -33,6 +33,7 @@ from typing import Any
 from django.db.models import Q
 from django.utils.translation import gettext as _
 
+from comics.helper import name_key
 from comics.models import Artist, Edition, Editorial, Issue, Publishing
 
 from .http import is_allowed_cover_url
@@ -67,13 +68,6 @@ def ordinal(number: int) -> str:
     """1 -> "1st", 2 -> "2nd", 11 -> "11th" (how Publishing.serie names a volume)."""
     suffix = "th" if 10 <= number % 100 <= 20 else {1: "st", 2: "nd", 3: "rd"}.get(number % 10, "th")
     return f"{number}{suffix}"
-
-
-def name_key(name: str) -> str:
-    """A name compared ignoring case, accents and repeated spaces."""
-    decomposed = unicodedata.normalize("NFKD", name)
-    plain = "".join(char for char in decomposed if not unicodedata.combining(char))
-    return " ".join(plain.casefold().split())
 
 
 # ---------- Proposal ----------
@@ -158,7 +152,7 @@ def build_proposal(source_issue: SourceIssue, series: SeriesLoaders | None = Non
     warnings: list[str] = []
     editorial = None
     if source_issue.publisher:
-        editorial = Editorial.objects.filter(name__iexact=source_issue.publisher).first()
+        editorial = Editorial.objects.matching(source_issue.publisher)
     series_ids = series.ids() if series else SourceSeries()
     comicvine_volume_id = source_issue.comicvine_volume_id or series_ids.comicvine_volume_id
     publishing, candidates = match_publishing(source_issue, editorial, comicvine_volume_id, warnings)

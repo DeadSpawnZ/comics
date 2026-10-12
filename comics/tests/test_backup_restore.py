@@ -5,7 +5,8 @@ their user's username too, achievements by their code and achievement categories
 Notifications point to their user and achievement by natural key and to announcements by id
 (announcements are content, like pieces: nothing seeds them). The versions of issues and editions
 (comics.history) travel with them, their authors by username, so the history survives a restore;
-change requests point to them (and to their targets) by id, so they keep pointing to them."""
+change requests point to them (and to their targets) by id, so they keep pointing to them. Editorial
+aliases travel by their name (natural key) and point to their editorial by id."""
 
 import json
 import tempfile
@@ -31,6 +32,8 @@ from comics.models import (
     ChangeRequest,
     Collection,
     Edition,
+    Editorial,
+    EditorialAlias,
     Issue,
     Notification,
     Profile,
@@ -40,7 +43,7 @@ from comics.versions import revert_to_version
 from comics.roles import ACCESS_MANAGEMENT, ADMINISTRATORS, COLLECTORS, REVIEWERS, ROLE_PERMISSIONS, ensure_roles
 
 from .base import TEST_MEDIA_ROOT, TEST_STORAGES, ComiTestCase
-from .factories import make_achievement, make_category, make_collection, make_edition, make_user
+from .factories import make_achievement, make_category, make_collection, make_edition, make_editorial, make_user
 
 
 def group_permissions(name: str) -> set[str]:
@@ -375,6 +378,27 @@ class RestoreTests(TransactionTestCase):
             (notification.recipient.username, notification.kind),
             ("author", Notification.Kind.CHANGE_REQUEST_APPROVED),
         )
+
+    def test_restore_keeps_the_editorial_aliases(self) -> None:
+        marvel = make_editorial(name="Marvel Comics")
+        EditorialAlias.objects.create(editorial=marvel, name="Marvel")
+        with tempfile.TemporaryDirectory() as tmp:
+            dump_file = self.make_dump(tmp)
+            content = json.loads(dump_file.read_text(encoding="utf-8"))
+            entry = next(item for item in content if item["model"] == "comics.editorialalias")
+            self.assertNotIn("pk", entry)  # matched by its name on load
+            self.assertEqual(
+                entry["fields"], {"editorial": marvel.pk, "name": "Marvel", "key": "marvel"}
+            )
+
+            call_command("flush", interactive=False, verbosity=0)
+            call_command("loaddata", str(dump_file), verbosity=0)
+            # Loading the same dump again updates the alias (found by its name), never duplicates it.
+            call_command("loaddata", str(dump_file), verbosity=0)
+
+        alias = EditorialAlias.objects.get()
+        self.assertEqual((alias.name, alias.key, alias.editorial.name), ("Marvel", "marvel", "Marvel Comics"))
+        self.assertEqual(Editorial.objects.matching("MARVEL"), alias.editorial)
 
     def test_ensure_roles_rebuilds_the_groups_after_flush(self) -> None:
         call_command("flush", interactive=False, verbosity=0)

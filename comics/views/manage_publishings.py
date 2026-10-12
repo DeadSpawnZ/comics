@@ -17,13 +17,15 @@ from django.views.decorators.http import require_POST
 
 from comics.decorators import management_required
 from comics.forms import (
+    ArtistCreateForm,
+    EditorialAliasForm,
     EditorialDialogForm,
     PublishingDialogForm,
     PublishingManageForm,
     TitleDialogForm,
     publishing_label,
 )
-from comics.models import Publishing, Title
+from comics.models import Artist, EditorialAlias, Publishing, Title
 from comics.views.manage_editions import PAGE_SIZE, RECENT_COUNT
 from comics.views.utils import log_action, safe_next_url
 
@@ -124,10 +126,11 @@ def publishing_delete(request: HttpRequest, pk: int) -> HttpResponseRedirect:
     return redirect(back_url)
 
 
-# ---------- "Create" dialogs of the edition form (JSON APIs) ----------
+# ---------- "Create" dialogs and import helpers of the edition form (JSON APIs) ----------
 #
 # Each one validates with its form (the same rules as the Gestión pages and the models), creates the
-# row and answers {"id", "label"} so the page can add it to its selects; or 400 with
+# row and answers {"id", "label"} so the page can add it to its selects (the alias and artist APIs
+# answer what they created, see each one); or 400 with
 # {"errors": {field: [messages]}, "non_field_errors": [messages]}, the field names without the
 # form's prefix. POST only, with the CSRF token like any form.
 
@@ -187,4 +190,74 @@ def publishing_create_api(request: HttpRequest) -> JsonResponse:
         return _invalid(form)
     return JsonResponse(
         {"id": publishing.pk, "label": publishing.select_label, "publishing_title": publishing.publishing_title}
+    )
+
+
+@management_required
+@require_POST
+def editorial_alias_create_api(request: HttpRequest) -> JsonResponse:
+    """Remember a catalogue's publisher name as an alias of an existing editorial, so the next import
+    matches it. Answers {"id", "name", "editorial": {"id", "label"}, "created"}; remembering an alias
+    the editorial already has answers it again ("created": false) and logs nothing."""
+    form = EditorialAliasForm(request.POST)
+    if not form.is_valid():
+        return _invalid(form)
+    try:
+        with transaction.atomic():
+            alias, created = EditorialAlias.objects.remember(form.cleaned_data["editorial"], form.cleaned_data["name"])
+            if created:
+                log_action(request, alias, ADDITION, "Creado desde Gestión.")
+    except ValidationError as exc:  # keyed by the form's fields (name, editorial)
+        form.add_error(None, exc)
+        return _invalid(form)
+    except IntegrityError:  # another request remembered the same name in the meantime
+        form.add_error("name", _("That alias already exists."))
+        return _invalid(form)
+    return JsonResponse(
+        {
+            "id": alias.pk,
+            "name": alias.name,
+            "editorial": {"id": alias.editorial_id, "label": alias.editorial.name},
+            "created": created,
+        }
+    )
+
+
+def _ensure_artists(request: HttpRequest, names: list[str]) -> list[tuple[Artist, bool]]:
+    """Artist.objects.ensure_named(names), logging the ones created; all or nothing."""
+    with transaction.atomic():
+        results = Artist.objects.ensure_named(names)
+        for artist, created in results:
+            if created:
+                log_action(request, artist, ADDITION, "Creado desde Gestión.")
+    return results
+
+
+@management_required
+@require_POST
+def artists_create_api(request: HttpRequest) -> JsonResponse:
+    """Create the artists named in the request (`new_artist-name`, repeated for several, e.g. every
+    artist an import did not find). Answers, in the order asked, {"artists": [{"requested", "id",
+    "name", "created"}]}: a name an artist already has (ignoring case, accents and repeated spaces)
+    answers that artist, so repeating a request creates nothing twice."""
+    form = ArtistCreateForm(request.POST)
+    if not form.is_valid():
+        return _invalid(form)
+    names = form.cleaned_data["name"]
+    try:
+        results = _ensure_artists(request, names)
+    except IntegrityError:
+        # Another request created one of them in the meantime: a second attempt finds it by name.
+        try:
+            results = _ensure_artists(request, names)
+        except IntegrityError:
+            form.add_error(None, _("The artists could not be created. Try again."))
+            return _invalid(form)
+    return JsonResponse(
+        {
+            "artists": [
+                {"requested": name, "id": artist.pk, "name": artist.name, "created": created}
+                for name, (artist, created) in zip(names, results, strict=True)
+            ]
+        }
     )

@@ -103,27 +103,29 @@
 
   // ---------- Artists (cover artists, issue creators): visible chips + selector to add more ----------
   // Checking a box from another script (the catalogue import) and dispatching "change" on it
-  // refreshes its list too.
+  // refreshes its list too. Artists created on the page (addArtists below) get a row in every picker.
+  const artistPickers = new Map(); // field name -> {list, render}
+  const checkboxOf = (row) => row.querySelector("input[type=checkbox]");
+
   function artistPicker(picker) {
     const list = picker.querySelector("[data-artist-list]");
-    if (!list) return; // there are no artists yet
     const add = picker.querySelector("[data-artist-add]");
     const empty = picker.querySelector("[data-artist-empty]");
-    const rows = [...list.querySelectorAll(".artist-list__item")];
-    const checkboxOf = (row) => row.querySelector("input[type=checkbox]");
+    const rows = () => [...list.querySelectorAll(".artist-list__item")];
 
     const render = () => {
       const placeholder = add.options[0];
-      const available = rows.filter((row) => !checkboxOf(row).checked);
-      for (const row of rows) row.hidden = !checkboxOf(row).checked;
+      const all = rows();
+      const available = all.filter((row) => !checkboxOf(row).checked);
+      for (const row of all) row.hidden = !checkboxOf(row).checked;
       add.replaceChildren(placeholder, ...available.map((row) => new Option(row.dataset.artistName, row.dataset.artistId)));
       add.value = "";
       add.disabled = available.length === 0;
-      empty.hidden = available.length !== rows.length;
+      empty.hidden = available.length !== all.length;
     };
 
     add.addEventListener("change", () => {
-      const row = rows.find((item) => item.dataset.artistId === add.value);
+      const row = rows().find((item) => item.dataset.artistId === add.value);
       if (row) checkboxOf(row).checked = true;
       render();
     });
@@ -136,8 +138,51 @@
     });
     list.addEventListener("change", render);
     render();
+    artistPickers.set(picker.dataset.fieldName, { picker, list, render });
   }
   document.querySelectorAll("[data-artist-picker]").forEach(artistPicker);
+
+  // A row like the server renders (manage/includes/artist_picker.html), unchecked, kept in name order.
+  function addArtistRow({ picker, list }, artist) {
+    const id = String(artist.id);
+    if (list.querySelector(`.artist-list__item[data-artist-id="${CSS.escape(id)}"]`)) return;
+    const row = document.createElement("li");
+    row.className = "artist-list__item";
+    row.dataset.artistId = id;
+    row.dataset.artistName = artist.name;
+    row.hidden = true;
+    const box = document.createElement("input");
+    box.type = "checkbox";
+    box.name = picker.dataset.fieldName;
+    box.value = id;
+    box.id = `${picker.dataset.fieldId}_new_${id}`;
+    box.className = "form-check-input";
+    const hidden = document.createElement("span");
+    hidden.hidden = true;
+    hidden.append(box);
+    const photo = document.createElement("span");
+    photo.className = "artist-list__photo material-symbols-outlined";
+    photo.setAttribute("aria-hidden", "true");
+    photo.textContent = "person";
+    const name = document.createElement("span");
+    name.className = "artist-list__name";
+    name.textContent = artist.name;
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "artist-list__remove";
+    remove.dataset.artistRemove = "";
+    const removeText = interpolate(gettext("Remove %(name)s"), { name: artist.name }, true);
+    remove.setAttribute("aria-label", removeText);
+    remove.title = removeText;
+    const icon = document.createElement("span");
+    icon.className = "material-symbols-outlined";
+    icon.setAttribute("aria-hidden", "true");
+    icon.textContent = "close";
+    remove.append(icon);
+    row.append(hidden, photo, name, remove);
+    const after = [...list.children].find((item) => item.dataset.artistName.localeCompare(artist.name) > 0);
+    list.insertBefore(row, after || null);
+  }
 
   // ---------- Cover preview ----------
   const imageInput = document.querySelector("input[type=file][name=image]");
@@ -204,6 +249,24 @@
       }
       editionPublishing.value = id;
       editionPublishing.dispatchEvent(new Event("change", { bubbles: true }));
+    },
+    // Artists just created (or found by name) by the "Create artist" API: offered in every artist
+    // picker, and checked in the one named `fieldName` ("cover_artists", "issue_data-creators"), if any.
+    addArtists(artists, fieldName) {
+      for (const entry of artistPickers.values()) {
+        for (const artist of artists) addArtistRow(entry, artist);
+        entry.render();
+      }
+      if (fieldName) for (const artist of artists) this.checkArtist(fieldName, artist.id);
+    },
+    // Check one more artist in a picker (the others stay as they are).
+    checkArtist(fieldName, artistId) {
+      const entry = artistPickers.get(fieldName);
+      if (!entry) return;
+      const row = entry.list.querySelector(`.artist-list__item[data-artist-id="${CSS.escape(String(artistId))}"]`);
+      if (!row) return;
+      checkboxOf(row).checked = true;
+      entry.render();
     },
   };
 })();

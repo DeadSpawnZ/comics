@@ -32,6 +32,7 @@ from .models import (
     Edition,
     EditionCoverArtist,
     Editorial,
+    EditorialAlias,
     GeekCollectable,
     Issue,
     IssueCreator,
@@ -142,10 +143,20 @@ class TitleAdmin(admin.ModelAdmin):
     search_fields = ["name"]
 
 
+class EditorialAliasInline(admin.TabularInline):
+    """Other names of the editorial in the external catalogues (see EditorialAlias)."""
+
+    model = EditorialAlias
+    fields = ["name"]
+    extra = 0
+
+
 @admin.register(Editorial)
 class EditorialAdmin(admin.ModelAdmin):
     list_display = ["name", "country"]
     ordering = ["name"]
+    search_fields = ["name", "aliases__name"]
+    inlines = [EditorialAliasInline]
 
 
 @admin.register(Publishing)

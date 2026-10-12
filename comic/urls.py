@@ -127,6 +127,12 @@ urlpatterns = [
     path("gestion/api/publishings/nuevo/", manage_publishings.publishing_create_api, name="manage_publishing_create_api"),
     path("gestion/api/titulos/nuevo/", manage_publishings.title_create_api, name="manage_title_create_api"),
     path("gestion/api/editoriales/nueva/", manage_publishings.editorial_create_api, name="manage_editorial_create_api"),
+    path(
+        "gestion/api/editoriales/alias/nuevo/",
+        manage_publishings.editorial_alias_create_api,
+        name="manage_editorial_alias_create_api",
+    ),
+    path("gestion/api/artistas/nuevos/", manage_publishings.artists_create_api, name="manage_artists_create_api"),
     path("gestion/arcos/", manage_arcs.arc_list, name="manage_arcs"),
     path("gestion/arcos/nuevo/", manage_arcs.arc_form, name="manage_arc_new"),
     path("gestion/arcos/<int:pk>/", manage_arcs.arc_form, name="manage_arc_edit"),

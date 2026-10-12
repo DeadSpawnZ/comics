@@ -59,13 +59,28 @@ import simple_history
 from PIL import Image
 
 from .achievements.windows import CalendarWindow, clear_unused, window_errors
-from .helper import generate_image_jpeg, square_jpeg, square_png
+from .helper import generate_image_jpeg, name_key, square_jpeg, square_png
 from .history import TrackedHistory, record_change
 from .roles import APPROVE_CHANGE_REQUESTS, VALIDATE_CHANGE_REQUESTS
 
 logger = logging.getLogger(__name__)
 
 # Create your models here.
+
+
+class EditorialQuerySet(QuerySet["Editorial"]):
+    def matching(self, name: str) -> Editorial | None:
+        """The editorial called `name`, or known by it as an alias (EditorialAlias), comparing names
+        ignoring case, accents and repeated spaces (how a catalogue's publisher is matched). A name
+        wins over an alias. At most two queries: editorials are few, so their names are compared here."""
+        key = name_key(name)
+        if not key:
+            return None
+        for editorial in self.order_by("pk"):
+            if name_key(editorial.name) == key:
+                return editorial
+        alias = EditorialAlias.objects.filter(key=key, editorial__in=self).select_related("editorial").first()
+        return alias.editorial if alias else None
 
 
 class Editorial(Model):
@@ -80,8 +95,111 @@ class Editorial(Model):
     country = CharField(max_length=3, choices=CountryAbbr)
     # titles = ManyToManyField(Person, through="Membership")
 
+    objects = EditorialQuerySet.as_manager()
+
     def __str__(self) -> str:
         return self.name
+
+    def clean(self) -> None:
+        """A name can not be an alias too (of this or another editorial): the catalogue import would
+        not know which editorial is meant."""
+        key = name_key(self.name or "")
+        alias = EditorialAlias.objects.filter(key=key).select_related("editorial").first() if key else None
+        if alias is not None:
+            raise ValidationError(
+                {
+                    "name": ValidationError(
+                        _("“%(name)s” is an alias of %(editorial)s: delete the alias first."),
+                        code="alias",
+                        params={"name": alias.name, "editorial": alias.editorial.name},
+                    )
+                }
+            )
+
+
+class EditorialAliasManager(Manager["EditorialAlias"]):
+    def get_by_natural_key(self, name: str) -> EditorialAlias:
+        return self.get(key=name_key(name))
+
+    def remember(self, editorial: Editorial, name: str) -> tuple[EditorialAlias, bool]:
+        """(the alias `name` of `editorial`, whether it was created now). Remembering it again is not an
+        error; any other conflict (the alias of another editorial, an editorial's name) raises the
+        ValidationError of EditorialAlias.clean(), keyed by field. Call inside a transaction."""
+        existing = self.filter(key=name_key(name)).first()
+        if existing is not None and existing.editorial_id == editorial.pk:
+            return existing, False
+        alias = EditorialAlias(editorial=editorial, name=name)
+        alias.full_clean(exclude=["key"])  # clean() reports a taken key on `name`
+        alias.save()
+        return alias, True
+
+
+class EditorialAlias(Model):
+    """Another name of an editorial in the external catalogues (e.g. Metron's "Marvel" is "Marvel
+    Comics" in Comi): the catalogue import matches a publisher by the editorial's name or by one of
+    its aliases. Aliases are unique and none is an editorial's name, compared ignoring case, accents
+    and repeated spaces. That comparison lives in `key` (name_key of the name, set by clean() and
+    save()) under a unique index: a functional index (Lower) would miss accents and spaces, and a
+    plain column behaves the same on MySQL and SQLite."""
+
+    editorial = ForeignKey(Editorial, on_delete=CASCADE, related_name="aliases")
+    name = CharField(_("Alias"), max_length=100)
+    key = CharField(max_length=255, unique=True, editable=False)
+
+    objects = EditorialAliasManager()
+
+    class Meta:
+        ordering = ["name"]
+        verbose_name = _("editorial alias")
+        verbose_name_plural = _("editorial aliases")
+
+    def __str__(self) -> str:
+        return self.name
+
+    def natural_key(self) -> tuple[str]:
+        return (self.name,)
+
+    natural_key.dependencies = ["comics.editorial"]
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        self.name = " ".join(self.name.split())
+        self.key = name_key(self.name)[:255]
+        super().save(*args, **kwargs)
+
+    def clean(self) -> None:
+        self.name = " ".join((self.name or "").split())
+        self.key = name_key(self.name)[:255]
+        if not self.key:
+            return  # the field reports the missing name
+        taken = EditorialAlias.objects.filter(key=self.key).exclude(pk=self.pk).select_related("editorial").first()
+        if taken is not None:
+            raise ValidationError(
+                {
+                    "name": ValidationError(
+                        _("“%(name)s” is already an alias of %(editorial)s."),
+                        code="duplicate",
+                        params={"name": taken.name, "editorial": taken.editorial.name},
+                    )
+                }
+            )
+        # Its own editorial by the name it is being saved with (e.g. renamed in the same admin form).
+        try:
+            own: Editorial | None = self.editorial
+        except Editorial.DoesNotExist:
+            own = None
+        others = Editorial.objects.exclude(pk=own.pk) if own is not None and own.pk else Editorial.objects.all()
+        names = [*others.values_list("name", flat=True), *([own.name] if own is not None else [])]
+        for editorial_name in names:
+            if name_key(editorial_name or "") == self.key:
+                raise ValidationError(
+                    {
+                        "name": ValidationError(
+                            _("“%(name)s” is the name of an editorial: it needs no alias."),
+                            code="editorial_name",
+                            params={"name": editorial_name},
+                        )
+                    }
+                )
 
 
 class Title(Model):
@@ -211,9 +329,32 @@ class Publishing(Model):
             raise ValidationError("Duplicated publishing")
 
 
+class ArtistQuerySet(QuerySet["Artist"]):
+    def ensure_named(self, names: Iterable[str]) -> list[tuple[Artist, bool]]:
+        """(artist, created) for each name, in order: the artist that already has the name, compared
+        ignoring case, accents and repeated spaces (like the catalogue import), else a new one. A name
+        repeated in `names` is created once. Call inside a transaction."""
+        known: dict[str, Artist] = {}
+        for artist in self.order_by("pk").only("pk", "name"):
+            known.setdefault(name_key(artist.name), artist)
+        result: list[tuple[Artist, bool]] = []
+        for name in names:
+            key = name_key(name)
+            artist = known.get(key)
+            if artist is not None:
+                result.append((artist, False))
+                continue
+            artist = self.create(name=" ".join(name.split()))
+            known[key] = artist
+            result.append((artist, True))
+        return result
+
+
 class Artist(Model):
     name = CharField(max_length=100, unique=True)
     photo = ImageField(upload_to="artists/photos/", null=True, blank=True)
+
+    objects = ArtistQuerySet.as_manager()
 
     def __str__(self) -> str:
         return self.name

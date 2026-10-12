@@ -79,10 +79,18 @@ Administradores aprueban. Diseño acordado con el usuario:
   petición más, cacheada; si apuntan a publishings distintos gana Metron con un aviso). En el
   diálogo, idioma y fecha de inicio empiezan vacíos y son obligatorios. Borrador del formulario en
   `sessionStorage` con oferta de recuperarlo tras recargar (`js/custom/form_draft.js`). **Falta probarlo en el navegador.**
+- **Hecho en la rama (sin commit): ayudas del importador.** Campos obligatorios de los diálogos con
+  asterisco y, mientras están vacíos, contorno y pista (`RequiredHintsMixin`, `aria-required` /
+  `aria-describedby`); **alias de editoriales** (`EditorialAlias`, migración `0115`, aditiva, sin
+  aplicar: clave normalizada única, en el admin como inline de la editorial y en el respaldo por
+  clave natural) con los que el mapeador empareja la editorial, y que el resumen de la importación
+  y el diálogo de publishing ofrecen recordar al elegir una editorial existente
+  (`/gestion/api/editoriales/alias/nuevo/`); **crear artistas que faltan** desde el resumen ("+" por
+  artista y "Crear todos", `/gestion/api/artistas/nuevos/`, idempotente por nombre) y "+" junto a
+  los selectores de artistas. **Falta probarlo en el navegador.**
 - **Siguiente:** **importación masiva** de un issue o de una serie completa convertida en
   **solicitudes de cambio**, reutilizando el mismo mapeador (`comics/catalog_sources/mapper.py`).
-- **Limitaciones conocidas de la v1:** no se crean artistas que falten (se listan como "no
-  encontrados"); la lista de issues de una serie en Metron solo se lee en su primera página (comprobado el
+- **Limitaciones conocidas de la v1:** la lista de issues de una serie en Metron solo se lee en su primera página (comprobado el
   2026-10-11 con dos series: viene ordenada por número, el #1 primero); el país de la editorial solo lo da Metron; Metron lista juntos a los artistas de todas las portadas (para
   la A se proponen los que también dibujan el interior, para las variantes los que aparecen en su
   nombre); las letras de variante (B, C…) son una sugerencia; las impresiones a partir de la 7.ª no
@@ -98,6 +106,20 @@ Administradores aprueban. Diseño acordado con el usuario:
   - Tipos: `_create(...) -> Model | None` genérico con `TypeVar`; `UniqueNameMixin` con `Any`;
     mensajes de duplicado repetidos en las vistas; `Publishing.IDENTIFIER_FIELDS` e
     `Issue.IDENTIFIER_FIELDS` sin usar.
+- **Menores de la revisión de alias de editoriales y alta de artistas (pendientes):**
+  - Admin: dos alias nuevos en el mismo guardado que se normalizan igual (o que la intercalación de
+    MySQL considera iguales) dan un `IntegrityError` (500); añadir un `clean()` al formset del inline
+    que rechace `name_key` repetidos. Renombrar una editorial a uno de sus alias, borrando ese alias
+    en el mismo guardado, requiere dos guardados.
+  - Un artista creado con el "+" del selector no se refleja en el resumen de la importación (sigue
+    como "no encontrado" hasta reimportar); emitir un evento `comi:artists-created` que
+    `catalog_import.js` escuche.
+  - La clave del alias se trunca a 255 caracteres al guardar, pero las búsquedas usan la clave
+    completa; unificar en un helper o rechazar nombres demasiado largos.
+  - `NameListField` acepta nombres formados solo por marcas combinantes (clave vacía); rechazarlos.
+  - Código duplicado: índice de artistas por `name_key` (`ensure_named` y `ArtistMatcher`), envío
+    POST con CSRF y lectura de errores en `catalog_import.js` y `publishing_dialogs.js`;
+    `max_length` fijo en `EditorialAliasForm`; `RepeatableTextInput.format_value` sin uso real.
 - Impresión, ratio (salvo cuando el nombre de la variante lo dice, p. ej. "1:25"), exclusivas de
   tienda/evento y país siguen siendo manuales.
 - **Portada importada descargada de nuevo al reenviar:** la descarga ocurre en `clean()` del

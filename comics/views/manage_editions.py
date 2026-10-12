@@ -24,6 +24,7 @@ from comics.catalog_sources import service as catalog
 from comics.catalog_sources.errors import CatalogError
 from comics.decorators import management_required
 from comics.forms import (
+    ArtistCreateForm,
     CatalogLookupForm,
     EditionManageForm,
     EditorialDialogForm,
@@ -267,13 +268,16 @@ def edition_form(request: HttpRequest, pk: int | None = None) -> HttpResponse:  
             "sibling_groups": Edition.group_by_cover_kind(sibling_editions),
             "own_option": own_option,
             "back_url": back_url,
-            # The "Create publishing" dialog and its "Create title" / "Create editorial" dialogs.
+            # The "Create publishing" dialog and its "Create title" / "Create editorial" dialogs, and
+            # the "Create artist" dialog of the artist pickers.
             "publishing_dialog": PublishingDialogForm(),
             "title_dialog": TitleDialogForm(),
             "editorial_dialog": EditorialDialogForm(),
+            "artist_dialog": ArtistCreateForm(),
             "form_data": {
                 "issuesUrl": reverse("manage_publishing_issues"),
                 "catalogUrl": reverse("manage_catalog_lookup"),
+                "artistsCreateUrl": reverse("manage_artists_create_api"),
                 "publishingTitles": {
                     publishing.pk: publishing.publishing_title for publishing in form.fields["publishing"].queryset
                 },
