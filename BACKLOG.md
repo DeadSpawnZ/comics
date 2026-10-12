@@ -66,14 +66,14 @@ Administradores aprueban. Diseño acordado con el usuario:
   (ids, sinopsis y creadores) y panel "Números de identificación". Credenciales en `.env`
   (`METRON_USERNAME`, `METRON_PASSWORD`, `COMICVINE_API_KEY`), cargado como `env_file` opcional del
   servicio `web`.
-- **Hecho en la rama (sin commitear ni desplegar, revisión aprobada): crear publishing, título y editorial desde el
+- **Hecho en la rama (commit `e93b119`, desplegado el 2026-10-12): crear publishing, título y editorial desde el
   formulario de edición.** Diálogos apilados ("Crear publishing" → "+" título / "+" editorial) que
   envían a `/gestion/api/publishings/nuevo/`, `/gestion/api/titulos/nuevo/` y
   `/gestion/api/editoriales/nueva/` (`comics/views/manage_publishings.py`); el importador los
   precarga con la serie de Metron (fecha = la del primer issue: tienda, si no portada, si no 1 de enero
   del año de inicio con aviso; Comic Vine siempre cae al año de inicio). El título nunca se elige solo.
   Ids de serie en `Publishing` (`metron_series_id`, `comicvine_volume_id` únicos; `gcd_series_id`
-  indexado; migración `0114`, aditiva, **pendiente de ensayar en `comic_refactor` y aplicar**), con
+  indexado; migración `0114`, aditiva, aplicada; respaldo `backups/comic-20261011-232724.sql`, imagen anterior `comi:pre-dialogs`), con
   panel de números de identificación en la página del publishing; el mapeador empareja publishings
   por esos ids primero (también por el id de Comic Vine que da la serie de Metron, lo que cuesta una
   petición más, cacheada; si apuntan a publishings distintos gana Metron con un aviso). En el
