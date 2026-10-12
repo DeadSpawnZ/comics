@@ -109,6 +109,11 @@ Administradores aprueban. Diseño acordado con el usuario:
 - **Desplegado el 2026-10-12 (commit `a724dde`):** alias de editoriales (migración `0115`, aplicada),
   alta de artistas que faltan desde la importación y marcado de campos obligatorios en los diálogos.
   Respaldo `backups/comic-20261012-001048.sql`, imagen anterior `comi:pre-aliases`.
+- **Alias de artistas (aplazado por el usuario el 2026-10-12):** igual que los de editoriales. El
+  emparejamiento ya ignora mayúsculas, acentos y espacios, pero no nombres distintos de la misma
+  persona entre fuentes ("Jim Lee" / "James Lee", "J. Scott Campbell" / "J Scott Campbell").
+  Propuesta: modelo `ArtistAlias` con clave normalizada (como `EditorialAlias`), emparejar por nombre
+  o alias, y en el resumen de la importación elegir un artista existente con "Recordar como alias".
 - **Menores de la revisión de alias de editoriales y alta de artistas (pendientes):**
   - Admin: dos alias nuevos en el mismo guardado que se normalizan igual (o que la intercalación de
     MySQL considera iguales) dan un `IntegrityError` (500); añadir un `clean()` al formset del inline
