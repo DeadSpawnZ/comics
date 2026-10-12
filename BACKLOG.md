@@ -106,6 +106,9 @@ Administradores aprueban. Diseño acordado con el usuario:
   - Tipos: `_create(...) -> Model | None` genérico con `TypeVar`; `UniqueNameMixin` con `Any`;
     mensajes de duplicado repetidos en las vistas; `Publishing.IDENTIFIER_FIELDS` e
     `Issue.IDENTIFIER_FIELDS` sin usar.
+- **Desplegado el 2026-10-12 (commit `a724dde`):** alias de editoriales (migración `0115`, aplicada),
+  alta de artistas que faltan desde la importación y marcado de campos obligatorios en los diálogos.
+  Respaldo `backups/comic-20261012-001048.sql`, imagen anterior `comi:pre-aliases`.
 - **Menores de la revisión de alias de editoriales y alta de artistas (pendientes):**
   - Admin: dos alias nuevos en el mismo guardado que se normalizan igual (o que la intercalación de
     MySQL considera iguales) dan un `IntegrityError` (500); añadir un `clean()` al formset del inline
