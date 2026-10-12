@@ -8,11 +8,15 @@ reviews the proposal, and saving the form is what writes it.
 Matching rules:
 
 - Editorial: by name, case-insensitively.
-- Publishing: by title, case-insensitively; then the language when the source knows it and the
-  year the series began when it knows it (both strict: another language or year is another
-  publishing); then the series number ("1st", "2nd"...) and the editorial, which only narrow the
-  candidates when some of them fit. Only a single remaining publishing is selected; otherwise the
-  title matches are offered as candidates.
+- Publishing: by the series ids first (Metron, then Comic Vine, including the Comic Vine id the
+  Metron series names; when the two point to different publishings, Metron's wins with a
+  warning); else by title, case-insensitively;
+  then the language when the source knows it and the year the series began when it knows it (both
+  strict: another language or year is another publishing); then the series number ("1st",
+  "2nd"...) and the editorial, which only narrow the candidates when some of them fit. Only a
+  single remaining publishing is selected; otherwise the title matches are offered as candidates.
+  When none is selected, the proposal also carries the values to create it (new_publishing), for
+  the "Create publishing" dialog. Its Title (the group) is never proposed: the user picks it.
 - Issue: by the external ids first (Metron, then Comic Vine), else by publishing and number.
 - Artists: by name, ignoring case, accents and repeated spaces.
 """
@@ -21,8 +25,9 @@ from __future__ import annotations
 
 import re
 import unicodedata
-from collections.abc import Iterable
-from dataclasses import asdict, dataclass, field
+from collections.abc import Callable, Iterable
+from dataclasses import asdict, dataclass, field, replace
+from datetime import date
 from typing import Any
 
 from django.db.models import Q
@@ -31,7 +36,7 @@ from django.utils.translation import gettext as _
 from comics.models import Artist, Edition, Editorial, Issue, Publishing
 
 from .http import is_allowed_cover_url
-from .types import SourceCredit, SourceIssue, SourceVariant
+from .types import SourceCredit, SourceIssue, SourceSeries, SourceVariant
 
 MAX_CANDIDATES = 10
 
@@ -95,6 +100,24 @@ class ProposedVariant:
 
 
 @dataclass
+class ProposedPublishing:
+    """The values to create the issue's publishing with, when Comi has none that matches. Empty
+    strings and None mean unknown: the dialog keeps its own default (or the user fills it in)."""
+
+    publishing_title: str
+    year: int | None
+    serie: str  # "1st", "2nd"... from the volume number
+    language: str  # a Publishing.LangAbbr value
+    date: str  # ISO date: the first issue's store date, else its cover date, else January 1 of `year`
+    metron_series_id: int | None
+    comicvine_volume_id: int | None
+    gcd_series_id: int | None
+    editorial: dict[str, Any] | None  # {"id", "name"} of the matched editorial
+    new_editorial: dict[str, str] | None  # {"name", "country"} to create it with, when it did not match
+    warnings: list[str] = field(default_factory=list)
+
+
+@dataclass
 class Proposal:
     source: str
     source_name: str
@@ -113,18 +136,39 @@ class Proposal:
     variants: list[ProposedVariant]
     unmatched: dict[str, Any]
     warnings: list[str] = field(default_factory=list)
+    new_publishing: ProposedPublishing | None = None  # only when no publishing matched
 
     def as_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
-def build_proposal(source_issue: SourceIssue) -> Proposal:
-    """Match `source_issue` against Comi's catalogue (a fixed number of queries)."""
+@dataclass(frozen=True)
+class SeriesLoaders:
+    """The catalogue's hooks for what its issue answer does not say about the series (see
+    comics.catalog_sources.service); each may request the catalogue (answers are cached)."""
+
+    ids: Callable[[], SourceSeries]  # the series ids in other catalogues, to match a publishing
+    details: Callable[[bool], SourceSeries]  # its first issue and, when asked, the publisher's country
+
+
+def build_proposal(source_issue: SourceIssue, series: SeriesLoaders | None = None) -> Proposal:
+    """Match `source_issue` against Comi's catalogue (a fixed number of queries). `series` completes
+    the series ids used to match the publishing and, when none matches, the values to create one
+    (details(with_publisher): `with_publisher` says whether the editorial is missing too)."""
     warnings: list[str] = []
     editorial = None
     if source_issue.publisher:
         editorial = Editorial.objects.filter(name__iexact=source_issue.publisher).first()
-    publishing, candidates = match_publishing(source_issue, editorial)
+    series_ids = series.ids() if series else SourceSeries()
+    comicvine_volume_id = source_issue.comicvine_volume_id or series_ids.comicvine_volume_id
+    publishing, candidates = match_publishing(source_issue, editorial, comicvine_volume_id, warnings)
+    new_publishing = None
+    if publishing is None and source_issue.series_name:
+        details = series.details(editorial is None) if series else SourceSeries()
+        details = replace(
+            details, comicvine_volume_id=comicvine_volume_id, gcd_series_id=series_ids.gcd_series_id
+        )
+        new_publishing = propose_publishing(source_issue, details, editorial)
     issue, conflicts = match_issue(source_issue, publishing)
     for other in conflicts:
         warnings.append(
@@ -188,7 +232,81 @@ def build_proposal(source_issue: SourceIssue) -> Proposal:
             "cover_artists": unmatched_cover_artists,
         },
         warnings=warnings,
+        new_publishing=new_publishing,
     )
+
+
+def propose_publishing(
+    source_issue: SourceIssue, series: SourceSeries, editorial: Editorial | None
+) -> ProposedPublishing:
+    """The values to create the publishing of `source_issue` with, and what the user should check."""
+    warnings: list[str] = []
+    start = _start_date(source_issue, series, warnings)
+    return ProposedPublishing(
+        publishing_title=source_issue.series_name,
+        year=source_issue.series_year or (start.year if start else None),
+        serie=ordinal(source_issue.series_volume) if source_issue.series_volume else "",
+        language=_language(source_issue, warnings),
+        date=start.isoformat() if start else "",
+        metron_series_id=source_issue.metron_series_id,
+        comicvine_volume_id=series.comicvine_volume_id or source_issue.comicvine_volume_id,
+        gcd_series_id=series.gcd_series_id,
+        editorial={"id": editorial.pk, "name": editorial.name} if editorial else None,
+        new_editorial=_new_editorial(source_issue, series, editorial, warnings),
+        warnings=warnings,
+    )
+
+
+def _start_date(source_issue: SourceIssue, series: SourceSeries, warnings: list[str]) -> date | None:
+    """The first issue's store date, else its cover date, else January 1 of the year the series began."""
+    if series.first_issue_store_date:
+        return series.first_issue_store_date
+    if series.first_issue_cover_date:
+        warnings.append(_("Only the first issue's cover date is known: check the start date."))
+        return series.first_issue_cover_date
+    if source_issue.series_year:
+        warnings.append(
+            _("The first issue's date is unknown: the start date is January 1, %(year)s. Check it.")
+            % {"year": source_issue.series_year}
+        )
+        return date(source_issue.series_year, 1, 1)
+    warnings.append(_("The start date of the series is unknown: enter it."))
+    return None
+
+
+def _language(source_issue: SourceIssue, warnings: list[str]) -> str:
+    """The series' language when Comi has it; otherwise "" and a warning."""
+    if source_issue.language in Publishing.LangAbbr.values:
+        return source_issue.language
+    if source_issue.language:
+        warnings.append(
+            _("The language “%(language)s” is not one of Comi's: choose it yourself.")
+            % {"language": source_issue.language}
+        )
+    else:
+        warnings.append(
+            _("%(source)s does not say the language of the series: check it.") % {"source": source_issue.source_name}
+        )
+    return ""
+
+
+def _new_editorial(
+    source_issue: SourceIssue, series: SourceSeries, editorial: Editorial | None, warnings: list[str]
+) -> dict[str, str] | None:
+    """{"name", "country"} to prefill the "Create editorial" dialog with, when the publisher did not
+    match. A country Comi does not have is left for the user, with a warning."""
+    if editorial is not None or not source_issue.publisher:
+        return None
+    name = source_issue.publisher
+    if len(name) > Editorial._meta.get_field("name").max_length:
+        warnings.append(_("The publisher's name “%(name)s” is longer than Comi allows.") % {"name": name})
+    country = series.publisher_country.upper()
+    if country and country not in Editorial.CountryAbbr.values:
+        warnings.append(
+            _("The publisher's country “%(country)s” is not one of Comi's: choose it yourself.") % {"country": country}
+        )
+        country = ""
+    return {"name": name, "country": country}
 
 
 def _series_description(source_issue: SourceIssue) -> str:
@@ -236,9 +354,19 @@ def _edition_values(source_issue: SourceIssue, warnings: list[str]) -> dict[str,
 
 
 def match_publishing(
-    source_issue: SourceIssue, editorial: Editorial | None
+    source_issue: SourceIssue,
+    editorial: Editorial | None,
+    comicvine_volume_id: int | None = None,
+    warnings: list[str] | None = None,
 ) -> tuple[Publishing | None, list[Publishing]]:
-    """(the publishing, when exactly one fits; else None, and the title matches as candidates)."""
+    """(the publishing, when exactly one fits; else None, and the title matches as candidates).
+    `comicvine_volume_id`: the series' Comic Vine id, when known (the source's own or the one its
+    series names); `warnings` gets the conflicts between the series ids."""
+    by_id = _publishing_by_series_id(
+        source_issue.metron_series_id, comicvine_volume_id or source_issue.comicvine_volume_id, warnings
+    )
+    if by_id is not None:
+        return by_id, []
     if not source_issue.series_name:
         return None, []
     by_title = list(
@@ -259,6 +387,34 @@ def match_publishing(
     if len(remaining) == 1:
         return remaining[0], []
     return None, (remaining or by_title)[:MAX_CANDIDATES]
+
+
+def _publishing_by_series_id(
+    metron_series_id: int | None, comicvine_volume_id: int | None, warnings: list[str] | None
+) -> Publishing | None:
+    """The publishing that already holds the series' Metron id, else its Comic Vine id. When they are
+    held by two different publishings, Metron's is kept and `warnings` says so (likely a duplicate)."""
+    lookups = Q()
+    if metron_series_id:
+        lookups |= Q(metron_series_id=metron_series_id)
+    if comicvine_volume_id:
+        lookups |= Q(comicvine_volume_id=comicvine_volume_id)
+    if not lookups:
+        return None
+    found = list(Publishing.objects.filter(lookups).prefetch_related("editorials"))
+    by_metron = next((item for item in found if metron_series_id and item.metron_series_id == metron_series_id), None)
+    by_comicvine = next(
+        (item for item in found if comicvine_volume_id and item.comicvine_volume_id == comicvine_volume_id), None
+    )
+    if by_metron and by_comicvine and by_metron.pk != by_comicvine.pk and warnings is not None:
+        warnings.append(
+            _(
+                "The Metron series is %(metron)s, but its Comic Vine volume is %(comicvine)s: the first one is "
+                "used. Check whether they are the same publishing."
+            )
+            % {"metron": by_metron.select_label, "comicvine": by_comicvine.select_label}
+        )
+    return by_metron or by_comicvine
 
 
 def match_issue(source_issue: SourceIssue, publishing: Publishing | None) -> tuple[Issue | None, list[Issue]]:

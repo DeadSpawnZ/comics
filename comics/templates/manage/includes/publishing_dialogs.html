@@ -1,0 +1,108 @@
+{% load i18n %}
+{% comment %}
+  The "Create publishing" dialog of the edition form and the "Create title" / "Create editorial"
+  dialogs it opens on top of it. Sibling modals (never nested in each other nor in the edition form),
+  driven by js/custom/publishing_dialogs.js: each form posts to its Gestión JSON API and the new row
+  is added to the select that asked for it. Parameters: publishing_dialog, title_dialog,
+  editorial_dialog (the unbound forms).
+{% endcomment %}
+<div class="modal fade md-dialog" id="publishing-dialog" tabindex="-1" aria-labelledby="publishing-dialog-title" aria-hidden="true" data-bs-backdrop="static">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form id="publishing-dialog-form" action="{% url 'manage_publishing_create_api' %}" method="post" novalidate
+            data-create-dialog data-prefix="{{ publishing_dialog.prefix }}" data-draft="publishing-dialog" data-draft-dialog>
+        {% csrf_token %}
+        <div class="modal-header">
+          <h2 class="modal-title md-headline-small" id="publishing-dialog-title">{% translate "Create publishing" %}</h2>
+        </div>
+        <div class="modal-body">
+          {% include 'manage/includes/dialog_errors.html' %}
+          <ul class="catalog-import__summary mb-3" data-dialog-warnings aria-label="{% translate 'Check before creating' %}" hidden></ul>
+          <div class="row g-3">
+            <div class="col-12 col-md-7">{% include 'manage/includes/field.html' with field=publishing_dialog.publishing_title %}</div>
+            <div class="col-12 col-md-5">
+              <div class="d-flex align-items-start gap-1">
+                <div class="flex-grow-1">{% include 'manage/includes/field.html' with field=publishing_dialog.title %}</div>
+                <button type="button" class="md-icon-btn mt-2" data-open-dialog="title-dialog"
+                        aria-label="{% translate 'Create title' %}" title="{% translate 'Create title' %}">
+                  <span class="material-symbols-outlined" aria-hidden="true">add</span>
+                </button>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=publishing_dialog.serie %}</div>
+            <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=publishing_dialog.language %}</div>
+            <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=publishing_dialog.date %}</div>
+            <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=publishing_dialog.year %}</div>
+            <div class="col-12 md-body-medium">{% translate "The title groups publishings under a letter: choose it, or create it with +." %} {{ publishing_dialog.year.help_text }}</div>
+            <div class="col-12">
+              <div class="d-flex align-items-center gap-1">
+                <label class="md-section-label d-block mb-0" for="{{ publishing_dialog.editorials.id_for_label }}">{{ publishing_dialog.editorials.label }}</label>
+                <button type="button" class="md-icon-btn" data-open-dialog="editorial-dialog"
+                        aria-label="{% translate 'Create editorial' %}" title="{% translate 'Create editorial' %}">
+                  <span class="material-symbols-outlined" aria-hidden="true">add</span>
+                </button>
+              </div>
+              {{ publishing_dialog.editorials }}
+            </div>
+            <div class="col-12 md-section-label">{% translate "Series in external catalogues" %}</div>
+            <div class="col-12 col-md-4">{% include 'manage/includes/field.html' with field=publishing_dialog.metron_series_id %}</div>
+            <div class="col-12 col-md-4">{% include 'manage/includes/field.html' with field=publishing_dialog.comicvine_volume_id %}</div>
+            <div class="col-12 col-md-4">{% include 'manage/includes/field.html' with field=publishing_dialog.gcd_series_id %}</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="md-btn md-btn--text" data-bs-dismiss="modal">{% translate "Cancel" %}</button>
+          <button type="submit" class="md-btn md-btn--filled">{% translate "Create" %}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade md-dialog" id="title-dialog" tabindex="-1" aria-labelledby="title-dialog-title" aria-hidden="true" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form id="title-dialog-form" action="{% url 'manage_title_create_api' %}" method="post" novalidate
+            data-create-dialog data-prefix="{{ title_dialog.prefix }}" data-target-select="{{ publishing_dialog.title.id_for_label }}">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h2 class="modal-title md-headline-small" id="title-dialog-title">{% translate "Create title" %}</h2>
+        </div>
+        <div class="modal-body">
+          {% include 'manage/includes/dialog_errors.html' %}
+          {% include 'manage/includes/field.html' with field=title_dialog.name %}
+          <p class="md-body-medium mt-2 mb-0">{% translate "Groups publishings under a letter." %}</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="md-btn md-btn--text" data-bs-dismiss="modal">{% translate "Cancel" %}</button>
+          <button type="submit" class="md-btn md-btn--filled">{% translate "Create" %}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade md-dialog" id="editorial-dialog" tabindex="-1" aria-labelledby="editorial-dialog-title" aria-hidden="true" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form id="editorial-dialog-form" action="{% url 'manage_editorial_create_api' %}" method="post" novalidate
+            data-create-dialog data-prefix="{{ editorial_dialog.prefix }}" data-target-select="{{ publishing_dialog.editorials.id_for_label }}">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h2 class="modal-title md-headline-small" id="editorial-dialog-title">{% translate "Create editorial" %}</h2>
+        </div>
+        <div class="modal-body">
+          {% include 'manage/includes/dialog_errors.html' %}
+          <div class="row g-3">
+            <div class="col-12 col-md-8">{% include 'manage/includes/field.html' with field=editorial_dialog.name %}</div>
+            <div class="col-12 col-md-4">{% include 'manage/includes/field.html' with field=editorial_dialog.country %}</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="md-btn md-btn--text" data-bs-dismiss="modal">{% translate "Cancel" %}</button>
+          <button type="submit" class="md-btn md-btn--filled">{% translate "Create" %}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

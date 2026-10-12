@@ -4,18 +4,25 @@ from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION
-from django.core.exceptions import ValidationError
+from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
 from django.core.paginator import Paginator
-from django.db import transaction
-from django.db.models import Count, ProtectedError, Q
-from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
+from django.db import IntegrityError, transaction
+from django.db.models import Count, Model, ProtectedError, Q
+from django.forms import BaseForm, ModelForm
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 
 from comics.decorators import management_required
-from comics.forms import PublishingManageForm, publishing_label
+from comics.forms import (
+    EditorialDialogForm,
+    PublishingDialogForm,
+    PublishingManageForm,
+    TitleDialogForm,
+    publishing_label,
+)
 from comics.models import Publishing, Title
 from comics.views.manage_editions import PAGE_SIZE, RECENT_COUNT
 from comics.views.utils import log_action, safe_next_url
@@ -115,3 +122,69 @@ def publishing_delete(request: HttpRequest, pk: int) -> HttpResponseRedirect:
     else:
         messages.success(request, _("Publishing deleted: %(publishing)s") % {"publishing": label})
     return redirect(back_url)
+
+
+# ---------- "Create" dialogs of the edition form (JSON APIs) ----------
+#
+# Each one validates with its form (the same rules as the Gestión pages and the models), creates the
+# row and answers {"id", "label"} so the page can add it to its selects; or 400 with
+# {"errors": {field: [messages]}, "non_field_errors": [messages]}, the field names without the
+# form's prefix. POST only, with the CSRF token like any form.
+
+
+def _invalid(form: BaseForm) -> JsonResponse:
+    errors = {name: [str(message) for message in messages] for name, messages in form.errors.items()}
+    non_field = errors.pop(NON_FIELD_ERRORS, [])
+    return JsonResponse({"errors": errors, "non_field_errors": non_field}, status=400)
+
+
+def _create(request: HttpRequest, form: ModelForm, log_message: str, duplicate: str) -> Model | None:
+    """Save `form` and log it, atomically; None (with the error on the form) when the database or a
+    model rule refuses it, e.g. another request created the same row in the meantime."""
+    try:
+        with transaction.atomic():
+            created = form.save()
+            log_action(request, created, ADDITION, log_message)
+    except ValidationError as exc:  # Publishing.save() checks duplicates too
+        form.add_error(None, exc)
+        return None
+    except IntegrityError:
+        form.add_error(None, duplicate)
+        return None
+    return created
+
+
+@management_required
+@require_POST
+def title_create_api(request: HttpRequest) -> JsonResponse:
+    form = TitleDialogForm(request.POST)
+    duplicate = _("A title with that name already exists.")
+    title = _create(request, form, "Creado desde Gestión.", duplicate) if form.is_valid() else None
+    if title is None:
+        return _invalid(form)
+    return JsonResponse({"id": title.pk, "label": title.name})
+
+
+@management_required
+@require_POST
+def editorial_create_api(request: HttpRequest) -> JsonResponse:
+    form = EditorialDialogForm(request.POST)
+    duplicate = _("An editorial with that name already exists.")
+    editorial = _create(request, form, "Creada desde Gestión.", duplicate) if form.is_valid() else None
+    if editorial is None:
+        return _invalid(form)
+    return JsonResponse({"id": editorial.pk, "label": editorial.name})
+
+
+@management_required
+@require_POST
+def publishing_create_api(request: HttpRequest) -> JsonResponse:
+    """Also answers the publishing title, which the edition form uses to name the edition's own issue."""
+    form = PublishingDialogForm(request.POST)
+    duplicate = _("A publishing with these values already exists.")
+    publishing = _create(request, form, "Creado desde Gestión.", duplicate) if form.is_valid() else None
+    if publishing is None:
+        return _invalid(form)
+    return JsonResponse(
+        {"id": publishing.pk, "label": publishing.select_label, "publishing_title": publishing.publishing_title}
+    )

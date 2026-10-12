@@ -179,6 +179,7 @@ window.ComiCombobox = (function () {
       } else if (event.key === "Escape") {
         if (list.hidden) return;
         event.preventDefault();
+        event.stopPropagation(); // closes the list only, not the dialog the field may be in
         input.value = selectedText();
         close();
       } else if (event.key === "Tab") {

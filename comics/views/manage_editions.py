@@ -23,7 +23,15 @@ from comics.achievements.registry import Event
 from comics.catalog_sources import service as catalog
 from comics.catalog_sources.errors import CatalogError
 from comics.decorators import management_required
-from comics.forms import CatalogLookupForm, EditionManageForm, IssueSectionForm, publishing_choices
+from comics.forms import (
+    CatalogLookupForm,
+    EditionManageForm,
+    EditorialDialogForm,
+    IssueSectionForm,
+    PublishingDialogForm,
+    TitleDialogForm,
+    publishing_choices,
+)
 from comics.models import CollectedIssue, Collection, Edition, Issue
 from comics.views.manage import _number_sort_key
 from comics.views.utils import log_action, safe_next_url
@@ -259,6 +267,10 @@ def edition_form(request: HttpRequest, pk: int | None = None) -> HttpResponse:  
             "sibling_groups": Edition.group_by_cover_kind(sibling_editions),
             "own_option": own_option,
             "back_url": back_url,
+            # The "Create publishing" dialog and its "Create title" / "Create editorial" dialogs.
+            "publishing_dialog": PublishingDialogForm(),
+            "title_dialog": TitleDialogForm(),
+            "editorial_dialog": EditorialDialogForm(),
             "form_data": {
                 "issuesUrl": reverse("manage_publishing_issues"),
                 "catalogUrl": reverse("manage_catalog_lookup"),

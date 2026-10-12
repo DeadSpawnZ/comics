@@ -182,8 +182,8 @@ msgstr "Publishing: %(name)s"
 
 #: comics/static/js/custom/catalog_import.js
 #, python-format
-msgid "Publishing not found in Comi: %(name)s. Choose it or create it first."
-msgstr "Publishing que no está en Comi: %(name)s. Elígelo o créalo antes."
+msgid "Publishing not found in Comi: %(name)s. Choose it or create it."
+msgstr "Publishing que no está en Comi: %(name)s. Elígelo o créalo."
 
 #: comics/static/js/custom/catalog_import.js
 #, python-format
@@ -247,3 +247,20 @@ msgstr "No se pudo copiar"
 #: comics/static/js/custom/catalog_import.js
 msgid "Imported cover (downloaded when you save)"
 msgstr "Portada importada (se descarga al guardar)"
+
+#: comics/static/js/custom/catalog_import.js
+#: comics/static/js/custom/publishing_dialogs.js
+msgid "Create publishing"
+msgstr "Crear publishing"
+
+#: comics/static/js/custom/publishing_dialogs.js
+msgid "It could not be created. Check your session and try again."
+msgstr "No se pudo crear. Revisa tu sesión e inténtalo de nuevo."
+
+#: comics/static/js/custom/publishing_dialogs.js
+msgid "It could not be created. Check your connection and try again."
+msgstr "No se pudo crear. Revisa tu conexión e inténtalo de nuevo."
+
+#: comics/static/js/custom/form_draft.js
+msgid "Your changes were restored. Check them, then save."
+msgstr "Se recuperaron tus cambios. Revísalos y guarda."

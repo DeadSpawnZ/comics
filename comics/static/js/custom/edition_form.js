@@ -78,7 +78,7 @@
   })();
 
   // ---------- Compilation: ordered list of issues ----------
-  picker.orderedIssueList({
+  const collectedList = picker.orderedIssueList({
     issuesUrl: data.issuesUrl,
     publishingSelect: document.getElementById("collected-publishing"),
     issueSelect: document.getElementById("collected-issue"),
@@ -161,7 +161,22 @@
 
   syncContent();
 
-  // What other scripts (catalog_import.js) use to drive the content section.
+  // ---------- Unsaved changes kept by form_draft.js ----------
+  // The issue lists are loaded on demand and the compilation is a widget: they are kept as extras
+  // and restored once the plain fields are (the publishing first, so the own issue is right).
+  const editionForm = editionPublishing.form;
+  editionForm.comiDraftExtras = () => ({
+    collected: collectedList.items(),
+    issuePublishing: issuePublishing.value,
+    issue: issueSelect.value,
+  });
+  editionForm.addEventListener("comi:draft-restored", (event) => {
+    const extras = event.detail.extras || {};
+    if (Array.isArray(extras.collected)) collectedList.setItems(extras.collected);
+    if (extras.issuePublishing) window.ComiEditionForm.selectIssue(extras.issuePublishing, extras.issue);
+  });
+
+  // What other scripts (catalog_import.js, publishing_dialogs.js) use to drive the form.
   window.ComiEditionForm = {
     useSingleIssue() {
       const single = document.querySelector("input[name=content][value=single]");
@@ -176,6 +191,19 @@
       renderIssueOptions();
       issueSelect.value = issueId ? String(issueId) : "";
       if (!issueSelect.value) ownOption.selected = true;
+    },
+    // A publishing just created (the "Create publishing" dialog): offered in every publishing select
+    // of the page and chosen for the edition, as if picked by hand.
+    addPublishing(publishing) {
+      const id = String(publishing.id);
+      data.publishingTitles[id] = publishing.publishing_title;
+      for (const select of [editionPublishing, issuePublishing, document.getElementById("collected-publishing")]) {
+        if (!select || [...select.options].some((option) => option.value === id)) continue;
+        const groups = select.querySelectorAll("optgroup");
+        (groups.length ? groups[groups.length - 1] : select).append(new Option(publishing.label, id));
+      }
+      editionPublishing.value = id;
+      editionPublishing.dispatchEvent(new Event("change", { bubbles: true }));
     },
   };
 })();

@@ -3201,3 +3201,129 @@ msgstr "(se abre en una pestaña nueva)"
 #, python-format
 msgid "Copy the %(source)s number"
 msgstr "Copiar el número de %(source)s"
+
+#: comics/catalog_sources/mapper.py
+msgid "Only the first issue's cover date is known: check the start date."
+msgstr "Solo se conoce la fecha de portada del primer issue: revisa la fecha de inicio."
+
+#: comics/catalog_sources/mapper.py
+#, python-format
+msgid "The first issue's date is unknown: the start date is January 1, %(year)s. Check it."
+msgstr "No se conoce la fecha del primer issue: la fecha de inicio es el 1 de enero de %(year)s. Revísala."
+
+#: comics/catalog_sources/mapper.py
+msgid "The start date of the series is unknown: enter it."
+msgstr "No se conoce la fecha de inicio de la serie: escríbela."
+
+#: comics/catalog_sources/mapper.py
+#, python-format
+msgid "The language “%(language)s” is not one of Comi's: choose it yourself."
+msgstr "El idioma “%(language)s” no es uno de los de Comi: elígelo tú."
+
+#: comics/catalog_sources/mapper.py
+#, python-format
+msgid "%(source)s does not say the language of the series: check it."
+msgstr "%(source)s no indica el idioma de la serie: revísalo."
+
+#: comics/catalog_sources/mapper.py
+#, python-format
+msgid "The publisher's name “%(name)s” is longer than Comi allows."
+msgstr "El nombre de la editorial “%(name)s” es más largo de lo que Comi permite."
+
+#: comics/catalog_sources/mapper.py
+#, python-format
+msgid "The publisher's country “%(country)s” is not one of Comi's: choose it yourself."
+msgstr "El país de la editorial “%(country)s” no es uno de los de Comi: elígelo tú."
+
+#: comics/forms.py
+msgid "Metron series ID"
+msgstr "ID de serie en Metron"
+
+#: comics/forms.py
+msgid "Comic Vine volume ID"
+msgstr "ID de volumen en Comic Vine"
+
+#: comics/forms.py
+msgid "GCD series ID"
+msgstr "ID de serie en GCD"
+
+#: comics/forms.py
+msgid "Another publishing already has this Metron series ID."
+msgstr "Otro publishing ya tiene este ID de serie de Metron."
+
+#: comics/forms.py
+msgid "Another publishing already has this Comic Vine volume ID."
+msgstr "Otro publishing ya tiene este ID de volumen de Comic Vine."
+
+#: comics/forms.py
+#: comics/views/manage_publishings.py
+msgid "A title with that name already exists."
+msgstr "Ya existe un título con ese nombre."
+
+#: comics/forms.py
+#: comics/views/manage_publishings.py
+msgid "An editorial with that name already exists."
+msgstr "Ya existe una editorial con ese nombre."
+
+#: comics/forms.py
+msgid "Country"
+msgstr "País"
+
+#: comics/views/manage_publishings.py
+msgid "A publishing with these values already exists."
+msgstr "Ya existe un publishing con estos valores."
+
+#: comics/templates/manage/publishing_form.html
+#: comics/templates/manage/includes/publishing_dialogs.html
+msgid "Series in external catalogues"
+msgstr "Serie en catálogos externos"
+
+#: comics/templates/manage/edition_form.html
+#: comics/templates/manage/includes/publishing_dialogs.html
+msgid "Create publishing"
+msgstr "Crear publishing"
+
+#: comics/templates/manage/includes/publishing_dialogs.html
+msgid "Check before creating"
+msgstr "Revisa antes de crear"
+
+#: comics/templates/manage/includes/publishing_dialogs.html
+msgid "Create title"
+msgstr "Crear título"
+
+#: comics/templates/manage/includes/publishing_dialogs.html
+msgid "Create editorial"
+msgstr "Crear editorial"
+
+#: comics/templates/manage/includes/publishing_dialogs.html
+msgid "The title groups publishings under a letter: choose it, or create it with +."
+msgstr "El título agrupa publishings bajo una letra: elígelo, o créalo con +."
+
+#: comics/templates/manage/includes/publishing_dialogs.html
+msgid "Create"
+msgstr "Crear"
+
+#: comics/templates/manage/includes/publishing_dialogs.html
+msgid "Groups publishings under a letter."
+msgstr "Agrupa publishings bajo una letra."
+
+#: comics/templates/manage/edition_form.html
+msgid "This page has unsaved changes from before it was reloaded."
+msgstr "Esta página tiene cambios sin guardar de antes de recargarla."
+
+#: comics/templates/manage/edition_form.html
+msgid "Restore them"
+msgstr "Recuperarlos"
+
+#: comics/templates/manage/edition_form.html
+msgid "Discard"
+msgstr "Descartar"
+
+#: comics/forms.py
+msgid "Choose a language"
+msgstr "Elige un idioma"
+
+#: comics/catalog_sources/mapper.py
+#, python-format
+msgid "The Metron series is %(metron)s, but its Comic Vine volume is %(comicvine)s: the first one is used. Check whether they are the same publishing."
+msgstr "La serie de Metron es %(metron)s, pero su volumen de Comic Vine es %(comicvine)s: se usa la primera. Comprueba si son el mismo publishing."

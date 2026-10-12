@@ -355,6 +355,36 @@ NEW_TRANSLATIONS = {
     'Identification numbers': 'Números de identificación',
     '(opens in a new tab)': '(se abre en una pestaña nueva)',
     'Copy the %(source)s number': 'Copiar el número de %(source)s',
+    # Creating a publishing (and its title and editorial) from the edition form; series ids.
+    "Only the first issue's cover date is known: check the start date.": 'Solo se conoce la fecha de portada del primer issue: revisa la fecha de inicio.',
+    "The first issue's date is unknown: the start date is January 1, %(year)s. Check it.": 'No se conoce la fecha del primer issue: la fecha de inicio es el 1 de enero de %(year)s. Revísala.',
+    'The start date of the series is unknown: enter it.': 'No se conoce la fecha de inicio de la serie: escríbela.',
+    "The language “%(language)s” is not one of Comi's: choose it yourself.": 'El idioma “%(language)s” no es uno de los de Comi: elígelo tú.',
+    '%(source)s does not say the language of the series: check it.': '%(source)s no indica el idioma de la serie: revísalo.',
+    "The publisher's name “%(name)s” is longer than Comi allows.": 'El nombre de la editorial “%(name)s” es más largo de lo que Comi permite.',
+    "The publisher's country “%(country)s” is not one of Comi's: choose it yourself.": 'El país de la editorial “%(country)s” no es uno de los de Comi: elígelo tú.',
+    'Metron series ID': 'ID de serie en Metron',
+    'Comic Vine volume ID': 'ID de volumen en Comic Vine',
+    'GCD series ID': 'ID de serie en GCD',
+    'Another publishing already has this Metron series ID.': 'Otro publishing ya tiene este ID de serie de Metron.',
+    'Another publishing already has this Comic Vine volume ID.': 'Otro publishing ya tiene este ID de volumen de Comic Vine.',
+    'A title with that name already exists.': 'Ya existe un título con ese nombre.',
+    'An editorial with that name already exists.': 'Ya existe una editorial con ese nombre.',
+    'Country': 'País',
+    'A publishing with these values already exists.': 'Ya existe un publishing con estos valores.',
+    'Series in external catalogues': 'Serie en catálogos externos',
+    'Create publishing': 'Crear publishing',
+    'Check before creating': 'Revisa antes de crear',
+    'Create title': 'Crear título',
+    'Create editorial': 'Crear editorial',
+    'The title groups publishings under a letter: choose it, or create it with +.': 'El título agrupa publishings bajo una letra: elígelo, o créalo con +.',
+    'Create': 'Crear',
+    'Groups publishings under a letter.': 'Agrupa publishings bajo una letra.',
+    'This page has unsaved changes from before it was reloaded.': 'Esta página tiene cambios sin guardar de antes de recargarla.',
+    'Restore them': 'Recuperarlos',
+    'Discard': 'Descartar',
+    'Choose a language': 'Elige un idioma',
+    'The Metron series is %(metron)s, but its Comic Vine volume is %(comicvine)s: the first one is used. Check whether they are the same publishing.': 'La serie de Metron es %(metron)s, pero su volumen de Comic Vine es %(comicvine)s: se usa la primera. Comprueba si son el mismo publishing.',
 }
 
 
@@ -362,7 +392,7 @@ NEW_TRANSLATIONS = {
 NEW_JS_TRANSLATIONS = {
     'Cover from %(source)s (downloaded when you save)': 'Portada de %(source)s (se descarga al guardar)',
     'Publishing: %(name)s': 'Publishing: %(name)s',
-    'Publishing not found in Comi: %(name)s. Choose it or create it first.': 'Publishing que no está en Comi: %(name)s. Elígelo o créalo antes.',
+    'Publishing not found in Comi: %(name)s. Choose it or create it.': 'Publishing que no está en Comi: %(name)s. Elígelo o créalo.',
     'Use %(name)s': 'Usar %(name)s',
     'Issue already in Comi: %(name)s': 'Issue que ya está en Comi: %(name)s',
     'Issue not in Comi yet: it is created when you save.': 'El issue todavía no está en Comi: se crea al guardar.',
@@ -377,6 +407,10 @@ NEW_JS_TRANSLATIONS = {
     'Copied': 'Copiado',
     'Imported cover (downloaded when you save)': 'Portada importada (se descarga al guardar)',
     'Could not copy': 'No se pudo copiar',
+    'Create publishing': 'Crear publishing',
+    'It could not be created. Check your session and try again.': 'No se pudo crear. Revisa tu sesión e inténtalo de nuevo.',
+    'It could not be created. Check your connection and try again.': 'No se pudo crear. Revisa tu conexión e inténtalo de nuevo.',
+    'Your changes were restored. Check them, then save.': 'Se recuperaron tus cambios. Revísalos y guarda.',
 }
 
 

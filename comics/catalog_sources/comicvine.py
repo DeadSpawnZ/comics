@@ -18,7 +18,7 @@ from django.views.decorators.debug import sensitive_variables
 
 from .errors import AuthFailed, BadResponse, NotConfigured, NotFound, RateLimited
 from .http import get_json, throttle
-from .types import SourceCredit, SourceIssue, parse_date, parse_int
+from .types import SourceCredit, SourceIssue, SourceSeries, parse_date, parse_int
 
 KEY = "comicvine"
 NAME = "Comic Vine"
@@ -96,6 +96,19 @@ def fetch_issue(issue_id: int) -> dict[str, Any]:
     return {"issue": issue, "volume": volume}
 
 
+def fetch_series_ids(source_issue: SourceIssue) -> SourceSeries:
+    """Comic Vine knows no other catalogue's ids; its own volume id is in `source_issue`."""
+    return SourceSeries(comicvine_volume_id=source_issue.comicvine_volume_id)
+
+
+def fetch_series(source_issue: SourceIssue, with_publisher: bool) -> SourceSeries:
+    """What Comic Vine adds about the series: nothing beyond the volume fetched with the issue (its
+    id and start year are already in `source_issue`). It does not say the publisher's country, and
+    the first issue's date would cost another request per volume, so the proposal falls back to the
+    start year."""
+    return SourceSeries()
+
+
 def html_to_text(value: str) -> str:
     """Comic Vine descriptions are HTML: keep paragraphs and line breaks, drop the markup."""
     text = re.sub(r"(?i)<br\s*/?>|</p>|</h\d>|</li>", "\n", value or "")
@@ -140,4 +153,6 @@ def to_source_issue(data: dict[str, Any]) -> SourceIssue:
         metron_id=None,
         comicvine_id=parse_int(issue.get("id")),
         gcd_id=None,
+        comicvine_volume_id=parse_int(volume.get("id")) or parse_int((issue.get("volume") or {}).get("id")),
+        source_publisher_id=parse_int((volume.get("publisher") or {}).get("id")),
     )

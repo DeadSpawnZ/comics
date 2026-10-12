@@ -607,7 +607,17 @@ class PublishingManageForm(forms.ModelForm):
 
     class Meta:
         model = Publishing
-        fields = ["publishing_title", "serie", "language", "date", "year", "editorials"]
+        fields = [
+            "publishing_title",
+            "serie",
+            "language",
+            "date",
+            "year",
+            "editorials",
+            "metron_series_id",
+            "comicvine_volume_id",
+            "gcd_series_id",
+        ]
         labels = {
             "publishing_title": _("Publishing title"),
             "serie": _("Series"),
@@ -615,6 +625,9 @@ class PublishingManageForm(forms.ModelForm):
             "date": _("Start date"),
             "year": _("Year"),
             "editorials": _("Editorials"),
+            "metron_series_id": _("Metron series ID"),
+            "comicvine_volume_id": _("Comic Vine volume ID"),
+            "gcd_series_id": _("GCD series ID"),
         }
         help_texts = {"year": _("Empty: taken from the start date.")}
         widgets = {
@@ -625,14 +638,17 @@ class PublishingManageForm(forms.ModelForm):
             NON_FIELD_ERRORS: {
                 "unique_together": _("A publishing with that title, year, series and language already exists."),
             },
+            "metron_series_id": {"unique": _("Another publishing already has this Metron series ID.")},
+            "comicvine_volume_id": {"unique": _("Another publishing already has this Comic Vine volume ID.")},
         }
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        if self.instance.pk and self.instance.title_id:
-            self.fields["title_name"].initial = self.instance.title.name
+        if "title_name" in self.fields:
+            if self.instance.pk and self.instance.title_id:
+                self.fields["title_name"].initial = self.instance.title.name
+            self.fields["title_name"].widget.attrs["list"] = "title-options"
         self.fields["editorials"].queryset = Editorial.objects.order_by("name")
-        self.fields["title_name"].widget.attrs["list"] = "title-options"
         self.fields["editorials"].widget.attrs["data-placeholder"] = _("Search an editorial…")
         for _name, field in self.fields.items():
             widget = field.widget
@@ -653,13 +669,119 @@ class PublishingManageForm(forms.ModelForm):
     def save(self, commit: bool = True) -> Publishing:
         publishing = super().save(commit=False)
         publishing.year = self.cleaned_data.get("year")
-        name = (self.cleaned_data.get("title_name") or "").strip() or publishing.publishing_title.strip()
-        title = Title.objects.filter(name__iexact=name).first() or Title.objects.create(name=name)
-        publishing.title = title
+        publishing.title = self.chosen_title(publishing)
         if commit:
             publishing.save()
             self.save_m2m()
         return publishing
+
+    def chosen_title(self, publishing: Publishing) -> Title:
+        """The typed title, reused when it exists (ignoring case) and created otherwise; the
+        publishing title when nothing was typed."""
+        name = (self.cleaned_data.get("title_name") or "").strip() or publishing.publishing_title.strip()
+        return Title.objects.filter(name__iexact=name).first() or Title.objects.create(name=name)
+
+
+class PlaceholderSelect(forms.Select):
+    """A select whose empty option is a placeholder: shown while nothing is chosen, never choosable."""
+
+    def create_option(
+        self,
+        name: str,
+        value: Any,
+        label: int | str,
+        selected: bool,
+        index: int,
+        subindex: int | None = None,
+        attrs: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        option = super().create_option(name, value, label, selected, index, subindex, attrs)
+        if value in ("", None):
+            option["attrs"]["disabled"] = True
+        return option
+
+
+class PublishingDialogForm(PublishingManageForm):
+    """The "Create publishing" dialog of the Gestión edition form (posted to an API, see
+    comics.views.manage_publishings.publishing_create_api). The title is chosen from the existing
+    ones (the "Create title" dialog adds new ones), never derived from the publishing title.
+    Neither the language nor the start date starts with the model's default (English, today): the
+    dialog is often prefilled from a catalogue that may not know them, and a default the user
+    overlooked would be saved as if it were known. Both are required. Prefixed, as it lives on the
+    edition form's page."""
+
+    PREFIX = "new_publishing"
+
+    title_name = None  # replaced by the `title` select
+    title = forms.ModelChoiceField(queryset=Title.objects.order_by("name"), label=_("Title (group)"))
+    language = forms.ChoiceField(
+        choices=[("", _("Choose a language")), *Publishing.LangAbbr.choices],
+        label=_("Language"),
+        widget=PlaceholderSelect,
+    )
+
+    class Meta(PublishingManageForm.Meta):
+        fields = ["title", *PublishingManageForm.Meta.fields]
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        kwargs.setdefault("prefix", self.PREFIX)
+        kwargs["initial"] = {"language": "", "date": None, **(kwargs.get("initial") or {})}
+        super().__init__(*args, **kwargs)
+        self.fields["title"].widget.attrs["data-combobox"] = ""
+
+    def chosen_title(self, publishing: Publishing) -> Title:
+        return self.cleaned_data["title"]
+
+
+class UniqueNameMixin:
+    """A unique `name`, compared ignoring case (MySQL's collation does, SQLite does not), so a
+    duplicate is a form error on every database instead of an IntegrityError on one of them."""
+
+    duplicate_message: str | Promise = ""
+    _meta: Any
+    instance: Any
+    cleaned_data: dict[str, Any]
+
+    def clean_name(self) -> str:
+        name = self.cleaned_data["name"].strip()
+        others = self._meta.model.objects.filter(name__iexact=name).exclude(pk=self.instance.pk)
+        if name and others.exists():
+            raise ValidationError(self.duplicate_message, code="unique")
+        return name
+
+
+class TitleDialogForm(UniqueNameMixin, MaterialFieldsMixin, forms.ModelForm):
+    """The "Create title" dialog (a Title groups publishings under a letter)."""
+
+    PREFIX = "new_title"
+    duplicate_message = _("A title with that name already exists.")
+
+    class Meta:
+        model = Title
+        fields = ["name"]
+        labels = {"name": _("Name")}
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        kwargs.setdefault("prefix", self.PREFIX)
+        super().__init__(*args, **kwargs)
+        self.style_fields()
+
+
+class EditorialDialogForm(UniqueNameMixin, MaterialFieldsMixin, forms.ModelForm):
+    """The "Create editorial" dialog."""
+
+    PREFIX = "new_editorial"
+    duplicate_message = _("An editorial with that name already exists.")
+
+    class Meta:
+        model = Editorial
+        fields = ["name", "country"]
+        labels = {"name": _("Name"), "country": _("Country")}
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        kwargs.setdefault("prefix", self.PREFIX)
+        super().__init__(*args, **kwargs)
+        self.style_fields()
 
 
 def edition_label(edition: Edition) -> str:

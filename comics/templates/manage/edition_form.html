@@ -8,7 +8,7 @@
 {% endblock %}
 
 {% block manage_content %}
-<form method="post" enctype="multipart/form-data" novalidate>
+<form method="post" enctype="multipart/form-data" novalidate id="edition-form" data-draft="edition">
   {% csrf_token %}
   <input type="hidden" name="next" value="{{ back_url }}">
   {{ form.catalog_cover_url }}
@@ -45,6 +45,16 @@
         {% translate "Save" %}
       </button>
     </div>
+  </div>
+
+  {# Offered by js/custom/form_draft.js when this tab kept unsaved changes of the page (e.g. after a reload). #}
+  <div class="md-surface-card mb-3 form-draft" id="form-draft" hidden>
+    <span class="material-symbols-outlined" aria-hidden="true">restore</span>
+    <span class="form-draft__text" id="form-draft-text" tabindex="-1">{% translate "This page has unsaved changes from before it was reloaded." %}</span>
+    <span class="form-draft__actions" id="form-draft-actions">
+      <button type="button" class="md-btn md-btn--tonal" id="form-draft-restore">{% translate "Restore them" %}</button>
+      <button type="button" class="md-btn md-btn--text" id="form-draft-discard">{% translate "Discard" %}</button>
+    </span>
   </div>
 
   {% if form.non_field_errors or form.errors or content_errors or issue_form.errors %}
@@ -118,7 +128,13 @@
         <h2 class="md-title-medium mb-3">{% translate "Edition data" %}</h2>
         <div class="row g-3">
           <div class="col-12">
-            {% include 'manage/includes/field.html' with field=form.publishing %}
+            <div class="d-flex align-items-start gap-2">
+              <div class="flex-grow-1">{% include 'manage/includes/field.html' with field=form.publishing %}</div>
+              <button type="button" class="md-btn md-btn--tonal mt-2 text-nowrap" id="create-publishing" data-open-dialog="publishing-dialog">
+                <span class="material-symbols-outlined" aria-hidden="true">add</span>
+                {% translate "Create publishing" %}
+              </button>
+            </div>
           </div>
           <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=form.number %}</div>
           <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=form.variant %}</div>
@@ -212,7 +228,7 @@
           <div class="row g-3">
             <div class="col-12 col-md-6">
               <div class="form-floating md-field">
-                <select class="form-select" id="issue-publishing" data-combobox>
+                <select class="form-select" id="issue-publishing" data-combobox data-draft-skip>
                   <option value="">{% translate "Choose a publishing…" %}</option>
                   {% for value, label in publishing_options %}
                     <option value="{{ value }}" {% if value == issue_publishing_id %}selected{% endif %}>{{ label }}</option>
@@ -223,7 +239,7 @@
             </div>
             <div class="col-12 col-md-6">
               <div class="form-floating md-field">
-                <select class="form-select" id="issue-select" name="issue">
+                <select class="form-select" id="issue-select" name="issue" data-draft-skip>
                   <option value="" id="own-issue-option">{{ own_option }}</option>
                   {% for issue in issue_options %}
                     <option value="{{ issue.pk }}" {% if issue.pk == selected_issue_id %}selected{% endif %}>{{ issue }}</option>
@@ -283,19 +299,20 @@
           </div>
           <ol class="collected-list mt-3" id="collected-list"></ol>
           <p class="md-body-medium mb-0" id="collected-empty">{% translate "There are no issues in the compilation yet." %}</p>
-          <input type="hidden" name="collected" id="collected-input">
+          <input type="hidden" name="collected" id="collected-input" data-draft-skip>
         </div>
       </div>
     </div>
 
     {% if edition.issue %}
       <div class="col-12 col-xl-6">
-        {% include 'includes/identification_numbers.html' with issue=edition.issue %}
+        {% include 'includes/identification_numbers.html' with item=edition.issue %}
       </div>
     {% endif %}
   </div>
 </form>
 
+{% include 'manage/includes/publishing_dialogs.html' %}
 {% if edition %}
   {% include 'manage/includes/delete_dialog.html' with delete_next=back_url %}
 {% endif %}
@@ -305,7 +322,9 @@
 {% block extra_js %}
 <script src="{% static 'js/custom/issue_picker.js' %}"></script>
 <script src="{% static 'js/custom/edition_form.js' %}"></script>
+<script src="{% static 'js/custom/publishing_dialogs.js' %}"></script>
 <script src="{% static 'js/custom/catalog_import.js' %}"></script>
 <script src="{% static 'js/custom/force_uppercase_variant.js' %}"></script>
 <script src="{% static 'js/custom/copy_value.js' %}"></script>
+<script src="{% static 'js/custom/form_draft.js' %}"></script>
 {% endblock %}

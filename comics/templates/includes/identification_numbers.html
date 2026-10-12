@@ -1,6 +1,6 @@
 {% load i18n %}
-{# The issue's numbers in external catalogues, only those that are set. Copy buttons: js/custom/copy_value.js. Parameter: issue. #}
-{% with identifiers=issue.identification_numbers %}
+{# The numbers of an issue or a publishing (its series) in external catalogues, only those that are set. Copy buttons: js/custom/copy_value.js. Parameter: item (anything with identification_numbers()). #}
+{% with identifiers=item.identification_numbers %}
   {% if identifiers %}
     <section class="md-surface-card identifiers" aria-labelledby="identifiers-title" data-copy-group>
       <h2 class="md-title-medium mb-3" id="identifiers-title">{% translate "Identification numbers" %}</h2>

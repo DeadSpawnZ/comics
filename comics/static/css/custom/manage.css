@@ -886,3 +886,40 @@
 .identifiers__copy .material-symbols-outlined {
   font-size: 1.125rem;
 }
+
+/* Unsaved changes kept after a reload (js/custom/form_draft.js) */
+.form-draft {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--md-on-surface);
+}
+
+.form-draft > .material-symbols-outlined {
+  color: var(--md-primary);
+}
+
+.form-draft__text {
+  flex: 1 1 16rem;
+}
+
+.form-draft__text:focus {
+  outline: none;
+}
+
+.form-draft__actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.form-draft[hidden],
+.form-draft__actions[hidden] {
+  display: none;
+}
+
+/* "Create" dialogs of the edition form (js/custom/publishing_dialogs.js) */
+[data-dialog-errors][hidden],
+[data-dialog-warnings][hidden] {
+  display: none;
+}

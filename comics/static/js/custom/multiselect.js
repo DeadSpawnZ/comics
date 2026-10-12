@@ -125,9 +125,7 @@ window.ComiMultiselect = (function () {
       const option = options().find((item) => item.value === value);
       if (!option) return;
       option.selected = selected;
-      select.dispatchEvent(new Event("change", { bubbles: true }));
-      renderChips();
-      if (!list.hidden) renderList();
+      select.dispatchEvent(new Event("change", { bubbles: true })); // re-renders (see below)
     }
 
     box.addEventListener("click", (event) => {
@@ -160,6 +158,7 @@ window.ComiMultiselect = (function () {
       } else if (event.key === "Escape") {
         if (!list.hidden) {
           event.preventDefault();
+          event.stopPropagation(); // closes the list only, not the dialog the field may be in
           input.value = "";
           close();
         }
@@ -177,6 +176,11 @@ window.ComiMultiselect = (function () {
       setSelected(visible[Number(item.dataset.index)].value, true);
     });
 
+    // Options added or (de)selected by other scripts, followed by a "change" event, show up too.
+    select.addEventListener("change", () => {
+      renderChips();
+      if (!list.hidden) renderList();
+    });
     renderChips();
   }
 

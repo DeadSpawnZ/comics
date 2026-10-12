@@ -105,3 +105,20 @@ class SourceIssue:
     metron_id: int | None
     comicvine_id: int | None
     gcd_id: int | None
+    # The series (volume) and publisher ids in the source, when its issue answer says them.
+    metron_series_id: int | None = None
+    comicvine_volume_id: int | None = None
+    source_publisher_id: int | None = None
+
+
+@dataclass
+class SourceSeries:
+    """What a catalogue says about the series of an issue beyond the issue itself: the series ids in
+    other catalogues (to match a publishing) and, to propose a new one, its first issue's dates and
+    the publisher's country. Every value may be unknown (None or empty)."""
+
+    first_issue_store_date: date | None = None
+    first_issue_cover_date: date | None = None
+    publisher_country: str = ""  # as the catalogue writes it (Metron: ISO 3166 alpha-2, e.g. "US")
+    comicvine_volume_id: int | None = None
+    gcd_series_id: int | None = None

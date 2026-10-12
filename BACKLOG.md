@@ -59,21 +59,45 @@ Administradores aprueban. Diseño acordado con el usuario:
   `MaterialFieldsMixin`.
 
 ### Catálogos externos: Metron (principal) y Comic Vine (respaldo)
-- **Hecho en la rama `feat/change-requests` (sin commitear ni desplegar):** precarga del formulario de
+- **Hecho y desplegado (commit `98cab5e`):** precarga del formulario de
   edición de Gestión desde Metron o Comic Vine (`comics/catalog_sources/`, endpoint
   `/gestion/api/catalogo/`), ids externos en `Issue` (`metron_id`, `comicvine_id` únicos; `gcd_id`
   indexado; migración `0113`, aditiva), sección "Datos del issue" en el formulario de edición
   (ids, sinopsis y creadores) y panel "Números de identificación". Credenciales en `.env`
   (`METRON_USERNAME`, `METRON_PASSWORD`, `COMICVINE_API_KEY`), cargado como `env_file` opcional del
   servicio `web`.
+- **Hecho en la rama (sin commitear ni desplegar, revisión aprobada): crear publishing, título y editorial desde el
+  formulario de edición.** Diálogos apilados ("Crear publishing" → "+" título / "+" editorial) que
+  envían a `/gestion/api/publishings/nuevo/`, `/gestion/api/titulos/nuevo/` y
+  `/gestion/api/editoriales/nueva/` (`comics/views/manage_publishings.py`); el importador los
+  precarga con la serie de Metron (fecha = la del primer issue: tienda, si no portada, si no 1 de enero
+  del año de inicio con aviso; Comic Vine siempre cae al año de inicio). El título nunca se elige solo.
+  Ids de serie en `Publishing` (`metron_series_id`, `comicvine_volume_id` únicos; `gcd_series_id`
+  indexado; migración `0114`, aditiva, **pendiente de ensayar en `comic_refactor` y aplicar**), con
+  panel de números de identificación en la página del publishing; el mapeador empareja publishings
+  por esos ids primero (también por el id de Comic Vine que da la serie de Metron, lo que cuesta una
+  petición más, cacheada; si apuntan a publishings distintos gana Metron con un aviso). En el
+  diálogo, idioma y fecha de inicio empiezan vacíos y son obligatorios. Borrador del formulario en
+  `sessionStorage` con oferta de recuperarlo tras recargar (`js/custom/form_draft.js`). **Falta probarlo en el navegador.**
 - **Siguiente:** **importación masiva** de un issue o de una serie completa convertida en
   **solicitudes de cambio**, reutilizando el mismo mapeador (`comics/catalog_sources/mapper.py`).
-- **Limitaciones conocidas de la v1:** no se crean editoriales, publishings ni artistas que falten
-  (se listan como "no encontrados"); Metron lista juntos a los artistas de todas las portadas (para
+- **Limitaciones conocidas de la v1:** no se crean artistas que falten (se listan como "no
+  encontrados"); la lista de issues de una serie en Metron solo se lee en su primera página (comprobado el
+  2026-10-11 con dos series: viene ordenada por número, el #1 primero); el país de la editorial solo lo da Metron; Metron lista juntos a los artistas de todas las portadas (para
   la A se proponen los que también dibujan el interior, para las variantes los que aparecen en su
   nombre); las letras de variante (B, C…) son una sugerencia; las impresiones a partir de la 7.ª no
   existen en Comi; el límite propio de peticiones por minuto se cuenta en la caché local de cada
   proceso. Comic Vine no tiene variantes, precio, idioma ni número de volumen.
+- **Menores de la revisión de "crear publishing" (pendientes):**
+  - Con Comic Vine (no da número de volumen) el diálogo conserva la serie por defecto `1st`; valorar
+    tratarla como el idioma y la fecha (vacía y obligatoria).
+  - El borrador guarda el campo oculto `next` (añadirle `data-draft-skip`) y el texto del aviso de
+    recuperación ("antes de recargar") no es exacto cuando se vuelve otro día a la misma página.
+  - Al apilar diálogos, el de abajo sigue en el árbol de accesibilidad: marcarlo `inert`.
+  - "Duplicated publishing" de `Publishing.validate_duplicates` sin traducir (solo en carreras).
+  - Tipos: `_create(...) -> Model | None` genérico con `TypeVar`; `UniqueNameMixin` con `Any`;
+    mensajes de duplicado repetidos en las vistas; `Publishing.IDENTIFIER_FIELDS` e
+    `Issue.IDENTIFIER_FIELDS` sin usar.
 - Impresión, ratio (salvo cuando el nombre de la variante lo dice, p. ej. "1:25"), exclusivas de
   tienda/evento y país siguen siendo manuales.
 - **Portada importada descargada de nuevo al reenviar:** la descarga ocurre en `clean()` del

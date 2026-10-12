@@ -1,8 +1,9 @@
 // Import box of the Gestión edition form: loads an issue from Metron or Comic Vine (through
 // comics.views.manage_editions.catalog_lookup) and fills the form with it. Nothing is saved here:
 // the user reviews the values and saves the form. The imported cover is only a URL (a hidden
-// field); the server downloads it when the form is saved. Every text from the catalogue goes into
-// the page with textContent / form values, never as HTML.
+// field); the server downloads it when the form is saved. When the publishing is not in Comi, the
+// "Create publishing" dialog (publishing_dialogs.js) is prefilled with the catalogue's series. Every
+// text from the catalogue goes into the page with textContent / form values, never as HTML.
 (function () {
   "use strict";
 
@@ -11,6 +12,7 @@
 
   const data = JSON.parse(document.getElementById("edition-form-data").textContent);
   const editionForm = window.ComiEditionForm;
+  const publishingDialogs = window.ComiPublishingDialogs;
   const sourceSelect = document.getElementById("catalog-source");
   const idInput = document.getElementById("catalog-id");
   const status = document.getElementById("catalog-status");
@@ -88,6 +90,10 @@
   coverDiscard.addEventListener("click", discardCover);
   // A form sent back with errors still carries the imported cover: show it again.
   if (coverUrlInput.value) setCover(coverUrlInput.value, "");
+  // Unsaved changes restored by form_draft.js may carry one too.
+  coverUrlInput.addEventListener("change", () => {
+    if (coverUrlInput.value) setCover(coverUrlInput.value, "");
+  });
   // An uploaded file wins over the imported cover (the server ignores the URL then too).
   if (imageInput) {
     imageInput.addEventListener("change", () => {
@@ -120,12 +126,20 @@
     } else {
       const item = summaryItem(
         "help",
-        interpolate(gettext("Publishing not found in Comi: %(name)s. Choose it or create it first."), { name: unmatched.publishing }, true),
+        interpolate(gettext("Publishing not found in Comi: %(name)s. Choose it or create it."), { name: unmatched.publishing }, true),
         "missing"
       );
+      const choices = document.createElement("div");
+      choices.className = "catalog-import__choices";
+      if (proposal.new_publishing && publishingDialogs) {
+        const create = document.createElement("button");
+        create.type = "button";
+        create.className = "md-btn md-btn--tonal";
+        create.textContent = gettext("Create publishing");
+        create.addEventListener("click", () => publishingDialogs.open(create));
+        choices.append(create);
+      }
       if (proposal.publishing_candidates.length) {
-        const choices = document.createElement("div");
-        choices.className = "catalog-import__choices";
         for (const candidate of proposal.publishing_candidates) {
           const button = document.createElement("button");
           button.type = "button";
@@ -134,8 +148,8 @@
           button.addEventListener("click", () => setField("id_publishing", candidate.id));
           choices.append(button);
         }
-        item.append(choices);
       }
+      if (choices.childElementCount) item.append(choices);
     }
     if (proposal.issue) {
       summaryItem("check_circle", interpolate(gettext("Issue already in Comi: %(name)s"), { name: proposal.issue.label }, true), "ok");
@@ -195,6 +209,7 @@
     const edition = proposal.edition;
     editionForm.useSingleIssue();
     if (proposal.publishing) setField("id_publishing", proposal.publishing.id);
+    if (proposal.new_publishing && publishingDialogs) publishingDialogs.prefill(proposal.new_publishing);
     setField("id_number", edition.number);
     setField("id_format", edition.format);
     setField("id_release_date", edition.release_date);
