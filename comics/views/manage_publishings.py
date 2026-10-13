@@ -182,14 +182,20 @@ def editorial_create_api(request: HttpRequest) -> JsonResponse:
 @management_required
 @require_POST
 def publishing_create_api(request: HttpRequest) -> JsonResponse:
-    """Also answers the publishing title, which the edition form uses to name the edition's own issue."""
+    """Also answers the publishing title, which the edition form uses to name the edition's own issue,
+    and the start date, which it proposes as the edition's release date."""
     form = PublishingDialogForm(request.POST)
     duplicate = _("A publishing with these values already exists.")
     publishing = _create(request, form, "Creado desde Gestión.", duplicate) if form.is_valid() else None
     if publishing is None:
         return _invalid(form)
     return JsonResponse(
-        {"id": publishing.pk, "label": publishing.select_label, "publishing_title": publishing.publishing_title}
+        {
+            "id": publishing.pk,
+            "label": publishing.select_label,
+            "publishing_title": publishing.publishing_title,
+            "date": publishing.date.isoformat(),
+        }
     )
 
 

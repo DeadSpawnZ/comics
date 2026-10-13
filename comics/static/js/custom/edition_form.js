@@ -70,6 +70,20 @@
   editionPublishing.addEventListener("change", refreshOwnIssue);
   editionNumber.addEventListener("input", refreshOwnIssue);
 
+  // ---------- Release date: the publishing's start date by default ----------
+  // On a new edition, picking (or creating) a publishing proposes its start date, as long as the date
+  // is still the one the page started with or the last one proposed here. A date typed by hand, by
+  // the catalogue import or by a restored draft is different, so it is never replaced.
+  const releaseDate = document.getElementById("id_release_date");
+  let proposedDate = data.fillReleaseDate && releaseDate ? releaseDate.value : null;
+  editionPublishing.addEventListener("change", () => {
+    const start = data.publishingDates[editionPublishing.value];
+    if (proposedDate === null || !start || releaseDate.value !== proposedDate) return;
+    releaseDate.value = start;
+    proposedDate = start;
+    releaseDate.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+
   // The server already rendered the list without the own issue; load it fully so the own issue
   // can come back if the publishing or number changes.
   (async () => {
@@ -242,6 +256,7 @@
     addPublishing(publishing) {
       const id = String(publishing.id);
       data.publishingTitles[id] = publishing.publishing_title;
+      data.publishingDates[id] = publishing.date;
       for (const select of [editionPublishing, issuePublishing, document.getElementById("collected-publishing")]) {
         if (!select || [...select.options].some((option) => option.value === id)) continue;
         const groups = select.querySelectorAll("optgroup");

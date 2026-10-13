@@ -394,7 +394,12 @@ class CreateEndpointTests(ComiTestCase):
         publishing = Publishing.objects.get()
         self.assertEqual(
             response.json(),
-            {"id": publishing.pk, "label": "Batman (2016) 3rd · EN · DC", "publishing_title": "Batman"},
+            {
+                "id": publishing.pk,
+                "label": "Batman (2016) 3rd · EN · DC",
+                "publishing_title": "Batman",
+                "date": "2016-06-15",
+            },
         )
         self.assertEqual(publishing.title.name, "Batman")
         self.assertEqual((publishing.year, str(publishing.date)), (2016, "2016-06-15"))  # year from the date

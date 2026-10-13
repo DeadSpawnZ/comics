@@ -33,7 +33,7 @@ from comics.forms import (
     TitleDialogForm,
     publishing_choices,
 )
-from comics.models import CollectedIssue, Collection, Edition, Issue
+from comics.models import CollectedIssue, Collection, Edition, Issue, Publishing
 from comics.views.manage import _number_sort_key
 from comics.views.utils import log_action, safe_next_url
 
@@ -185,6 +185,9 @@ def edition_form(request: HttpRequest, pk: int | None = None) -> HttpResponse:  
     initial = {}
     if not edition and request.GET.get("publishing", "").isdigit():
         initial["publishing"] = int(request.GET["publishing"])  # e.g. "New edition" from a publishing
+        start = Publishing.objects.filter(pk=initial["publishing"]).values_list("date", flat=True).first()
+        if start:
+            initial["release_date"] = start  # the publishing's start date, as when it is picked on the page
     form = EditionManageForm(request.POST or None, request.FILES or None, instance=edition, initial=initial)
     shown_issue = IssueSectionForm.shown_issue(request.POST or None, edition.issue if edition else None)
     issue_form = IssueSectionForm(request.POST or None, instance=shown_issue)
@@ -245,6 +248,7 @@ def edition_form(request: HttpRequest, pk: int | None = None) -> HttpResponse:  
         own_option = _("Own issue (by publishing and number)")
 
     sibling_editions = sibling_editions_of(edition) if edition else []
+    publishings = list(form.fields["publishing"].queryset)
 
     return render(
         request,
@@ -278,9 +282,11 @@ def edition_form(request: HttpRequest, pk: int | None = None) -> HttpResponse:  
                 "issuesUrl": reverse("manage_publishing_issues"),
                 "catalogUrl": reverse("manage_catalog_lookup"),
                 "artistsCreateUrl": reverse("manage_artists_create_api"),
-                "publishingTitles": {
-                    publishing.pk: publishing.publishing_title for publishing in form.fields["publishing"].queryset
-                },
+                "publishingTitles": {publishing.pk: publishing.publishing_title for publishing in publishings},
+                # Picking a publishing proposes its start date as the release date (edition_form.js), only
+                # while the date is the one the page started with on a new, unsent edition.
+                "publishingDates": {publishing.pk: publishing.date.isoformat() for publishing in publishings},
+                "fillReleaseDate": edition is None and not form.is_bound,
                 "collected": [_issue_payload(collected[i]) for i in collected_ids if i in collected],
             },
         },
