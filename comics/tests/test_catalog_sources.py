@@ -16,8 +16,8 @@ from unittest import mock
 from urllib.error import HTTPError, URLError
 from urllib.request import Request
 
-from django.core.cache import cache
 from django.contrib.messages import get_messages
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.test import override_settings
 from django.urls import reverse
@@ -98,7 +98,13 @@ def metron_with_variants() -> dict[str, Any]:
             "upc": "",
             "image": "https://static.metron.cloud/media/variants/b.jpg",
         },
-        {"name": "Unknown Comics Exclusive", "price": None, "sku": "", "upc": "", "image": "https://evil.example/c.jpg"},
+        {
+            "name": "Unknown Comics Exclusive",
+            "price": None,
+            "sku": "",
+            "upc": "",
+            "image": "https://evil.example/c.jpg",
+        },
         {"name": "7Th Printing", "price": "4.99", "sku": "", "upc": "", "image": ""},
     ]
     return data
@@ -156,14 +162,18 @@ class MapperTests(CatalogTestCase):
         self.assertEqual(proposal.synopsis, METRON_ISSUE["desc"])
         self.assertEqual(proposal.identifiers, {"metron_id": 15439, "comicvine_id": 21801, "gcd_id": 35962})
         self.assertEqual(proposal.cover_url, COVER_URL)
-        self.assertEqual([(a.id, a.name) for a in proposal.creators], [(self.ron.pk, "ron wilson"), (self.tom.pk, "Tom DeFalco")])
+        self.assertEqual(
+            [(a.id, a.name) for a in proposal.creators], [(self.ron.pk, "ron wilson"), (self.tom.pk, "Tom DeFalco")]
+        )
         # The editor is not a creator; cover-only roles go to the cover artists.
         self.assertNotIn("Jim Salicrup", proposal.unmatched["creators"])
         self.assertIn("Armando Gil", proposal.unmatched["creators"])
         self.assertEqual([a.id for a in proposal.cover_artists], [self.ron.pk])
         self.assertEqual(proposal.unmatched["cover_artists"], ["Frank Giacoia"])
         self.assertEqual((proposal.unmatched["editorial"], proposal.unmatched["publishing"]), ("", ""))
-        self.assertIn("Only the cover date is known: the release date is usually a few months earlier.", proposal.warnings)
+        self.assertIn(
+            "Only the cover date is known: the release date is usually a few months earlier.", proposal.warnings
+        )
         self.assertEqual(proposal.variants, [])
 
     def test_unmatched_editorial_and_publishing_are_listed(self) -> None:
@@ -193,7 +203,9 @@ class MapperTests(CatalogTestCase):
     def test_the_issue_is_matched_by_publishing_and_number(self) -> None:
         issue = make_edition(publishing=self.publishing, number="7").issue
         proposal = build_proposal(metron.to_source_issue(METRON_ISSUE))
-        self.assertEqual(proposal.issue, {"id": issue.pk, "label": str(issue), "publishing_id": self.publishing.pk, "number": "7"})
+        self.assertEqual(
+            proposal.issue, {"id": issue.pk, "label": str(issue), "publishing_id": self.publishing.pk, "number": "7"}
+        )
 
     def test_variants_are_offered_with_what_their_names_say(self) -> None:
         proposal = build_proposal(metron.to_source_issue(metron_with_variants()))
@@ -217,7 +229,9 @@ class MapperTests(CatalogTestCase):
         source = comicvine.to_source_issue(
             {"issue": COMICVINE["issue"]["results"], "volume": COMICVINE["volume"]["results"]}
         )
-        self.assertEqual((source.publisher, source.series_year, source.series_volume, source.language), ("Marvel", 1976, None, ""))
+        self.assertEqual(
+            (source.publisher, source.series_year, source.series_volume, source.language), ("Marvel", 1976, None, "")
+        )
         self.assertEqual(
             source.description,
             "The Champion challenges Earth's mightiest heroes & more.\nSecond paragraph.\nSame paragraph, new line.",
@@ -275,9 +289,12 @@ class MetronClientTests(CatalogTestCase):
 
     def test_unreadable_answers(self) -> None:
         for body in (b"<html>maintenance</html>", json.dumps([1, 2]).encode()):
-            with self.subTest(body=body[:10]), mock.patch(OPEN_URL, return_value=FakeResponse(body)):
-                with self.assertRaises(BadResponse):
-                    metron.fetch_issue(2)
+            with (
+                self.subTest(body=body[:10]),
+                mock.patch(OPEN_URL, return_value=FakeResponse(body)),
+                self.assertRaises(BadResponse),
+            ):
+                metron.fetch_issue(2)
 
     def test_own_rate_limit_stops_before_requesting(self) -> None:
         with (
@@ -402,14 +419,20 @@ class CatalogLookupViewTests(CatalogTestCase):
 
     def test_invalid_input_and_source_errors_are_json(self) -> None:
         self.client.force_login(self.manager)
-        for params in ({"source": "metron", "id": "abc"}, {"source": "gcd", "id": "1"}, {"source": "metron", "id": "0"}):
+        for params in (
+            {"source": "metron", "id": "abc"},
+            {"source": "gcd", "id": "1"},
+            {"source": "metron", "id": "0"},
+        ):
             with self.subTest(params=params):
                 response = self.client.get(self.url, params)
                 self.assertEqual(response.status_code, 400)
                 self.assertIn("error", response.json())
         with mock.patch(OPEN_URL, side_effect=http_error("https://metron.cloud/api/issue/9/", 404)):
             response = self.client.get(self.url, {"source": "metron", "id": "9"})
-        self.assertEqual((response.status_code, response.json()), (404, {"error": "Metron has no issue with the id 9."}))
+        self.assertEqual(
+            (response.status_code, response.json()), (404, {"error": "Metron has no issue with the id 9."})
+        )
 
     @override_settings(**NO_CREDENTIALS)
     def test_disabled_without_credentials(self) -> None:
@@ -459,7 +482,9 @@ class ImportedEditionSaveTests(CatalogTestCase):
 
     def test_the_imported_cover_is_downloaded_on_save(self) -> None:
         with mock.patch(OPEN_URL, return_value=FakeResponse(png_bytes())) as open_url:
-            response = self.client.post(reverse("manage_edition_new"), self.new_edition_data(catalog_cover_url=COVER_URL))
+            response = self.client.post(
+                reverse("manage_edition_new"), self.new_edition_data(catalog_cover_url=COVER_URL)
+            )
         self.assertEqual(response.status_code, 302)
         edition = Edition.objects.get(publishing=self.publishing, number="7")
         self.assertTrue(edition.image.name.endswith(".jpg"))  # processed like an uploaded cover
@@ -484,7 +509,9 @@ class ImportedEditionSaveTests(CatalogTestCase):
         for answer, message in cases:
             kwargs = {"side_effect": answer} if isinstance(answer, Exception) else {"return_value": answer}
             with self.subTest(message=message), mock.patch(OPEN_URL, **kwargs):
-                response = self.client.post(reverse("manage_edition_new"), self.new_edition_data(catalog_cover_url=COVER_URL))
+                response = self.client.post(
+                    reverse("manage_edition_new"), self.new_edition_data(catalog_cover_url=COVER_URL)
+                )
                 self.assertEqual(response.status_code, 200)
                 self.assertContains(response, message[:30])
         self.assertFalse(Edition.objects.exists())
@@ -535,7 +562,9 @@ class ImportedEditionSaveTests(CatalogTestCase):
     def test_an_id_of_another_issue_is_refused(self) -> None:
         other = make_edition(publishing=make_publishing(publishing_title="Other"), number="1").issue
         Issue.objects.filter(pk=other.pk).update(metron_id=15439)
-        response = self.client.post(reverse("manage_edition_new"), self.new_edition_data(**{"issue_data-metron_id": "15439"}))
+        response = self.client.post(
+            reverse("manage_edition_new"), self.new_edition_data(**{"issue_data-metron_id": "15439"})
+        )
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Another issue already has this Metron ID.")
         self.assertFalse(Edition.objects.filter(publishing=self.publishing).exists())
@@ -611,7 +640,12 @@ class IdentifierProposalTests(CatalogTestCase):
         Issue.objects.filter(pk=taken.pk).update(comicvine_id=21801)
         target = make_edition().issue
         change_request = submit(
-            author=make_user(), model=Issue, changes={"comicvine_id": 21801}, label=str(target), reason="CV", target=target
+            author=make_user(),
+            model=Issue,
+            changes={"comicvine_id": 21801},
+            label=str(target),
+            reason="CV",
+            target=target,
         )
         with self.assertRaisesMessage(ValidationError, "Comic Vine ID"):
             approve(change_request, user=make_user(role=ADMINISTRATORS))
@@ -632,7 +666,8 @@ class IdentificationPanelTests(ComiTestCase):
         response = self.client.get(reverse("comics_edition_detail", args=[self.edition.pk]))
         self.assertContains(response, "Identification numbers")
         self.assertContains(
-            response, 'href="https://comicvine.gamespot.com/issue/4000-21801/" target="_blank" rel="noopener noreferrer"'
+            response,
+            'href="https://comicvine.gamespot.com/issue/4000-21801/" target="_blank" rel="noopener noreferrer"',
         )
         self.assertContains(response, "(opens in a new tab)", count=2)
         self.assertContains(response, 'href="https://www.comics.org/issue/35962/"')
@@ -658,7 +693,7 @@ class IdentificationPanelTests(ComiTestCase):
         response = self.client.get(reverse("manage_edition_edit", args=[self.edition.pk]))
         self.assertContains(response, "Identification numbers")
         self.assertContains(response, 'href="https://www.comics.org/issue/35962/"')
-        self.assertContains(response, 'name="issue_data-shown" value="%s"' % self.edition.issue_id)
+        self.assertContains(response, f'name="issue_data-shown" value="{self.edition.issue_id}"')
 
 
 # ---------- Robustness: request errors, secrets in tracebacks, reverts, creators ----------

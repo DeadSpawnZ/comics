@@ -4,8 +4,8 @@ from unittest import mock
 
 from PIL import Image
 
-from comics.models import collections as collection_models
 from comics.models import GeekCollectable
+from comics.models import collections as collection_models
 
 from .base import ComiTestCase
 from .factories import image_upload, make_dealer
@@ -30,7 +30,9 @@ class GeekCollectableImageTests(ComiTestCase):
         stored_name = item.image.name
 
         item.description = "Edited"
-        with mock.patch.object(collection_models, "generate_image_jpeg", wraps=collection_models.generate_image_jpeg) as convert:
+        with mock.patch.object(
+            collection_models, "generate_image_jpeg", wraps=collection_models.generate_image_jpeg
+        ) as convert:
             item.save()
             GeekCollectable.objects.get(pk=item.pk).save()  # fresh instance, unchanged image
 
@@ -42,7 +44,9 @@ class GeekCollectableImageTests(ComiTestCase):
         old_name = item.image.name
 
         item.image = image_upload("new.png", mode="RGB")
-        with mock.patch.object(collection_models, "generate_image_jpeg", wraps=collection_models.generate_image_jpeg) as convert:
+        with mock.patch.object(
+            collection_models, "generate_image_jpeg", wraps=collection_models.generate_image_jpeg
+        ) as convert:
             item.save()
 
         convert.assert_called_once()

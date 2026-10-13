@@ -46,9 +46,9 @@ from django.db import transaction
 from django.db.models import (
     SET_NULL,
     BooleanField,
+    Field,
     FileField,
     ForeignKey,
-    Field,
     ManyToManyField,
     Model,
     QuerySet,

@@ -159,9 +159,7 @@ def build_proposal(source_issue: SourceIssue, series: SeriesLoaders | None = Non
     new_publishing = None
     if publishing is None and source_issue.series_name:
         details = series.details(editorial is None) if series else SourceSeries()
-        details = replace(
-            details, comicvine_volume_id=comicvine_volume_id, gcd_series_id=series_ids.gcd_series_id
-        )
+        details = replace(details, comicvine_volume_id=comicvine_volume_id, gcd_series_id=series_ids.gcd_series_id)
         new_publishing = propose_publishing(source_issue, details, editorial)
     issue, conflicts = match_issue(source_issue, publishing)
     for other in conflicts:
@@ -177,19 +175,14 @@ def build_proposal(source_issue: SourceIssue, series: SeriesLoaders | None = Non
         # drawn by the interior artists, so those are proposed for it.
         main_cover = [credit.name for credit in cover_credits if credit.is_story]
         warnings.append(
-            _(
-                "%(source)s lists the artists of all the covers together: check the cover artists of "
-                "the cover you save."
-            )
+            _("%(source)s lists the artists of all the covers together: check the cover artists of the cover you save.")
             % {"source": source_issue.source_name}
         )
     else:
         main_cover = [credit.name for credit in cover_credits]
     cover_artists, unmatched_cover_artists = artists.match(main_cover)
 
-    variants = [
-        _variant(variant, index, cover_credits, artists) for index, variant in enumerate(source_issue.variants)
-    ]
+    variants = [_variant(variant, index, cover_credits, artists) for index, variant in enumerate(source_issue.variants)]
 
     cover_url = source_issue.image if is_allowed_cover_url(source_issue.image) else ""
     if source_issue.image and not cover_url:
@@ -321,9 +314,7 @@ def _edition_values(source_issue: SourceIssue, warnings: list[str]) -> dict[str,
     if source_issue.number:
         values["number"] = source_issue.number
         if len(source_issue.number) > Edition._meta.get_field("number").max_length:
-            warnings.append(
-                _("The number “%(number)s” is longer than Comi allows.") % {"number": source_issue.number}
-            )
+            warnings.append(_("The number “%(number)s” is longer than Comi allows.") % {"number": source_issue.number})
     if source_issue.store_date:
         values["release_date"] = source_issue.store_date.isoformat()
     elif source_issue.cover_date:

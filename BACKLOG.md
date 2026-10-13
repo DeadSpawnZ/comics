@@ -38,7 +38,7 @@ Administradores aprueban. Diseño acordado con el usuario:
   aprobar solicitudes, paginación del historial, miniatura sin imagen, artistas protegidos (`0112`)
   e integración con Metron/Comic Vine (`0113`). Respaldo `backups/comic-20261010-220738.sql`, imagen
   anterior `comi:pre-catalog`. Falta probar en el navegador el importador y el panel de identificadores.
-- **Pendiente para cerrar la rama:** la pasada de Ruff y los PR `feat/change-requests` → `develop` →
+- **Pendiente para cerrar la rama:** los PR `feat/change-requests` → `develop` →
   `master`.
 - **Decisiones tomadas por el implementador, pendientes de confirmar por el usuario:** nadie revisa
   sus propias solicitudes; los revisores no pueden rechazar una solicitud ya validada; el autor no ve
@@ -177,13 +177,13 @@ cron/`schtasks` y habrá que reescribirla cuando se haga.
   (`# isort: off`) reproduce el orden de registro de los modelos: no reordenarlo.
 - Dos archivos JS tienen las URLs `/ajax/...` escritas a mano en lugar de usar `{% url %}`:
   `comics/static/js/custom/collection_form_events.js`, `fill_release_date.js`.
-- `edition_form` y `_clean_content` en `comics/views/manage_editions.py` son demasiado complejas
-  (`# noqa: C901`); dividirlas ahora que hay tests.
+- `edition_form` y `_clean_content` en `comics/views/manage_editions.py` y `evaluate` en
+  `comics/achievements/engine.py` son demasiado complejas (`# noqa: C901`); dividirlas ahora que hay
+  tests.
+- Las excepciones de `comics/catalog_sources/errors.py` y `InvalidTransition` no llevan el sufijo
+  `Error` (`# noqa: N818`); renombrarlas si se toca esa zona.
 - La re-evaluación de logros tras cambiar el contenido de una edición está duplicada en
   `manage_editions._schedule_owners_after_content_change` y `versions.schedule_edition_owners`.
-- **Pasada de Ruff pendiente** de todo lo fusionado desde la última (el trabajo de
-  `feat/user-profile` entró en `develop` sin ella). Hacerla una vez al terminar la feature actual y
-  commitearla como `style: apply ruff format and fixes`.
 
 ## Limitaciones conocidas y seguridad
 

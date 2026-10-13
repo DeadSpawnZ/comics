@@ -14,7 +14,6 @@ from django.utils.translation import gettext_lazy as _
 from ..models import Profile, validate_phone
 from .base import LimitedImageField, _outlined_text_fields
 
-
 # ---------- Accounts: sign in, self-registration and profile ----------
 
 

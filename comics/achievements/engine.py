@@ -32,7 +32,7 @@ def level_for(rule: Rule, achievement: Achievement, progress: int) -> int:
     return max((tier.level for tier in achievement.tiers.all() if progress >= tier.threshold), default=0)
 
 
-def evaluate(
+def evaluate(  # noqa: C901
     user: User,
     rules: Iterable[str] | None = None,
     *,

@@ -19,6 +19,7 @@ from comics.achievements.engine import (
     schedule_reading_arc_owners,
 )
 from comics.achievements.registry import Event, rule_keys_for
+from comics.history import record_change
 from comics.models import (
     CollectedIssue,
     Collection,
@@ -28,7 +29,6 @@ from comics.models import (
     ReadingArcEntry,
     Signature,
 )
-from comics.history import record_change
 from comics.roles import assign_default_role
 
 

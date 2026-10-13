@@ -16,8 +16,8 @@ from pathlib import Path
 from django.contrib.auth.models import Group, Permission, User
 from django.contrib.contenttypes.models import ContentType
 from django.core.management import call_command
-from django.utils import timezone
 from django.test import TransactionTestCase, override_settings
+from django.utils import timezone
 
 import dump
 from comics import change_requests
@@ -39,8 +39,8 @@ from comics.models import (
     Profile,
     UserAchievement,
 )
-from comics.versions import revert_to_version
 from comics.roles import ACCESS_MANAGEMENT, ADMINISTRATORS, COLLECTORS, REVIEWERS, ROLE_PERMISSIONS, ensure_roles
+from comics.versions import revert_to_version
 
 from .base import TEST_MEDIA_ROOT, TEST_STORAGES, ComiTestCase
 from .factories import make_achievement, make_category, make_collection, make_edition, make_editorial, make_user
@@ -387,9 +387,7 @@ class RestoreTests(TransactionTestCase):
             content = json.loads(dump_file.read_text(encoding="utf-8"))
             entry = next(item for item in content if item["model"] == "comics.editorialalias")
             self.assertNotIn("pk", entry)  # matched by its name on load
-            self.assertEqual(
-                entry["fields"], {"editorial": marvel.pk, "name": "Marvel", "key": "marvel"}
-            )
+            self.assertEqual(entry["fields"], {"editorial": marvel.pk, "name": "Marvel", "key": "marvel"})
 
             call_command("flush", interactive=False, verbosity=0)
             call_command("loaddata", str(dump_file), verbosity=0)

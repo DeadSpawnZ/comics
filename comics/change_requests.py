@@ -25,7 +25,7 @@ from django.utils.translation import gettext as _
 
 from comics.achievements.engine import schedule
 from comics.achievements.registry import Event
-from comics.history import history_model, versioned_m2m_fields, version_relation_rows, versions_of
+from comics.history import history_model, version_relation_rows, versioned_m2m_fields, versions_of
 from comics.models import ChangeRequest, Edition, Issue, Notification
 from comics.roles import can_approve_change_requests, can_review_change_requests, can_validate_change_requests
 from comics.versions import EMPTY, RelatedNames, apply_changes, display_value, field_label
@@ -109,7 +109,7 @@ def submit(
 # ---------- Steps ----------
 
 
-class InvalidTransition(ValidationError):
+class InvalidTransition(ValidationError):  # noqa: N818
     """The step is not possible for the request in its current status."""
 
 

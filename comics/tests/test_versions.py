@@ -157,7 +157,9 @@ class RecordingTests(ComiTestCase):
 
         # Changed from the other side of the relation (artist.covers): the edition gets the version.
         self.artist.covers.add(edition)
-        self.assertEqual(list(edition_versions(edition)[0].cover_artists.values_list("artist_id", flat=True)), [self.artist.pk])
+        self.assertEqual(
+            list(edition_versions(edition)[0].cover_artists.values_list("artist_id", flat=True)), [self.artist.pk]
+        )
 
     def test_a_batch_coalesces_the_changes_of_a_row(self) -> None:
         edition = make_edition()
@@ -211,7 +213,12 @@ class RevertTests(ComiTestCase):
                 self.assertEqual(len(edition_versions(self.edition)), count + 1)
                 self.assertEqual(edition_versions(self.edition)[0], reverted)
                 self.assertEqual(
-                    (reverted.reverted_to, reverted.history_user, reverted.history_change_reason, reverted.history_type),
+                    (
+                        reverted.reverted_to,
+                        reverted.history_user,
+                        reverted.history_change_reason,
+                        reverted.history_type,
+                    ),
                     (target, self.manager, "Back", CHANGED),
                 )
 
@@ -239,11 +246,15 @@ class RevertTests(ComiTestCase):
         revert_to_version(compilation, user=self.manager)
         edition = Edition.objects.get(pk=self.edition.pk)
         self.assertIsNone(edition.issue_id)
-        self.assertEqual(list(edition.collected_entries.values_list("issue_id", "order")), [(first.pk, 1), (second.pk, 2)])
+        self.assertEqual(
+            list(edition.collected_entries.values_list("issue_id", "order")), [(first.pk, 1), (second.pk, 2)]
+        )
         self.assertEqual(list(edition.cover_artists.all()), [artist])
 
         revert_to_version(reordered, user=self.manager)
-        self.assertEqual(list(edition.collected_entries.values_list("issue_id", "order")), [(third.pk, 1), (first.pk, 2)])
+        self.assertEqual(
+            list(edition.collected_entries.values_list("issue_id", "order")), [(third.pk, 1), (first.pk, 2)]
+        )
 
         revert_to_version(single, user=self.manager)
         edition = Edition.objects.get(pk=self.edition.pk)
@@ -362,7 +373,9 @@ class HistoryPageTests(ComiTestCase):
         self.assertEqual(self.client.get(self.url).status_code, 302)  # to the login
         self.client.force_login(make_user(username="collector"))
         self.assertEqual(self.client.get(self.url).status_code, 403)
-        revert_url = reverse("manage_edition_revert", args=[self.edition.pk, edition_versions(self.edition)[0].history_id])
+        revert_url = reverse(
+            "manage_edition_revert", args=[self.edition.pk, edition_versions(self.edition)[0].history_id]
+        )
         self.assertEqual(self.client.post(revert_url).status_code, 403)
         self.client.force_login(self.manager)
         self.assertEqual(self.client.get(self.url).status_code, 200)
@@ -382,7 +395,9 @@ class HistoryPageTests(ComiTestCase):
         artist = Artist.objects.create(name="Jim Lee")
         other = make_publishing(publishing_title="Batman", year=2011)
         apply_changes(self.edition, {"notes": "second", "cover_artists": [artist]}, user=self.manager, reason="Typo")
-        apply_changes(self.edition, {"publishing": other, "rarity": "legendary", "cover_artists": []}, user=self.manager)
+        apply_changes(
+            self.edition, {"publishing": other, "rarity": "legendary", "cover_artists": []}, user=self.manager
+        )
         self.client.force_login(self.manager)
         response = self.client.get(self.url)
         entries = response.context["page_obj"].object_list
@@ -392,7 +407,9 @@ class HistoryPageTests(ComiTestCase):
         changes = {change.label: (change.old, change.new) for change in latest.changes}
         self.assertEqual(changes["Rarity"], ("Common", "Legendary"))
         self.assertEqual(changes["Publishing"][1], "Batman (2011) 1st")
-        self.assertEqual([(c.label, c.added, c.removed) for c in latest.relation_changes], [("Cover artists", [], ["Jim Lee"])])
+        self.assertEqual(
+            [(c.label, c.added, c.removed) for c in latest.relation_changes], [("Cover artists", [], ["Jim Lee"])]
+        )
         self.assertEqual({c.label: (c.old, c.new) for c in middle.changes}, {"Notes": ("first", "second")})
         self.assertEqual(middle.reason, "Typo")
         self.assertEqual([entry.can_revert for entry in entries], [False, True, True])

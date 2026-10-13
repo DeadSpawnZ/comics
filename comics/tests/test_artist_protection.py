@@ -126,9 +126,7 @@ class HistoryTests(ComiTestCase):
         before = apply_changes(self.issue, {"creators": [self.first, self.second]}, user=self.admin)
         apply_changes(self.issue, {"creators": []}, user=self.admin)
 
-        self.assertEqual(
-            set(before.creators.values_list("artist_id", flat=True)), {self.first.pk, self.second.pk}
-        )
+        self.assertEqual(set(before.creators.values_list("artist_id", flat=True)), {self.first.pk, self.second.pk})
         revert_to_version(before, user=self.admin)
 
         self.assertEqual(set(Issue.objects.get(pk=self.issue.pk).creators.all()), {self.first, self.second})

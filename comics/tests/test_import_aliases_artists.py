@@ -57,7 +57,9 @@ class RequiredMarkersTests(ComiTestCase):
                 control = tag(self.html, f'name="{name}"')
                 self.assertIn('aria-required="true"', control)
                 self.assertIn(f'aria-describedby="id_{name}-hint"', control)
-                hint_div = re.search(rf'<div class="required-hint" id="id_{name}-hint"[^>]*>(.*?)</div>', self.html, re.S)
+                hint_div = re.search(
+                    rf'<div class="required-hint" id="id_{name}-hint"[^>]*>(.*?)</div>', self.html, re.S
+                )
                 self.assertIsNotNone(hint_div)
                 self.assertNotIn("hidden", hint_div.group(0).split(">")[0])
                 self.assertIn(hint, hint_div.group(1))
@@ -73,7 +75,9 @@ class RequiredMarkersTests(ComiTestCase):
         serie = tag(self.html, 'name="new_publishing-serie"')  # starts as "1st"
         self.assertIn('aria-required="true"', serie)
         self.assertNotIn("aria-describedby", serie)
-        self.assertRegex(self.html, r'<div class="required-hint" id="id_new_publishing-serie-hint" data-required-hint hidden>')
+        self.assertRegex(
+            self.html, r'<div class="required-hint" id="id_new_publishing-serie-hint" data-required-hint hidden>'
+        )
 
     def test_optional_fields_are_not_marked(self) -> None:
         for name in ("new_publishing-year", "new_publishing-metron_series_id"):
@@ -233,7 +237,12 @@ class AliasEndpointTests(CatalogTestCase):
         alias = EditorialAlias.objects.get()
         self.assertEqual(
             response.json(),
-            {"id": alias.pk, "name": "Marvel", "editorial": {"id": self.marvel.pk, "label": "Marvel Comics"}, "created": True},
+            {
+                "id": alias.pk,
+                "name": "Marvel",
+                "editorial": {"id": self.marvel.pk, "label": "Marvel Comics"},
+                "created": True,
+            },
         )
         entry = LogEntry.objects.get(content_type__model="editorialalias", object_id=str(alias.pk))
         self.assertEqual((entry.action_flag, entry.user_id), (ADDITION, self.manager.pk))
@@ -329,7 +338,9 @@ class ArtistCreateEndpointTests(ComiTestCase):
         response = self.post("jose  garcia", "Ron Wilson", "RON WILSON")
         artists = response.json()["artists"]
         ron = Artist.objects.get(name="Ron Wilson")
-        self.assertEqual([(item["id"], item["created"]) for item in artists], [(jose.pk, False), (ron.pk, True), (ron.pk, False)])
+        self.assertEqual(
+            [(item["id"], item["created"]) for item in artists], [(jose.pk, False), (ron.pk, True), (ron.pk, False)]
+        )
         self.assertEqual(artists[0]["name"], "José García")
         again = self.post("Ron Wilson").json()["artists"]
         self.assertEqual((again[0]["id"], again[0]["created"]), (ron.pk, False))

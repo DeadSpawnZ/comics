@@ -14,7 +14,6 @@ from ..models import Issue
 from .base import MaterialFieldsMixin
 from .catalog import EditionManageForm, publishing_label, publishings_for_select
 
-
 # ---------- Change requests ----------
 
 

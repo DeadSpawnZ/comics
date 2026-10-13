@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Self
 
+import simple_history
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
@@ -36,7 +37,6 @@ from django.db.models import (
 )
 from django.utils.functional import Promise
 from django.utils.translation import gettext_lazy as _
-import simple_history
 from PIL import Image
 
 from ..helper import name_key
@@ -133,15 +133,15 @@ class EditorialAlias(Model):
     def __str__(self) -> str:
         return self.name
 
-    def natural_key(self) -> tuple[str]:
-        return (self.name,)
-
-    natural_key.dependencies = ["comics.editorial"]
-
     def save(self, *args: Any, **kwargs: Any) -> None:
         self.name = " ".join(self.name.split())
         self.key = name_key(self.name)[:255]
         super().save(*args, **kwargs)
+
+    def natural_key(self) -> tuple[str]:
+        return (self.name,)
+
+    natural_key.dependencies = ["comics.editorial"]
 
     def clean(self) -> None:
         self.name = " ".join((self.name or "").split())

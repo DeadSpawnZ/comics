@@ -16,7 +16,6 @@ from ..achievements.windows import ALL_WINDOW_KINDS, WindowKind, window_kinds_of
 from ..models import Achievement, AchievementCategory, AchievementTier, unique_code
 from .base import LimitedImageField, _material_widgets, _outlined_text_fields
 
-
 # ---------- Gestión: achievements ----------
 
 

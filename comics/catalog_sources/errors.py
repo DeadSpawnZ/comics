@@ -15,41 +15,41 @@ class CatalogError(Exception):
         self.message = message
 
 
-class NotConfigured(CatalogError):
+class NotConfigured(CatalogError):  # noqa: N818
     """The source has no credentials in the settings."""
 
     status = 503
 
 
-class NotFound(CatalogError):
+class NotFound(CatalogError):  # noqa: N818
     status = 404
 
 
-class AuthFailed(CatalogError):
+class AuthFailed(CatalogError):  # noqa: N818
     """The source rejected the credentials."""
 
     status = 502
 
 
-class RateLimited(CatalogError):
+class RateLimited(CatalogError):  # noqa: N818
     """The source (or our own limit, see comics.catalog_sources.http.throttle) asks to slow down."""
 
     status = 429
 
 
-class Unavailable(CatalogError):
+class Unavailable(CatalogError):  # noqa: N818
     """Timeout, connection error or server error at the source."""
 
     status = 504
 
 
-class BadResponse(CatalogError):
+class BadResponse(CatalogError):  # noqa: N818
     """The source answered something we cannot read (not JSON, too large, unexpected shape)."""
 
     status = 502
 
 
-class CoverRejected(CatalogError):
+class CoverRejected(CatalogError):  # noqa: N818
     """A cover URL that is not allowed, or a download that is not an acceptable picture."""
 
     status = 400

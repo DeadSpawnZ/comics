@@ -19,8 +19,8 @@ from django.urls import reverse
 
 from comics.catalog_sources import comicvine, metron
 from comics.catalog_sources.mapper import SeriesLoaders, build_proposal
-from comics.catalog_sources.types import SourceSeries
 from comics.catalog_sources.service import load_proposal
+from comics.catalog_sources.types import SourceSeries
 from comics.forms import TitleDialogForm
 from comics.models import Editorial, Publishing, Title
 from comics.roles import ADMINISTRATORS
@@ -29,7 +29,14 @@ from .base import ComiTestCase
 from .factories import make_editorial, make_publishing, make_user
 from .test_catalog_sources import COMICVINE, METRON_ISSUE, OPEN_URL, CatalogTestCase, http_error, json_response
 
-SERIES = {"id": 1440, "name": "Marvel Two-in-One Annual", "volume": 1, "year_began": 1976, "cv_id": 2865, "gcd_id": 4321}
+SERIES = {
+    "id": 1440,
+    "name": "Marvel Two-in-One Annual",
+    "volume": 1,
+    "year_began": 1976,
+    "cv_id": 2865,
+    "gcd_id": 4321,
+}
 ISSUE_LIST = {
     "count": 3,
     "next": None,
@@ -152,7 +159,9 @@ class SeriesProposalTests(CatalogTestCase):
         marvel = make_editorial(name="MARVEL")
         open_url = metron_answers()
         proposal = self.load(open_url)["new_publishing"]
-        self.assertEqual((proposal["editorial"], proposal["new_editorial"]), ({"id": marvel.pk, "name": "MARVEL"}, None))
+        self.assertEqual(
+            (proposal["editorial"], proposal["new_editorial"]), ({"id": marvel.pk, "name": "MARVEL"}, None)
+        )
         self.assertFalse(any("/publisher/" in url for url in requested(open_url)))
 
     def test_only_the_series_ids_are_requested_when_the_publishing_matches(self) -> None:
@@ -191,7 +200,9 @@ class SeriesProposalTests(CatalogTestCase):
         proposal = self.load(metron_answers())
         self.assertEqual(proposal["publishing"]["id"], response.json()["id"])
         self.assertIsNone(proposal["new_publishing"])
-        self.assertEqual(proposal["warnings"], ["Only the cover date is known: the release date is usually a few months earlier."])
+        self.assertEqual(
+            proposal["warnings"], ["Only the cover date is known: the release date is usually a few months earlier."]
+        )
 
     def test_conflicting_series_ids_keep_metron_and_warn(self) -> None:
         by_metron = make_publishing(publishing_title="Marvel Two-in-One Annual", year=1976, metron_series_id=1440)
@@ -267,7 +278,9 @@ class MatchBySeriesIdTests(CatalogTestCase):
 
     def test_the_comic_vine_volume_id_matches(self) -> None:
         held = make_publishing(publishing_title="Renamed", comicvine_volume_id=2865)
-        source = comicvine.to_source_issue({"issue": COMICVINE["issue"]["results"], "volume": COMICVINE["volume"]["results"]})
+        source = comicvine.to_source_issue(
+            {"issue": COMICVINE["issue"]["results"], "volume": COMICVINE["volume"]["results"]}
+        )
         self.assertEqual(source.comicvine_volume_id, 2865)
         self.assertEqual(build_proposal(source).publishing["id"], held.pk)
 
@@ -353,7 +366,9 @@ class CreateEndpointTests(ComiTestCase):
 
     def test_creates_an_editorial(self) -> None:
         self.client.force_login(self.manager)
-        response = self.post("manage_editorial_create_api", {"new_editorial-name": "Image", "new_editorial-country": "US"})
+        response = self.post(
+            "manage_editorial_create_api", {"new_editorial-name": "Image", "new_editorial-country": "US"}
+        )
         editorial = Editorial.objects.get(name="Image")
         self.assertEqual(response.json(), {"id": editorial.pk, "label": "Image"})
         self.assertEqual(editorial.country, "US")
@@ -362,7 +377,9 @@ class CreateEndpointTests(ComiTestCase):
     def test_editorial_errors(self) -> None:
         make_editorial(name="Marvel")
         self.client.force_login(self.manager)
-        response = self.post("manage_editorial_create_api", {"new_editorial-name": "MARVEL", "new_editorial-country": "FR"})
+        response = self.post(
+            "manage_editorial_create_api", {"new_editorial-name": "MARVEL", "new_editorial-country": "FR"}
+        )
         self.assertEqual(response.status_code, 400)
         errors = response.json()["errors"]
         self.assertEqual(errors["name"], ["An editorial with that name already exists."])
@@ -385,7 +402,9 @@ class CreateEndpointTests(ComiTestCase):
         self.assertEqual(
             (publishing.metron_series_id, publishing.comicvine_volume_id, publishing.gcd_series_id), (1440, 2865, 4321)
         )
-        self.assertTrue(LogEntry.objects.filter(content_type__model="publishing", object_id=str(publishing.pk)).exists())
+        self.assertTrue(
+            LogEntry.objects.filter(content_type__model="publishing", object_id=str(publishing.pk)).exists()
+        )
 
     def test_the_language_and_start_date_must_be_chosen(self) -> None:
         self.client.force_login(self.manager)
@@ -519,17 +538,23 @@ class PublishingSeriesIdsTests(ComiTestCase):
             "year": "2012",
             "editorials": [make_editorial().pk],
         }
-        response = self.client.post(url, {**data, "metron_series_id": "5", "comicvine_volume_id": "99", "gcd_series_id": "7"})
+        response = self.client.post(
+            url, {**data, "metron_series_id": "5", "comicvine_volume_id": "99", "gcd_series_id": "7"}
+        )
         self.assertContains(response, "Another publishing already has this Comic Vine volume ID.")
         self.client.post(url, {**data, "metron_series_id": "5", "comicvine_volume_id": "", "gcd_series_id": "7"})
         publishing.refresh_from_db()
         # GCD's id may repeat (only indexed); Metron's and Comic Vine's are unique.
-        self.assertEqual((publishing.metron_series_id, publishing.comicvine_volume_id, publishing.gcd_series_id), (5, None, 7))
+        self.assertEqual(
+            (publishing.metron_series_id, publishing.comicvine_volume_id, publishing.gcd_series_id), (5, None, 7)
+        )
         self.assertEqual(taken.gcd_series_id, 7)
 
     def test_identification_numbers_order(self) -> None:
         publishing = Publishing(gcd_series_id=3, metron_series_id=1)
-        self.assertEqual([(item.source, item.value) for item in publishing.identification_numbers()], [("Metron", 1), ("GCD", 3)])
+        self.assertEqual(
+            [(item.source, item.value) for item in publishing.identification_numbers()], [("Metron", 1), ("GCD", 3)]
+        )
 
 
 class SeriesIdFieldsTests(ComiTestCase):

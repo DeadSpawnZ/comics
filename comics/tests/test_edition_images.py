@@ -4,8 +4,7 @@ thumbnail too."""
 
 from unittest import mock
 
-from comics.models import catalog
-from comics.models import Edition
+from comics.models import Edition, catalog
 
 from .base import ComiTestCase
 from .factories import image_upload, make_edition, make_publishing

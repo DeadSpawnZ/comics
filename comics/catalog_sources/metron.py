@@ -111,7 +111,9 @@ def fetch_series_ids(source_issue: SourceIssue) -> SourceSeries:
         SERIES_CACHE_SECONDS,
         lambda data: parse_int(data.get("id")) == series_id,
     )
-    return SourceSeries(comicvine_volume_id=parse_int(series.get("cv_id")), gcd_series_id=parse_int(series.get("gcd_id")))
+    return SourceSeries(
+        comicvine_volume_id=parse_int(series.get("cv_id")), gcd_series_id=parse_int(series.get("gcd_id"))
+    )
 
 
 def fetch_series(source_issue: SourceIssue, with_publisher: bool) -> SourceSeries:

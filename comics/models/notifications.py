@@ -33,7 +33,6 @@ from .achievements import Achievement
 from .base import localized
 from .change_requests import ChangeRequest
 
-
 # ---------- Notifications ----------
 # What users are told about (achievements, announcements from Gestión, the steps of their change
 # requests), shown under the navbar bell. A notification stores references, never texts: it is
@@ -43,9 +42,7 @@ from .change_requests import ChangeRequest
 def validate_site_path(value: str) -> None:
     """Links stay on this site: a path starting with a single "/" (no scheme, no host)."""
     if not value.startswith("/") or not url_has_allowed_host_and_scheme(value, allowed_hosts=None):
-        raise ValidationError(
-            _("Enter a path on this site that starts with “/”, e.g. /comics/."), code="external_link"
-        )
+        raise ValidationError(_("Enter a path on this site that starts with “/”, e.g. /comics/."), code="external_link")
 
 
 class Announcement(Model):
@@ -168,9 +165,7 @@ class Notification(Model):
     # this cascade never fires; it keeps a hand-made deletion from failing on notifications.
     achievement = ForeignKey(Achievement, on_delete=CASCADE, null=True, blank=True, related_name="notifications")
     announcement = ForeignKey(Announcement, on_delete=CASCADE, null=True, blank=True, related_name="notifications")
-    change_request = ForeignKey(
-        ChangeRequest, on_delete=CASCADE, null=True, blank=True, related_name="notifications"
-    )
+    change_request = ForeignKey(ChangeRequest, on_delete=CASCADE, null=True, blank=True, related_name="notifications")
     level = PositiveSmallIntegerField(null=True, blank=True)
     count = PositiveIntegerField(null=True, blank=True)
     created_at = DateTimeField(default=timezone.now)

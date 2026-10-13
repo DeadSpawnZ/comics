@@ -27,7 +27,6 @@ from django.utils.translation import gettext_lazy as _
 from ..roles import APPROVE_CHANGE_REQUESTS, VALIDATE_CHANGE_REQUESTS
 from .catalog import Edition, Issue
 
-
 # ---------- Change requests ----------
 # Collectors propose new issues and editions, or corrections to existing ones; Reviewers validate
 # the proposals and Administrators approve them (see comics.change_requests). The history of the

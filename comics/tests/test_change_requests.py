@@ -141,7 +141,9 @@ class SubmitTests(ChangeRequestTestCase):
         self.assertEqual(versions_of(Edition, self.edition.pk).count(), 1)
 
     def test_a_correction_without_changes_is_refused(self) -> None:
-        response = self.client.post(reverse("comics_edition_suggest", args=[self.edition.pk]), edition_data(self.edition))
+        response = self.client.post(
+            reverse("comics_edition_suggest", args=[self.edition.pk]), edition_data(self.edition)
+        )
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Change at least one value")
         self.assertFalse(ChangeRequest.objects.exists())
@@ -206,7 +208,9 @@ class SubmitTests(ChangeRequestTestCase):
         )
 
         # An issue that already exists cannot be proposed again.
-        response = self.client.post(url, {**data, "number": self.edition.issue.number, "publishing": self.edition.publishing_id})
+        response = self.client.post(
+            url, {**data, "number": self.edition.issue.number, "publishing": self.edition.publishing_id}
+        )
         self.assertContains(response, "An issue with that publishing and number already exists.")
         self.assertEqual(ChangeRequest.objects.count(), 1)
 
@@ -323,9 +327,7 @@ class PermissionTests(ChangeRequestTestCase):
         for step in ("validate", "approve", "reject"):
             with self.subTest(step=step):
                 self.assertEqual(self.client.get(reverse(f"review_{step}", args=[change_request.pk])).status_code, 405)
-        self.assertEqual(
-            self.client.get(reverse("comics_request_withdraw", args=[change_request.pk])).status_code, 405
-        )
+        self.assertEqual(self.client.get(reverse("comics_request_withdraw", args=[change_request.pk])).status_code, 405)
 
     def test_only_the_author_withdraws_and_only_while_pending(self) -> None:
         change_request = self.update_request()
@@ -478,15 +480,15 @@ class ApprovalTests(ChangeRequestTestCase):
             with self.subTest(model=model.__name__):
                 names = {field.name for field in history_model(model)._meta.get_fields()}
                 self.assertFalse({name for name in names if "request" in name})
-                related = {field.related_model for field in history_model(model)._meta.get_fields() if field.is_relation}
+                related = {
+                    field.related_model for field in history_model(model)._meta.get_fields() if field.is_relation
+                }
                 self.assertNotIn(ChangeRequest, related)
 
     def test_a_new_edition_is_created_with_a_created_version(self) -> None:
         publishing = make_publishing(publishing_title="Spawn")
         values = new_edition_data(publishing.pk, cover_artists=[self.artist.pk])
-        changes = {
-            name: values[name] for name in values if name not in ("reason", "evidence_url")
-        }
+        changes = {name: values[name] for name in values if name not in ("reason", "evidence_url")}
         change_request = submit(
             author=self.author, model=Edition, changes=changes, label="Spawn #7 B", reason="Missing"
         )
@@ -500,7 +502,9 @@ class ApprovalTests(ChangeRequestTestCase):
         entry = LogEntry.objects.get(content_type__model="edition", object_id=str(edition.pk))
         self.assertEqual((entry.user, entry.action_flag, entry.change_message), (self.admin, ADDITION, "Creada."))
         change_request = fresh(change_request)
-        self.assertEqual((change_request.target_pk, change_request.applied_history_id), (edition.pk, version.history_id))
+        self.assertEqual(
+            (change_request.target_pk, change_request.applied_history_id), (edition.pk, version.history_id)
+        )
         self.assertEqual(change_request.target_label, edition.short_name)
 
     def test_a_new_issue_is_created(self) -> None:
@@ -600,7 +604,9 @@ class ConflictTests(ChangeRequestTestCase):
         change_request = self.update_request(notes="Proposed notes")
         self.assertFalse(any(review.conflict for review in review_request(change_request).fields))
         self.client.force_login(self.admin)
-        self.assertNotContains(self.client.get(reverse("review_detail", args=[change_request.pk])), "Approving overwrites")
+        self.assertNotContains(
+            self.client.get(reverse("review_detail", args=[change_request.pk])), "Approving overwrites"
+        )
 
 
 class DeletedTargetTests(ChangeRequestTestCase):
@@ -683,9 +689,7 @@ class ReporteroTests(ChangeRequestTestCase):
             approve(change_request, user=self.admin)
         award = UserAchievement.objects.get(user=self.author, achievement__code="reportero")
         self.assertEqual(award.level, 1)
-        self.assertTrue(
-            Notification.objects.filter(recipient=self.author, kind=Notification.Kind.ACHIEVEMENT).exists()
-        )
+        self.assertTrue(Notification.objects.filter(recipient=self.author, kind=Notification.Kind.ACHIEVEMENT).exists())
         # The approver gets nothing for approving.
         self.assertFalse(UserAchievement.objects.filter(user=self.admin, achievement__code="reportero").exists())
 
@@ -733,7 +737,11 @@ class PageTests(ChangeRequestTestCase):
         self.assertContains(response, 'rel="noopener noreferrer nofollow"')
 
     def test_queue_filters_by_status_and_counts(self) -> None:
-        pending, validated, rejected = self.update_request(), self.update_request(notes="v"), self.update_request(notes="r")
+        pending, validated, rejected = (
+            self.update_request(),
+            self.update_request(notes="v"),
+            self.update_request(notes="r"),
+        )
         validate(validated, user=self.reviewer)
         reject(rejected, user=self.reviewer)
         self.client.force_login(self.reviewer)

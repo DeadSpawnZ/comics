@@ -32,7 +32,6 @@ from ..achievements.windows import CalendarWindow, clear_unused, window_errors
 from ..helper import square_png
 from .base import PictureModel, _random_name, localized
 
-
 # ---------- Achievements ----------
 # What an achievement is called, looks like, when it can be earned and how its levels are set
 # lives here (editable in Gestión); how it is earned lives in code (comics/achievements), tied by
