@@ -1,0 +1,148 @@
+"""The app's forms, one module per area, re-exported so `comics.forms.X` keeps working everywhere.
+
+Views, the admin and the tests import from `comics.forms`, so every public name stays available here
+(plus _number_key, which the collection entry views use to sort editions).
+Module dependencies run one way: base <- catalog <- collections and change_requests;
+base <- accounts, achievements and announcements."""
+
+from .accounts import (
+    DUPLICATE_EMAIL,
+    AvatarField,
+    AvatarForm,
+    LoginForm,
+    PersonalInfoForm,
+    PrivacyForm,
+    ProfilePasswordForm,
+    RegistrationForm,
+    unique_email,
+)
+from .achievements import (
+    WINDOW_FIELDS,
+    AchievementCategoryForm,
+    AchievementCreateForm,
+    AchievementForm,
+    AchievementIconField,
+    AchievementTierForm,
+    AchievementTierFormSet,
+    BaseAchievementTierFormSet,
+)
+from .announcements import AnnouncementCreateForm, AnnouncementForm, RoleChoiceField
+from .base import (
+    LimitedImageField,
+    MaterialFieldsMixin,
+    PlaceholderSelect,
+    RequiredHintsMixin,
+    UniqueNameMixin,
+    save_formset_reinserting,
+)
+from .catalog import (
+    CATALOG_ID_PATTERN,
+    COVER_EXTENSIONS,
+    MAX_CATALOG_ID,
+    NEWEST_PUBLISHINGS,
+    RECENT_PUBLISHINGS,
+    ArtistCreateForm,
+    CatalogCoverField,
+    CatalogLookupForm,
+    EditionForm,
+    EditionManageForm,
+    EditorialAliasForm,
+    EditorialDialogForm,
+    IssueSectionForm,
+    NameListField,
+    PublishingDialogForm,
+    PublishingManageForm,
+    RepeatableTextInput,
+    RevertForm,
+    TitleDialogForm,
+    catalog_cover,
+    publishing_choices,
+    publishing_label,
+    publishings_for_select,
+    recent_publishings,
+)
+from .change_requests import EditionProposalForm, IssueProposalForm, ProposalForm, ReviewNoteForm
+from .collections import (
+    CollectionEntryForm,
+    CollectionForm,
+    ReadingArcForm,
+    SignatureForm,
+    SignatureFormSet,
+    _number_key,
+    available_purchases,
+    edition_label,
+    purchase_label,
+)
+
+__all__ = [
+    # base
+    "LimitedImageField",
+    "MaterialFieldsMixin",
+    "PlaceholderSelect",
+    "RequiredHintsMixin",
+    "UniqueNameMixin",
+    "save_formset_reinserting",
+    # catalog
+    "CATALOG_ID_PATTERN",
+    "COVER_EXTENSIONS",
+    "MAX_CATALOG_ID",
+    "NEWEST_PUBLISHINGS",
+    "RECENT_PUBLISHINGS",
+    "ArtistCreateForm",
+    "CatalogCoverField",
+    "CatalogLookupForm",
+    "EditionForm",
+    "EditionManageForm",
+    "EditorialAliasForm",
+    "EditorialDialogForm",
+    "IssueSectionForm",
+    "NameListField",
+    "PublishingDialogForm",
+    "PublishingManageForm",
+    "RepeatableTextInput",
+    "RevertForm",
+    "TitleDialogForm",
+    "catalog_cover",
+    "publishing_choices",
+    "publishing_label",
+    "publishings_for_select",
+    "recent_publishings",
+    # change_requests
+    "EditionProposalForm",
+    "IssueProposalForm",
+    "ProposalForm",
+    "ReviewNoteForm",
+    # collections
+    "CollectionEntryForm",
+    "CollectionForm",
+    "ReadingArcForm",
+    "SignatureForm",
+    "SignatureFormSet",
+    "_number_key",
+    "available_purchases",
+    "edition_label",
+    "purchase_label",
+    # accounts
+    "DUPLICATE_EMAIL",
+    "AvatarField",
+    "AvatarForm",
+    "LoginForm",
+    "PersonalInfoForm",
+    "PrivacyForm",
+    "ProfilePasswordForm",
+    "RegistrationForm",
+    "unique_email",
+    # achievements
+    "WINDOW_FIELDS",
+    "AchievementCategoryForm",
+    "AchievementCreateForm",
+    "AchievementForm",
+    "AchievementIconField",
+    "AchievementTierForm",
+    "AchievementTierFormSet",
+    "BaseAchievementTierFormSet",
+    # announcements
+    "AnnouncementCreateForm",
+    "AnnouncementForm",
+    "RoleChoiceField",
+]

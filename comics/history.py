@@ -28,7 +28,7 @@ When a batch writes its versions:
 - The services in comics.versions (apply_changes, revert_to_version) end their batch inside their
   own atomic block: the change and its version are committed together, and the version is returned.
 
-This module must not import comics.models (models.py imports it); the services are in
+This module must not import comics.models (comics.models.catalog imports it); the services are in
 comics.versions.
 """
 

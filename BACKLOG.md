@@ -169,12 +169,12 @@ cron/`schtasks` y habrá que reescribirla cuando se haga.
   `ensure_history` podría crearlas.
 
 ### General
-- **Siguiente tarea: dividir `comics/models.py` (~1900 líneas) y `comics/forms.py` (~1650) en
-  módulos por área** (catálogo, colecciones, logros, perfiles y roles, notificaciones, solicitudes,
-  historial…), p. ej. paquetes `comics/models/` y `comics/forms/` que reexporten en `__init__.py`
-  para no romper los imports. Motivo: cada tarea lee estos archivos enteros y dispara el consumo de
-  tokens de los agentes. Debe ser un refactor sin cambios de comportamiento: `makemigrations --check`
-  sin cambios (las migraciones referencian `comics.models.X`) y la suite MySQL completa en verde.
+- Menores de la división de `models.py` / `forms.py` en paquetes: `_random_name`
+  (`comics/models/base.py`) ya se usa desde dos módulos, renombrarlo a `random_name`;
+  `assertNoLogs("comics.models")` en `test_edition_images.py` podría apuntar a
+  `comics.models.catalog`; las referencias `#: comics/models.py:NNN` / `comics/forms.py:NNN` del `.po`
+  se regenerarán con el próximo `makemessages`. El orden de imports de `comics/models/__init__.py`
+  (`# isort: off`) reproduce el orden de registro de los modelos: no reordenarlo.
 - Dos archivos JS tienen las URLs `/ajax/...` escritas a mano en lugar de usar `{% url %}`:
   `comics/static/js/custom/collection_form_events.js`, `fill_release_date.js`.
 - `edition_form` y `_clean_content` en `comics/views/manage_editions.py` son demasiado complejas

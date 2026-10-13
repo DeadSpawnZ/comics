@@ -264,7 +264,7 @@ class AvatarTests(ComiTestCase):
         current = self.profile.avatar.name
 
         stale.phone = "8112345678"
-        with self.captureOnCommitCallbacks(execute=True), mock.patch("comics.models.square_jpeg") as square:
+        with self.captureOnCommitCallbacks(execute=True), mock.patch("comics.models.profiles.square_jpeg") as square:
             stale.save(update_fields=["phone"])
 
         square.assert_not_called()
@@ -276,7 +276,7 @@ class AvatarTests(ComiTestCase):
         self.upload(picture())
         self.profile.refresh_from_db()
         name = self.profile.avatar.name
-        with mock.patch("comics.models.square_jpeg") as square:
+        with mock.patch("comics.models.profiles.square_jpeg") as square:
             self.profile.is_public = False
             self.profile.save()
         square.assert_not_called()

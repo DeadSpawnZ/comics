@@ -4,7 +4,7 @@ thumbnail too."""
 
 from unittest import mock
 
-from comics import models
+from comics.models import catalog
 from comics.models import Edition
 
 from .base import ComiTestCase
@@ -14,7 +14,7 @@ from .factories import image_upload, make_edition, make_publishing
 class ProcessImageTests(ComiTestCase):
     def test_saving_without_a_cover_processes_and_logs_nothing(self) -> None:
         edition = Edition(publishing=make_publishing(), number="1")
-        with mock.patch.object(models.Image, "open") as image_open, self.assertNoLogs("comics.models"):
+        with mock.patch.object(catalog.Image, "open") as image_open, self.assertNoLogs("comics.models"):
             edition.save()
             edition.notes = "edited"
             edition.save()
@@ -36,7 +36,7 @@ class ProcessImageTests(ComiTestCase):
         edition.refresh_from_db()
         paths = (edition.image.name, edition.thumbnail.name)
 
-        with mock.patch.object(models.Image, "open") as image_open:
+        with mock.patch.object(catalog.Image, "open") as image_open:
             edition.notes = "edited"
             edition.save()
 
