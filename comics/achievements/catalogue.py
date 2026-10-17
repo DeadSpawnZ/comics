@@ -241,6 +241,16 @@ ACHIEVEMENTS = [
             "window_end_month": 8,
         },
     },
+    {
+        "code": "reportero",
+        "category": "random",
+        "display_order": 70,
+        "name_en": "Reporter",
+        "name_es": "Reportero",
+        "description_en": "Get a change request approved. J. Jonah Jameson would hire you at the Daily Bugle!",
+        "description_es": "Consigue que aprueben una de tus solicitudes de cambio. ¡J. Jonah Jameson te contrataría en el Daily Bugle!",
+        "tiers": [],
+    },
 ]
 
 

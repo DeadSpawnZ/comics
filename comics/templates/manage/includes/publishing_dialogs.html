@@ -1,0 +1,151 @@
+{% load i18n %}
+{% comment %}
+  The "Create publishing" dialog of the edition form and the "Create title" / "Create editorial"
+  dialogs it opens on top of it. Sibling modals (never nested in each other nor in the edition form),
+  driven by js/custom/publishing_dialogs.js: each form posts to its Gestión JSON API and the new row
+  is added to the select that asked for it. Required fields carry an asterisk and, while empty, a
+  hint (forms.RequiredHintsMixin). When an import's publisher matched no editorial, the
+  publishing dialog offers to pick an existing one and remember the publisher's name as its alias
+  (data-alias-url). Also the "Create artist" dialog of the edition form's artist pickers.
+  Parameters: publishing_dialog, title_dialog, editorial_dialog, artist_dialog (the unbound forms).
+{% endcomment %}
+<div class="modal fade md-dialog" id="publishing-dialog" tabindex="-1" aria-labelledby="publishing-dialog-title" aria-hidden="true" data-bs-backdrop="static">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form id="publishing-dialog-form" action="{% url 'manage_publishing_create_api' %}" method="post" novalidate
+            data-create-dialog data-prefix="{{ publishing_dialog.prefix }}" data-draft="publishing-dialog" data-draft-dialog
+            data-alias-url="{% url 'manage_editorial_alias_create_api' %}">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h2 class="modal-title md-headline-small" id="publishing-dialog-title">{% translate "Create publishing" %}</h2>
+        </div>
+        <div class="modal-body">
+          {% include 'manage/includes/dialog_errors.html' %}
+          <ul class="catalog-import__summary mb-3" data-dialog-warnings aria-label="{% translate 'Check before creating' %}" hidden></ul>
+          <div class="row g-3">
+            <div class="col-12 col-md-7">{% include 'manage/includes/field.html' with field=publishing_dialog.publishing_title %}</div>
+            <div class="col-12 col-md-5">
+              <div class="d-flex align-items-start gap-1">
+                <div class="flex-grow-1">{% include 'manage/includes/field.html' with field=publishing_dialog.title %}</div>
+                <div class="related-actions mt-2">
+                  <button type="button" class="md-icon-btn related-btn related-btn--add" data-open-dialog="title-dialog"
+                          aria-label="{% translate 'Create title' %}" title="{% translate 'Create title' %}">
+                    <span class="material-symbols-outlined" aria-hidden="true">add_circle</span>
+                  </button>
+                  {% if user.is_superuser %}
+                    {# Titles have no Gestión page: the pencil opens the Django admin (superusers only). #}
+                    {% url 'admin:comics_title_change' 0 as title_edit_url %}
+                    <a class="md-icon-btn related-btn related-btn--edit" data-related-edit data-for="{{ publishing_dialog.title.id_for_label }}"
+                       data-url-template="{{ title_edit_url }}" target="_blank" rel="noopener"
+                       aria-label="{% translate 'Edit title' %}" title="{% translate 'Edit title' %}">
+                      <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+                    </a>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=publishing_dialog.serie %}</div>
+            <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=publishing_dialog.language %}</div>
+            <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=publishing_dialog.date %}</div>
+            <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=publishing_dialog.year %}</div>
+            <div class="col-12 md-body-medium">{% translate "The title groups publishings under a letter: choose it, or create it with +." %} {{ publishing_dialog.year.help_text }}</div>
+            {% with editorials=publishing_dialog.editorials %}
+            <div class="col-12{% if not editorials.value %} needs-value{% endif %}" data-required-field>
+              <div class="d-flex align-items-center gap-1">
+                <label class="md-section-label d-block mb-0" for="{{ editorials.id_for_label }}">{{ editorials.label }}<span class="required-mark" aria-hidden="true"> *</span></label>
+                <button type="button" class="md-icon-btn related-btn related-btn--add" data-open-dialog="editorial-dialog"
+                        aria-label="{% translate 'Create editorial' %}" title="{% translate 'Create editorial' %}">
+                  <span class="material-symbols-outlined" aria-hidden="true">add_circle</span>
+                </button>
+              </div>
+              {{ editorials }}
+              <div class="required-hint" id="{{ editorials.auto_id }}-hint" data-required-hint{% if editorials.value %} hidden{% endif %}><span class="material-symbols-outlined" aria-hidden="true">info</span>{{ editorials.field.required_hint }}</div>
+            </div>
+            {% endwith %}
+            {# Filled by publishing_dialogs.js when an import's publisher matched no editorial. #}
+            <div class="col-12" id="publisher-alias" hidden></div>
+            <div class="col-12 md-section-label">{% translate "Series in external catalogues" %}</div>
+            <div class="col-12 col-md-4">{% include 'manage/includes/field.html' with field=publishing_dialog.metron_series_id %}</div>
+            <div class="col-12 col-md-4">{% include 'manage/includes/field.html' with field=publishing_dialog.comicvine_volume_id %}</div>
+            <div class="col-12 col-md-4">{% include 'manage/includes/field.html' with field=publishing_dialog.gcd_series_id %}</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="md-btn md-btn--text" data-bs-dismiss="modal">{% translate "Cancel" %}</button>
+          <button type="submit" class="md-btn md-btn--filled">{% translate "Create" %}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade md-dialog" id="title-dialog" tabindex="-1" aria-labelledby="title-dialog-title" aria-hidden="true" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form id="title-dialog-form" action="{% url 'manage_title_create_api' %}" method="post" novalidate
+            data-create-dialog data-prefix="{{ title_dialog.prefix }}" data-target-select="{{ publishing_dialog.title.id_for_label }}">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h2 class="modal-title md-headline-small" id="title-dialog-title">{% translate "Create title" %}</h2>
+        </div>
+        <div class="modal-body">
+          {% include 'manage/includes/dialog_errors.html' %}
+          {% include 'manage/includes/field.html' with field=title_dialog.name %}
+          <p class="md-body-medium mt-2 mb-0">{% translate "Groups publishings under a letter." %}</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="md-btn md-btn--text" data-bs-dismiss="modal">{% translate "Cancel" %}</button>
+          <button type="submit" class="md-btn md-btn--filled">{% translate "Create" %}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade md-dialog" id="editorial-dialog" tabindex="-1" aria-labelledby="editorial-dialog-title" aria-hidden="true" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form id="editorial-dialog-form" action="{% url 'manage_editorial_create_api' %}" method="post" novalidate
+            data-create-dialog data-prefix="{{ editorial_dialog.prefix }}" data-target-select="{{ publishing_dialog.editorials.id_for_label }}">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h2 class="modal-title md-headline-small" id="editorial-dialog-title">{% translate "Create editorial" %}</h2>
+        </div>
+        <div class="modal-body">
+          {% include 'manage/includes/dialog_errors.html' %}
+          <div class="row g-3">
+            <div class="col-12 col-md-8">{% include 'manage/includes/field.html' with field=editorial_dialog.name %}</div>
+            <div class="col-12 col-md-4">{% include 'manage/includes/field.html' with field=editorial_dialog.country %}</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="md-btn md-btn--text" data-bs-dismiss="modal">{% translate "Cancel" %}</button>
+          <button type="submit" class="md-btn md-btn--filled">{% translate "Create" %}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade md-dialog" id="artist-dialog" tabindex="-1" aria-labelledby="artist-dialog-title" aria-hidden="true" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form id="artist-dialog-form" action="{% url 'manage_artists_create_api' %}" method="post" novalidate
+            data-create-dialog data-prefix="{{ artist_dialog.prefix }}">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h2 class="modal-title md-headline-small" id="artist-dialog-title">{% translate "Create artist" %}</h2>
+        </div>
+        <div class="modal-body">
+          {% include 'manage/includes/dialog_errors.html' %}
+          {% include 'manage/includes/field.html' with field=artist_dialog.name %}
+          <p class="md-body-medium mt-2 mb-0">{% translate "It is added to the list you opened this from. If an artist already has that name, that one is added instead." %}</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="md-btn md-btn--text" data-bs-dismiss="modal">{% translate "Cancel" %}</button>
+          <button type="submit" class="md-btn md-btn--filled">{% translate "Create" %}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

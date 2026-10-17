@@ -23,7 +23,11 @@ window.ComiCombobox = (function () {
     input.className = "form-select md-combobox__input";
     input.autocomplete = "off";
     input.spellcheck = false;
-    input.placeholder = label ? label.textContent.trim() : "";
+    // The label's text without the asterisk of a required field (.required-mark).
+    const labelText = label
+      ? [...label.childNodes].filter((node) => !(node.classList && node.classList.contains("required-mark"))).map((node) => node.textContent).join("")
+      : "";
+    input.placeholder = labelText.trim();
     input.setAttribute("role", "combobox");
     input.setAttribute("aria-autocomplete", "list");
     input.setAttribute("aria-expanded", "false");
@@ -179,6 +183,7 @@ window.ComiCombobox = (function () {
       } else if (event.key === "Escape") {
         if (list.hidden) return;
         event.preventDefault();
+        event.stopPropagation(); // closes the list only, not the dialog the field may be in
         input.value = selectedText();
         close();
       } else if (event.key === "Tab") {

@@ -1,0 +1,318 @@
+{
+ "id": 15439,
+ "publisher": {
+  "id": 1,
+  "name": "Marvel"
+ },
+ "imprint": null,
+ "series": {
+  "id": 1440,
+  "name": "Marvel Two-in-One Annual",
+  "alt_names": [],
+  "sort_name": "Marvel Two-in-One Annual",
+  "volume": 1,
+  "year_began": 1976,
+  "series_type": {
+   "id": 6,
+   "name": "Annual"
+  },
+  "genres": [],
+  "language": "en"
+ },
+ "number": "7",
+ "alt_number": "",
+ "title": "",
+ "name": [
+  "And They Shall Call Him...Champion!"
+ ],
+ "cover_date": "1982-10-01",
+ "store_date": null,
+ "foc_date": null,
+ "price": "1.00",
+ "price_currency": "USD",
+ "rating": {
+  "id": 6,
+  "name": "CCA"
+ },
+ "sku": "",
+ "isbn": "",
+ "upc": "",
+ "page": 52,
+ "desc": "The Champion challenges Earth's mightiest heroes to an intergalactic boxing match.",
+ "image": "https://static.metron.cloud/media/issue/2020/07/25/marvel-two-one-annual-7.jpg",
+ "cover_hash": "aa348a6b8c77dd30",
+ "average_rating": null,
+ "rating_count": 0,
+ "arcs": [],
+ "credits": [
+  {
+   "id": 1074,
+   "creator": "Armando Gil",
+   "role": [
+    {
+     "id": 4,
+     "name": "Inker"
+    }
+   ]
+  },
+  {
+   "id": 1081,
+   "creator": "Bob Camp",
+   "role": [
+    {
+     "id": 4,
+     "name": "Inker"
+    }
+   ]
+  },
+  {
+   "id": 367,
+   "creator": "Chic Stone",
+   "role": [
+    {
+     "id": 4,
+     "name": "Inker"
+    }
+   ]
+  },
+  {
+   "id": 680,
+   "creator": "Dan Green",
+   "role": [
+    {
+     "id": 4,
+     "name": "Inker"
+    }
+   ]
+  },
+  {
+   "id": 487,
+   "creator": "Frank Giacoia",
+   "role": [
+    {
+     "id": 4,
+     "name": "Inker"
+    },
+    {
+     "id": 7,
+     "name": "Cover"
+    }
+   ]
+  },
+  {
+   "id": 361,
+   "creator": "George Roussos",
+   "role": [
+    {
+     "id": 5,
+     "name": "Colorist"
+    }
+   ]
+  },
+  {
+   "id": 1521,
+   "creator": "Jim Novak",
+   "role": [
+    {
+     "id": 6,
+     "name": "Letterer"
+    }
+   ]
+  },
+  {
+   "id": 1531,
+   "creator": "Jim Salicrup",
+   "role": [
+    {
+     "id": 8,
+     "name": "Editor"
+    }
+   ]
+  },
+  {
+   "id": 1143,
+   "creator": "Mike Esposito",
+   "role": [
+    {
+     "id": 4,
+     "name": "Inker"
+    }
+   ]
+  },
+  {
+   "id": 1072,
+   "creator": "Ron Wilson",
+   "role": [
+    {
+     "id": 3,
+     "name": "Penciller"
+    },
+    {
+     "id": 7,
+     "name": "Cover"
+    }
+   ]
+  },
+  {
+   "id": 268,
+   "creator": "Tom DeFalco",
+   "role": [
+    {
+     "id": 1,
+     "name": "Writer"
+    }
+   ]
+  }
+ ],
+ "characters": [
+  {
+   "id": 368,
+   "name": "Alicia Masters",
+   "modified": "2026-09-01T16:16:26.159279-04:00"
+  },
+  {
+   "id": 120,
+   "name": "Captain America",
+   "modified": "2026-09-30T11:59:50.692732-04:00"
+  },
+  {
+   "id": 2460,
+   "name": "Champion",
+   "modified": "2026-08-03T09:49:45.356292-04:00"
+  },
+  {
+   "id": 745,
+   "name": "Colossus",
+   "modified": "2026-10-02T08:14:43.594557-04:00"
+  },
+  {
+   "id": 360,
+   "name": "Cyclops",
+   "modified": "2026-10-02T08:12:14.923090-04:00"
+  },
+  {
+   "id": 1379,
+   "name": "Doc Samson",
+   "modified": "2026-08-28T10:31:07.596645-04:00"
+  },
+  {
+   "id": 127,
+   "name": "Hawkeye",
+   "modified": "2026-09-26T09:41:10.577138-04:00"
+  },
+  {
+   "id": 128,
+   "name": "Hulk",
+   "modified": "2026-09-26T09:41:10.577138-04:00"
+  },
+  {
+   "id": 364,
+   "name": "Human Torch",
+   "modified": "2026-10-07T08:57:12.223368-04:00"
+  },
+  {
+   "id": 193,
+   "name": "Invisible Woman",
+   "modified": "2026-10-07T08:57:12.223368-04:00"
+  },
+  {
+   "id": 130,
+   "name": "Iron Man",
+   "modified": "2026-09-30T11:59:50.692732-04:00"
+  },
+  {
+   "id": 747,
+   "name": "Kitty Pryde",
+   "modified": "2026-10-06T12:49:01.060029-04:00"
+  },
+  {
+   "id": 194,
+   "name": "Mister Fantastic",
+   "modified": "2026-10-07T08:57:12.223368-04:00"
+  },
+  {
+   "id": 132,
+   "name": "Namor",
+   "modified": "2026-09-26T09:41:10.577138-04:00"
+  },
+  {
+   "id": 773,
+   "name": "Nightcrawler",
+   "modified": "2026-10-02T08:14:43.594557-04:00"
+  },
+  {
+   "id": 1394,
+   "name": "Sasquatch",
+   "modified": "2026-08-03T13:42:56.465766-04:00"
+  },
+  {
+   "id": 153,
+   "name": "Scarlet Witch",
+   "modified": "2026-10-08T08:36:00.294931-04:00"
+  },
+  {
+   "id": 144,
+   "name": "She-Hulk",
+   "modified": "2026-09-26T09:41:10.577138-04:00"
+  },
+  {
+   "id": 748,
+   "name": "Storm",
+   "modified": "2026-10-08T08:36:00.294931-04:00"
+  },
+  {
+   "id": 137,
+   "name": "Thing",
+   "modified": "2026-10-07T08:57:12.223368-04:00"
+  },
+  {
+   "id": 138,
+   "name": "Thor (Marvel)",
+   "modified": "2026-09-23T10:44:49.959547-04:00"
+  },
+  {
+   "id": 606,
+   "name": "Vision",
+   "modified": "2026-09-26T09:41:10.577138-04:00"
+  },
+  {
+   "id": 379,
+   "name": "Wasp",
+   "modified": "2026-09-26T09:41:10.577138-04:00"
+  },
+  {
+   "id": 143,
+   "name": "Wolverine",
+   "modified": "2026-10-06T12:49:01.060029-04:00"
+  },
+  {
+   "id": 722,
+   "name": "Wonder Man",
+   "modified": "2026-09-30T10:22:51.254883-04:00"
+  }
+ ],
+ "teams": [
+  {
+   "id": 12,
+   "name": "Avengers",
+   "modified": "2026-09-26T09:41:10.625288-04:00"
+  },
+  {
+   "id": 13,
+   "name": "Fantastic Four",
+   "modified": "2026-09-30T17:18:02.725076-04:00"
+  },
+  {
+   "id": 15,
+   "name": "X-Men",
+   "modified": "2026-10-02T08:17:03.175974-04:00"
+  }
+ ],
+ "universes": [],
+ "reprints": [],
+ "variants": [],
+ "cv_id": 21801,
+ "gcd_id": 35962,
+ "resource_url": "https://metron.cloud/issue/marvel-two-one-annual-1976-7/",
+ "modified": "2024-12-30T20:35:26.169782-05:00"
+}

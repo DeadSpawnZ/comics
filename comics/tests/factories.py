@@ -5,7 +5,6 @@ import io
 import itertools
 from decimal import Decimal
 from typing import Any
-from unittest import mock
 
 from django.contrib.auth.models import Group, User
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -50,9 +49,7 @@ def make_edition(*, publishing: Publishing | None = None, **fields: Any) -> Edit
     fields.setdefault("number", str(next(_sequence)))
     fields.setdefault("release_date", datetime.date(2000, 1, 1))
     edition = Edition(publishing=publishing or make_publishing(), **fields)
-    # Fixture editions have no image: process_image would only log that it cannot open one.
-    with mock.patch.object(Edition, "process_image"):
-        edition.save()
+    edition.save()
     return edition
 
 

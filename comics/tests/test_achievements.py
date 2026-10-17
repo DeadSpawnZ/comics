@@ -46,6 +46,7 @@ SEEDED = {
     "madrugador",
     "ave_nocturna",
     "verano",
+    "reportero",
 }
 # Rows whose rule is a generic one (the others: rule = code).
 GENERIC_ROWS = {"halloween", "madrugador", "ave_nocturna", "verano"}
@@ -67,6 +68,7 @@ PAGE = {"accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0
 seed_migration = importlib.import_module("comics.migrations.0097_seed_achievements")
 more_seed_migration = importlib.import_module("comics.migrations.0099_seed_more_achievements")
 random_seed_migration = importlib.import_module("comics.migrations.0103_seed_random_achievements")
+reportero_seed_migration = importlib.import_module("comics.migrations.0111_seed_reportero")
 
 
 def achievement(code: str) -> Achievement:
@@ -113,7 +115,10 @@ class SeedTests(ComiTestCase):
                 for item in catalogue.ACHIEVEMENTS[: len(first)]
             ],
         )
-        self.assertEqual(random_seed_migration.ACHIEVEMENTS, catalogue.ACHIEVEMENTS[len(first) :])
+        self.assertEqual(
+            random_seed_migration.ACHIEVEMENTS + reportero_seed_migration.ACHIEVEMENTS,
+            catalogue.ACHIEVEMENTS[len(first) :],
+        )
 
     def test_ensure_catalogue_only_creates_what_is_missing(self) -> None:
         Achievement.objects.filter(code="origin").delete()
@@ -484,7 +489,7 @@ class DisplayTests(ComiTestCase):
         )
         # One challenge per level: great_power (2 levels), veteran, batcave_vault, speed_force,
         # assemble and chronicler (3 each), the rest one each.
-        self.assertEqual((shown.earned, shown.total), (3, 29))
+        self.assertEqual((shown.earned, shown.total), (3, 30))
         earned = [
             (reto.achievement.code, reto.level) for shelf in shown.categories for reto in shelf.retos if reto.earned
         ]
@@ -499,7 +504,7 @@ class DisplayTests(ComiTestCase):
         self.assertNotIn(" / 3", html)
         shown = showcase(self.owner, include_locked=False)
         self.assertTrue(all(reto.earned for shelf in shown.categories for reto in shelf.retos))
-        self.assertEqual((shown.earned, shown.total), (3, 29))  # the counts stay the same
+        self.assertEqual((shown.earned, shown.total), (3, 30))  # the counts stay the same
 
     def test_disabled_achievements_are_hidden_everywhere(self) -> None:
         Achievement.objects.filter(code__in=["origin", "veteran"]).update(is_enabled=False)

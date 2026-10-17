@@ -3,7 +3,10 @@ group permissions travel by natural key, so they survive permission ids that dif
 databases. `ensure_roles` rebuilds the groups when a dump does not bring them. Profiles travel by
 their user's username too, achievements by their code and achievement categories by theirs.
 Notifications point to their user and achievement by natural key and to announcements by id
-(announcements are content, like pieces: nothing seeds them)."""
+(announcements are content, like pieces: nothing seeds them). The versions of issues and editions
+(comics.history) travel with them, their authors by username, so the history survives a restore;
+change requests point to them (and to their targets) by id, so they keep pointing to them. Editorial
+aliases travel by their name (natural key) and point to their editorial by id."""
 
 import json
 import tempfile
@@ -13,25 +16,34 @@ from pathlib import Path
 from django.contrib.auth.models import Group, Permission, User
 from django.contrib.contenttypes.models import ContentType
 from django.core.management import call_command
-from django.utils import timezone
 from django.test import TransactionTestCase, override_settings
+from django.utils import timezone
 
 import dump
+from comics import change_requests
 from comics.achievements.catalogue import ACHIEVEMENTS, ensure_catalogue
+from comics.history import versions_of
 from comics.models import (
     Achievement,
     AchievementCategory,
     AchievementTier,
     Announcement,
+    Artist,
+    ChangeRequest,
     Collection,
+    Edition,
+    Editorial,
+    EditorialAlias,
+    Issue,
     Notification,
     Profile,
     UserAchievement,
 )
 from comics.roles import ACCESS_MANAGEMENT, ADMINISTRATORS, COLLECTORS, REVIEWERS, ROLE_PERMISSIONS, ensure_roles
+from comics.versions import revert_to_version
 
 from .base import TEST_MEDIA_ROOT, TEST_STORAGES, ComiTestCase
-from .factories import make_achievement, make_category, make_collection, make_edition, make_user
+from .factories import make_achievement, make_category, make_collection, make_edition, make_editorial, make_user
 
 
 def group_permissions(name: str) -> set[str]:
@@ -96,7 +108,7 @@ class RestoreTests(TransactionTestCase):
             call_command("loaddata", str(dump_file), verbosity=0)
 
         self.assertEqual(Group.objects.filter(name__in=ROLE_PERMISSIONS).count(), 3)
-        self.assertEqual(group_permissions(ADMINISTRATORS), {ACCESS_MANAGEMENT})
+        self.assertEqual(group_permissions(ADMINISTRATORS), set(ROLE_PERMISSIONS[ADMINISTRATORS]))
         manager = User.objects.get(username="manager")
         self.assertTrue(manager.has_perm(ACCESS_MANAGEMENT))
         self.assertEqual(set(manager.groups.values_list("name", flat=True)), {COLLECTORS, ADMINISTRATORS})
@@ -277,6 +289,114 @@ class RestoreTests(TransactionTestCase):
         self.assertEqual(profile.avatar.name, "avatars/user1_0123456789abcdef.jpg")
         self.assertEqual((profile.phone, profile.is_public), ("811 234 5678", False))
         self.assertTrue(Profile.objects.filter(user__username="plain").exists())
+
+    def test_restore_keeps_the_versions(self) -> None:
+        manager = make_user(username="manager")
+        edition = make_edition(notes="first")
+        edition.cover_artists.add(Artist.objects.create(name="Todd McFarlane"))
+        edition._history_user = manager
+        edition._change_reason = "Typo"
+        edition.notes = "second"
+        edition.save()
+        history = Edition.history.model
+        dumped = [
+            (version.history_type, version.notes, getattr(version.history_user, "username", None))
+            for version in versions_of(Edition, edition.pk)
+        ]
+        issue_versions = versions_of(Issue, edition.issue_id).count()
+        with tempfile.TemporaryDirectory() as tmp:
+            dump_file = self.make_dump(tmp)
+            content = json.loads(dump_file.read_text(encoding="utf-8"))
+            entry = next(
+                item
+                for item in content
+                if item["model"] == "comics.historicaledition" and item["fields"]["history_change_reason"] == "Typo"
+            )
+            self.assertEqual(entry["fields"]["history_user"], ["manager"])
+
+            call_command("flush", interactive=False, verbosity=0)
+            make_user(username="other")  # the restored users get other ids
+            call_command("loaddata", str(dump_file), verbosity=0)
+
+        # Loading the rows (and setting their relations) wrote no versions of its own.
+        restored = [
+            (version.history_type, version.notes, getattr(version.history_user, "username", None))
+            for version in versions_of(Edition, edition.pk)
+        ]
+        self.assertEqual(restored, dumped)
+        self.assertEqual(versions_of(Issue, edition.issue_id).count(), issue_versions)
+        latest = versions_of(Edition, edition.pk).first()
+        self.assertEqual((latest.history_user.username, latest.history_change_reason), ("manager", "Typo"))
+        self.assertEqual(list(latest.cover_artists.values_list("artist__name", flat=True)), ["Todd McFarlane"])
+        self.assertEqual(history.cover_artists.model.objects.count(), 2)  # one row per version since the artist
+
+        revert_to_version(versions_of(Edition, edition.pk).last(), user=None)
+        edition = Edition.objects.get(pk=edition.pk)
+        self.assertEqual((edition.notes, edition.cover_artists.count()), ("first", 0))
+
+    def test_restore_keeps_the_change_requests(self) -> None:
+        author = make_user(username="author")
+        manager = make_user(username="manager", role=ADMINISTRATORS)
+        edition = make_edition(notes="old")
+        pending = change_requests.submit(
+            author=author, model=Edition, changes={"notes": "new"}, label="x", reason="Typo", target=edition
+        )
+        approved = change_requests.submit(
+            author=author,
+            model=Edition,
+            changes={"notes": "applied"},
+            label="x",
+            reason="Typo",
+            evidence_url="https://example.com/",
+            target=edition,
+        )
+        version = change_requests.approve(approved, user=manager, note="Thanks")
+        with tempfile.TemporaryDirectory() as tmp:
+            dump_file = self.make_dump(tmp)
+            content = json.loads(dump_file.read_text(encoding="utf-8"))
+            entry = next(
+                item for item in content if item["model"] == "comics.changerequest" and item["pk"] == approved.pk
+            )
+            self.assertEqual((entry["fields"]["author"], entry["fields"]["decided_by"]), (["author"], ["manager"]))
+
+            call_command("flush", interactive=False, verbosity=0)
+            make_user(username="other")  # the restored users get other ids
+            call_command("loaddata", str(dump_file), verbosity=0)
+
+        restored = ChangeRequest.objects.get(pk=approved.pk)
+        self.assertEqual(
+            (restored.status, restored.author.username, restored.decided_by.username, restored.decision_note),
+            (ChangeRequest.Status.APPROVED, "author", "manager", "Thanks"),
+        )
+        self.assertEqual((restored.changes, restored.evidence_url), ({"notes": "applied"}, "https://example.com/"))
+        # It still points to the version it produced, which was restored with its id.
+        applied = versions_of(Edition, edition.pk).get(history_id=restored.applied_history_id)
+        self.assertEqual((applied.history_id, applied.notes), (version.history_id, "applied"))
+        self.assertEqual(ChangeRequest.objects.get(pk=pending.pk).status, ChangeRequest.Status.PENDING)
+        notification = Notification.objects.get(change_request=restored)
+        self.assertEqual(
+            (notification.recipient.username, notification.kind),
+            ("author", Notification.Kind.CHANGE_REQUEST_APPROVED),
+        )
+
+    def test_restore_keeps_the_editorial_aliases(self) -> None:
+        marvel = make_editorial(name="Marvel Comics")
+        EditorialAlias.objects.create(editorial=marvel, name="Marvel")
+        with tempfile.TemporaryDirectory() as tmp:
+            dump_file = self.make_dump(tmp)
+            content = json.loads(dump_file.read_text(encoding="utf-8"))
+            entry = next(item for item in content if item["model"] == "comics.editorialalias")
+            self.assertNotIn("pk", entry)  # matched by its name on load
+            self.assertEqual(entry["fields"], {"editorial": marvel.pk, "name": "Marvel", "key": "marvel"})
+
+            call_command("flush", interactive=False, verbosity=0)
+            call_command("loaddata", str(dump_file), verbosity=0)
+            # Loading the same dump again updates the alias (found by its name), never duplicates it.
+            call_command("loaddata", str(dump_file), verbosity=0)
+
+        alias = EditorialAlias.objects.get()
+        self.assertEqual((alias.name, alias.key, alias.editorial.name), ("Marvel", "marvel", "Marvel Comics"))
+        self.assertEqual(Editorial.objects.matching("MARVEL"), alias.editorial)
 
     def test_ensure_roles_rebuilds_the_groups_after_flush(self) -> None:
         call_command("flush", interactive=False, verbosity=0)

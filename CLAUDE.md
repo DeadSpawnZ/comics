@@ -1,5 +1,7 @@
 # Project instructions
 
+- Pending work, open decisions and known limits are tracked in `BACKLOG.md`; read it before starting new work and update it when an item is resolved or added.
+
 - Code comments and docstrings are written in **English**, regardless of what they explain (technical or business context). See the `english-comments` skill (`.claude/skills/english-comments/SKILL.md`).
 - Linting and formatting use **Ruff**, configured in `pyproject.toml`. New or changed Python code must pass `ruff check` and `ruff format`. Subagents do **not** run Ruff: the coordinator runs it once at the end of a feature (after all its iterations) and commits the result separately (`style: apply ruff format and fixes`).
 

@@ -515,11 +515,11 @@ class CatalogueTests(ComiTestCase):
         with CaptureQueriesContext(connection) as captured:
             engine.evaluate(owner)
         evaluate_all = len(captured)
-        # Each award is a few queries (savepoint, get_or_create); the Random rules add three reads.
-        self.assertLessEqual(evaluate_all, 36)
+        # Each award is a few queries (savepoint, get_or_create); the Random rules add four reads.
+        self.assertLessEqual(evaluate_all, 37)
         with CaptureQueriesContext(connection) as captured:
             engine.evaluate(owner)
-        self.assertLessEqual(len(captured), 15)  # nothing new to award: only the rule queries
+        self.assertLessEqual(len(captured), 16)  # nothing new to award: only the rule queries
 
     def test_now_is_not_used_by_halloween(self) -> None:
         # The rule reads last_login, so a nightly retroactive run on Nov 1 still sees Oct 31 sign-ins.

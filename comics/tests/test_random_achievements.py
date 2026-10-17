@@ -24,7 +24,9 @@ from .factories import image_upload, make_achievement, make_collection, make_edi
 from .test_achievements import achievement, held
 
 LOCAL = zoneinfo.ZoneInfo("America/Monterrey")
-RANDOM = ["novato", "aplicado", "fotogenico", "madrugador", "ave_nocturna", "verano"]
+RANDOM = ["novato", "aplicado", "fotogenico", "madrugador", "ave_nocturna", "verano"]  # seeded by 0103
+# The category now: 0111 added reportero (tested with the change requests).
+RANDOM_NOW = [*RANDOM, "reportero"]
 BUYING, SELLING = Collection.TradeChoices.BUYING, Collection.TradeChoices.SELLING
 
 
@@ -39,7 +41,7 @@ class SeedTests(ComiTestCase):
         self.assertEqual((random.name_en, random.name_es), ("Random", "Random"))
         self.assertEqual(list(AchievementCategory.objects.values_list("code", flat=True))[-1], "random")
         rows = {row.code: row for row in Achievement.objects.filter(category=random)}
-        self.assertEqual(set(rows), set(RANDOM))
+        self.assertEqual(set(rows), set(RANDOM_NOW))
         self.assertFalse(any(row.is_secret for row in rows.values()))
         self.assertEqual(rows["novato"].name_es, "Novato")
         self.assertEqual(
@@ -63,9 +65,9 @@ class SeedTests(ComiTestCase):
         self.assertEqual((verano.window_end_day, verano.window_end_month), (31, 8))
 
     def test_ensure_catalogue_recreates_them(self) -> None:
-        Achievement.objects.filter(code__in=RANDOM).delete()
+        Achievement.objects.filter(code__in=RANDOM_NOW).delete()
         AchievementCategory.objects.filter(code="random").delete()
-        self.assertEqual(sorted(catalogue.ensure_catalogue()), sorted(RANDOM))
+        self.assertEqual(sorted(catalogue.ensure_catalogue()), sorted(RANDOM_NOW))
         self.assertEqual(achievement("ave_nocturna").window_start_time, datetime.time(1))
 
 

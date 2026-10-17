@@ -1,0 +1,44 @@
+{% load i18n %}
+{% comment %}The requested fields of a change request (comics.change_requests.FieldReview): for a
+correction, the value when it was submitted, now and proposed, with the conflicts flagged; for a
+new object, the proposed values only. Expects `change_request` and `reviews`. Every value is
+autoescaped.{% endcomment %}
+<div class="table-responsive">
+  <table class="table table-sm align-middle mb-0 md-body-medium request-fields">
+    <thead>
+      <tr>
+        <th scope="col">{% translate "Field" %}</th>
+        {% if change_request.action == "update" %}
+          <th scope="col">{% translate "When requested" %}</th>
+          <th scope="col">{% translate "Now" %}</th>
+        {% endif %}
+        <th scope="col">{% translate "Proposed" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for review in reviews %}
+        <tr class="{% if review.conflict %}table-warning{% endif %}">
+          <th scope="row">
+            {{ review.label }}
+            {% if review.conflict %}
+              <span class="md-assist-chip ms-1" title="{% translate 'This field changed after the request was submitted.' %}">
+                <span class="material-symbols-outlined" aria-hidden="true">warning</span>
+                {% translate "Conflict" %}
+              </span>
+            {% endif %}
+          </th>
+          {% if change_request.action == "update" %}
+            <td>{{ review.base|truncatechars:300|linebreaksbr }}</td>
+            <td>{{ review.current|truncatechars:300|linebreaksbr }}</td>
+          {% endif %}
+          <td>
+            <ins>{{ review.proposed|truncatechars:300|linebreaksbr }}</ins>
+            {% if review.already_applied and change_request.is_open %}
+              <span class="md-body-medium d-block">{% translate "Already the current value." %}</span>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

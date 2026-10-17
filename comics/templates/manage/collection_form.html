@@ -31,10 +31,11 @@
           {% translate "Save and add another" %}
         </button>
       {% endif %}
-      <button type="submit" name="save_continue" class="md-btn md-btn--tonal">{% translate "Save and continue editing" %}</button>
+      {# Once the piece exists the buttons say "Update", so it is clear it was already saved. #}
+      <button type="submit" name="save_continue" class="md-btn md-btn--tonal">{% if piece %}{% translate "Update and continue editing" %}{% else %}{% translate "Save and continue editing" %}{% endif %}</button>
       <button type="submit" class="md-btn md-btn--filled">
-        <span class="material-symbols-outlined" aria-hidden="true">save</span>
-        {% translate "Save" %}
+        <span class="material-symbols-outlined" aria-hidden="true">{% if piece %}sync{% else %}save{% endif %}</span>
+        {% if piece %}{% translate "Update" context "save button" %}{% else %}{% translate "Save" %}{% endif %}
       </button>
     </div>
   </div>

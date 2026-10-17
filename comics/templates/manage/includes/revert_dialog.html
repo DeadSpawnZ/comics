@@ -1,0 +1,39 @@
+{% load i18n %}
+{# Confirmation for "Revert to this version": the trigger button sets data-revert-url and data-revert-date. #}
+<div class="modal fade md-dialog" id="revertDialog" tabindex="-1" aria-labelledby="revertDialogTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="post" id="revertDialogForm">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}">
+        <div class="modal-header">
+          <h2 class="modal-title md-headline-small" id="revertDialogTitle">{% translate "Revert to this version?" %}</h2>
+        </div>
+        <div class="modal-body">
+          <p>
+            {% blocktranslate trimmed %}
+              Everything goes back to how it was on <strong id="revertDialogDate"></strong>. The current state stays
+              in the history, so this can be undone too.
+            {% endblocktranslate %}
+          </p>
+          <div class="form-floating md-field">
+            <input type="text" class="form-control" id="revertDialogReason" name="{{ form.reason.html_name }}"
+                   maxlength="{{ form.fields.reason.max_length }}" placeholder=" ">
+            <label for="revertDialogReason">{{ form.reason.label }}</label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="md-btn md-btn--text" data-bs-dismiss="modal">{% translate "Cancel" %}</button>
+          <button type="submit" class="md-btn md-btn--filled">{% translate "Revert" %}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<script>
+  document.getElementById("revertDialog").addEventListener("show.bs.modal", function (event) {
+    var trigger = event.relatedTarget;
+    document.getElementById("revertDialogForm").action = trigger.dataset.revertUrl;
+    document.getElementById("revertDialogDate").textContent = trigger.dataset.revertDate;
+  });
+</script>

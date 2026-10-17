@@ -1,5 +1,5 @@
 {% extends 'manage/base_manage.html' %}
-{% load i18n %}
+{% load static i18n %}
 
 {% block breadcrumb %}
 <a href="{{ back_url }}">Publishings</a>
@@ -71,12 +71,28 @@
         {{ form.editorials }}
         {% for error in form.editorials.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
       </div>
+      <div class="col-12 md-section-label">{% translate "Series in external catalogues" %}</div>
+      <div class="col-12 col-md-4">{% include 'manage/includes/field.html' with field=form.metron_series_id %}</div>
+      <div class="col-12 col-md-4">{% include 'manage/includes/field.html' with field=form.comicvine_volume_id %}</div>
+      <div class="col-12 col-md-4">{% include 'manage/includes/field.html' with field=form.gcd_series_id %}</div>
     </div>
   </div>
+
+  {% if publishing %}
+    <div class="row g-3 mt-0">
+      <div class="col-12 col-xl-6">
+        {% include 'includes/identification_numbers.html' with item=publishing %}
+      </div>
+    </div>
+  {% endif %}
 </form>
 
 {% if publishing and not edition_count %}
   {% translate "Delete publishing?" as delete_title %}
   {% include 'manage/includes/delete_dialog.html' with delete_next=back_url delete_title=delete_title %}
 {% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/custom/copy_value.js' %}"></script>
 {% endblock %}

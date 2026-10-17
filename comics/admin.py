@@ -23,15 +23,19 @@ from .models import (
     AchievementTier,
     Announcement,
     Artist,
+    ChangeRequest,
     CollectedIssue,
     Collection,
     Connecting,
     ConnectingPiece,
     Dealer,
     Edition,
+    EditionCoverArtist,
     Editorial,
+    EditorialAlias,
     GeekCollectable,
     Issue,
+    IssueCreator,
     Notification,
     Profile,
     Publishing,
@@ -100,6 +104,23 @@ class NotificationAdmin(admin.ModelAdmin):
         return False
 
 
+@admin.register(ChangeRequest)
+class ChangeRequestAdmin(admin.ModelAdmin):
+    """Read-only: requests move only through their steps (the review area), which notify the
+    author and apply approved changes through the history."""
+
+    list_display = ("id", "kind", "action", "target_label", "status", "author", "created_at", "decided_at")
+    list_filter = ("status", "kind", "action")
+    list_select_related = ("author",)
+    search_fields = ("target_label", "author__username", "reason")
+
+    def has_add_permission(self, request: HttpRequest) -> bool:
+        return False
+
+    def has_change_permission(self, request: HttpRequest, obj: ChangeRequest | None = None) -> bool:
+        return False
+
+
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
     list_display = ("user", "is_public", "phone")
@@ -122,10 +143,20 @@ class TitleAdmin(admin.ModelAdmin):
     search_fields = ["name"]
 
 
+class EditorialAliasInline(admin.TabularInline):
+    """Other names of the editorial in the external catalogues (see EditorialAlias)."""
+
+    model = EditorialAlias
+    fields = ["name"]
+    extra = 0
+
+
 @admin.register(Editorial)
 class EditorialAdmin(admin.ModelAdmin):
     list_display = ["name", "country"]
     ordering = ["name"]
+    search_fields = ["name", "aliases__name"]
+    inlines = [EditorialAliasInline]
 
 
 @admin.register(Publishing)
@@ -162,6 +193,19 @@ class EditionInline(admin.TabularInline):
         return False
 
 
+class IssueCreatorInline(admin.TabularInline):
+    # The admin cannot show a many-to-many field with its own through model as a widget: the
+    # creators are edited as rows instead.
+    model = IssueCreator
+    extra = 0
+    autocomplete_fields = ["artist"]
+    verbose_name = "creador"
+    verbose_name_plural = "creadores"
+
+    def get_queryset(self, request: HttpRequest) -> QuerySet[IssueCreator]:
+        return super().get_queryset(request).select_related("artist")
+
+
 @admin.register(Issue)
 class IssueAdmin(admin.ModelAdmin):
     list_display = ["__str__", "publishing", "number", "edition_count", "first_release"]
@@ -169,9 +213,8 @@ class IssueAdmin(admin.ModelAdmin):
     ordering = ["publishing__publishing_title", "number"]
     search_fields = ["publishing__publishing_title", "number"]
     autocomplete_fields = ["publishing"]
-    filter_horizontal = ["creators"]
-    fields = ["publishing", "number", "synopsis", "creators"]
-    inlines = [EditionInline]
+    fields = ["publishing", "number", "synopsis"]
+    inlines = [IssueCreatorInline, EditionInline]
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[Issue]:
         return super().get_queryset(request).with_first_release().annotate(edition_count=Count("editions"))
@@ -196,6 +239,18 @@ class CollectedIssueInline(admin.TabularInline):
     def get_queryset(self, request: HttpRequest) -> QuerySet[CollectedIssue]:
         # Each row shows its issue (and its publishing) in the autocomplete and in __str__.
         return super().get_queryset(request).select_related("issue__publishing")
+
+
+class EditionCoverArtistInline(admin.TabularInline):
+    # Same as IssueCreatorInline: the cover artists are edited as rows.
+    model = EditionCoverArtist
+    extra = 0
+    autocomplete_fields = ["artist"]
+    verbose_name = "artista de portada"
+    verbose_name_plural = "artistas de portada"
+
+    def get_queryset(self, request: HttpRequest) -> QuerySet[EditionCoverArtist]:
+        return super().get_queryset(request).select_related("artist")
 
 
 @admin.register(Edition)
@@ -230,9 +285,9 @@ class EditionAdmin(admin.ModelAdmin):
         ),
         ("Issue", {"fields": ("issue",)}),
         ("Images", {"fields": ("image", "thumbnail_preview", "thumbnail")}),
-        ("Extras", {"fields": ("notes", "cover_artists"), "classes": ("collapse",)}),
+        ("Extras", {"fields": ("notes",), "classes": ("collapse",)}),
     )
-    inlines = [CollectedIssueInline]
+    inlines = [EditionCoverArtistInline, CollectedIssueInline]
     autocomplete_fields = ["issue"]
 
     list_display = [
@@ -249,7 +304,6 @@ class EditionAdmin(admin.ModelAdmin):
     ]
     ordering = ["publishing__publishing_title", "number", "variant"]
     search_fields = ["publishing__publishing_title"]
-    filter_horizontal = ("cover_artists",)
     readonly_fields = ["country", "thumbnail_preview"]
     list_select_related = ("publishing",)  # Optimize queries by selecting related publishing
 
