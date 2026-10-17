@@ -504,6 +504,9 @@ class Edition(Model):
     image = ImageField(upload_to="images/originals/", null=True, blank=True)
     thumbnail = ImageField(upload_to="images/thumbnails/", null=True, blank=True)
     notes = TextField(max_length=500, blank=True)
+    # Unlike Metron and Comic Vine (one record per story, kept on the Issue), MyComicShop has one
+    # record (IVID) per cover and printing, so its id identifies the edition. Unique when set.
+    mycomicshop_id = PositiveIntegerField("MyComicShop ID", null=True, blank=True, unique=True)
     cover_artists = ManyToManyField(Artist, through="EditionCoverArtist", blank=True, related_name="covers")
     issue = ForeignKey(
         Issue,

@@ -1,0 +1,31 @@
+{% load i18n %}
+{% comment %}
+  The variants of a catalogue series (MyComicShop) to pick the one to import, opened from the import
+  box of the edition form. js/custom/catalog_import.js fills it from the series API: one fieldset per
+  issue number with a card (a radio) per variant; the variants already in Comi are disabled and link
+  to their edition. A sibling of the edition form, so its radios are never submitted with it.
+{% endcomment %}
+<div class="modal fade md-dialog" id="catalog-series-dialog" tabindex="-1" aria-labelledby="catalog-series-title" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header flex-column align-items-start gap-1">
+        <h2 class="modal-title md-headline-small" id="catalog-series-title">{% translate "Choose the cover to import" %}</h2>
+        <a class="md-btn md-btn--text catalog-series__link" id="catalog-series-link" target="_blank" rel="noopener noreferrer" hidden>
+          <span class="material-symbols-outlined" aria-hidden="true">open_in_new</span>
+          <span id="catalog-series-link-text"></span>
+        </a>
+      </div>
+      <div class="modal-body">
+        <div class="catalog-import__status mb-2" id="catalog-series-status" role="status" aria-live="polite"></div>
+        <div class="catalog-series" id="catalog-series-issues"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="md-btn md-btn--text" data-bs-dismiss="modal">{% translate "Cancel" %}</button>
+        <button type="button" class="md-btn md-btn--filled" id="catalog-series-import" disabled>
+          <span class="material-symbols-outlined" aria-hidden="true">download</span>
+          {% translate "Import" %}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

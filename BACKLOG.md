@@ -73,104 +73,44 @@ Todo está commiteado y desplegado en local. Falta:
   formulario de edición, así que si el formulario vuelve con errores (p. ej. de la sección del issue)
   la portada se descarga otra vez en cada envío. Valorar guardarla temporalmente (o en caché) la
   primera vez, o descargarla solo cuando todo el formulario es válido.
-- Impresión, ratio (salvo cuando el nombre de la variante lo dice, p. ej. "1:25"), exclusivas de
-  tienda/evento y país siguen siendo manuales.
+- Con Metron y Comic Vine, impresión, ratio (salvo cuando el nombre de la variante lo dice, p. ej.
+  "1:25"), exclusivas de tienda/evento y país siguen siendo manuales (MyComicShop sí los propone).
 
 ### Importar desde MyComicShop (rama `feat/mycomicshop-import`)
 
-**Objetivo:** importar los issues y variantes que no existen en Metron ni en Comic Vine (retailer
-incentive, exclusivas de tienda o convención…). La app muestra las variantes de una serie de
-MyComicShop en una vista propia y el usuario elige cuál importar. No se trata de rastrear el
-catálogo: cada consulta la lanza el usuario a mano.
+Implementado y commiteado (ver README). La rama sale de `chore/codegraph` y lleva
+`feat/change-requests` fusionada (`70f6cec`), porque el importador en el que se apoya solo existe ahí.
+Falta:
 
-**Estado de la rama:** sale de `chore/codegraph`, porque el usuario quiere probar codegraph con los
-agentes en esta feature, y lleva `feat/change-requests` fusionada (commit de merge `70f6cec`): el
-importador de Metron/Comic Vine en el que se apoya esta feature solo existe en esa rama.
-
-**Hallazgos (2026-10-17):**
-- `POST https://www.mycomicshop.com/search?TID=<id>`, sin cuerpo ni cookies, devuelve 200 y
-  `text/html` de ~226 KB. La página se genera en el servidor (ColdFusion detrás de Imperva) y no trae
-  JSON ni datos embebidos para el JS. Es el mismo método que usa el formulario de la propia página.
-- Un `GET` a la misma URL, o a `search?q=…`, devuelve en cambio un reto JS de Imperva (212 bytes, que
-  cargan `/_Incapsula_Resource`), aunque se manden cabeceras de navegador y cookies. Que el POST
-  funcione depende de cómo tienen configurado Imperva y puede dejar de funcionar sin aviso.
-- `robots.txt` permite `/search` a `*`. Solo bloquea cart, account, login, wantlist, auctions,
-  newlistings, restocked, etc.
-- No hay paginación: todas las variantes de la serie llegan en una sola página.
-- Estructura: `#resultstab > ul.results-detailed > li.issue`, un `li` por variante:
-  - `<a name="<IVID>">`. En `.imgcol` va el texto "Issue #1A" y la portada: `a.fancyboxthis[href]`
-    apunta a `https://media.mycomicshop.com/n_iv/600/<imgid>.jpg`, y la miniatura usa `/n_iv/120/`
-    con el mismo id.
-  - `.othercolleft .title`: serie con el año y la editorial abreviada, p. ej. "(2023 IDW)", más
-    `span.issuenum strong` con "#1A". En `.indentrow` van los tags (enlaces `IVGroupID`).
-  - `.othercolright`: la fecha va en el enlace `minyrmo=YYYYMM` (solo mes y año) y la editorial en
-    `pl=<nombre>`.
-  - `#tab-addtocart-<IVID>`: si hay stock, una `table.issuestock` con una celda de microdatos
-    schema.org `Product` por copia en venta (`sku` = ItemID, `price`, grado). Es stock de la tienda
-    y no interesa al catálogo. Si no hay stock, un `<p>` con "not in stock". Después viene un `<p>` de
-    **texto libre** con esta forma: [nota de variante, p. ej. "Limited 1 for 25 Retailer Incentive
-    Variant Cover." o "Carnivore Comics Exclusive Cover by … - Limited to 1200 copies."] +
-    "Written by X. Art by Y. Cover by Z." + sinopsis + "Cover price $3.99.". Los créditos y el
-    precio hay que sacarlos con regex.
-  - Se ignoran `#tab-ebaylistings-<IVID>` y las pestañas AJAX `/ajax/tab_wantlist?IVID=` y
-    `/ajax/tab_census?IVID=`.
-- IDs: `TID` es la serie, `IVID` el issue o variante, `ItemID` una copia en venta e `IVGroupID` un tag.
-- Sufijos de variante: `A`/`B`/`C` son portadas normales; `RI.A` o `RIA` son retailer incentive
-  (el ratio viene en la nota); `NYCC`, `REIQ`, `CARNIVORE.B`, `JOLZAR.A`, `XPOSURE`… son exclusivas.
-  La nota de variante dice qué es cada una.
-- Serie de ejemplo: `TID=58451662` (Teenage Mutant Ninja Turtles vs. Street Fighter, 2023 IDW,
-  40 variantes de los números 1 a 5). Para volver a bajar el HTML:
-  `curl -s -X POST -A "<UA de Chrome>" -o mcs.html "https://www.mycomicshop.com/search?TID=58451662"`.
-- Sin verificar: si existe una URL por variante (p. ej. `POST search?IVID=<id>`) y cómo es la página
-  de resultados de búsqueda por nombre.
-- Texto libre (revisado con `TID=57389539` Batman Spawn 2023 DC, `TID=65211284` Vampirella X
-  Witchblade Special 2026 Dynamite y `TID=58451662`):
-  - Créditos en dos formatos. Frases: "Written by X. Art by Y (pencils), Z (inks) and W (inks
-    assist). Cover by A and B." (también "Story by", "Cover by A, B"; nombres con iniciales como
-    "J. Scott Campbell" o "Freddie E. Williams II"). Códigos de solicitación: "(W) X (A) Y (CA) Z
-    (C) W" sin ningún separador entre el último nombre y la sinopsis ("(CA) Stjepan Sejic Two titans
-    of comics…"); la sinopsis empieza igual en las variantes del mismo número.
-  - La nota de variante va antes de los créditos: "Limited 1 for 25 Retailer Incentive Variant
-    Cover[ - Signed by X]." (ratio), "… - Limited to 1200 copies." (tirada), "2nd Printing.",
-    "Foil cover.", "Blank Sketch Cover.", "<tienda(s)> [joint] Exclusive [Variant|Virgin] Cover by X"
-    (exclusiva y artista de portada), "New York Comic Con Exclusive…" (evento), "Reprints …".
-  - "48 pages, full color, rated T+. Cover price $5.99." al final.
-  - La página dice UTF-8 pero trae bytes cp1252 sueltos (aparece "�").
-
-**Decisiones del usuario (2026-10-17):** el punto de entrada es el `TID` (como el id de Comic Vine),
-con "MyComicShop" en el selector de fuente de Gestión → Edición; el botón abre un modal con todas las
-variantes de la serie y se importa **una** a la vez, que precarga el formulario de edición como
-Metron y Comic Vine (lo que MyComicShop no da se queda vacío). Si el publishing no existe se crea en
-el momento, como hoy. Se guarda el `IVID` en `Edition` para marcar en el modal las variantes que ya
-existen; el `TID` en `Publishing` no se guarda por ahora.
-
-**Implementación sugerida:**
-1. **Tercera fuente** `comics/catalog_sources/mycomicshop.py` que produzca `SourceIssue`
-   (`types.py`). Así se reutilizan sin cambios el mapeador, `match_publishing`/`match_issue` y el
-   formulario de edición. `CatalogSource.fetch` recibe un id de issue, pero la página es por serie:
-   bajar por `TID`, cachear la serie y elegir la variante por `IVID`. Valorar un campo
-   `mycomicshop_id` como los de Metron y Comic Vine. `is_configured` siempre devuelve verdadero,
-   porque no hay clave.
-2. **Descarga** en `comics/catalog_sources/http.py`: un helper de POST que devuelva HTML con las
-   mismas reglas que el resto (`CATALOG_USER_AGENT`, timeout, límite de tamaño, sin seguir
-   redirecciones, errores como `CatalogError`), `throttle` bajo y caché por `TID` (p. ej. 1 h).
-   Añadir `media.mycomicshop.com` a `ALLOWED_COVER_HOSTS` y usar la portada de 600 px.
-3. **Parser:** hoy no hay ninguna dependencia para HTML (`http.py` usa urllib). Decidir entre
-   `html.parser` de la biblioteca estándar y añadir `beautifulsoup4` fijado en `requirements.txt`.
-   Probarlo con un fixture HTML recortado en `comics/tests/` que tenga una variante sin stock, una con
-   stock y una RI con nota.
-4. **Vista en Gestión:** se pega la URL o el `TID` y se ve una vista previa propia: rejilla de
-   portadas agrupada por número, y en cada variante su sufijo, la nota, la fecha, si ya existe en Comi
-   y un botón para importarla. Ese botón abre el formulario de edición con la propuesta, como hace
-   hoy el importador de Metron y Comic Vine.
-5. **Alternativa si falla el POST:** subir el HTML guardado desde el navegador y pasarlo por el mismo
-   parser. Si el POST deja de funcionar, valorar Playwright (Chromium sin interfaz en la imagen,
-   ~400 MB más). **Límite acordado con el usuario:** nada de plugins "stealth", falseo de huella ni
-   proxies. Si Imperva bloquea también al navegador, solo queda subir el HTML.
-
-**Para más adelante:** búsqueda por nombre (`search?q=`, que en GET devuelve el reto; probarlo con
-POST), importar varias variantes de golpe o como solicitudes de cambio (enlaza con la "Importación
-masiva" de arriba).
+- **Aplicar la migración `0116_edition_mycomicshop_id` a la base real** (ensayada en `comic_refactor`:
+  aplicar, revertir y reaplicar sin pérdida) y **probar en el navegador** con los TID `57389539`
+  (Batman Spawn) y `65211284` (Vampirella X Witchblade): modal, teclado, importar una RI, una
+  exclusiva con tirada y una 2.ª impresión, re-importar otra portada, portada ya existente
+  deshabilitada, errores (TID `1`, texto no numérico) y que Metron/Comic Vine sigan igual.
+- **Confirmar con el usuario** si los coleccionistas pueden proponer el `MyComicShop ID` en las
+  solicitudes de cambio de una edición (hoy sí, porque `EditionProposalForm` reutiliza los campos de
+  Gestión; quitarlo es una exclusión como la de `image`).
+- **Fragilidad:** solo funciona `POST https://www.mycomicshop.com/search?TID=<id>`; un `GET` (también
+  a `search?q=`) devuelve un reto JS de Imperva. Si el POST deja de funcionar: subir el HTML guardado
+  desde el navegador y pasarlo por el mismo parser, o valorar Playwright (~400 MB más en la imagen).
+  **Límite acordado con el usuario:** nada de plugins "stealth", falseo de huella ni proxies.
+- **Límites conocidos del parser** (`comics/catalog_sources/mycomicshop.py`):
+  - Formato "(W) (A) (CA)": si tres o más variantes de un número tienen artistas de portada con el
+    mismo apellido ("Jae Lee", "Jim Lee", "Stan Lee") y ninguna usa el formato de frases, el nombre se
+    corta en el apellido sin marcarse como dudoso.
+  - Una nota que termina en una palabra de una letra ("… Variant Cover B. Written by X.") no se corta
+    ahí y el guionista acaba dentro de la nota.
+  - Si un crédito en frase va antes de los códigos ("Cover by X. (W) A (A) B …"), los códigos acaban
+    en la sinopsis.
+  - "48 pages, full color. Rated Teen" se queda al final de la sinopsis.
+  - Una exclusiva conjunta de varias tiendas que pase de 60 caracteres se descarta con aviso.
+- **Menores:** re-importar en una edición su propio IVID avisa de que ya existe una edición con ese
+  ID (la consulta no sabe qué edición está abierta); el panel "Identification numbers" no muestra el
+  IVID; la caché de la serie y el `throttle` usan la `LocMemCache` por proceso (sin `CACHES`
+  configurado), así que con varios workers la búsqueda tras el modal puede volver a pedir la página.
+- **Para más adelante:** guardar el `TID` en `Publishing` para emparejar la serie sin depender del
+  nombre, búsqueda por nombre (`search?q=` por POST, sin probar), importar varias variantes de golpe o
+  como solicitudes de cambio (enlaza con la "Importación masiva" de arriba).
 
 ### Logros que esperan otra feature
 - **Popular / Super Popular** (20 / 100 seguidores): necesitan un sistema de seguidores.

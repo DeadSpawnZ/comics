@@ -125,6 +125,11 @@ urlpatterns = [
     path("gestion/api/issues/", manage_editions.publishing_issues, name="manage_publishing_issues"),
     path("gestion/api/catalogo/", manage_editions.catalog_lookup, name="manage_catalog_lookup"),
     path(
+        "gestion/api/catalogo/mycomicshop/series/",
+        manage_editions.catalog_mycomicshop_series,
+        name="manage_catalog_mycomicshop_series",
+    ),
+    path(
         "gestion/api/publishings/nuevo/", manage_publishings.publishing_create_api, name="manage_publishing_create_api"
     ),
     path("gestion/api/titulos/nuevo/", manage_publishings.title_create_api, name="manage_title_create_api"),

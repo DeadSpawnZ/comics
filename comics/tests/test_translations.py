@@ -322,11 +322,19 @@ NEW_TRANSLATIONS = {
     "%(source)s sent an answer Comi cannot read.": "%(source)s envió una respuesta que Comi no puede leer.",
     "%(source)s did not answer in time. Try again in a moment.": "%(source)s no respondió a tiempo. Inténtalo de nuevo en un momento.",
     "%(source)s could not be reached. Try again later.": "No se pudo conectar con %(source)s. Inténtalo más tarde.",
-    "Covers can only be downloaded from Metron or Comic Vine.": "Las portadas solo se pueden descargar de Metron o Comic Vine.",
+    "Covers can only be downloaded from the catalogues Comi imports from.": "Las portadas solo se pueden descargar de los catálogos de los que importa Comi.",
     "The cover could not be downloaded. Try again, or upload it yourself.": "No se pudo descargar la portada. Inténtalo de nuevo o súbela tú.",
     "The cover is too large (maximum %(size)s MB).": "La portada es demasiado grande (máximo %(size)s MB).",
     "%(source)s is not configured.": "%(source)s no está configurado.",
     "%(source)s has no issue with the id %(id)s.": "%(source)s no tiene ningún issue con el id %(id)s.",
+    "%(source)s has no series with the id %(id)s.": "%(source)s no tiene ninguna serie con el id %(id)s.",
+    "%(source)s is refusing automated requests right now. Try again later.": "%(source)s está rechazando las peticiones automáticas en este momento. Inténtalo más tarde.",
+    "%(source)s has no issue with the id %(id)s in the series %(series)s.": "%(source)s no tiene ningún issue con el id %(id)s en la serie %(series)s.",
+    "%(source)s also needs the series id.": "%(source)s también necesita el id de la serie.",
+    "Check the artist name “%(name)s”: %(source)s's text does not make clear where it ends.": "Revisa el nombre del artista “%(name)s”: el texto de %(source)s no deja claro dónde acaba.",
+    "%(field)s: Comi does not accept “%(value)s” from %(source)s, so it was left out. Fill it in yourself.": "%(field)s: Comi no acepta “%(value)s” de %(source)s, así que se ha dejado fuera. Rellénalo tú.",
+    "Enter the series' number in the catalogue, e.g. 58451662.": "Escribe el número de la serie en el catálogo, p. ej. 58451662.",
+    "Another edition already has this MyComicShop ID.": "Otra edición ya tiene este ID de MyComicShop.",
     "%(issue)s already has one of these ids: saving them on another issue will fail.": "%(issue)s ya tiene uno de estos ids: guardarlos en otro issue fallará.",
     "%(source)s lists the artists of all the covers together: check the cover artists of the cover you save.": "%(source)s lista juntos a los artistas de todas las portadas: revisa los artistas de la portada que guardes.",
     "The cover is on a server Comi does not download from: upload it yourself.": "La portada está en un servidor del que Comi no descarga: súbela tú.",
@@ -342,13 +350,16 @@ NEW_TRANSLATIONS = {
     "Comic Vine ID (optional)": "ID de Comic Vine (opcional)",
     "GCD ID (optional)": "ID de GCD (opcional)",
     "Import from a catalogue": "Importar de un catálogo",
-    "Fill in the form with an issue from Metron or Comic Vine. Check the values: nothing is saved until you save the form.": "Rellena el formulario con un issue de Metron o Comic Vine. Revisa los valores: no se guarda nada hasta que guardes el formulario.",
+    "Fill in the form with an issue from a catalogue. With MyComicShop, enter the series ID and pick the cover among its variants. Check the values: nothing is saved until you save the form.": "Rellena el formulario con un issue de un catálogo. Con MyComicShop, escribe el ID de la serie y elige la portada entre sus variantes. Revisa los valores: no se guarda nada hasta que guardes el formulario.",
+    "MyComicShop series ID (TID)": "ID de la serie en MyComicShop (TID)",
+    "Choose the cover to import": "Elige la portada que quieres importar",
+    "Import": "Importar",
+    "%(edition)s already has this MyComicShop ID: saving it on another edition will fail.": "%(edition)s ya tiene este ID de MyComicShop: guardarlo en otra edición fallará.",
     "not configured": "sin configurar",
     "Source": "Fuente",
     "Issue ID in the catalogue": "ID del issue en el catálogo",
     "Load": "Cargar",
     "Cover to fill in": "Portada que se rellena",
-    "Importing is off: set METRON_USERNAME and METRON_PASSWORD (or COMICVINE_API_KEY) in the .env file and restart the app.": "La importación está desactivada: define METRON_USERNAME y METRON_PASSWORD (o COMICVINE_API_KEY) en el archivo .env y reinicia la app.",
     "Do not use the imported cover": "No usar la portada importada",
     "Saved on the issue above (the edition's own issue unless you chose another one). Only the values you change are written.": "Se guarda en el issue de arriba (el issue propio de la edición, salvo que hayas elegido otro). Solo se escriben los valores que cambies.",
     "No creators yet.": "Todavía no hay creadores.",
@@ -413,6 +424,19 @@ NEW_TRANSLATIONS = {
 
 # JavaScript texts (djangojs.po), checked the same way.
 NEW_JS_TRANSLATIONS = {
+    # MyComicShop series dialog and the cover values of an import (catalog_import.js).
+    "Cover: %(values)s": "Portada: %(values)s",
+    "MyComicShop ID": "ID de MyComicShop",
+    "Store (exclusive)": "Tienda (exclusiva)",
+    "Enter the series ID (TID) or paste its MyComicShop URL.": "Escribe el ID de la serie (TID) o pega su URL de MyComicShop.",
+    "Cover #%(label)s": "Portada #%(label)s",
+    "Already in Comi": "Ya está en Comi",
+    "Limited to %(count)s": "Limitada a %(count)s",
+    "Printing: %(printing)s": "Impresión: %(printing)s",
+    "Store: %(name)s": "Tienda: %(name)s",
+    "Event: %(name)s": "Evento: %(name)s",
+    "The catalogue lists no covers for this series.": "El catálogo no tiene portadas de esta serie.",
+    "Every cover of this series is already in Comi.": "Todas las portadas de esta serie ya están en Comi.",
     "Cover from %(source)s (downloaded when you save)": "Portada de %(source)s (se descarga al guardar)",
     "Publishing: %(name)s": "Publishing: %(name)s",
     "Publishing not found in Comi: %(name)s. Choose it or create it.": "Publishing que no está en Comi: %(name)s. Elígelo o créalo.",
@@ -520,6 +544,13 @@ NEW_PLURALS = {
 }
 
 
+NEW_JS_PLURALS = {
+    ("%(count)s cover. Choose the one to import.", "%(count)s covers. Choose the one to import."): (
+        "%(count)s portada. Elige la que quieres importar.",
+        "%(count)s portadas. Elige la que quieres importar.",
+    ),
+}
+
 NEW_CONTEXT_TRANSLATIONS = {
     ("rarities", "All"): "Todas",
     ("challenge", "Earned"): "Conseguido",
@@ -580,3 +611,7 @@ class SpanishCatalogTests(SimpleTestCase):
         for source, spanish in NEW_JS_TRANSLATIONS.items():
             with self.subTest(msgid=source):
                 self.assertEqual(catalog.gettext(source), spanish)
+        for (singular, plural), forms in NEW_JS_PLURALS.items():
+            for count, spanish in [(1, forms[0]), (2, forms[1])]:
+                with self.subTest(msgid=singular, count=count):
+                    self.assertEqual(catalog.ngettext(singular, plural, count), spanish)

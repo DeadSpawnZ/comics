@@ -348,3 +348,84 @@ msgstr "“%(source)s” ahora es un alias de %(editorial)s: las próximas impor
 #, python-format
 msgid "Editorial chosen: %(editorial)s."
 msgstr "Editorial elegida: %(editorial)s."
+
+#: comics/static/js/custom/catalog_import.js
+#, python-format
+msgid "Cover: %(values)s"
+msgstr "Portada: %(values)s"
+
+#: comics/static/js/custom/catalog_import.js
+msgid "Variant"
+msgstr "Variante"
+
+#: comics/static/js/custom/catalog_import.js
+msgid "Printing"
+msgstr "Impresión"
+
+#: comics/static/js/custom/catalog_import.js
+msgid "Ratio"
+msgstr "Ratio"
+
+#: comics/static/js/custom/catalog_import.js
+msgid "Limited to"
+msgstr "Limitada a"
+
+#: comics/static/js/custom/catalog_import.js
+msgid "Store (exclusive)"
+msgstr "Tienda (exclusiva)"
+
+#: comics/static/js/custom/catalog_import.js
+msgid "Event (exclusive)"
+msgstr "Evento (exclusiva)"
+
+#: comics/static/js/custom/catalog_import.js
+msgid "MyComicShop ID"
+msgstr "ID de MyComicShop"
+
+#: comics/static/js/custom/catalog_import.js
+msgid "Enter the series ID (TID) or paste its MyComicShop URL."
+msgstr "Escribe el ID de la serie (TID) o pega su URL de MyComicShop."
+
+#: comics/static/js/custom/catalog_import.js
+#, python-format
+msgid "Cover #%(label)s"
+msgstr "Portada #%(label)s"
+
+#: comics/static/js/custom/catalog_import.js
+msgid "Already in Comi"
+msgstr "Ya está en Comi"
+
+#: comics/static/js/custom/catalog_import.js
+#, python-format
+msgid "Limited to %(count)s"
+msgstr "Limitada a %(count)s"
+
+#: comics/static/js/custom/catalog_import.js
+#, python-format
+msgid "Printing: %(printing)s"
+msgstr "Impresión: %(printing)s"
+
+#: comics/static/js/custom/catalog_import.js
+#, python-format
+msgid "Store: %(name)s"
+msgstr "Tienda: %(name)s"
+
+#: comics/static/js/custom/catalog_import.js
+#, python-format
+msgid "Event: %(name)s"
+msgstr "Evento: %(name)s"
+
+#: comics/static/js/custom/catalog_import.js
+msgid "The catalogue lists no covers for this series."
+msgstr "El catálogo no tiene portadas de esta serie."
+
+#: comics/static/js/custom/catalog_import.js
+msgid "Every cover of this series is already in Comi."
+msgstr "Todas las portadas de esta serie ya están en Comi."
+
+#: comics/static/js/custom/catalog_import.js
+#, python-format
+msgid "%(count)s cover. Choose the one to import."
+msgid_plural "%(count)s covers. Choose the one to import."
+msgstr[0] "%(count)s portada. Elige la que quieres importar."
+msgstr[1] "%(count)s portadas. Elige la que quieres importar."

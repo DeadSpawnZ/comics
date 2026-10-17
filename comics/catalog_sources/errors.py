@@ -6,6 +6,8 @@ the query string and the Metron credentials in a header, so neither may reach a 
 
 from __future__ import annotations
 
+from django.utils.translation import gettext as _
+
 
 class CatalogError(Exception):
     status = 502
@@ -47,6 +49,16 @@ class BadResponse(CatalogError):  # noqa: N818
     """The source answered something we cannot read (not JSON, too large, unexpected shape)."""
 
     status = 502
+
+
+class InvalidLookup(CatalogError):  # noqa: N818
+    """The request lacks something the source needs (MyComicShop's series id)."""
+
+    status = 400
+
+
+def series_required_message(source: str) -> str:
+    return _("%(source)s also needs the series id.") % {"source": source}
 
 
 class CoverRejected(CatalogError):  # noqa: N818

@@ -3,6 +3,7 @@ the clients share to build it."""
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal, InvalidOperation
@@ -27,6 +28,11 @@ STORY_ROLE_WORDS = (
     "finish",
     "layout",
 )
+
+# A variant's ratio ("1:25") and printing ("2nd Printing"), as catalogues write them in variant names
+# and notes.
+RATIO_PATTERN = re.compile(r"(?<![\d:])(\d{1,3}):(\d{1,3})(?![\d:])")
+PRINTING_PATTERN = re.compile(r"(?i)\b(\d{1,2})\s*(?:st|nd|rd|th)\s+print")
 
 
 def parse_int(value: Any) -> int | None:
@@ -58,6 +64,8 @@ def parse_date(value: Any) -> date | None:
 class SourceCredit:
     name: str
     roles: list[str]
+    # The name was guessed from free text (MyComicShop) and may be cut or carry extra words.
+    uncertain: bool = False
 
     @property
     def is_cover(self) -> bool:
@@ -109,6 +117,18 @@ class SourceIssue:
     metron_series_id: int | None = None
     comicvine_volume_id: int | None = None
     source_publisher_id: int | None = None
+    # The series id in the source when its series hooks need it (MyComicShop's TID).
+    source_series_id: int | None = None
+    # Edition-level values, for catalogues with one record per cover and printing (MyComicShop).
+    # Empty/None: the mapper proposes the main cover (A) of the first printing, as for Metron and
+    # Comic Vine, whose issue is the original publication.
+    variant: str = ""
+    printing: int | None = None  # 2 for a 2nd printing
+    ratio: str = ""  # "1:25"
+    limited_to: str = ""  # the print run, digits
+    retailer_exclusive: str = ""
+    event_exclusive: str = ""
+    mycomicshop_id: int | None = None  # the edition's id in MyComicShop (IVID)
 
 
 @dataclass

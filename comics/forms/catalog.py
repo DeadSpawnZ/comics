@@ -13,8 +13,8 @@ from django.db.models import QuerySet, prefetch_related_objects
 from django.http import QueryDict
 from django.utils.translation import gettext_lazy as _
 
-from ..catalog_sources import comicvine, metron
-from ..catalog_sources.errors import CoverRejected
+from ..catalog_sources import service as catalog_service
+from ..catalog_sources.errors import CoverRejected, series_required_message
 from ..catalog_sources.http import MAX_COVER_BYTES, download_cover, is_allowed_cover_url
 from ..models import Artist, Edition, Editorial, Issue, Publishing, Title
 from .base import LimitedImageField, MaterialFieldsMixin, PlaceholderSelect, RequiredHintsMixin, UniqueNameMixin
@@ -40,6 +40,7 @@ class EditionForm(forms.ModelForm):
             "image",
             "thumbnail",
             "notes",
+            "mycomicshop_id",
             "cover_artists",
             "issue",
             "collected_issues",
@@ -113,6 +114,7 @@ class EditionManageForm(MaterialFieldsMixin, forms.ModelForm):
             "image",
             "cover_artists",
             "notes",
+            "mycomicshop_id",
         ]
         labels = {
             "publishing": "Publishing",
@@ -130,6 +132,7 @@ class EditionManageForm(MaterialFieldsMixin, forms.ModelForm):
             "image": _("Cover"),
             "cover_artists": _("Cover artists"),
             "notes": _("Notes"),
+            "mycomicshop_id": "MyComicShop ID",
         }
         widgets = {
             "release_date": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
@@ -143,6 +146,7 @@ class EditionManageForm(MaterialFieldsMixin, forms.ModelForm):
                     "An edition with that publishing, number, variant, printing, event and store already exists."
                 ),
             },
+            "mycomicshop_id": {"unique": _("Another edition already has this MyComicShop ID.")},
         }
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -175,7 +179,9 @@ class EditionManageForm(MaterialFieldsMixin, forms.ModelForm):
         cleaned = super().clean()
         url = (cleaned.get("catalog_cover_url") or "").strip()
         if url and not is_allowed_cover_url(url):
-            self.add_error(None, ValidationError(_("Covers can only be downloaded from Metron or Comic Vine.")))
+            self.add_error(
+                None, ValidationError(_("Covers can only be downloaded from the catalogues Comi imports from."))
+            )
         elif url and not self.errors and not self.files.get(self.add_prefix("image")):
             try:
                 cleaned["image"] = catalog_cover(url)
@@ -284,15 +290,30 @@ class IssueSectionForm(MaterialFieldsMixin, forms.ModelForm):
 
 
 CATALOG_ID_PATTERN = re.compile(r"^(?:4000-)?(\d{1,10})$")
+SERIES_ID_PATTERN = re.compile(r"^\d{1,10}$")
 MAX_CATALOG_ID = 2_147_483_647  # the Issue id fields are PositiveIntegerField
+
+
+def clean_series_id(value: str) -> int:
+    """A catalogue's series id (MyComicShop's TID), as typed in the import box."""
+    value = value.strip()
+    number = int(value) if SERIES_ID_PATTERN.match(value) else 0
+    if not 0 < number <= MAX_CATALOG_ID:
+        raise ValidationError(_("Enter the series' number in the catalogue, e.g. 58451662."), code="invalid_series")
+    return number
 
 
 class CatalogLookupForm(forms.Form):
     """What the import box asks a catalogue for: the source and the issue's id there (Comic Vine's
-    "4000-" prefix, as its URLs show it, is accepted too)."""
+    "4000-" prefix, as its URLs show it, is accepted too), plus the series id for the catalogues
+    whose issues are only reachable through their series (CatalogSource.requires_series:
+    MyComicShop's IVID needs its TID); the others ignore it."""
 
-    source = forms.ChoiceField(choices=[(metron.KEY, metron.NAME), (comicvine.KEY, comicvine.NAME)])
+    source = forms.ChoiceField(choices=[(source.key, source.name) for source in catalog_service.SOURCES.values()])
     id = forms.CharField(max_length=20)
+    # No max_length: only the sources that require a series validate it (clean), so whatever else
+    # is sent with Metron or Comic Vine never makes their lookup fail.
+    series = forms.CharField(required=False)
 
     def clean_id(self) -> int:
         match = CATALOG_ID_PATTERN.match(self.cleaned_data["id"].strip())
@@ -300,6 +321,33 @@ class CatalogLookupForm(forms.Form):
         if not 0 < number <= MAX_CATALOG_ID:
             raise ValidationError(_("Enter the issue's number in the catalogue, e.g. 15439."), code="invalid_id")
         return number
+
+    def clean(self) -> dict[str, Any]:
+        """The series id as an int for the sources that require it (an error when it is missing or
+        not a number); None for the others, whatever was sent."""
+        cleaned = super().clean()
+        source = catalog_service.SOURCES.get(cleaned.get("source") or "")
+        value = (cleaned.get("series") or "").strip()
+        cleaned["series"] = None
+        if source is None or not source.requires_series:
+            return cleaned
+        if not value:
+            self.add_error("series", series_required_message(source.name))
+            return cleaned
+        try:
+            cleaned["series"] = clean_series_id(value)
+        except ValidationError as exc:
+            self.add_error("series", exc)
+        return cleaned
+
+
+class CatalogSeriesForm(forms.Form):
+    """The series a catalogue's series view (MyComicShop's variants modal) asks for."""
+
+    id = forms.CharField(max_length=20)
+
+    def clean_id(self) -> int:
+        return clean_series_id(self.cleaned_data["id"])
 
 
 class PublishingManageForm(forms.ModelForm):

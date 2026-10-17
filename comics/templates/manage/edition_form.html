@@ -75,51 +75,54 @@
       <span class="material-symbols-outlined" aria-hidden="true">cloud_download</span>
       <h2 class="md-title-medium mb-0" id="catalog-import-title">{% translate "Import from a catalogue" %}</h2>
     </div>
-    {% if catalog_enabled %}
-      <p class="md-body-medium">{% translate "Fill in the form with an issue from Metron or Comic Vine. Check the values: nothing is saved until you save the form." %}</p>
-      <div class="row g-2 align-items-center">
-        <div class="col-12 col-md-3">
-          <div class="form-floating md-field">
-            <select class="form-select" id="catalog-source">
-              {% for source in catalog_sources %}
-                <option value="{{ source.key }}" {% if not source.enabled %}disabled{% endif %}>{{ source.name }}{% if not source.enabled %} · {% translate "not configured" %}{% endif %}</option>
-              {% endfor %}
-            </select>
-            <label for="catalog-source">{% translate "Source" %}</label>
-          </div>
-        </div>
-        <div class="col-8 col-md-4">
-          <div class="form-floating md-field">
-            <input type="text" class="form-control" id="catalog-id" inputmode="numeric" autocomplete="off" maxlength="20" placeholder="{% translate 'Issue ID in the catalogue' %}">
-            <label for="catalog-id">{% translate "Issue ID in the catalogue" %}</label>
-          </div>
-        </div>
-        <div class="col-4 col-md-2">
-          <button type="button" class="md-btn md-btn--tonal w-100" id="catalog-load">
-            <span class="material-symbols-outlined" aria-hidden="true">cloud_download</span>
-            {% translate "Load" %}
-          </button>
+    <p class="md-body-medium">
+      {% blocktranslate trimmed %}
+        Fill in the form with an issue from a catalogue. With MyComicShop, enter the series ID and pick the
+        cover among its variants. Check the values: nothing is saved until you save the form.
+      {% endblocktranslate %}
+    </p>
+    <div class="row g-2 align-items-center">
+      <div class="col-12 col-md-3">
+        <div class="form-floating md-field">
+          <select class="form-select" id="catalog-source">
+            {% for source in catalog_sources %}
+              <option value="{{ source.key }}" {% if not source.enabled %}disabled{% endif %}{% if source.requires_series %} data-requires-series{% endif %}>{{ source.name }}{% if not source.enabled %} · {% translate "not configured" %}{% endif %}</option>
+            {% endfor %}
+          </select>
+          <label for="catalog-source">{% translate "Source" %}</label>
         </div>
       </div>
-      <div class="catalog-import__status mt-2" id="catalog-status" role="status" aria-live="polite"></div>
-      <div class="catalog-import__result mt-3" id="catalog-result" hidden>
-        <div class="row g-2 align-items-center mb-2" id="catalog-variant-row" hidden>
-          <div class="col-12 col-md-7">
-            <div class="form-floating md-field">
-              <select class="form-select" id="catalog-variant"></select>
-              <label for="catalog-variant">{% translate "Cover to fill in" %}</label>
-            </div>
+      <div class="col-8 col-md-4">
+        <div class="form-floating md-field">
+          {# catalog_import.js swaps the label for the series one when the source is loaded by series. #}
+          <input type="text" class="form-control" id="catalog-id" inputmode="numeric" autocomplete="off" maxlength="20" placeholder="{% translate 'Issue ID in the catalogue' %}"
+                 data-issue-label="{% translate 'Issue ID in the catalogue' %}" data-series-label="{% translate 'MyComicShop series ID (TID)' %}">
+          <label for="catalog-id">{% translate "Issue ID in the catalogue" %}</label>
+        </div>
+      </div>
+      <div class="col-4 col-md-2">
+        <button type="button" class="md-btn md-btn--tonal w-100" id="catalog-load">
+          <span class="material-symbols-outlined" aria-hidden="true">cloud_download</span>
+          {% translate "Load" %}
+        </button>
+      </div>
+    </div>
+    <div class="catalog-import__status mt-2" id="catalog-status" role="status" aria-live="polite"></div>
+    <div class="catalog-import__result mt-3" id="catalog-result" hidden>
+      <div class="row g-2 align-items-center mb-2" id="catalog-variant-row" hidden>
+        <div class="col-12 col-md-7">
+          <div class="form-floating md-field">
+            <select class="form-select" id="catalog-variant"></select>
+            <label for="catalog-variant">{% translate "Cover to fill in" %}</label>
           </div>
         </div>
-        <ul class="catalog-import__summary mb-0" id="catalog-summary"></ul>
-        <a class="md-btn md-btn--text mt-1" id="catalog-source-link" target="_blank" rel="noopener noreferrer" hidden>
-          <span class="material-symbols-outlined" aria-hidden="true">open_in_new</span>
-          <span id="catalog-source-link-text"></span>
-        </a>
       </div>
-    {% else %}
-      <p class="md-body-medium mb-0">{% translate "Importing is off: set METRON_USERNAME and METRON_PASSWORD (or COMICVINE_API_KEY) in the .env file and restart the app." %}</p>
-    {% endif %}
+      <ul class="catalog-import__summary mb-0" id="catalog-summary"></ul>
+      <a class="md-btn md-btn--text mt-1" id="catalog-source-link" target="_blank" rel="noopener noreferrer" hidden>
+        <span class="material-symbols-outlined" aria-hidden="true">open_in_new</span>
+        <span id="catalog-source-link-text"></span>
+      </a>
+    </div>
   </section>
 
   <div class="row g-3">
@@ -156,6 +159,7 @@
           <div class="col-6 col-md-2">{% include 'manage/includes/field.html' with field=form.limited_to %}</div>
           <div class="col-12 col-md-4">{% include 'manage/includes/field.html' with field=form.event_exclusive %}</div>
           <div class="col-12 col-md-4">{% include 'manage/includes/field.html' with field=form.retailer_exclusive %}</div>
+          <div class="col-6 col-md-4">{% include 'manage/includes/field.html' with field=form.mycomicshop_id %}</div>
           <datalist id="event-options">{% for value in event_options %}<option value="{{ value }}">{% endfor %}</datalist>
           <datalist id="retailer-options">{% for value in retailer_options %}<option value="{{ value }}">{% endfor %}</datalist>
           <div class="col-12 md-body-medium mt-1">
@@ -322,6 +326,7 @@
 </form>
 
 {% include 'manage/includes/publishing_dialogs.html' %}
+{% include 'manage/includes/catalog_series_dialog.html' %}
 {% if edition %}
   {% include 'manage/includes/delete_dialog.html' with delete_next=back_url %}
 {% endif %}
