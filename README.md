@@ -1,4 +1,543 @@
-Proyecto de registro de comics
+# Comi
+
+Aplicación web para catalogar cómics y llevar el registro de una colección. Tiene un **catálogo
+compartido** de editoriales, series, números y ediciones. Sobre él, cada coleccionista registra sus
+**compras y ventas**, las firmas de sus piezas y lo que le falta. Los usuarios pueden **proponer
+correcciones** al catálogo, que pasan por revisión antes de aplicarse. Además hay **logros**,
+**perfiles** y **notificaciones**.
+
+Está hecha con Django 5.1 (Python 3.11) y MySQL 8, y se levanta con Docker Compose. La interfaz está
+en español e inglés.
+
+**Contenido:** [Funcionalidades](#funcionalidades) · [Conceptos del catálogo](#conceptos-del-catálogo) ·
+[Roles y áreas](#roles-y-áreas) · [Arquitectura](#arquitectura) · [Esquema de datos](#esquema-de-datos) ·
+[Requisitos previos](#requisitos-previos) · [Instalación](#instalación) ·
+[Respaldos](#respaldar-la-base-de-datos) · [Logros](#logros) · [Traducciones](#traducciones-español--inglés) ·
+[Desarrollo](#desarrollo)
+
+## Funcionalidades
+
+- **Catálogo** de editoriales, títulos, publishings, issues, ediciones (variantes, reimpresiones,
+  compilaciones) y artistas. Se mantiene desde **Gestión**, un área propia separada del admin de
+  Django.
+- **Importación desde catálogos externos:** el formulario de ediciones de Gestión se puede precargar
+  desde [Metron](https://metron.cloud) (fuente principal) o [Comic Vine](https://comicvine.gamespot.com)
+  (respaldo). Desde los mismos diálogos se crean el publishing, el título, la editorial y los
+  artistas que falten. Las editoriales tienen alias para emparejar los nombres de cada fuente.
+- **Colección personal** ("Mis comics"): compras y ventas de cada edición (con vendedor, precio y
+  valoración), firmas de artistas, lo que se tiene y lo que falta de cada publishing. También
+  **arcos de lectura** (issues en orden, de varias series), **connectings** (portadas que forman una
+  imagen mayor) y **coleccionables** geek.
+- **Historial de versiones** de issues y ediciones: cada guardado es una versión (quién, cuándo,
+  motivo), sea cual sea su origen. Cualquier versión se puede restaurar desde Gestión.
+- **Solicitudes de cambio:** los coleccionistas proponen correcciones o altas de issues y ediciones;
+  los revisores las validan y los administradores las aprueban. Al aprobarse se aplican como una
+  versión más del historial. El autor recibe un aviso en cada paso.
+- **Logros** con niveles, categorías y ventanas de tiempo. La regla de cada logro está en el código;
+  textos, íconos, niveles y categorías se editan en Gestión.
+- **Perfiles** públicos o privados con avatar y logros, **notificaciones** (campana de la barra
+  superior) y **anuncios** de Gestión a todos o a ciertos roles.
+
+## Conceptos del catálogo
+
+| Concepto | Qué es |
+| --- | --- |
+| **Editorial** | La casa que publica (Marvel, DC, Panini…). Puede tener alias con los nombres que le dan Metron o Comic Vine. |
+| **Title** | Un nombre que agrupa varios publishings, por ejemplo los volúmenes de una misma cabecera. |
+| **Publishing** | Una serie concreta: nombre, volumen (`serie`), idioma, año de inicio y editoriales. Es lo que Metron llama *series* y Comic Vine *volume*. |
+| **Issue** | El contenido de un número (la historia): número, sinopsis y creadores. Es único por publishing y número. |
+| **Edition** | La pieza física, lo que se suele llamar "un cómic": portada o variante, impresión, formato, precio de portada, fecha de salida e imagen. Apunta al issue que contiene; si es una compilación, a varios issues en orden. Puede pertenecer a un publishing distinto al del issue (reediciones, ediciones extranjeras). |
+| **Artist** | Creadores del interior (`IssueCreator`) y artistas de portada (`EditionCoverArtist`). No se puede borrar mientras tenga créditos. |
+| **Collection** | Una compra o una venta de una edición por un coleccionista. Una venta apunta a la compra que cierra (`previous_trade`). |
+
+## Roles y áreas
+
+Los roles son grupos de Django; las vistas comprueban permisos, nunca nombres de grupo
+(`comics/roles.py`). Se recrean con `manage.py ensure_roles`.
+
+| Rol | Puede |
+| --- | --- |
+| **Collectors** | Todo usuario registrado: su colección, perfil, notificaciones y proponer cambios. |
+| **Reviewers** | Además, validar o rechazar solicitudes en el área de revisión. |
+| **Administrators** | Además, entrar en Gestión y aprobar solicitudes. |
+| Superusuarios | Todo lo anterior y el admin de Django, que es solo para ellos. |
+
+| Ruta | Área |
+| --- | --- |
+| `/comics/` | Mis comics: colección, ediciones, arcos, connectings y solicitudes propias |
+| `/collectables/` | Coleccionables geek |
+| `/perfil/`, `/u/<usuario>/` | Perfil propio y perfiles de otros usuarios |
+| `/notificaciones/` | Notificaciones |
+| `/revisiones/` | Cola de revisión de solicitudes (Reviewers y Administrators) |
+| `/gestion/` | Gestión: catálogo, colecciones, arcos, connectings, historial, logros y anuncios (Administrators) |
+| `/admin/` | Admin de Django (superusuarios) |
+
+## Arquitectura
+
+Es un proyecto Django con una sola app, `comics`; `comic/` contiene la configuración y las rutas.
+
+| Ruta | Contenido |
+| --- | --- |
+| `comics/models/` | Modelos, un módulo por área (ver [Esquema de datos](#esquema-de-datos)) |
+| `comics/forms/` | Formularios, también por área |
+| `comics/views/` | Vistas; las de Gestión empiezan por `manage_` |
+| `comics/history.py`, `comics/versions.py` | Historial de versiones y servicios para aplicar cambios y revertirlos |
+| `comics/change_requests.py` | Flujo de las solicitudes de cambio (transiciones, permisos y avisos) |
+| `comics/catalog_sources/` | Clientes de Metron y Comic Vine, y el mapeador que convierte sus respuestas en una propuesta para el formulario |
+| `comics/achievements/` | Motor de logros: reglas, ventanas de tiempo, evaluación y presentación |
+| `comics/roles.py`, `comics/decorators.py` | Roles, permisos y control de acceso a las vistas |
+| `comics/signals.py` | Receptores de señales: rol y perfil de cada usuario nuevo, re-evaluación de logros y versiones de las compilaciones |
+| `comics/management/commands/` | Comandos: `ensure_roles`, `ensure_achievements`, `award_achievements`, `diagrams` |
+| `comics/templates/`, `comics/static/` | Plantillas (Bootstrap) y JS propio en `static/js/custom/` |
+| `locale/es/` | Traducción al español |
+
+### Dependencias entre módulos
+
+Una flecha `A --> B` significa que algún módulo de A importa uno de B. Se calcula a partir de los
+`import` del código, incluidos los que están dentro de funciones.
+
+<!-- diagrams:modules:start -->
+```mermaid
+flowchart TD
+    subgraph layer0["Entrada"]
+        urls["comic.urls<br/>rutas"]
+        views_site["comics.views<br/>sitio y revisiones"]
+        views_manage["comics.views.manage_*<br/>Gestión"]
+        admin["comics.admin<br/>admin de Django"]
+        commands["comics.management<br/>comandos"]
+        signals["comics.signals<br/>señales"]
+        web["decorators · middleware<br/>context_processors"]
+    end
+    subgraph layer1["Formularios y servicios"]
+        forms["comics.forms"]
+        catalog_sources["comics.catalog_sources<br/>Metron y Comic Vine"]
+        change_requests["comics.change_requests<br/>flujo de solicitudes"]
+        versions["comics.versions<br/>aplicar y revertir versiones"]
+        achievements["comics.achievements<br/>motor de logros"]
+    end
+    subgraph layer2["Datos"]
+        models["comics.models"]
+        history["comics.history<br/>historial"]
+        roles["comics.roles<br/>roles y permisos"]
+        helper["comics.helper<br/>utilidades"]
+    end
+    achievements --> models
+    admin --> forms
+    admin --> models
+    admin --> views_site
+    catalog_sources --> helper
+    catalog_sources --> models
+    change_requests --> achievements
+    change_requests --> history
+    change_requests --> models
+    change_requests --> roles
+    change_requests --> versions
+    commands --> achievements
+    commands --> models
+    commands --> roles
+    forms --> achievements
+    forms --> catalog_sources
+    forms --> change_requests
+    forms --> helper
+    forms --> models
+    forms --> roles
+    models --> achievements
+    models --> helper
+    models --> history
+    models --> roles
+    signals --> achievements
+    signals --> history
+    signals --> models
+    signals --> roles
+    urls --> views_manage
+    urls --> views_site
+    versions --> achievements
+    versions --> history
+    versions --> models
+    views_manage --> achievements
+    views_manage --> catalog_sources
+    views_manage --> forms
+    views_manage --> history
+    views_manage --> models
+    views_manage --> roles
+    views_manage --> versions
+    views_manage --> views_site
+    views_manage --> web
+    views_site --> achievements
+    views_site --> change_requests
+    views_site --> forms
+    views_site --> helper
+    views_site --> models
+    views_site --> roles
+    views_site --> views_manage
+    views_site --> web
+    web --> achievements
+    web --> models
+    web --> roles
+```
+<!-- diagrams:modules:end -->
+
+## Esquema de datos
+
+Generado a partir de los modelos de `comics`. `User` y `Group` son los de `django.contrib.auth`.
+En cada diagrama, las entidades que aparecen sin atributos pertenecen a otra área.
+
+<!-- diagrams:schema:start -->
+### Vista general
+
+Cada caja es un módulo de `comics/models/`; una flecha indica que los modelos de un área tienen relaciones hacia otra (el número es cuántas).
+
+```mermaid
+flowchart LR
+    catalog["<b>Catálogo</b><br/>Artist, CollectedIssue, Edition, EditionCoverArtist, Editorial, EditorialAlias, Issue, IssueCreator, Publishing, Title"]
+    collections["<b>Colecciones</b><br/>Collection, Connecting, ConnectingPiece, Dealer, GeekCollectable, ReadingArc, ReadingArcEntry, Signature"]
+    change_requests["<b>Solicitudes de cambio</b><br/>ChangeRequest"]
+    achievements["<b>Logros</b><br/>Achievement, AchievementCategory, AchievementTier, UserAchievement"]
+    notifications["<b>Notificaciones y anuncios</b><br/>Announcement, Notification"]
+    profiles["<b>Perfiles y permisos</b><br/>AreaAccess, Profile"]
+    auth["<b>django.contrib.auth</b><br/>User, Group"]
+    achievements -->|1| auth
+    change_requests -->|3| auth
+    collections -->|1| auth
+    collections -->|7| catalog
+    notifications -->|1| achievements
+    notifications -->|3| auth
+    notifications -->|1| change_requests
+    profiles -->|1| auth
+```
+
+Tienen historial de versiones (`django-simple-history`, tablas `Historical*`, que no se dibujan): `Edition` (con collected_issues, cover_artists), `Issue` (con creators).
+
+### Catálogo
+
+```mermaid
+erDiagram
+    Editorial {
+        BigAutoField id PK
+        CharField name UK
+        CharField country
+    }
+    EditorialAlias {
+        BigAutoField id PK
+        ForeignKey editorial FK
+        CharField name
+        CharField key UK
+    }
+    Title {
+        BigAutoField id PK
+        CharField name UK
+    }
+    Publishing {
+        BigAutoField id PK
+        ForeignKey title FK "null"
+        CharField publishing_title
+        CharField serie
+        CharField language
+        DateField date
+        IntegerField year "null"
+        PositiveIntegerField metron_series_id UK "null"
+        PositiveIntegerField comicvine_volume_id UK "null"
+        PositiveIntegerField gcd_series_id "null"
+    }
+    Artist {
+        BigAutoField id PK
+        CharField name UK
+        ImageField photo "null"
+    }
+    Issue {
+        BigAutoField id PK
+        ForeignKey publishing FK
+        CharField number
+        TextField synopsis
+        PositiveIntegerField metron_id UK "null"
+        PositiveIntegerField comicvine_id UK "null"
+        PositiveIntegerField gcd_id "null"
+    }
+    IssueCreator {
+        BigAutoField id PK
+        ForeignKey issue FK
+        ForeignKey artist FK
+    }
+    Edition {
+        BigAutoField id PK
+        ForeignKey publishing FK
+        CharField number
+        CharField variant
+        CharField printing
+        CharField ratio
+        CharField limited_to
+        CharField retailer_exclusive
+        CharField event_exclusive
+        DecimalField cover_price
+        CharField format
+        CharField rarity
+        DateField release_date
+        ImageField image "null"
+        ImageField thumbnail "null"
+        TextField notes
+        ForeignKey issue FK "null"
+    }
+    CollectedIssue {
+        BigAutoField id PK
+        ForeignKey edition FK
+        ForeignKey issue FK
+        PositiveSmallIntegerField order
+    }
+    EditionCoverArtist {
+        BigAutoField id PK
+        ForeignKey edition FK
+        ForeignKey artist FK
+    }
+    Editorial ||--o{ EditorialAlias : "editorial"
+    Title |o--o{ Publishing : "title"
+    Publishing }o--o{ Editorial : "editorials"
+    Publishing ||--o{ Issue : "publishing"
+    Issue ||--o{ IssueCreator : "issue"
+    Artist ||--o{ IssueCreator : "artist"
+    Publishing ||--o{ Edition : "publishing"
+    Issue |o--o{ Edition : "issue"
+    Edition ||--o{ CollectedIssue : "edition"
+    Issue ||--o{ CollectedIssue : "issue"
+    Edition ||--o{ EditionCoverArtist : "edition"
+    Artist ||--o{ EditionCoverArtist : "artist"
+```
+
+### Colecciones
+
+```mermaid
+erDiagram
+    Dealer {
+        BigAutoField id PK
+        CharField name UK
+        CharField real_name
+        CharField fb
+    }
+    Collection {
+        BigAutoField id PK
+        ForeignKey collector FK
+        ForeignKey edition FK
+        DecimalField amount
+        DateField trade_date
+        CharField trade_type
+        ForeignKey participant FK "null"
+        DecimalField valuation
+        ForeignKey previous_trade FK "null"
+        TextField notes
+    }
+    Signature {
+        BigAutoField id PK
+        ForeignKey artist FK
+        ForeignKey collectable FK
+        DateField date
+        DecimalField price
+        BooleanField has_coa
+    }
+    ReadingArc {
+        BigAutoField id PK
+        CharField name UK
+        TextField notes
+    }
+    ReadingArcEntry {
+        BigAutoField id PK
+        ForeignKey arc FK
+        ForeignKey issue FK
+        PositiveSmallIntegerField order
+    }
+    Connecting {
+        BigAutoField id PK
+        CharField name UK
+        PositiveSmallIntegerField rows
+        PositiveSmallIntegerField columns
+        TextField notes
+    }
+    ConnectingPiece {
+        BigAutoField id PK
+        ForeignKey connecting FK
+        ForeignKey edition FK
+        PositiveSmallIntegerField row
+        PositiveSmallIntegerField column
+    }
+    GeekCollectable {
+        BigAutoField id PK
+        CharField name
+        TextField description
+        DecimalField amount
+        DateField trade_date
+        ForeignKey participant FK
+        ImageField image "null"
+    }
+    User ||--o{ Collection : "collector"
+    Edition ||--o{ Collection : "edition"
+    Dealer |o--o{ Collection : "participant"
+    Collection |o--o{ Collection : "previous_trade"
+    Artist ||--o{ Signature : "artist"
+    Collection ||--o{ Signature : "collectable"
+    ReadingArc ||--o{ ReadingArcEntry : "arc"
+    Issue ||--o{ ReadingArcEntry : "issue"
+    Connecting ||--o{ ConnectingPiece : "connecting"
+    Edition ||--o{ ConnectingPiece : "edition"
+    Dealer ||--o{ GeekCollectable : "participant"
+```
+
+### Solicitudes de cambio
+
+```mermaid
+erDiagram
+    ChangeRequest {
+        BigAutoField id PK
+        CharField kind
+        CharField action
+        CharField status
+        PositiveBigIntegerField target_pk "null"
+        CharField target_label
+        JSONField changes
+        PositiveBigIntegerField base_history_id "null"
+        PositiveBigIntegerField applied_history_id "null"
+        TextField reason
+        URLField evidence_url
+        ForeignKey author FK "null"
+        DateTimeField created_at
+        ForeignKey validated_by FK "null"
+        DateTimeField validated_at "null"
+        TextField validation_note
+        ForeignKey decided_by FK "null"
+        DateTimeField decided_at "null"
+        TextField decision_note
+    }
+    User |o--o{ ChangeRequest : "author"
+    User |o--o{ ChangeRequest : "validated_by"
+    User |o--o{ ChangeRequest : "decided_by"
+```
+
+### Logros
+
+```mermaid
+erDiagram
+    AchievementCategory {
+        BigAutoField id PK
+        CharField code UK
+        CharField name_en
+        CharField name_es
+        CharField description_en
+        CharField description_es
+        PositiveSmallIntegerField display_order
+        BooleanField is_enabled
+        ImageField image
+    }
+    Achievement {
+        BigAutoField id PK
+        CharField code UK
+        CharField rule
+        CharField name_en
+        CharField name_es
+        CharField description_en
+        CharField description_es
+        CharField hint_en
+        CharField hint_es
+        ForeignKey category FK
+        ImageField icon_image
+        BooleanField is_secret
+        BooleanField is_enabled
+        PositiveSmallIntegerField display_order
+        CharField calendar_window
+        PositiveSmallIntegerField window_start_day "null"
+        PositiveSmallIntegerField window_start_month "null"
+        PositiveSmallIntegerField window_end_day "null"
+        PositiveSmallIntegerField window_end_month "null"
+        DateField window_start_date "null"
+        DateField window_end_date "null"
+        TimeField window_start_time "null"
+        TimeField window_end_time "null"
+    }
+    AchievementTier {
+        BigAutoField id PK
+        ForeignKey achievement FK
+        PositiveSmallIntegerField level
+        PositiveIntegerField threshold
+        CharField label_en
+        CharField label_es
+    }
+    UserAchievement {
+        BigAutoField id PK
+        ForeignKey user FK
+        ForeignKey achievement FK
+        PositiveSmallIntegerField level
+        DateTimeField awarded_at
+        DateTimeField level_reached_at
+        BooleanField notified
+        BooleanField bulk_awarded
+    }
+    AchievementCategory ||--o{ Achievement : "category"
+    Achievement ||--o{ AchievementTier : "achievement"
+    User ||--o{ UserAchievement : "user"
+    Achievement ||--o{ UserAchievement : "achievement"
+```
+
+### Notificaciones y anuncios
+
+```mermaid
+erDiagram
+    Announcement {
+        BigAutoField id PK
+        CharField title_en
+        CharField title_es
+        TextField body_en
+        TextField body_es
+        CharField link
+        CharField audience
+        ForeignKey created_by FK "null"
+        DateTimeField created_at
+    }
+    Notification {
+        BigAutoField id PK
+        ForeignKey recipient FK
+        CharField kind
+        ForeignKey achievement FK "null"
+        ForeignKey announcement FK "null"
+        ForeignKey change_request FK "null"
+        PositiveSmallIntegerField level "null"
+        PositiveIntegerField count "null"
+        DateTimeField created_at
+        DateTimeField read_at "null"
+    }
+    User |o--o{ Announcement : "created_by"
+    Announcement }o--o{ Group : "roles"
+    User ||--o{ Notification : "recipient"
+    Achievement |o--o{ Notification : "achievement"
+    Announcement |o--o{ Notification : "announcement"
+    ChangeRequest |o--o{ Notification : "change_request"
+```
+
+### Perfiles y permisos
+
+```mermaid
+erDiagram
+    AreaAccess {
+        BigAutoField id PK
+    }
+    Profile {
+        BigAutoField id PK
+        OneToOneField user FK, UK
+        ImageField avatar
+        CharField phone
+        BooleanField is_public
+    }
+    User ||--o| Profile : "user"
+```
+<!-- diagrams:schema:end -->
+
+### Regenerar los diagramas
+
+Los diagramas de este README los escribe el comando `diagrams`, que reemplaza el texto entre los
+marcadores `<!-- diagrams:...:start/end -->`. No necesita la base de datos ni Docker:
+
+```bash
+.venv/Scripts/python.exe manage.py diagrams --settings=comic.settings_test
+```
+
+Hay que correrlo después de cambiar modelos o imports entre módulos. Con `--check` no escribe nada y
+falla si algún diagrama está desactualizado. GitHub y la vista previa de VS Code (con la extensión
+*Markdown Preview Mermaid Support*) dibujan los bloques `mermaid`.
 
 ## Requisitos previos
 
@@ -198,10 +737,28 @@ Los textos de la interfaz se escriben en **inglés** en el código (`{% translat
 
 1. Extrae los textos nuevos a los `.po`:
    ```bash
-   docker compose run --rm -v "$(pwd):/code" web sh -c 'python manage.py makemessages -l es --no-wrap -i staticfiles -i media -i backups -i "comics/static/vendor/*" && python manage.py makemessages -d djangojs -l es --no-wrap -i staticfiles -i media -i backups -i "comics/static/vendor/*"'
+   MSYS_NO_PATHCONV=1 docker compose run --rm -v "$(pwd -W):/code" web sh -c 'python manage.py makemessages -l es --no-wrap -i staticfiles -i media -i backups -i "comics/static/vendor/*" && python manage.py makemessages -d djangojs -l es --no-wrap -i staticfiles -i media -i backups -i "comics/static/vendor/*"'
    ```
 2. Escribe la traducción en cada `msgstr` vacío de los `.po`.
 3. Reconstruye la imagen (`docker compose up --build`): el build compila los `.po` a `.mo` con `compilemessages`. Los `.mo` no se versionan.
+
+## Desarrollo
+
+- **Ramas:** `master` es lo desplegado, `develop` la integración; las features salen de `develop` en
+  ramas `feat/...` o `fix/...`.
+- **Tests:** contra MySQL, dentro de Docker. Desde Git Bash, el árbol de trabajo se monta con
+  `MSYS_NO_PATHCONV=1` y una ruta de Windows; con un `-v "$(pwd):/code"` normal no se monta nada y
+  los tests corren con el código que tiene la imagen:
+  ```bash
+  MSYS_NO_PATHCONV=1 docker compose run --rm -v "$(pwd -W):/code" web sh -c 'MYSQL_USER=root MYSQL_PASSWORD="$MYSQL_ROOT_PASSWORD" python manage.py test comics --noinput'
+  ```
+  Sin Docker se pueden correr sobre SQLite en memoria, pero MySQL es la referencia para las
+  migraciones: `.venv/Scripts/python.exe manage.py test comics --settings=comic.settings_test`.
+- **Estilo:** Ruff (`ruff check` y `ruff format`, configurado en `pyproject.toml`). Los comentarios y
+  docstrings van en inglés.
+- **Commits:** [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/), en inglés.
+- **Pendientes:** el trabajo pendiente, las decisiones abiertas y las limitaciones conocidas están en
+  [`BACKLOG.md`](BACKLOG.md).
 
 ## Notas
 
