@@ -13,3 +13,6 @@ dump*.json
 /.venv/
 __pycache__/
 *.pyc
+
+# CodeGraph local index (rebuilt with `codegraph init`)
+/.codegraph/
