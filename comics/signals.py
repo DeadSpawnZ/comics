@@ -6,6 +6,7 @@ from typing import Any
 
 from django.contrib.auth.models import User
 from django.contrib.auth.signals import user_logged_in
+from django.db.models import QuerySet
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 from django.http import HttpRequest
@@ -18,6 +19,7 @@ from comics.achievements.engine import (
     schedule_reading_arc_owners,
 )
 from comics.achievements.registry import Event, rule_keys_for
+from comics.history import record_change
 from comics.models import (
     CollectedIssue,
     Collection,
@@ -131,3 +133,20 @@ def collected_issue_changed(sender: type[CollectedIssue], instance: CollectedIss
     # What a compilation collects counts towards reading arcs.
     if not kwargs.get("raw"):
         schedule_compilation_owners(instance.edition_id)
+
+
+# ---------- Versions (comics.history) ----------
+
+
+def deleting_edition(origin: object) -> bool:
+    """Whether a deletion started with an edition (its collected issues go with it)."""
+    return isinstance(origin, Edition) or (isinstance(origin, QuerySet) and origin.model is Edition)
+
+
+@receiver(post_save, sender=CollectedIssue, dispatch_uid="comics.history.collected_issue_saved")
+@receiver(post_delete, sender=CollectedIssue, dispatch_uid="comics.history.collected_issue_deleted")
+def collected_issue_versioned(sender: type[CollectedIssue], instance: CollectedIssue, **kwargs: Any) -> None:
+    """The collected issues are part of their edition's versions, but the admin and scripts change
+    them row by row, without saving the edition."""
+    if not kwargs.get("raw") and not deleting_edition(kwargs.get("origin")):
+        record_change(Edition, instance.edition_id)

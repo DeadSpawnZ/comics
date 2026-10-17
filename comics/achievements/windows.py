@@ -14,7 +14,7 @@ the time zone it comes in.
   same local moment: a 31/10 window with 23:00 - 02:00 does not match 01/11 at 01:00 (use a
   31/10 - 01/11 window for that).
 
-This module has no model imports: models.py uses it to validate, rules use it to decide."""
+This module has no model imports: comics.models uses it to validate, rules use it to decide."""
 
 from __future__ import annotations
 

@@ -1,5 +1,6 @@
 import datetime
 import io
+import unicodedata
 
 from django.core.files import File
 from django.core.files.uploadedfile import InMemoryUploadedFile
@@ -14,6 +15,14 @@ def parse_id_or_none(value: object) -> int | None:
         return int(value) if value not in (None, "") else None
     except (TypeError, ValueError):
         return None
+
+
+def name_key(name: str) -> str:
+    """A name compared ignoring case, accents and repeated spaces (artists, editorials and their
+    aliases are matched this way, e.g. against a catalogue's credits and publisher)."""
+    decomposed = unicodedata.normalize("NFKD", name)
+    plain = "".join(char for char in decomposed if not unicodedata.combining(char))
+    return " ".join(plain.casefold().split())
 
 
 def parse_date_or_none(value: str | None) -> datetime.date | None:

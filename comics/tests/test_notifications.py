@@ -18,7 +18,7 @@ from django.utils import timezone, translation
 
 from comics.achievements import engine
 from comics.models import Achievement, AchievementTier, Announcement, Notification, UserAchievement
-from comics.roles import ADMINISTRATORS, COLLECTORS, REVIEWERS
+from comics.roles import ADMINISTRATORS, REVIEWERS
 
 from .base import ComiTestCase
 from .factories import make_achievement, make_category, make_collection, make_edition, make_user

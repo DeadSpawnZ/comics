@@ -13,7 +13,7 @@ from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest, HttpResponse
 from django.urls import reverse
 
-from comics.roles import can_access_management
+from comics.roles import can_access_management, can_review_change_requests
 
 View = Callable[..., HttpResponse]
 
@@ -25,6 +25,20 @@ def management_required(view_func: View) -> View:
     @wraps(view_func)
     def wrapper(request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         if not can_access_management(request.user):
+            raise PermissionDenied
+        return view_func(request, *args, **kwargs)
+
+    return login_required(wrapper)
+
+
+def review_required(view_func: View) -> View:
+    """The review area (change requests): anonymous users go to LOGIN_URL; signed-in users without
+    a change-request permission (can_review_change_requests) get 403. Separate from Gestión, so
+    Reviewers can review without getting Gestión."""
+
+    @wraps(view_func)
+    def wrapper(request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        if not can_review_change_requests(request.user):
             raise PermissionDenied
         return view_func(request, *args, **kwargs)
 

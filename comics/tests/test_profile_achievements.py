@@ -172,7 +172,7 @@ class ProfilePageTests(ComiTestCase):
 
     def test_owner_sees_medallions_counts_and_every_challenge(self) -> None:
         html = self.own_page()
-        self.assertIn("4 of 30 challenges", html)  # the section's total
+        self.assertIn("4 of 31 challenges", html)  # the section's total
         self.assertIn("3 of 9 challenges", html)  # collection
         self.assertIn('class="trophy-progress__bar is-partial" style="width: 33%"', html)
         self.assertIn('class="trophy-progress__bar" style="width: 0%"', html)  # treasures: nothing yet
@@ -211,7 +211,7 @@ class ProfilePageTests(ComiTestCase):
 
     def test_other_users_see_counts_but_only_earned_challenges(self) -> None:
         html = self.public_page()
-        self.assertIn("4 of 30 challenges", html)
+        self.assertIn("4 of 31 challenges", html)
         self.assertIn("3 of 9 challenges", html)
         self.assertIn('With great power… <span class="reto__level">Silver</span>', html)
         self.assertIn("Nothing earned in this category yet.", html)  # e.g. treasures

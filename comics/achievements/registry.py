@@ -38,6 +38,7 @@ class Event(StrEnum):
     EDITION_RARITY = "edition_rarity"  # an edition the user owns changed its rarity
     CONNECTING = "connecting"  # the pieces of a connecting with an edition the user owns changed
     READING_ARC = "reading_arc"  # the issues of a reading arc (or a compilation) the user owns changed
+    CHANGE_REQUEST = "change_request"  # a change request of the user was approved
 
 
 class Kind(StrEnum):

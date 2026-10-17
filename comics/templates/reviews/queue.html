@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% load static i18n %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/custom/manage.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="my-4">
+  <div class="mb-3">
+    <h1 class="md-headline-small mb-0">{% translate "Change requests" %}</h1>
+    <span class="md-body-medium">{% translate "Corrections and new issues or editions proposed by collectors." %}</span>
+  </div>
+
+  <div class="md-surface-card manage-table">
+    <div class="manage-toolbar">
+      <div class="manage-tabs" role="tablist" aria-label="{% translate 'Status' %}">
+        {% for value, label, count in tabs %}
+          <a class="manage-tab {% if value == selected %}is-active{% endif %}" role="tab"
+             aria-selected="{% if value == selected %}true{% else %}false{% endif %}"
+             href="{% querystring status=value page=None %}">
+            {{ label }} <span class="manage-tab__count">{{ count }}</span>
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+
+    {% if not page_obj.object_list %}
+      <div class="text-center py-5">
+        <span class="material-symbols-outlined d-block mb-2 empty-state-icon" aria-hidden="true">inbox</span>
+        <p class="md-body-medium mb-0">{% translate "No requests here." %}</p>
+      </div>
+    {% else %}
+      <ul class="manage-rows">
+        {% for change_request in page_obj %}
+          <li class="manage-row">
+            <div class="manage-row__main">
+              <a class="manage-row__title" href="{% url 'review_detail' change_request.pk %}">#{{ change_request.pk }} · {{ change_request.title }}</a>
+              <div class="md-body-medium">
+                {{ change_request.author.username|default:_("deleted user") }} · {{ change_request.created_at|date:"SHORT_DATETIME_FORMAT" }}
+                · {{ change_request.reason|truncatechars:120 }}
+              </div>
+            </div>
+            {% include 'change_requests/includes/status_chip.html' %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  </div>
+  {% include 'includes/paginator.html' %}
+</div>
+{% endblock %}

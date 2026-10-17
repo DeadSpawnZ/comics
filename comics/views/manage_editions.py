@@ -20,9 +20,20 @@ from django.views.decorators.http import require_GET, require_POST
 
 from comics.achievements.engine import schedule_compilation_owners, schedule_for_owners
 from comics.achievements.registry import Event
+from comics.catalog_sources import service as catalog
+from comics.catalog_sources.errors import CatalogError
 from comics.decorators import management_required
-from comics.forms import EditionManageForm, publishing_choices
-from comics.models import CollectedIssue, Collection, Edition, Issue
+from comics.forms import (
+    ArtistCreateForm,
+    CatalogLookupForm,
+    EditionManageForm,
+    EditorialDialogForm,
+    IssueSectionForm,
+    PublishingDialogForm,
+    TitleDialogForm,
+    publishing_choices,
+)
+from comics.models import CollectedIssue, Collection, Edition, Issue, Publishing
 from comics.views.manage import _number_sort_key
 from comics.views.utils import log_action, safe_next_url
 
@@ -174,15 +185,22 @@ def edition_form(request: HttpRequest, pk: int | None = None) -> HttpResponse:  
     initial = {}
     if not edition and request.GET.get("publishing", "").isdigit():
         initial["publishing"] = int(request.GET["publishing"])  # e.g. "New edition" from a publishing
+        start = Publishing.objects.filter(pk=initial["publishing"]).values_list("date", flat=True).first()
+        if start:
+            initial["release_date"] = start  # the publishing's start date, as when it is picked on the page
     form = EditionManageForm(request.POST or None, request.FILES or None, instance=edition, initial=initial)
+    shown_issue = IssueSectionForm.shown_issue(request.POST or None, edition.issue if edition else None)
+    issue_form = IssueSectionForm(request.POST or None, instance=shown_issue)
     content_errors = []
 
     if request.method == "POST":
         content = request.POST.get("content", CONTENT_SINGLE)
         selected_issue_id, collected_ids, content_errors = _clean_content(request.POST, content)
-        if form.is_valid() and not content_errors:
+        # A compilation has no issue of its own: the issue section is not used (nor validated).
+        issue_valid = content == CONTENT_COMPILATION or issue_form.is_valid()
+        if form.is_valid() and issue_valid and not content_errors:
             try:
-                saved = _save_edition(form, content, selected_issue_id, collected_ids)
+                saved = _save_edition(form, content, selected_issue_id, collected_ids, issue_form)
             except ValidationError as exc:
                 form.add_error(None, exc)
             else:
@@ -196,6 +214,8 @@ def edition_form(request: HttpRequest, pk: int | None = None) -> HttpResponse:  
                         f"{reverse('manage_edition_edit', args=[saved.pk])}?{urlencode({'next': back_url})}"
                     )
                 return redirect(back_url)
+        if content == CONTENT_COMPILATION:
+            issue_form = IssueSectionForm(instance=shown_issue)  # shown again as it was, without errors
 
     issue_publishing_id = None
     if selected_issue_id:
@@ -228,6 +248,7 @@ def edition_form(request: HttpRequest, pk: int | None = None) -> HttpResponse:  
         own_option = _("Own issue (by publishing and number)")
 
     sibling_editions = sibling_editions_of(edition) if edition else []
+    publishings = list(form.fields["publishing"].queryset)
 
     return render(
         request,
@@ -235,6 +256,10 @@ def edition_form(request: HttpRequest, pk: int | None = None) -> HttpResponse:  
         {
             "edition": edition,
             "form": form,
+            "issue_form": issue_form,
+            "shown_issue_id": shown_issue.pk or "",
+            "catalog_sources": catalog.source_choices(),
+            "catalog_enabled": catalog.any_source_enabled(),
             "content": content,
             "content_errors": content_errors,
             "selected_issue_id": selected_issue_id,
@@ -247,11 +272,21 @@ def edition_form(request: HttpRequest, pk: int | None = None) -> HttpResponse:  
             "sibling_groups": Edition.group_by_cover_kind(sibling_editions),
             "own_option": own_option,
             "back_url": back_url,
+            # The "Create publishing" dialog and its "Create title" / "Create editorial" dialogs, and
+            # the "Create artist" dialog of the artist pickers.
+            "publishing_dialog": PublishingDialogForm(),
+            "title_dialog": TitleDialogForm(),
+            "editorial_dialog": EditorialDialogForm(),
+            "artist_dialog": ArtistCreateForm(),
             "form_data": {
                 "issuesUrl": reverse("manage_publishing_issues"),
-                "publishingTitles": {
-                    publishing.pk: publishing.publishing_title for publishing in form.fields["publishing"].queryset
-                },
+                "catalogUrl": reverse("manage_catalog_lookup"),
+                "artistsCreateUrl": reverse("manage_artists_create_api"),
+                "publishingTitles": {publishing.pk: publishing.publishing_title for publishing in publishings},
+                # Picking a publishing proposes its start date as the release date (edition_form.js), only
+                # while the date is the one the page started with on a new, unsent edition.
+                "publishingDates": {publishing.pk: publishing.date.isoformat() for publishing in publishings},
+                "fillReleaseDate": edition is None and not form.is_bound,
                 "collected": [_issue_payload(collected[i]) for i in collected_ids if i in collected],
             },
         },
@@ -292,7 +327,15 @@ def _clean_content(data: QueryDict, content: str) -> tuple[int | None, list[int]
 
 
 @transaction.atomic
-def _save_edition(form: EditionManageForm, content: str, issue_id: int | None, collected_ids: list[int]) -> Edition:
+def _save_edition(
+    form: EditionManageForm,
+    content: str,
+    issue_id: int | None,
+    collected_ids: list[int],
+    issue_form: IssueSectionForm,
+) -> Edition:
+    """Save the edition, its content and, for a single-issue edition, the issue section on the
+    issue it ends up with. A ValidationError rolls everything back."""
     edition = form.save(commit=False)
     old_issue_id = (
         Edition.objects.filter(pk=edition.pk).values_list("issue_id", flat=True).first() if edition.pk else None
@@ -313,6 +356,8 @@ def _save_edition(form: EditionManageForm, content: str, issue_id: int | None, c
         edition.issue_id = issue_id  # None = own issue (by publishing and number)
         edition.save()
         form.save_m2m()
+        if edition.issue_id:
+            issue_form.apply_to(edition.issue)
     _schedule_owners_after_content_change(edition, content, old_issue_id)
     return edition
 
@@ -368,3 +413,19 @@ def publishing_issues(request: HttpRequest) -> JsonResponse:
     except ValueError:
         return JsonResponse({"results": []})
     return JsonResponse({"results": [_issue_payload(issue) for issue in _issues_for_publishing(publishing_id)]})
+
+
+@management_required
+@require_GET
+def catalog_lookup(request: HttpRequest) -> JsonResponse:
+    """An issue from an external catalogue (?source=metron|comicvine&id=...) as a proposal for the
+    edition form (comics.catalog_sources.mapper). Reads only: nothing is created or saved."""
+    form = CatalogLookupForm(request.GET)
+    if not form.is_valid():
+        message = next(iter(form.errors.values()))[0]
+        return JsonResponse({"error": message}, status=400)
+    try:
+        proposal = catalog.load_proposal(form.cleaned_data["source"], form.cleaned_data["id"])
+    except CatalogError as exc:
+        return JsonResponse({"error": exc.message}, status=exc.status)
+    return JsonResponse({"proposal": proposal.as_dict()})

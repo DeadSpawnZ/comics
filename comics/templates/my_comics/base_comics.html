@@ -40,6 +40,14 @@
           Connectings
         </a>
       </li>
+      <li>
+        <a class="md-side-nav__link {% if 'request' in url_name %}is-active{% endif %}"
+           {% if 'request' in url_name %}aria-current="page"{% endif %}
+           href="{% url 'comics_requests' %}">
+          <span class="material-symbols-outlined" aria-hidden="true">edit_note</span>
+          {% translate "My requests" %}
+        </a>
+      </li>
     </ul>
   </nav>
   {% block side_panels %}{% endblock %}
