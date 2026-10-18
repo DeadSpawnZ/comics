@@ -1,0 +1,55 @@
+{% extends 'manage/base_manage.html' %}
+{% load static i18n %}
+
+{% block breadcrumb %}
+<a href="{{ back_url }}">{% translate "Pieces" %}</a>
+<span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+<span class="is-current">{% if piece %}{{ piece.article.name }}{% else %}{% translate "New piece" %}{% endif %}</span>
+{% endblock %}
+
+{% block manage_content %}
+<form method="post" novalidate>
+  {% csrf_token %}
+  <input type="hidden" name="next" value="{{ back_url }}">
+  <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <a class="md-icon-btn" href="{{ back_url }}" aria-label="{% translate 'Back to pieces' %}" title="{% translate 'Back to pieces' %}">
+        <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+      </a>
+      <h1 class="md-headline-small mb-0">{% if piece %}{% translate "Edit piece" %}{% else %}{% translate "New piece" %}{% endif %}</h1>
+    </div>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      {% if piece %}
+        <button type="button" class="md-btn md-btn--danger-outlined" data-bs-toggle="modal" data-bs-target="#deleteDialog"
+                data-delete-url="{% url 'manage_collectable_delete' piece.pk %}" data-delete-name="{{ piece.article.name }}">
+          <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+          {% translate "Delete" %}
+        </button>
+      {% else %}
+        <button type="submit" name="save_add_another" class="md-btn md-btn--tonal">
+          <span class="material-symbols-outlined" aria-hidden="true">library_add</span>
+          {% translate "Save and add another" %}
+        </button>
+      {% endif %}
+      {# Once the piece exists the buttons say "Update", so it is clear it was already saved. #}
+      <button type="submit" name="save_continue" class="md-btn md-btn--tonal">{% if piece %}{% translate "Update and continue editing" %}{% else %}{% translate "Save and continue editing" %}{% endif %}</button>
+      <button type="submit" class="md-btn md-btn--filled">
+        <span class="material-symbols-outlined" aria-hidden="true">{% if piece %}sync{% else %}save{% endif %}</span>
+        {% if piece %}{% translate "Update" context "save button" %}{% else %}{% translate "Save" %}{% endif %}
+      </button>
+    </div>
+  </div>
+
+  {% include 'collectables/includes/piece_fields.html' %}
+</form>
+
+{% if piece %}
+  {% translate "Delete piece?" as delete_title %}
+  {% include 'manage/includes/delete_dialog.html' with delete_next=back_url delete_title=delete_title %}
+{% endif %}
+{{ form_data|json_script:"collectable-form-data" }}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/custom/collectable_form.js' %}"></script>
+{% endblock %}

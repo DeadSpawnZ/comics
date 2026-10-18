@@ -2,7 +2,7 @@
 
 Views, the admin and the tests import from `comics.forms`, so every public name stays available here
 (plus _number_key, which the collection entry views use to sort editions).
-Module dependencies run one way: base <- catalog <- collections and change_requests;
+Module dependencies run one way: base <- catalog <- collections <- collectables; catalog <- change_requests;
 base <- accounts, achievements and announcements."""
 
 from .accounts import (
@@ -63,6 +63,14 @@ from .catalog import (
     recent_publishings,
 )
 from .change_requests import EditionProposalForm, IssueProposalForm, ProposalForm, ReviewNoteForm
+from .collectables import (
+    DUPLICATE_COLLECTABLE,
+    ArticleManageForm,
+    CollectableEntryForm,
+    article_choices,
+    article_images,
+    available_collectable_purchases,
+)
 from .collections import (
     CollectionEntryForm,
     CollectionForm,
@@ -109,6 +117,13 @@ __all__ = [
     "publishing_label",
     "publishings_for_select",
     "recent_publishings",
+    # collectables
+    "DUPLICATE_COLLECTABLE",
+    "ArticleManageForm",
+    "CollectableEntryForm",
+    "article_choices",
+    "article_images",
+    "available_collectable_purchases",
     # change_requests
     "EditionProposalForm",
     "IssueProposalForm",

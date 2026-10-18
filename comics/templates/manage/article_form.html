@@ -1,0 +1,102 @@
+{% extends 'manage/base_manage.html' %}
+{% load static i18n %}
+
+{% block breadcrumb %}
+<a href="{{ back_url }}">{% translate "Articles" %}</a>
+<span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+<span class="is-current">{% if article %}{{ article.name }}{% else %}{% translate "New article" %}{% endif %}</span>
+{% endblock %}
+
+{% block manage_content %}
+<form method="post" enctype="multipart/form-data" novalidate>
+  {% csrf_token %}
+  <input type="hidden" name="next" value="{{ back_url }}">
+  <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <a class="md-icon-btn" href="{{ back_url }}" aria-label="{% translate 'Back to articles' %}" title="{% translate 'Back to articles' %}">
+        <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+      </a>
+      <h1 class="md-headline-small mb-0">{% if article %}{% translate "Edit article" %}{% else %}{% translate "New article" %}{% endif %}</h1>
+    </div>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      {% if article %}
+        <button type="button" class="md-btn md-btn--danger-outlined" data-bs-toggle="modal" data-bs-target="#deleteDialog"
+                data-delete-url="{% url 'manage_article_delete' article.pk %}" data-delete-name="{{ article.name }}">
+          <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+          {% translate "Delete" %}
+        </button>
+      {% endif %}
+      <button type="submit" name="save_continue" class="md-btn md-btn--tonal">{% if article %}{% translate "Update and continue editing" %}{% else %}{% translate "Save and continue editing" %}{% endif %}</button>
+      <button type="submit" class="md-btn md-btn--filled">
+        <span class="material-symbols-outlined" aria-hidden="true">{% if article %}sync{% else %}save{% endif %}</span>
+        {% if article %}{% translate "Update" context "save button" %}{% else %}{% translate "Save" %}{% endif %}
+      </button>
+    </div>
+  </div>
+
+  {% if form.errors %}
+    <div class="editor-errors mb-3" role="alert">
+      <span class="material-symbols-outlined" aria-hidden="true">error</span>
+      <ul>
+        {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+        {% if not form.non_field_errors %}<li>{% translate "Check the highlighted fields." %}</li>{% endif %}
+      </ul>
+    </div>
+  {% endif %}
+
+  <div class="row g-3">
+    <div class="col-12 col-xl-8">
+      <div class="md-surface-card h-100">
+        <h2 class="md-title-medium mb-3">{% translate "Article" %}</h2>
+        <div class="row g-3">
+          <div class="col-12">{% include 'manage/includes/field.html' with field=form.name %}</div>
+          <div class="col-12 col-md-6">{% include 'manage/includes/field.html' with field=form.category %}</div>
+          <div class="col-12 col-md-6">
+            {% include 'manage/includes/field.html' with field=form.limited_to %}
+            <div class="md-body-medium mt-1">{{ form.limited_to.help_text }}</div>
+          </div>
+          <div class="col-12">{% include 'manage/includes/field.html' with field=form.description %}</div>
+        </div>
+        {% if article %}
+          <p class="md-body-medium mt-3 mb-0">
+            <a href="{% url 'manage_collectables' %}?article={{ article.pk }}">
+              {% blocktranslate count counter=piece_count %}{{ counter }} piece registered{% plural %}{{ counter }} pieces registered{% endblocktranslate %}
+            </a>
+          </p>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="col-12 col-xl-4">
+      <div class="md-surface-card h-100">
+        <h2 class="md-title-medium mb-3">{% translate "Image" %}</h2>
+        {% if article and article.image %}{% translate "Replace image" as image_action %}{% else %}{% translate "Upload image" as image_action %}{% endif %}
+        <div class="edition-cover-preview mb-2">
+          {% if article and article.image %}
+            <img src="{{ article.image.url }}" alt="{% translate 'Current image' %}" id="image-preview">
+          {% else %}
+            <img alt="" id="image-preview" hidden>
+            <span class="material-symbols-outlined" aria-hidden="true" id="image-placeholder">image</span>
+          {% endif %}
+          <button type="button" class="edition-cover-edit" id="image-edit" aria-label="{{ image_action }}" title="{{ image_action }}">
+            <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+          </button>
+        </div>
+        <div hidden>{{ form.image }}</div>
+        {% for error in form.image.errors %}<div class="invalid-feedback d-block text-center">{{ error }}</div>{% endfor %}
+        <div class="md-body-medium text-center mb-1" id="image-file-name" hidden></div>
+        <div class="md-body-medium text-center">{% translate "JPEG, PNG or WebP. It is converted to JPEG on save." %}</div>
+      </div>
+    </div>
+  </div>
+</form>
+
+{% if article %}
+  {% translate "Delete article?" as delete_title %}
+  {% include 'manage/includes/delete_dialog.html' with delete_next=back_url delete_title=delete_title %}
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/custom/article_form.js' %}"></script>
+{% endblock %}

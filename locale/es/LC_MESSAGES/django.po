@@ -3488,3 +3488,240 @@ msgstr "Importar"
 #, python-format
 msgid "%(edition)s already has this MyComicShop ID: saving it on another edition will fail."
 msgstr "%(edition)s ya tiene este ID de MyComicShop: guardarlo en otra edición fallará."
+
+#: comics/models/collections.py
+msgid "Figure"
+msgstr "Figura"
+
+#: comics/models/collections.py
+msgid "Print"
+msgstr "Print"
+
+#: comics/models/collections.py
+msgid "Pin"
+msgstr "Pin"
+
+#: comics/models/collections.py
+msgid "Card"
+msgstr "Tarjeta"
+
+#: comics/models/collections.py
+msgid "Poster"
+msgstr "Póster"
+
+#: comics/models/collections.py
+msgid "Video"
+msgstr "Video"
+
+#: comics/models/collections.py
+msgctxt "article category"
+msgid "Other"
+msgstr "Otro"
+
+#: comics/models/collections.py
+msgid "A piece can't be its own previous trade."
+msgstr "Una pieza no puede ser su propia operación anterior."
+
+#: comics/models/collections.py
+msgid "The previous trade must be a purchase of the same article by the same collector."
+msgstr "La operación anterior debe ser una compra del mismo artículo por el mismo coleccionista."
+
+#: comics/models/collections.py
+msgid "Print run, when the article is limited."
+msgstr "Tirada, cuando el artículo es limitado."
+
+#: comics/models/collections.py
+msgid "Only a sale can have a previous trade."
+msgstr "Solo una venta puede tener una operación anterior."
+
+#: comics/models/collections.py
+msgid "This purchase has already been sold."
+msgstr "Esta compra ya se vendió."
+
+#: comics/templates/collectables/base_collectables.html
+msgid "Collectables sections"
+msgstr "Secciones de collectables"
+
+#: comics/templates/collectables/base_collectables.html
+msgid "Articles"
+msgstr "Artículos"
+
+#: comics/templates/collectables/collectables.html
+msgid "Search name or description"
+msgstr "Buscar nombre o descripción"
+
+#: comics/templates/collectables/collectables.html
+msgctxt "categories"
+msgid "All"
+msgstr "Todas"
+
+#: comics/templates/collectables/collectables.html
+#, python-format
+msgid "Limited to %(count)s"
+msgstr "Limitado a %(count)s"
+
+#: comics/templates/collectables/collectables.html
+msgid "Seller"
+msgstr "Vendedor"
+
+#: comics/templates/collectables/collectables.html
+msgid "View article"
+msgstr "Ver artículo"
+
+#: comics/templates/collectables/article_list.html
+msgid "No articles match these filters."
+msgstr "Ningún artículo coincide con estos filtros."
+
+#: comics/templates/collectables/article_list.html
+#, python-format
+msgid "View %(name)s"
+msgstr "Ver %(name)s"
+
+#: comics/templates/collectables/article_detail.html
+msgid "Article data"
+msgstr "Datos del artículo"
+
+#: comics/templates/collectables/article_detail.html
+msgid "Your purchases and sales"
+msgstr "Tus compras y ventas"
+
+#: comics/templates/collectables/article_detail.html
+msgid "Seller / buyer"
+msgstr "Vendedor / comprador"
+
+#: comics/templates/collectables/article_detail.html
+msgid "Sold"
+msgstr "Vendido"
+
+#: comics/templates/collectables/article_detail.html
+msgid "You have no purchases or sales of this article."
+msgstr "No tienes compras ni ventas de este artículo."
+
+#: comics/templates/collectables/article_detail.html
+msgid "Image"
+msgstr "Imagen"
+
+#: comics/templates/collectables/article_list.html
+#, python-format
+msgid "%(counter)s article"
+msgid_plural "%(counter)s articles"
+msgstr[0] "%(counter)s artículo"
+msgstr[1] "%(counter)s artículos"
+
+#: comics/forms/collectables.py
+msgid "Article"
+msgstr "Artículo"
+
+#: comics/forms/collectables.py
+msgid "That piece is already registered (same article, date, amount, type and participant)."
+msgstr "Esa pieza ya está registrada (mismo artículo, fecha, monto, tipo y participante)."
+
+#: comics/forms/collectables.py
+msgid "Choose a purchase made on or before the sale date."
+msgstr "Elige una compra hecha en o antes de la fecha de venta."
+
+#: comics/templates/collectables/article_detail.html
+msgid "Add to my collection"
+msgstr "Agregar a mi colección"
+
+#: comics/templates/collectables/article_detail.html
+msgctxt "article"
+msgid "Limited to"
+msgstr "Limitado a"
+
+#: comics/templates/collectables/includes/piece_fields.html
+msgid "The piece you are selling. Once linked, it no longer counts as yours. Only pieces of this article bought on or before the sale date are listed."
+msgstr "La pieza que vendes. Al vincularla deja de contar como tuya. Solo se listan las piezas de este artículo compradas en o antes de la fecha de venta."
+
+#: comics/templates/collectables/includes/piece_fields.html
+msgid "Choose an article"
+msgstr "Elige un artículo"
+
+#: comics/templates/manage/article_list.html
+#: comics/templates/manage/article_form.html
+msgid "New article"
+msgstr "Nuevo artículo"
+
+#: comics/templates/manage/article_list.html
+#: comics/templates/manage/article_form.html
+msgid "Delete article?"
+msgstr "¿Eliminar artículo?"
+
+#: comics/templates/manage/includes/article_row.html
+msgid "See its pieces"
+msgstr "Ver sus piezas"
+
+#: comics/templates/manage/includes/article_row.html
+#, python-format
+msgid "Edit %(name)s"
+msgstr "Editar %(name)s"
+
+#: comics/templates/manage/article_form.html
+msgid "Back to articles"
+msgstr "Volver a artículos"
+
+#: comics/templates/manage/article_form.html
+msgid "Edit article"
+msgstr "Editar artículo"
+
+#: comics/templates/manage/article_form.html
+#, python-format
+msgid "%(counter)s piece registered"
+msgid_plural "%(counter)s pieces registered"
+msgstr[0] "%(counter)s pieza registrada"
+msgstr[1] "%(counter)s piezas registradas"
+
+#: comics/templates/manage/article_form.html
+msgid "Replace image"
+msgstr "Reemplazar imagen"
+
+#: comics/templates/manage/article_form.html
+msgid "Upload image"
+msgstr "Subir imagen"
+
+#: comics/templates/manage/article_form.html
+msgid "Current image"
+msgstr "Imagen actual"
+
+#: comics/templates/manage/article_form.html
+msgid "JPEG, PNG or WebP. It is converted to JPEG on save."
+msgstr "JPEG, PNG o WebP. Se convierte a JPEG al guardar."
+
+#: comics/templates/manage/collectable_list.html
+msgid "Collectable pieces"
+msgstr "Piezas de collectables"
+
+#: comics/templates/manage/collectable_list.html
+msgctxt "articles"
+msgid "All"
+msgstr "Todos"
+
+#: comics/templates/manage/collectable_list.html
+msgid "Search article or participant"
+msgstr "Buscar artículo o participante"
+
+#: comics/templates/manage/collectable_form.html
+msgid "Back to pieces"
+msgstr "Volver a piezas"
+
+#: comics/views/manage_collectables.py
+#, python-format
+msgid "Article created: %(article)s"
+msgstr "Artículo creado: %(article)s"
+
+#: comics/views/manage_collectables.py
+#, python-format
+msgid "Article saved: %(article)s"
+msgstr "Artículo guardado: %(article)s"
+
+#: comics/views/manage_collectables.py
+#, python-format
+msgid "Article deleted: %(article)s"
+msgstr "Artículo eliminado: %(article)s"
+
+#: comics/views/manage_collectables.py
+#, python-format
+msgid "“%(name)s” cannot be deleted: %(count)d piece of it is registered."
+msgid_plural "“%(name)s” cannot be deleted: %(count)d pieces of it are registered."
+msgstr[0] "“%(name)s” no se puede eliminar: tiene %(count)d pieza registrada."
+msgstr[1] "“%(name)s” no se puede eliminar: tiene %(count)d piezas registradas."

@@ -30,7 +30,8 @@ en español e inglés.
 - **Colección personal** ("Mis comics"): compras y ventas de cada edición (con vendedor, precio y
   valoración), firmas de artistas, lo que se tiene y lo que falta de cada publishing. También
   **arcos de lectura** (issues en orden, de varias series), **connectings** (portadas que forman una
-  imagen mayor) y **coleccionables** geek.
+  imagen mayor) y **collectables** (figuras, prints, pines...: un catálogo de artículos
+  compartido y las piezas que compra o vende cada coleccionista).
 - **Historial de versiones** de issues y ediciones: cada guardado es una versión (quién, cuándo,
   motivo), sea cual sea su origen. Cualquier versión se puede restaurar desde Gestión.
 - **Solicitudes de cambio:** los coleccionistas proponen correcciones o altas de issues y ediciones;
@@ -68,7 +69,7 @@ Los roles son grupos de Django; las vistas comprueban permisos, nunca nombres de
 | Ruta | Área |
 | --- | --- |
 | `/comics/` | Mis comics: colección, ediciones, arcos, connectings y solicitudes propias |
-| `/collectables/` | Coleccionables geek |
+| `/collectables/` | Collectables propios (las piezas que se conservan) |
 | `/perfil/`, `/u/<usuario>/` | Perfil propio y perfiles de otros usuarios |
 | `/notificaciones/` | Notificaciones |
 | `/revisiones/` | Cola de revisión de solicitudes (Reviewers y Administrators) |
@@ -193,7 +194,7 @@ Cada caja es un módulo de `comics/models/`; una flecha indica que los modelos d
 ```mermaid
 flowchart LR
     catalog["<b>Catálogo</b><br/>Artist, CollectedIssue, Edition, EditionCoverArtist, Editorial, EditorialAlias, Issue, IssueCreator, Publishing, Title"]
-    collections["<b>Colecciones</b><br/>Collection, Connecting, ConnectingPiece, Dealer, GeekCollectable, ReadingArc, ReadingArcEntry, Signature"]
+    collections["<b>Colecciones</b><br/>Article, Collectable, Collection, Connecting, ConnectingPiece, Dealer, ReadingArc, ReadingArcEntry, Signature"]
     change_requests["<b>Solicitudes de cambio</b><br/>ChangeRequest"]
     achievements["<b>Logros</b><br/>Achievement, AchievementCategory, AchievementTier, UserAchievement"]
     notifications["<b>Notificaciones y anuncios</b><br/>Announcement, Notification"]
@@ -201,7 +202,7 @@ flowchart LR
     auth["<b>django.contrib.auth</b><br/>User, Group"]
     achievements -->|1| auth
     change_requests -->|3| auth
-    collections -->|1| auth
+    collections -->|2| auth
     collections -->|7| catalog
     notifications -->|1| achievements
     notifications -->|3| auth
@@ -361,14 +362,25 @@ erDiagram
         PositiveSmallIntegerField row
         PositiveSmallIntegerField column
     }
-    GeekCollectable {
+    Article {
         BigAutoField id PK
         CharField name
         TextField description
+        CharField category
+        PositiveIntegerField limited_to "null"
+        ImageField image "null"
+    }
+    Collectable {
+        BigAutoField id PK
+        ForeignKey collector FK
+        ForeignKey article FK
         DecimalField amount
         DateField trade_date
-        ForeignKey participant FK
-        ImageField image "null"
+        CharField trade_type
+        ForeignKey participant FK "null"
+        DecimalField valuation
+        ForeignKey previous_trade FK "null"
+        TextField notes
     }
     User ||--o{ Collection : "collector"
     Edition ||--o{ Collection : "edition"
@@ -380,7 +392,10 @@ erDiagram
     Issue ||--o{ ReadingArcEntry : "issue"
     Connecting ||--o{ ConnectingPiece : "connecting"
     Edition ||--o{ ConnectingPiece : "edition"
-    Dealer ||--o{ GeekCollectable : "participant"
+    User ||--o{ Collectable : "collector"
+    Article ||--o{ Collectable : "article"
+    Dealer |o--o{ Collectable : "participant"
+    Collectable |o--o{ Collectable : "previous_trade"
 ```
 
 ### Solicitudes de cambio

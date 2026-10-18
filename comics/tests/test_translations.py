@@ -421,6 +421,45 @@ NEW_TRANSLATIONS = {
     "The artists could not be created. Try again.": "No se pudieron crear los artistas. Inténtalo de nuevo.",
     "Create artist": "Crear artista",
     "It is added to the list you opened this from. If an artist already has that name, that one is added instead.": "Se añade a la lista desde la que lo abriste. Si un artista ya tiene ese nombre, se añade ese.",
+    # Collectables module: the user's pieces and the article catalogue.
+    "Collectables sections": "Secciones de collectables",
+    "Articles": "Artículos",
+    "Search name or description": "Buscar nombre o descripción",
+    "Limited to %(count)s": "Limitado a %(count)s",
+    "Seller": "Vendedor",
+    "View article": "Ver artículo",
+    "No articles match these filters.": "Ningún artículo coincide con estos filtros.",
+    "View %(name)s": "Ver %(name)s",
+    "Article data": "Datos del artículo",
+    "Your purchases and sales": "Tus compras y ventas",
+    "Seller / buyer": "Vendedor / comprador",
+    "Sold": "Vendido",
+    "You have no purchases or sales of this article.": "No tienes compras ni ventas de este artículo.",
+    "Image": "Imagen",
+    # Collectables: "New piece" form.
+    "Article": "Artículo",
+    "That piece is already registered (same article, date, amount, type and participant).": "Esa pieza ya está registrada (mismo artículo, fecha, monto, tipo y participante).",
+    "Choose a purchase made on or before the sale date.": "Elige una compra hecha en o antes de la fecha de venta.",
+    "Add to my collection": "Agregar a mi colección",
+    "The piece you are selling. Once linked, it no longer counts as yours. Only pieces of this article bought on or before the sale date are listed.": "La pieza que vendes. Al vincularla deja de contar como tuya. Solo se listan las piezas de este artículo compradas en o antes de la fecha de venta.",
+    "Choose an article": "Elige un artículo",
+    # Gestión of the Collectables module (articles and pieces).
+    "New article": "Nuevo artículo",
+    "Delete article?": "¿Eliminar artículo?",
+    "See its pieces": "Ver sus piezas",
+    "Edit %(name)s": "Editar %(name)s",
+    "Back to articles": "Volver a artículos",
+    "Edit article": "Editar artículo",
+    "Replace image": "Reemplazar imagen",
+    "Upload image": "Subir imagen",
+    "Current image": "Imagen actual",
+    "JPEG, PNG or WebP. It is converted to JPEG on save.": "JPEG, PNG o WebP. Se convierte a JPEG al guardar.",
+    "Collectable pieces": "Piezas de collectables",
+    "Search article or participant": "Buscar artículo o participante",
+    "Back to pieces": "Volver a piezas",
+    "Article created: %(article)s": "Artículo creado: %(article)s",
+    "Article saved: %(article)s": "Artículo guardado: %(article)s",
+    "Article deleted: %(article)s": "Artículo eliminado: %(article)s",
 }
 
 
@@ -479,6 +518,13 @@ NEW_JS_TRANSLATIONS = {
     "Create all missing artists": "Crear todos los artistas que faltan",
     "“%(source)s” is now an alias of %(editorial)s: next imports find it.": "“%(source)s” ahora es un alias de %(editorial)s: las próximas importaciones la encuentran.",
     "Editorial chosen: %(editorial)s.": "Editorial elegida: %(editorial)s.",
+    # Collectables piece form (collectable_form.js).
+    "Choose an article": "Elige un artículo",
+    "Choose an article first": "Elige primero un artículo",
+    "No purchases of this article to sell": "No hay compras de este artículo para vender",
+    "The purchases could not be loaded": "No se pudieron cargar las compras",
+    # Gestión article form (article_form.js).
+    "New image: %(name)s (applied on save)": "Nueva imagen: %(name)s (se aplica al guardar)",
 }
 
 
@@ -543,6 +589,18 @@ NEW_PLURALS = {
         "Leído por %(read)s de %(counter)s destinatario",
         "Leído por %(read)s de %(counter)s destinatarios",
     ),
+    ("%(counter)s article", "%(counter)s articles"): ("%(counter)s artículo", "%(counter)s artículos"),
+    ("%(counter)s piece registered", "%(counter)s pieces registered"): (
+        "%(counter)s pieza registrada",
+        "%(counter)s piezas registradas",
+    ),
+    (
+        "“%(name)s” cannot be deleted: %(count)d piece of it is registered.",
+        "“%(name)s” cannot be deleted: %(count)d pieces of it are registered.",
+    ): (
+        "“%(name)s” no se puede eliminar: tiene %(count)d pieza registrada.",
+        "“%(name)s” no se puede eliminar: tiene %(count)d piezas registradas.",
+    ),
 }
 
 
@@ -560,6 +618,9 @@ NEW_CONTEXT_TRANSLATIONS = {
     ("change request", "New"): "Nueva",
     ("requests", "All"): "Todas",
     ("save button", "Update"): "Actualizar",
+    ("categories", "All"): "Todas",
+    ("article", "Limited to"): "Limitado a",
+    ("articles", "All"): "Todos",
 }
 
 

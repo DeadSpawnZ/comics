@@ -12,7 +12,7 @@ from django.db.models import QuerySet
 from django.utils.translation import gettext_lazy as _
 
 from ..helper import parse_date_or_none, parse_id_or_none
-from ..models import Collection, Dealer, Edition, Publishing, ReadingArc, Signature
+from ..models import Collectable, Collection, Dealer, Edition, Publishing, ReadingArc, Signature
 from .catalog import publishing_label, publishings_for_select, recent_publishings
 
 
@@ -139,7 +139,8 @@ def edition_label(edition: Edition) -> str:
     return f"#{edition.number}{variant} · {edition.get_printing_display()} · {edition.get_format_display()}"
 
 
-def purchase_label(purchase: Collection) -> str:
+def purchase_label(purchase: Collection | Collectable) -> str:
+    """A purchase (of an edition or an article) as listed in the "purchase being sold" select."""
     participant = f" · {purchase.participant.name}" if purchase.participant_id else ""
     return f"{purchase.trade_date:%Y-%m-%d} · ${purchase.amount}{participant}"
 
@@ -153,19 +154,42 @@ def available_purchases(
     """Purchases of `edition_id` that `collector` still owns (not sold yet) on or before `before`:
     the ones a sale can point to as its previous trade. `current` (the sale being edited) keeps
     the purchase it already points to."""
-    purchases = Collection.objects.owned_by(collector).filter(
-        edition_id=edition_id, trade_type=Collection.TradeChoices.BUYING
-    )
-    if current is not None and current.previous_trade_id:
-        purchases = purchases | Collection.objects.filter(pk=current.previous_trade_id)
-    if before:
-        purchases = purchases.filter(trade_date__lte=before)
-    if current is not None and current.pk:
-        purchases = purchases.exclude(pk=current.pk)
-    return purchases.select_related("participant").order_by("trade_date", "id")
+    purchases = Collection.objects.filter(edition_id=edition_id).sellable_by(collector, before, current)
+    return purchases.select_related("participant")
 
 
-class CollectionEntryForm(forms.ModelForm):
+class CurrentValuesMixin:
+    """Read what a trade form currently holds (submitted data when bound, else the initial values),
+    to narrow its selects before validation. Used by the piece forms of comics and collectables."""
+
+    data: Any
+    initial: dict[str, Any]
+    instance: Any
+    is_bound: bool
+
+    def _current(self, name: str) -> Any:
+        """Submitted value (bound form) or initial value of a field."""
+        value = self.data.get(name) if self.is_bound else self.initial.get(name)
+        return value or None
+
+    def _current_id(self, name: str) -> int | None:
+        """Current value of a choice field as an id; None if it is missing or not a valid id. A malformed
+        submission then narrows nothing here, and the field validation reports it."""
+        return parse_id_or_none(self._current(name))
+
+    def _current_date(self, name: str) -> datetime.date | None:
+        """Current value of a date field; None if it is missing or not a valid date."""
+        value = self._current(name)
+        if isinstance(value, datetime.date):
+            return value
+        return parse_date_or_none(str(value)) if value else None
+
+    def _current_collector(self) -> User | None:
+        value = self._current_id("collector") or self.instance.collector_id
+        return User.objects.filter(pk=value).first() if value else None
+
+
+class CollectionEntryForm(CurrentValuesMixin, forms.ModelForm):
     """A piece bought or sold by a collector. In Gestión the collector is chosen; in Mis comics
     it is the signed-in user (pass `collector`). The publishing field only narrows the edition list."""
 
@@ -222,8 +246,11 @@ class CollectionEntryForm(forms.ModelForm):
         edition.label_from_instance = edition_label
         self.fields["participant"].queryset = Dealer.objects.order_by("name")
         self.fields["participant"].widget.attrs["data-combobox"] = ""
-        self.fields["previous_trade"].queryset = Collection.objects.filter(trade_type=Collection.TradeChoices.BUYING)
-        self.fields["previous_trade"].label_from_instance = purchase_label
+        previous = self.fields["previous_trade"]
+        previous.queryset = Collection.objects.filter(trade_type=Collection.TradeChoices.BUYING)
+        if collector is not None:
+            previous.queryset = previous.queryset.filter(collector=collector)
+        previous.label_from_instance = purchase_label
 
         publishing = self.fields["publishing"]
         publishing.queryset = publishings_for_select()
@@ -270,27 +297,6 @@ class CollectionEntryForm(forms.ModelForm):
             else:
                 widget.attrs.update({"class": "form-control", "placeholder": field.label})
         self.fields["notes"].widget.attrs["style"] = "height: 90px"
-
-    def _current(self, name: str) -> Any:
-        """Submitted value (bound form) or initial value of a field."""
-        value = self.data.get(name) if self.is_bound else self.initial.get(name)
-        return value or None
-
-    def _current_id(self, name: str) -> int | None:
-        """Current value of a choice field as an id; None if it is missing or not a valid id. A malformed
-        submission then narrows nothing here, and the field validation reports it."""
-        return parse_id_or_none(self._current(name))
-
-    def _current_date(self, name: str) -> datetime.date | None:
-        """Current value of a date field; None if it is missing or not a valid date."""
-        value = self._current(name)
-        if isinstance(value, datetime.date):
-            return value
-        return parse_date_or_none(str(value)) if value else None
-
-    def _current_collector(self) -> User | None:
-        value = self._current_id("collector") or self.instance.collector_id
-        return User.objects.filter(pk=value).first() if value else None
 
     def clean(self) -> dict[str, Any]:
         cleaned = super().clean()

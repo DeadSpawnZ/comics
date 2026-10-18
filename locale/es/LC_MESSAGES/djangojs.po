@@ -429,3 +429,23 @@ msgid "%(count)s cover. Choose the one to import."
 msgid_plural "%(count)s covers. Choose the one to import."
 msgstr[0] "%(count)s portada. Elige la que quieres importar."
 msgstr[1] "%(count)s portadas. Elige la que quieres importar."
+
+#: comics/static/js/custom/collectable_form.js
+msgid "Choose an article"
+msgstr "Elige un artículo"
+
+#: comics/static/js/custom/collectable_form.js
+msgid "Choose an article first"
+msgstr "Elige primero un artículo"
+
+#: comics/static/js/custom/collectable_form.js
+msgid "No purchases of this article to sell"
+msgstr "No hay compras de este artículo para vender"
+
+#: comics/static/js/custom/collectable_form.js
+msgid "The purchases could not be loaded"
+msgstr "No se pudieron cargar las compras"
+
+#: comics/static/js/custom/article_form.js
+msgid "New image: %(name)s (applied on save)"
+msgstr "Nueva imagen: %(name)s (se aplica al guardar)"

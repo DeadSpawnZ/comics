@@ -29,15 +29,18 @@ from .catalog import (
     current_year,
 )
 from .collections import (
+    Article,
+    Collectable,
+    CollectableQuerySet,
     Collection,
     CollectionQuerySet,
     Connecting,
     ConnectingPiece,
     Dealer,
-    GeekCollectable,
     ReadingArc,
     ReadingArcEntry,
     Signature,
+    TradeQuerySet,
 )
 from .profiles import PHONE_ALLOWED, AreaAccess, Profile, ProfileManager, validate_phone
 from .achievements import (
@@ -79,15 +82,18 @@ __all__ = [
     "Title",
     "current_year",
     # collections
+    "Article",
+    "Collectable",
+    "CollectableQuerySet",
     "Collection",
     "CollectionQuerySet",
     "Connecting",
     "ConnectingPiece",
     "Dealer",
-    "GeekCollectable",
     "ReadingArc",
     "ReadingArcEntry",
     "Signature",
+    "TradeQuerySet",
     # profiles
     "PHONE_ALLOWED",
     "AreaAccess",
