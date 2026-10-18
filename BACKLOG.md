@@ -109,7 +109,8 @@ Implementado (ver README) y en `develop` con el PR #5. Falta:
 
 ### Logros que esperan otra feature
 - **Popular / Super Popular** (20 / 100 seguidores): necesitan un sistema de seguidores.
-- `GeekCollectable` no tiene dueño, así que no hay logros de collectables por usuario.
+- **Logros de collectables:** los collectables ya tienen dueño (`Collectable.collector`, sobre el
+  catálogo `Article`), así que se pueden crear logros de collectables por usuario; aún no hay ninguno.
 
 ### Evaluación diaria de logros (aplazada por el usuario)
 Los logros por fecha (Veterano) solo se comprueban al iniciar sesión o con `award_achievements`. El
@@ -165,6 +166,24 @@ cron/`schtasks` y habrá que reescribirla cuando se haga.
   en `EditorialAliasForm`; `RepeatableTextInput.format_value` sin uso real.
 
 ### General
+- `Collection.validate_previous_trade` (piezas de cómics) solo impide que una venta apunte a sí misma;
+  `Collectable` ya exige que solo una venta tenga compra previa, que sea una compra del mismo
+  coleccionista y artículo y que no se haya vendido antes. Igualar las reglas de `Collection`.
+- Collectables: dos ventas guardadas a la vez podrían pasar las dos la comprobación de "ya vendida"
+  (sin bloqueo de fila); el autocompletado de "compra previa" del admin solo muestra el nombre del
+  artículo, así que varias piezas del mismo artículo se ven iguales.
+- Collectables, pendientes de la feature:
+  - Los coleccionistas solo pueden dar de alta sus piezas; editarlas o borrarlas solo se puede desde
+    Gestión (igual que las piezas de cómics).
+  - `Article` no tiene miniatura: las listas cargan la imagen completa (en diferido). Añadir una si
+    el catálogo crece.
+  - Gestión no puede quitar la imagen de un artículo, solo reemplazarla (`FileInput`).
+  - Borrar una compra ya vendida desvincula la venta sin avisar (también en cómics).
+  - Código repetido: las pestañas por tipo de operación (`TYPE_TABS` y sus contadores) están copiadas
+    entre `manage_collectables.collectable_list` y `collection_entries.collection_list`, y
+    `manage_collectables` importa constantes de otros tres módulos de vistas; moverlas a
+    `views/utils.py` o a `TradeChoices`.
+- Reemplazar o borrar la imagen de una edición o de un artículo deja el archivo viejo en `media/`.
 - Menores de la división de `models.py` / `forms.py` en paquetes: `_random_name`
   (`comics/models/base.py`) ya se usa desde dos módulos, renombrarlo a `random_name`;
   `assertNoLogs("comics.models")` en `test_edition_images.py` podría apuntar a
