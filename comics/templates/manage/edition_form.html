@@ -159,7 +159,6 @@
           <div class="col-6 col-md-2">{% include 'manage/includes/field.html' with field=form.limited_to %}</div>
           <div class="col-12 col-md-4">{% include 'manage/includes/field.html' with field=form.event_exclusive %}</div>
           <div class="col-12 col-md-4">{% include 'manage/includes/field.html' with field=form.retailer_exclusive %}</div>
-          <div class="col-6 col-md-4">{% include 'manage/includes/field.html' with field=form.mycomicshop_id %}</div>
           <datalist id="event-options">{% for value in event_options %}<option value="{{ value }}">{% endfor %}</datalist>
           <datalist id="retailer-options">{% for value in retailer_options %}<option value="{{ value }}">{% endfor %}</datalist>
           <div class="col-12 md-body-medium mt-1">
@@ -177,6 +176,7 @@
             {% translate "No cover artists yet." as no_cover_artists %}
             {% include 'manage/includes/artist_picker.html' with field=form.cover_artists empty_text=no_cover_artists create_artist=True %}
           </div>
+          <div class="col-12 col-md-4">{% include 'manage/includes/field.html' with field=form.mycomicshop_id %}</div>
         </div>
       </div>
     </div>
