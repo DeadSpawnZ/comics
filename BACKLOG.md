@@ -8,7 +8,7 @@ Cómo trabajar un punto: seguir `CLAUDE.md` (flujo backend con `backend-senior` 
 tests solo en MySQL, Ruff una vez por feature, migraciones ensayadas en `comic_refactor` antes de la
 base real). Quitar el punto de este archivo en el mismo commit que lo resuelve.
 
-Última actualización: 2026-10-17, en la rama `feat/change-requests`.
+Última actualización: 2026-10-17, en la rama `feat/mycomicshop-import`.
 
 ## Primera tarea de la próxima sesión
 
@@ -73,8 +73,40 @@ Todo está commiteado y desplegado en local. Falta:
   formulario de edición, así que si el formulario vuelve con errores (p. ej. de la sección del issue)
   la portada se descarga otra vez en cada envío. Valorar guardarla temporalmente (o en caché) la
   primera vez, o descargarla solo cuando todo el formulario es válido.
-- Impresión, ratio (salvo cuando el nombre de la variante lo dice, p. ej. "1:25"), exclusivas de
-  tienda/evento y país siguen siendo manuales.
+- Con Metron y Comic Vine, impresión, ratio (salvo cuando el nombre de la variante lo dice, p. ej.
+  "1:25"), exclusivas de tienda/evento y país siguen siendo manuales (MyComicShop sí los propone).
+
+### Importar desde MyComicShop (rama `feat/mycomicshop-import`)
+
+Implementado y commiteado (ver README). La rama sale de `chore/codegraph` y lleva
+`feat/change-requests` fusionada (`70f6cec`), porque el importador en el que se apoya solo existe ahí.
+Falta:
+
+- **Probar en el navegador** (la migración `0116` ya está aplicada en la base real) con los TID `57389539`
+  (Batman Spawn) y `65211284` (Vampirella X Witchblade): modal, teclado, importar una RI, una
+  exclusiva con tirada y una 2.ª impresión, re-importar otra portada, portada ya existente
+  deshabilitada, errores (TID `1`, texto no numérico) y que Metron/Comic Vine sigan igual.
+- **Fragilidad:** solo funciona `POST https://www.mycomicshop.com/search?TID=<id>`; un `GET` (también
+  a `search?q=`) devuelve un reto JS de Imperva. Si el POST deja de funcionar: subir el HTML guardado
+  desde el navegador y pasarlo por el mismo parser, o valorar Playwright (~400 MB más en la imagen).
+  **Límite acordado con el usuario:** nada de plugins "stealth", falseo de huella ni proxies.
+- **Límites conocidos del parser** (`comics/catalog_sources/mycomicshop.py`):
+  - Formato "(W) (A) (CA)": si tres o más variantes de un número tienen artistas de portada con el
+    mismo apellido ("Jae Lee", "Jim Lee", "Stan Lee") y ninguna usa el formato de frases, el nombre se
+    corta en el apellido sin marcarse como dudoso.
+  - Una nota que termina en una palabra de una letra ("… Variant Cover B. Written by X.") no se corta
+    ahí y el guionista acaba dentro de la nota.
+  - Si un crédito en frase va antes de los códigos ("Cover by X. (W) A (A) B …"), los códigos acaban
+    en la sinopsis.
+  - "48 pages, full color. Rated Teen" se queda al final de la sinopsis.
+  - Una exclusiva conjunta de varias tiendas que pase de 60 caracteres se descarta con aviso.
+- **Menores:** re-importar en una edición su propio IVID avisa de que ya existe una edición con ese
+  ID (la consulta no sabe qué edición está abierta); el panel "Identification numbers" no muestra el
+  IVID; la caché de la serie y el `throttle` usan la `LocMemCache` por proceso (sin `CACHES`
+  configurado), así que con varios workers la búsqueda tras el modal puede volver a pedir la página.
+- **Para más adelante:** guardar el `TID` en `Publishing` para emparejar la serie sin depender del
+  nombre, búsqueda por nombre (`search?q=` por POST, sin probar), importar varias variantes de golpe o
+  como solicitudes de cambio (enlaza con la "Importación masiva" de arriba).
 
 ### Logros que esperan otra feature
 - **Popular / Super Popular** (20 / 100 seguidores): necesitan un sistema de seguidores.

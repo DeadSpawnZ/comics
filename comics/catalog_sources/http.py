@@ -1,5 +1,5 @@
-"""HTTP for the catalogue clients, with the standard library (urllib): JSON requests to the APIs and
-cover downloads from an allowlist of image hosts.
+"""HTTP for the catalogue clients, with the standard library (urllib): JSON requests to the APIs,
+HTML pages from MyComicShop (which has no API) and cover downloads from an allowlist of image hosts.
 
 Politeness and safety rules shared by every source:
 
@@ -18,6 +18,7 @@ Politeness and safety rules shared by every source:
 
 from __future__ import annotations
 
+import codecs
 import json
 import socket
 import time
@@ -37,8 +38,11 @@ from .errors import AuthFailed, BadResponse, CatalogError, CoverRejected, NotFou
 
 TIMEOUT_SECONDS = 10
 MAX_JSON_BYTES = 2 * 1024 * 1024
+# A MyComicShop series page weighs ~15 KB per variant (a 24-variant series is ~360 KB).
+MAX_HTML_BYTES = 8 * 1024 * 1024
 MAX_COVER_BYTES = 10 * 1024 * 1024
-ALLOWED_COVER_HOSTS = frozenset({"static.metron.cloud", "comicvine.gamespot.com"})
+ALLOWED_COVER_HOSTS = frozenset({"static.metron.cloud", "comicvine.gamespot.com", "media.mycomicshop.com"})
+CP1252_FALLBACK = "comi-cp1252-fallback"
 # What sending a request or reading its answer can raise besides HTTPError: network errors and
 # timeouts (OSError, URLError), protocol errors (IncompleteRead, RemoteDisconnected...), a malformed
 # URL (InvalidURL is a ValueError) and a body nested too deep to decode.
@@ -122,6 +126,42 @@ def get_json(url: str, *, source: str, not_found: str, headers: dict[str, str] |
         raise unreadable from None
 
 
+def _cp1252_fallback(error: UnicodeError) -> tuple[str, int]:
+    """Codec error handler: decode the first invalid byte as cp1252 and resume right after it, so a
+    stray cp1252 byte inside UTF-8 text (e.g. 0x85 for "…") keeps its character instead of
+    becoming U+FFFD. The five bytes cp1252 leaves undefined still become U+FFFD."""
+    if not isinstance(error, UnicodeDecodeError):
+        raise error
+    byte = error.object[error.start : error.start + 1]
+    return bytes(byte).decode("cp1252", errors="replace"), error.start + 1
+
+
+codecs.register_error(CP1252_FALLBACK, _cp1252_fallback)
+
+
+def decode_html(body: bytes) -> str:
+    """UTF-8 text, with any byte that is not valid UTF-8 read as cp1252 (see _cp1252_fallback)."""
+    return body.decode("utf-8", errors=CP1252_FALLBACK)
+
+
+def post_html(url: str, *, source: str, not_found: str, data: bytes = b"") -> str:
+    """POST `data` (form-encoded) to `url` and return the HTML body as text, under the same rules as
+    get_json: user agent, timeout, size limit, no redirects and errors as CatalogError."""
+    try:
+        request = Request(url, data=data, method="POST", headers=_headers({"Accept": "text/html"}))
+        with open_url(_api_opener, request) as response:
+            body = response.read(MAX_HTML_BYTES + 1)
+    except HTTPError as exc:
+        status = exc.code
+        exc.close()
+        raise error_for_status(status, source, not_found) from None
+    except REQUEST_ERRORS as exc:
+        raise _request_error(exc, source) from None
+    if len(body) > MAX_HTML_BYTES:
+        raise BadResponse(_("%(source)s sent an answer Comi cannot read.") % {"source": source})
+    return decode_html(body)
+
+
 def throttle(key: str, per_minute: int, source: str) -> None:
     """Refuse (RateLimited) more than `per_minute` requests to a source within a clock minute, so
     Comi stays under the catalogue's published limit even if several people import at once. Counted
@@ -162,7 +202,7 @@ def download_cover(url: str) -> bytes:
     """The bytes of a cover from an allowlisted host (see is_allowed_cover_url), at most
     MAX_COVER_BYTES. Whether they are a valid picture is checked by the caller (the form)."""
     if not is_allowed_cover_url(url):
-        raise CoverRejected(_("Covers can only be downloaded from Metron or Comic Vine."))
+        raise CoverRejected(_("Covers can only be downloaded from the catalogues Comi imports from."))
     failed = _("The cover could not be downloaded. Try again, or upload it yourself.")
     try:
         request = Request(url, headers=_headers({"Accept": "image/*"}))

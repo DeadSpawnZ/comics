@@ -285,7 +285,7 @@ class EditionAdmin(admin.ModelAdmin):
         ),
         ("Issue", {"fields": ("issue",)}),
         ("Images", {"fields": ("image", "thumbnail_preview", "thumbnail")}),
-        ("Extras", {"fields": ("notes",), "classes": ("collapse",)}),
+        ("Extras", {"fields": ("notes", "mycomicshop_id"), "classes": ("collapse",)}),
     )
     inlines = [EditionCoverArtistInline, CollectedIssueInline]
     autocomplete_fields = ["issue"]

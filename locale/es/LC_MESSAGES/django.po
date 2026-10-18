@@ -3061,8 +3061,8 @@ msgstr "No se pudo conectar con %(source)s. Inténtalo más tarde."
 
 #: comics/catalog_sources/http.py
 #: comics/forms.py
-msgid "Covers can only be downloaded from Metron or Comic Vine."
-msgstr "Las portadas solo se pueden descargar de Metron o Comic Vine."
+msgid "Covers can only be downloaded from the catalogues Comi imports from."
+msgstr "Las portadas solo se pueden descargar de los catálogos de los que importa Comi."
 
 #: comics/catalog_sources/http.py
 msgid "The cover could not be downloaded. Try again, or upload it yourself."
@@ -3083,6 +3083,36 @@ msgstr "%(source)s no está configurado."
 #, python-format
 msgid "%(source)s has no issue with the id %(id)s."
 msgstr "%(source)s no tiene ningún issue con el id %(id)s."
+
+#: comics/catalog_sources/mycomicshop.py
+#, python-format
+msgid "%(source)s has no series with the id %(id)s."
+msgstr "%(source)s no tiene ninguna serie con el id %(id)s."
+
+#: comics/catalog_sources/mycomicshop.py
+#, python-format
+msgid "%(source)s is refusing automated requests right now. Try again later."
+msgstr "%(source)s está rechazando las peticiones automáticas en este momento. Inténtalo más tarde."
+
+#: comics/catalog_sources/mycomicshop.py
+#, python-format
+msgid "%(source)s has no issue with the id %(id)s in the series %(series)s."
+msgstr "%(source)s no tiene ningún issue con el id %(id)s en la serie %(series)s."
+
+#: comics/catalog_sources/errors.py
+#, python-format
+msgid "%(source)s also needs the series id."
+msgstr "%(source)s también necesita el id de la serie."
+
+#: comics/catalog_sources/mapper.py
+#, python-format
+msgid "Check the artist name “%(name)s”: %(source)s's text does not make clear where it ends."
+msgstr "Revisa el nombre del artista “%(name)s”: el texto de %(source)s no deja claro dónde acaba."
+
+#: comics/catalog_sources/mapper.py
+#, python-format
+msgid "%(field)s: Comi does not accept “%(value)s” from %(source)s, so it was left out. Fill it in yourself."
+msgstr "%(field)s: Comi no acepta “%(value)s” de %(source)s, así que se ha dejado fuera. Rellénalo tú."
 
 #: comics/catalog_sources/mapper.py
 #, python-format
@@ -3134,6 +3164,14 @@ msgid "Enter the issue's number in the catalogue, e.g. 15439."
 msgstr "Escribe el número del issue en el catálogo, p. ej. 15439."
 
 #: comics/forms.py
+msgid "Enter the series' number in the catalogue, e.g. 58451662."
+msgstr "Escribe el número de la serie en el catálogo, p. ej. 58451662."
+
+#: comics/forms.py
+msgid "Another edition already has this MyComicShop ID."
+msgstr "Otra edición ya tiene este ID de MyComicShop."
+
+#: comics/forms.py
 msgid "Metron ID (optional)"
 msgstr "ID de Metron (opcional)"
 
@@ -3148,10 +3186,6 @@ msgstr "ID de GCD (opcional)"
 #: comics/templates/manage/edition_form.html
 msgid "Import from a catalogue"
 msgstr "Importar de un catálogo"
-
-#: comics/templates/manage/edition_form.html
-msgid "Fill in the form with an issue from Metron or Comic Vine. Check the values: nothing is saved until you save the form."
-msgstr "Rellena el formulario con un issue de Metron o Comic Vine. Revisa los valores: no se guarda nada hasta que guardes el formulario."
 
 #: comics/templates/manage/edition_form.html
 msgid "not configured"
@@ -3172,10 +3206,6 @@ msgstr "Cargar"
 #: comics/templates/manage/edition_form.html
 msgid "Cover to fill in"
 msgstr "Portada que se rellena"
-
-#: comics/templates/manage/edition_form.html
-msgid "Importing is off: set METRON_USERNAME and METRON_PASSWORD (or COMICVINE_API_KEY) in the .env file and restart the app."
-msgstr "La importación está desactivada: define METRON_USERNAME y METRON_PASSWORD (o COMICVINE_API_KEY) en el archivo .env y reinicia la app."
 
 #: comics/templates/manage/edition_form.html
 msgid "Do not use the imported cover"
@@ -3427,3 +3457,24 @@ msgstr "Actualizar"
 #: comics/templates/manage/includes/publishing_dialogs.html
 msgid "Edit title"
 msgstr "Editar título"
+
+#: comics/templates/manage/edition_form.html
+msgid "Fill in the form with an issue from a catalogue. With MyComicShop, enter the series ID and pick the cover among its variants. Check the values: nothing is saved until you save the form."
+msgstr "Rellena el formulario con un issue de un catálogo. Con MyComicShop, escribe el ID de la serie y elige la portada entre sus variantes. Revisa los valores: no se guarda nada hasta que guardes el formulario."
+
+#: comics/templates/manage/edition_form.html
+msgid "MyComicShop series ID (TID)"
+msgstr "ID de la serie en MyComicShop (TID)"
+
+#: comics/templates/manage/includes/catalog_series_dialog.html
+msgid "Choose the cover to import"
+msgstr "Elige la portada que quieres importar"
+
+#: comics/templates/manage/includes/catalog_series_dialog.html
+msgid "Import"
+msgstr "Importar"
+
+#: comics/catalog_sources/mapper.py
+#, python-format
+msgid "%(edition)s already has this MyComicShop ID: saving it on another edition will fail."
+msgstr "%(edition)s ya tiene este ID de MyComicShop: guardarlo en otra edición fallará."

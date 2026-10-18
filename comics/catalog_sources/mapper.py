@@ -30,6 +30,7 @@ from dataclasses import asdict, dataclass, field, replace
 from datetime import date
 from typing import Any
 
+from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.utils.translation import gettext as _
 
@@ -37,7 +38,7 @@ from comics.helper import name_key
 from comics.models import Artist, Edition, Editorial, Issue, Publishing
 
 from .http import is_allowed_cover_url
-from .types import SourceCredit, SourceIssue, SourceSeries, SourceVariant
+from .types import PRINTING_PATTERN, RATIO_PATTERN, SourceCredit, SourceIssue, SourceSeries, SourceVariant
 
 MAX_CANDIDATES = 10
 
@@ -59,9 +60,6 @@ FORMAT_BY_SERIES_TYPE = {
     "digitalchapters": Edition.FormatChoices.DIGITAL,
     "magazine": Edition.FormatChoices.MAGAZINE,
 }
-
-RATIO_PATTERN = re.compile(r"(?<![\d:])(\d{1,3}):(\d{1,3})(?![\d:])")
-PRINTING_PATTERN = re.compile(r"(?i)\b(\d{1,2})\s*(?:st|nd|rd|th)\s+print")
 
 
 def ordinal(number: int) -> str:
@@ -166,7 +164,20 @@ def build_proposal(source_issue: SourceIssue, series: SeriesLoaders | None = Non
         warnings.append(
             _("%(issue)s already has one of these ids: saving them on another issue will fail.") % {"issue": other}
         )
+    if source_issue.mycomicshop_id:
+        owner = Edition.objects.filter(mycomicshop_id=source_issue.mycomicshop_id).select_related("publishing").first()
+        if owner:
+            warnings.append(
+                _("%(edition)s already has this MyComicShop ID: saving it on another edition will fail.")
+                % {"edition": owner.short_name}
+            )
 
+    for credit in source_issue.credits:
+        if credit.uncertain:
+            warnings.append(
+                _("Check the artist name “%(name)s”: %(source)s's text does not make clear where it ends.")
+                % {"name": credit.name, "source": source_issue.source_name}
+            )
     artists = ArtistMatcher()
     creators, unmatched_creators = artists.match(credit.name for credit in source_issue.credits if credit.is_story)
     cover_credits = [credit for credit in source_issue.credits if credit.is_cover]
@@ -308,9 +319,65 @@ def _series_description(source_issue: SourceIssue) -> str:
     return text
 
 
-def _edition_values(source_issue: SourceIssue, warnings: list[str]) -> dict[str, str]:
-    # A catalogue's issue is the original publication: the main cover (A) of the first printing.
-    values = {"variant": "A", "printing": str(Edition.PrintingChoices.FIRST)}
+def _edition_field_label(name: str) -> str:
+    """How the Gestión edition form names an edition field, for the warnings."""
+    labels = {
+        "variant": _("Variant"),
+        "printing": _("Printing"),
+        "ratio": "Ratio",
+        "limited_to": _("Limited to"),
+        "retailer_exclusive": _("Store (exclusive)"),
+        "event_exclusive": _("Event (exclusive)"),
+    }
+    return labels[name]
+
+
+def _rejected_value(source_issue: SourceIssue, name: str, value: str, warnings: list[str]) -> None:
+    warnings.append(
+        _("%(field)s: Comi does not accept “%(value)s” from %(source)s, so it was left out. Fill it in yourself.")
+        % {"field": _edition_field_label(name), "value": value, "source": source_issue.source_name}
+    )
+
+
+def _checked_edition_value(source_issue: SourceIssue, name: str, warnings: list[str]) -> str:
+    """The source's value for the Edition text field `name` when the field accepts it (length,
+    format), else "" (with a warning when the source had a value)."""
+    value = getattr(source_issue, name).strip()
+    if not value:
+        return ""
+    try:
+        Edition._meta.get_field(name).clean(value, None)
+    except ValidationError:
+        _rejected_value(source_issue, name, value, warnings)
+        return ""
+    return value
+
+
+def _printing(source_issue: SourceIssue, warnings: list[str]) -> str:
+    """The source's printing as an Edition.PrintingChoices value: the first one when the source does
+    not say it; "" and a warning when Comi has no such printing (7th...)."""
+    if source_issue.printing is None:
+        return str(Edition.PrintingChoices.FIRST)
+    value = ordinal(source_issue.printing)
+    if value in Edition.PrintingChoices.values:
+        return value
+    _rejected_value(source_issue, "printing", value, warnings)
+    return ""
+
+
+def _edition_values(source_issue: SourceIssue, warnings: list[str]) -> dict[str, str]:  # noqa: C901
+    # A Metron or Comic Vine issue is the original publication: the main cover (A) of the first
+    # printing. Catalogues with one record per cover (MyComicShop) say which cover and printing.
+    # A value Comi rejects is left out (not sent empty), so the form keeps what it has.
+    variant = _checked_edition_value(source_issue, "variant", warnings) if source_issue.variant.strip() else "A"
+    values = {"variant": variant, "printing": _printing(source_issue, warnings)}
+    values = {name: value for name, value in values.items() if value}
+    for name in ("ratio", "limited_to", "retailer_exclusive", "event_exclusive"):
+        value = _checked_edition_value(source_issue, name, warnings)
+        if value:
+            values[name] = value
+    if source_issue.mycomicshop_id:
+        values["mycomicshop_id"] = str(source_issue.mycomicshop_id)
     if source_issue.number:
         values["number"] = source_issue.number
         if len(source_issue.number) > Edition._meta.get_field("number").max_length:

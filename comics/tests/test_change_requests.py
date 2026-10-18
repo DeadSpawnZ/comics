@@ -46,6 +46,7 @@ def edition_data(edition: Edition, **changes: Any) -> dict[str, Any]:
         "retailer_exclusive": edition.retailer_exclusive,
         "event_exclusive": edition.event_exclusive,
         "notes": edition.notes,
+        "mycomicshop_id": edition.mycomicshop_id or "",
         "cover_artists": [artist.pk for artist in edition.cover_artists.all()],
         "reason": "The cover says otherwise.",
         "evidence_url": "",

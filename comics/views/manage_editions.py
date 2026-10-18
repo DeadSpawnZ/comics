@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from typing import Any
 from urllib.parse import urlencode
 
@@ -11,6 +11,7 @@ from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Exists, OuterRef, ProtectedError, Q, QuerySet
+from django.forms import Form
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonResponse, QueryDict
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -26,6 +27,7 @@ from comics.decorators import management_required
 from comics.forms import (
     ArtistCreateForm,
     CatalogLookupForm,
+    CatalogSeriesForm,
     EditionManageForm,
     EditorialDialogForm,
     IssueSectionForm,
@@ -259,7 +261,6 @@ def edition_form(request: HttpRequest, pk: int | None = None) -> HttpResponse:  
             "issue_form": issue_form,
             "shown_issue_id": shown_issue.pk or "",
             "catalog_sources": catalog.source_choices(),
-            "catalog_enabled": catalog.any_source_enabled(),
             "content": content,
             "content_errors": content_errors,
             "selected_issue_id": selected_issue_id,
@@ -281,6 +282,7 @@ def edition_form(request: HttpRequest, pk: int | None = None) -> HttpResponse:  
             "form_data": {
                 "issuesUrl": reverse("manage_publishing_issues"),
                 "catalogUrl": reverse("manage_catalog_lookup"),
+                "catalogSeriesUrl": reverse("manage_catalog_mycomicshop_series"),
                 "artistsCreateUrl": reverse("manage_artists_create_api"),
                 "publishingTitles": {publishing.pk: publishing.publishing_title for publishing in publishings},
                 # Picking a publishing proposes its start date as the release date (edition_form.js), only
@@ -418,14 +420,31 @@ def publishing_issues(request: HttpRequest) -> JsonResponse:
 @management_required
 @require_GET
 def catalog_lookup(request: HttpRequest) -> JsonResponse:
-    """An issue from an external catalogue (?source=metron|comicvine&id=...) as a proposal for the
-    edition form (comics.catalog_sources.mapper). Reads only: nothing is created or saved."""
-    form = CatalogLookupForm(request.GET)
+    """An issue from an external catalogue (?source=metron|comicvine|mycomicshop&id=...[&series=...],
+    the series being required by MyComicShop) as a proposal for the edition form
+    (comics.catalog_sources.mapper). Reads only: nothing is created or saved."""
+    return _catalog_answer(
+        CatalogLookupForm(request.GET),
+        lambda data: {"proposal": catalog.load_proposal(data["source"], data["id"], data["series"]).as_dict()},
+    )
+
+
+@management_required
+@require_GET
+def catalog_mycomicshop_series(request: HttpRequest) -> JsonResponse:
+    """A MyComicShop series (?id=<TID>) with all its variants, for the modal the user picks the
+    variant to import from (comics.catalog_sources.service.mycomicshop_series). Reads only."""
+    return _catalog_answer(CatalogSeriesForm(request.GET), lambda data: catalog.mycomicshop_series(data["id"]))
+
+
+def _catalog_answer(form: Form, read: Callable[[dict[str, Any]], dict[str, Any]]) -> JsonResponse:
+    """The catalogue APIs' answer: `read(cleaned_data)` as JSON, or {"error": message} with the
+    first form error (400) or the CatalogError's message and status."""
     if not form.is_valid():
         message = next(iter(form.errors.values()))[0]
         return JsonResponse({"error": message}, status=400)
     try:
-        proposal = catalog.load_proposal(form.cleaned_data["source"], form.cleaned_data["id"])
+        answer = read(form.cleaned_data)
     except CatalogError as exc:
         return JsonResponse({"error": exc.message}, status=exc.status)
-    return JsonResponse({"proposal": proposal.as_dict()})
+    return JsonResponse(answer)

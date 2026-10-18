@@ -21,8 +21,11 @@ en español e inglés.
   compilaciones) y artistas. Se mantiene desde **Gestión**, un área propia separada del admin de
   Django.
 - **Importación desde catálogos externos:** el formulario de ediciones de Gestión se puede precargar
-  desde [Metron](https://metron.cloud) (fuente principal) o [Comic Vine](https://comicvine.gamespot.com)
-  (respaldo). Desde los mismos diálogos se crean el publishing, el título, la editorial y los
+  desde [Metron](https://metron.cloud) (fuente principal), [Comic Vine](https://comicvine.gamespot.com)
+  (respaldo) o [MyComicShop](https://www.mycomicshop.com), para las variantes que no están en los otros
+  dos (incentivos, exclusivas de tienda o convención…): con el `TID` de la serie se abre un modal con
+  todas sus portadas, se elige una y se rellenan variante, ratio, impresión, tirada y exclusivas.
+  Desde los mismos diálogos se crean el publishing, el título, la editorial y los
   artistas que falten. Las editoriales tienen alias para emparejar los nombres de cada fuente.
 - **Colección personal** ("Mis comics"): compras y ventas de cada edición (con vendedor, precio y
   valoración), firmas de artistas, lo que se tiene y lo que falta de cada publishing. También
@@ -83,7 +86,7 @@ Es un proyecto Django con una sola app, `comics`; `comic/` contiene la configura
 | `comics/views/` | Vistas; las de Gestión empiezan por `manage_` |
 | `comics/history.py`, `comics/versions.py` | Historial de versiones y servicios para aplicar cambios y revertirlos |
 | `comics/change_requests.py` | Flujo de las solicitudes de cambio (transiciones, permisos y avisos) |
-| `comics/catalog_sources/` | Clientes de Metron y Comic Vine, y el mapeador que convierte sus respuestas en una propuesta para el formulario |
+| `comics/catalog_sources/` | Clientes de Metron, Comic Vine y MyComicShop, y el mapeador que convierte sus respuestas en una propuesta para el formulario |
 | `comics/achievements/` | Motor de logros: reglas, ventanas de tiempo, evaluación y presentación |
 | `comics/roles.py`, `comics/decorators.py` | Roles, permisos y control de acceso a las vistas |
 | `comics/signals.py` | Receptores de señales: rol y perfil de cada usuario nuevo, re-evaluación de logros y versiones de las compilaciones |
@@ -110,7 +113,7 @@ flowchart TD
     end
     subgraph layer1["Formularios y servicios"]
         forms["comics.forms"]
-        catalog_sources["comics.catalog_sources<br/>Metron y Comic Vine"]
+        catalog_sources["comics.catalog_sources<br/>catálogos externos"]
         change_requests["comics.change_requests<br/>flujo de solicitudes"]
         versions["comics.versions<br/>aplicar y revertir versiones"]
         achievements["comics.achievements<br/>motor de logros"]
@@ -275,6 +278,7 @@ erDiagram
         ImageField image "null"
         ImageField thumbnail "null"
         TextField notes
+        PositiveIntegerField mycomicshop_id UK "null"
         ForeignKey issue FK "null"
     }
     CollectedIssue {
@@ -552,7 +556,7 @@ MYSQL_PASSWORD=<password del usuario>
 
 Opcionalmente puedes crear un `.env` en la raíz con `COMPOSE_PROJECT_NAME=<nombre>` para fijar el nombre del proyecto de Docker Compose. Ninguno de los dos archivos se sube al repositorio (están en `.gitignore`).
 
-El mismo `.env` (opcional) se carga en el servicio `web` con las credenciales de los catálogos externos que usa la importación del formulario de ediciones de Gestión. Sin ellas la importación queda desactivada (el recuadro lo indica); con cambios en `.env` hay que recrear el contenedor (`docker compose up -d web`):
+El mismo `.env` (opcional) se carga en el servicio `web` con las credenciales de los catálogos externos que usa la importación del formulario de ediciones de Gestión. Sin ellas esas dos fuentes aparecen desactivadas en el selector (MyComicShop no necesita clave); con cambios en `.env` hay que recrear el contenedor (`docker compose up -d web`):
 
 ```
 METRON_USERNAME=<usuario de metron.cloud>

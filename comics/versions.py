@@ -59,6 +59,7 @@ FIELD_LABELS: dict[str, str | Promise] = {
     "metron_id": "Metron ID",
     "comicvine_id": "Comic Vine ID",
     "gcd_id": "GCD ID",
+    "mycomicshop_id": "MyComicShop ID",
 }
 EMPTY = "—"
 

@@ -1,5 +1,8 @@
-// Import box of the Gestión edition form: loads an issue from Metron or Comic Vine (through
-// comics.views.manage_editions.catalog_lookup) and fills the form with it. Nothing is saved here:
+// Import box of the Gestión edition form: loads an issue from Metron, Comic Vine or MyComicShop
+// (through comics.views.manage_editions.catalog_lookup) and fills the form with it. MyComicShop is
+// loaded by series (its TID, or a pasted URL holding it): its variants are shown in a dialog
+// (catalog_mycomicshop_series, includes/catalog_series_dialog.html), the user picks one and that
+// variant is looked up and filled in like a Metron or Comic Vine issue. Nothing is saved here:
 // the user reviews the values and saves the form. The imported cover is only a URL (a hidden
 // field); the server downloads it when the form is saved. When the publishing is not in Comi, the
 // "Create publishing" dialog (publishing_dialogs.js) is prefilled with the catalogue's series. When
@@ -12,7 +15,7 @@
   "use strict";
 
   const loadButton = document.getElementById("catalog-load");
-  if (!loadButton) return; // importing is off (no credentials)
+  if (!loadButton) return; // not the edition form
 
   const data = JSON.parse(document.getElementById("edition-form-data").textContent);
   const editionForm = window.ComiEditionForm;
@@ -26,6 +29,16 @@
   const summary = document.getElementById("catalog-summary");
   const sourceLink = document.getElementById("catalog-source-link");
   const sourceLinkText = document.getElementById("catalog-source-link-text");
+  const idLabel = document.querySelector('label[for="catalog-id"]');
+
+  const seriesDialog = document.getElementById("catalog-series-dialog");
+  const seriesTitle = document.getElementById("catalog-series-title");
+  const seriesLink = document.getElementById("catalog-series-link");
+  const seriesLinkText = document.getElementById("catalog-series-link-text");
+  const seriesStatus = document.getElementById("catalog-series-status");
+  const seriesIssues = document.getElementById("catalog-series-issues");
+  const seriesImport = document.getElementById("catalog-series-import");
+  const seriesDefaultTitle = seriesTitle.textContent;
 
   const coverUrlInput = document.getElementById("id_catalog_cover_url");
   const coverPreview = document.getElementById("cover-preview");
@@ -42,6 +55,10 @@
   // Artists created from the summary, by the name the catalogue gives them: from then on they count
   // as matched, also when another cover is chosen.
   const createdArtists = new Map();
+  // Cover values only some catalogues give (MyComicShop). The ones the previous import filled in and
+  // the current one does not have are emptied, so importing another cover leaves nothing stale.
+  const COVER_FIELDS = ["limited_to", "retailer_exclusive", "event_exclusive", "mycomicshop_id"];
+  let filledCoverFields = new Set();
 
   // ---------- Helpers ----------
 
@@ -56,6 +73,13 @@
     if (field.tagName === "SELECT" && ![...field.options].some((option) => option.value === String(value))) return;
     field.value = String(value);
     field.dispatchEvent(new Event(field.tagName === "SELECT" ? "change" : "input", { bubbles: true }));
+  }
+
+  function clearField(id) {
+    const field = document.getElementById(id);
+    if (!field || field.value === "") return;
+    field.value = "";
+    field.dispatchEvent(new Event("input", { bubbles: true }));
   }
 
   // Check exactly `artists` in an artist picker (see edition_form.js) and let it refresh.
@@ -224,6 +248,25 @@
     item.append(list);
   }
 
+  // "Variant: RI.A · Ratio: 1:25 · …" for a proposal with cover values (MyComicShop); "" for the
+  // catalogues whose issue is the original publication (Metron, Comic Vine).
+  function coverValuesText(edition) {
+    if (!edition.ratio && !COVER_FIELDS.some((name) => edition[name])) return "";
+    const labels = [
+      ["variant", gettext("Variant")],
+      ["printing", gettext("Printing")],
+      ["ratio", gettext("Ratio")],
+      ["limited_to", gettext("Limited to")],
+      ["retailer_exclusive", gettext("Store (exclusive)")],
+      ["event_exclusive", gettext("Event (exclusive)")],
+      ["mycomicshop_id", gettext("MyComicShop ID")],
+    ];
+    return labels
+      .filter(([name]) => edition[name])
+      .map(([name, label]) => `${label}: ${edition[name]}`)
+      .join(" · ");
+  }
+
   function renderSummary() {
     summary.replaceChildren();
     const unmatched = proposal.unmatched;
@@ -262,6 +305,8 @@
     } else {
       summaryItem("add_circle", gettext("Issue not in Comi yet: it is created when you save."), "ok");
     }
+    const coverValues = coverValuesText(proposal.edition);
+    if (coverValues) summaryItem("style", interpolate(gettext("Cover: %(values)s"), { values: coverValues }, true), "ok");
     if (unmatched.editorial) {
       const item = summaryItem(
         "help",
@@ -330,7 +375,7 @@
     setField("id_variant", variant ? variant.letter : edition.variant);
     setField("id_printing", variant ? variant.printing : edition.printing);
     const ratio = document.getElementById("id_ratio");
-    ratio.value = variant ? variant.ratio : "";
+    ratio.value = variant ? variant.ratio : edition.ratio || "";
     ratio.dispatchEvent(new Event("input", { bubbles: true }));
     setField("id_cover_price", variant && variant.cover_price !== null ? variant.cover_price : edition.cover_price);
     const cover = coverArtistsOf(variant);
@@ -358,6 +403,11 @@
     setField("id_number", edition.number);
     setField("id_format", edition.format);
     setField("id_release_date", edition.release_date);
+    for (const name of COVER_FIELDS) {
+      if (edition[name]) setField(`id_${name}`, edition[name]);
+      else if (filledCoverFields.has(name)) clearField(`id_${name}`);
+    }
+    filledCoverFields = new Set(COVER_FIELDS.filter((name) => edition[name]));
     setField("id_issue_data-synopsis", proposal.synopsis);
     for (const [name, value] of Object.entries(proposal.identifiers)) setField(`id_issue_data-${name}`, value);
     const creators = creatorsOf();
@@ -390,8 +440,60 @@
 
   // ---------- Loading ----------
 
+  // {proposal} or {error} (a message for the user) for the catalogue lookup with `params`.
+  async function fetchProposal(params) {
+    const failed = { error: gettext("The catalogue could not be read. Try again.") };
+    try {
+      const url = new URL(data.catalogUrl, window.location.origin);
+      for (const [name, value] of Object.entries(params)) url.searchParams.set(name, value);
+      const response = await fetch(url, { headers: { Accept: "application/json" }, credentials: "same-origin" });
+      const body = await response.json().catch(() => null);
+      if (!response.ok || !body || !body.proposal) return body && body.error ? { error: body.error } : failed;
+      return { proposal: body.proposal };
+    } catch (error) {
+      return failed;
+    }
+  }
+
+  // Whether the chosen source is loaded by series (MyComicShop): the id is then the series'.
+  function bySeries() {
+    const option = sourceSelect.selectedOptions[0];
+    return Boolean(option && option.hasAttribute("data-requires-series"));
+  }
+
+  // The id input asks for an issue id or, for a source loaded by series, the series id (a pasted
+  // URL is accepted too, so it may be longer and not only digits).
+  function syncIdInput() {
+    const series = bySeries();
+    const label = series ? idInput.dataset.seriesLabel : idInput.dataset.issueLabel;
+    idLabel.textContent = label;
+    idInput.placeholder = label;
+    idInput.inputMode = series ? "text" : "numeric";
+    idInput.maxLength = series ? 500 : 20;
+  }
+
+  // MyComicShop's series id: the digits typed, or the TID of a pasted URL ("…/search?TID=57389539").
+  function seriesIdFrom(value) {
+    if (/^\d{1,10}$/.test(value)) return value;
+    const match = value.match(/[?&]TID=(\d{1,10})(?!\d)/i);
+    return match ? match[1] : "";
+  }
+
   async function load() {
+    // A lookup is still running (Enter in the id input does not check the button): let it finish
+    // first, or its late answer would overwrite whatever the next import fills in.
+    if (loadButton.disabled) return;
     const id = idInput.value.trim();
+    if (bySeries()) {
+      const tid = seriesIdFrom(id);
+      if (!tid) {
+        showStatus(gettext("Enter the series ID (TID) or paste its MyComicShop URL."), true);
+        idInput.focus();
+        return;
+      }
+      loadSeries(tid);
+      return;
+    }
     if (!id) {
       showStatus(gettext("Enter the issue's ID in the catalogue."), true);
       idInput.focus();
@@ -400,16 +502,9 @@
     loadButton.disabled = true;
     showStatus(gettext("Loading…"));
     try {
-      const url = new URL(data.catalogUrl, window.location.origin);
-      url.searchParams.set("source", sourceSelect.value);
-      url.searchParams.set("id", id);
-      const response = await fetch(url, { headers: { Accept: "application/json" }, credentials: "same-origin" });
-      const body = await response.json().catch(() => null);
-      if (!response.ok || !body || !body.proposal) {
-        showStatus((body && body.error) || gettext("The catalogue could not be read. Try again."), true);
-        return;
-      }
-      await apply(body.proposal);
+      const answer = await fetchProposal({ source: sourceSelect.value, id });
+      if (answer.error) showStatus(answer.error, true);
+      else await apply(answer.proposal);
     } catch (error) {
       showStatus(gettext("The catalogue could not be read. Try again."), true);
     } finally {
@@ -417,6 +512,227 @@
     }
   }
 
+  // ---------- Series dialog (MyComicShop): pick the variant to import ----------
+
+  let series = null; // {source, name, tid} of the series shown in the dialog
+  // Bumped by every request the dialog makes and when it closes: an answer that arrives for an older
+  // request (or once the dialog is closed) is dropped.
+  let seriesRequest = 0;
+
+  function showSeriesStatus(text, isError = false) {
+    seriesStatus.textContent = text;
+    seriesStatus.classList.toggle("catalog-import__status--error", isError);
+  }
+
+  const seriesRadios = () => [...seriesIssues.querySelectorAll("input[type=radio]")];
+  const chosenRadio = () => seriesRadios().find((radio) => radio.checked) || null;
+
+  // The chosen variant, else the first one that can be chosen, else Cancel.
+  function focusInDialog() {
+    const target =
+      chosenRadio() ||
+      seriesRadios().find((radio) => !radio.disabled) ||
+      seriesDialog.querySelector("[data-bs-dismiss=modal]");
+    target.focus();
+  }
+
+  function chip(text, extraClass = "") {
+    const element = document.createElement("span");
+    element.className = `md-assist-chip ${extraClass}`.trim();
+    element.textContent = text;
+    return element;
+  }
+
+  // A variant's card: a radio (its label holds the cover and the details), disabled with a link to
+  // the edition when Comi already has it.
+  function variantCard(variant) {
+    const card = document.createElement("div");
+    card.className = "catalog-series__card";
+    const choice = document.createElement("label");
+    choice.className = "catalog-series__choice";
+    const radio = document.createElement("input");
+    radio.type = "radio";
+    radio.name = "catalog-series-variant";
+    radio.value = String(variant.ivid);
+    radio.className = "visually-hidden";
+    radio.disabled = Boolean(variant.existing);
+
+    const thumb = document.createElement("span");
+    thumb.className = "catalog-series__thumb";
+    if (variant.thumb_url) {
+      const image = document.createElement("img");
+      image.loading = "lazy";
+      image.decoding = "async";
+      image.referrerPolicy = "no-referrer";
+      image.alt = interpolate(gettext("Cover #%(label)s"), { label: variant.label }, true);
+      image.src = variant.thumb_url;
+      thumb.append(image);
+    } else {
+      const icon = document.createElement("span");
+      icon.className = "material-symbols-outlined";
+      icon.setAttribute("aria-hidden", "true");
+      icon.textContent = "image";
+      thumb.append(icon);
+    }
+
+    const name = document.createElement("span");
+    name.className = "catalog-series__name";
+    name.textContent = variant.variant || variant.label;
+    name.title = `#${variant.label}`;
+
+    const facts = document.createElement("span");
+    facts.className = "catalog-series__facts";
+    facts.textContent = [variant.date, variant.price ? `$${variant.price}` : ""].filter(Boolean).join(" · ");
+
+    const chips = document.createElement("span");
+    chips.className = "catalog-series__chips";
+    if (variant.existing) chips.append(chip(gettext("Already in Comi"), "md-assist-chip--primary"));
+    if (variant.ratio) chips.append(chip(variant.ratio));
+    if (variant.limited_to) chips.append(chip(interpolate(gettext("Limited to %(count)s"), { count: variant.limited_to }, true)));
+    if (variant.printing) chips.append(chip(interpolate(gettext("Printing: %(printing)s"), { printing: variant.printing }, true)));
+    if (variant.retailer_exclusive) {
+      chips.append(chip(interpolate(gettext("Store: %(name)s"), { name: variant.retailer_exclusive }, true)));
+    }
+    if (variant.event_exclusive) {
+      chips.append(chip(interpolate(gettext("Event: %(name)s"), { name: variant.event_exclusive }, true)));
+    }
+
+    choice.append(radio, thumb, name);
+    if (facts.textContent) choice.append(facts);
+    if (chips.childElementCount) choice.append(chips);
+    if (variant.note) {
+      const note = document.createElement("span");
+      note.className = "catalog-series__note";
+      note.textContent = variant.note;
+      note.title = variant.note;
+      choice.append(note);
+    }
+    // A double click picks the variant and imports it.
+    choice.addEventListener("dblclick", () => {
+      if (radio.disabled) return;
+      radio.checked = true;
+      importChosen();
+    });
+    card.append(choice);
+
+    if (variant.existing) {
+      card.classList.add("is-existing");
+      const link = document.createElement("a");
+      link.className = "catalog-series__existing";
+      link.href = variant.existing.url;
+      link.target = "_blank";
+      link.rel = "noopener";
+      link.textContent = variant.existing.label;
+      card.append(link);
+    }
+    return card;
+  }
+
+  function renderSeries(body) {
+    const info = body.series;
+    const details = [info.year, info.publisher].filter(Boolean).join(", ");
+    seriesTitle.textContent = details ? `${info.title} (${details})` : info.title;
+    seriesLink.hidden = !(info.url && info.url.startsWith("https://"));
+    if (!seriesLink.hidden) {
+      seriesLink.href = info.url;
+      seriesLinkText.textContent = interpolate(gettext("Open in %(source)s"), { source: series.name }, true);
+    }
+    const groups = body.issues.map((issue) => {
+      const group = document.createElement("fieldset");
+      group.className = "catalog-series__issue";
+      const legend = document.createElement("legend");
+      legend.className = "md-title-small";
+      legend.textContent = `#${issue.number}`;
+      const grid = document.createElement("div");
+      grid.className = "catalog-series__grid";
+      grid.append(...issue.variants.map(variantCard));
+      group.append(legend, grid);
+      return group;
+    });
+    seriesIssues.replaceChildren(...groups);
+    const count = body.issues.reduce((total, issue) => total + issue.variants.length, 0);
+    const available = seriesRadios().filter((radio) => !radio.disabled).length;
+    if (!count) showSeriesStatus(gettext("The catalogue lists no covers for this series."), true);
+    else if (!available) showSeriesStatus(gettext("Every cover of this series is already in Comi."));
+    else {
+      showSeriesStatus(
+        interpolate(ngettext("%(count)s cover. Choose the one to import.", "%(count)s covers. Choose the one to import.", count), { count }, true)
+      );
+    }
+    if (seriesDialog.classList.contains("show")) focusInDialog();
+  }
+
+  async function loadSeries(tid) {
+    const request = ++seriesRequest;
+    const option = sourceSelect.selectedOptions[0];
+    series = { source: sourceSelect.value, name: option.textContent.trim(), tid };
+    seriesTitle.textContent = seriesDefaultTitle;
+    seriesLink.hidden = true;
+    seriesIssues.replaceChildren();
+    seriesImport.disabled = true;
+    showSeriesStatus(gettext("Loading…"));
+    showStatus("");
+    bootstrap.Modal.getOrCreateInstance(seriesDialog).show();
+    try {
+      const url = new URL(data.catalogSeriesUrl, window.location.origin);
+      url.searchParams.set("id", tid);
+      const response = await fetch(url, { headers: { Accept: "application/json" }, credentials: "same-origin" });
+      const body = await response.json().catch(() => null);
+      if (request !== seriesRequest) return;
+      if (!response.ok || !body || !body.series) {
+        showSeriesStatus((body && body.error) || gettext("The catalogue could not be read. Try again."), true);
+        return;
+      }
+      renderSeries(body);
+    } catch (error) {
+      if (request === seriesRequest) showSeriesStatus(gettext("The catalogue could not be read. Try again."), true);
+    }
+  }
+
+  // Look the chosen variant up and fill the form with it, as with any other catalogue.
+  async function importChosen() {
+    const radio = chosenRadio();
+    if (!radio || radio.disabled || !series || seriesImport.dataset.busy) return;
+    const request = ++seriesRequest;
+    seriesImport.dataset.busy = "true";
+    seriesImport.disabled = true;
+    showSeriesStatus(gettext("Loading…"));
+    const answer = await fetchProposal({ source: series.source, id: radio.value, series: series.tid });
+    delete seriesImport.dataset.busy;
+    seriesImport.disabled = !chosenRadio();
+    if (request !== seriesRequest) return; // the dialog was closed meanwhile
+    if (answer.error) {
+      showSeriesStatus(answer.error, true);
+      seriesImport.disabled = false;
+      return;
+    }
+    bootstrap.Modal.getOrCreateInstance(seriesDialog).hide();
+    try {
+      await apply(answer.proposal);
+    } catch (error) {
+      showStatus(gettext("The catalogue could not be read. Try again."), true);
+    }
+  }
+
+  seriesIssues.addEventListener("change", () => {
+    seriesImport.disabled = !chosenRadio() || Boolean(seriesImport.dataset.busy);
+  });
+  // Enter on a variant imports it (Space checks it, arrows move between the variants).
+  seriesIssues.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" || !event.target.matches("input[type=radio]")) return;
+    event.preventDefault();
+    event.target.checked = true;
+    importChosen();
+  });
+  seriesImport.addEventListener("click", importChosen);
+  seriesDialog.addEventListener("shown.bs.modal", focusInDialog);
+  seriesDialog.addEventListener("hidden.bs.modal", () => {
+    seriesRequest += 1;
+    loadButton.focus();
+  });
+
+  sourceSelect.addEventListener("change", syncIdInput);
+  syncIdInput();
   loadButton.addEventListener("click", load);
   idInput.addEventListener("keydown", (event) => {
     if (event.key !== "Enter") return;

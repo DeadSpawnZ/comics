@@ -49,7 +49,7 @@ COMPONENTS: list[tuple[str, str, str]] = [
     ("comics.middleware", "web", ""),
     ("comics.context_processors", "web", ""),
     ("comics.forms*", "forms", "comics.forms"),
-    ("comics.catalog_sources*", "catalog_sources", "comics.catalog_sources<br/>Metron y Comic Vine"),
+    ("comics.catalog_sources*", "catalog_sources", "comics.catalog_sources<br/>catálogos externos"),
     ("comics.change_requests", "change_requests", "comics.change_requests<br/>flujo de solicitudes"),
     ("comics.versions", "versions", "comics.versions<br/>aplicar y revertir versiones"),
     ("comics.achievements*", "achievements", "comics.achievements<br/>motor de logros"),

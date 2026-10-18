@@ -16,7 +16,7 @@
 
 For non-trivial backend features or fixes, orchestrate the project subagents instead of implementing directly:
 
-1. Delegate the implementation to a **new** `backend-senior` per task with a clear spec. Do not reuse an agent across different tasks: its context keeps growing and every call re-sends it.
+1. Delegate the implementation to a **new** `backend-senior` per task with a clear spec. Do not reuse an agent across different tasks: its context keeps growing and every call re-sends it. Keep tasks small enough to finish in one pass: split features that span several areas (models, gestion UI, notifications, achievements) into separate tasks, since cost grows faster than linearly with an agent's length (measure with `.claude/scripts/agent_usage.py`).
 2. Send its result to a **new** `code-reviewer` per task for review of the current diff.
 3. If the verdict is `CHANGES REQUESTED` (any BLOCKER or MAJOR), pass the findings back to the same `backend-senior` of that task (continue it with SendMessage) and review again with the same reviewer.
 4. Stop after `APPROVED` or after **3 review rounds**; if still not approved, summarize the disagreement and ask the user. MINOR findings never open an extra round: carry them into the next task's spec or a backlog.

@@ -441,9 +441,11 @@ class CatalogLookupViewTests(CatalogTestCase):
             response = self.client.get(self.url, {"source": "metron", "id": "15439"})
         self.assertEqual((response.status_code, response.json()), (503, {"error": "Metron is not configured."}))
         open_url.assert_not_called()
+        # MyComicShop needs no key, so the import box stays on with only that source enabled.
         page = self.client.get(reverse("manage_edition_new"))
-        self.assertContains(page, "Importing is off")
-        self.assertNotContains(page, 'id="catalog-load"')
+        self.assertNotContains(page, "Importing is off")
+        self.assertContains(page, '<option value="metron" disabled>Metron · not configured</option>', html=True)
+        self.assertContains(page, '<option value="mycomicshop" data-requires-series>MyComicShop</option>', html=True)
 
     @override_settings(METRON_USERNAME="", METRON_PASSWORD="", COMICVINE_API_KEY=API_KEY)
     def test_only_configured_sources_can_be_chosen(self) -> None:
@@ -496,7 +498,7 @@ class ImportedEditionSaveTests(CatalogTestCase):
             with self.subTest(url=url), mock.patch(OPEN_URL) as open_url:
                 response = self.client.post(reverse("manage_edition_new"), self.new_edition_data(catalog_cover_url=url))
                 self.assertEqual(response.status_code, 200)
-                self.assertContains(response, "Covers can only be downloaded from Metron or Comic Vine.")
+                self.assertContains(response, "Covers can only be downloaded from the catalogues Comi imports from.")
                 open_url.assert_not_called()
         self.assertFalse(Edition.objects.exists())
 
