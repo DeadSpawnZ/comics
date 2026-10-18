@@ -8,7 +8,7 @@ Cómo trabajar un punto: seguir `CLAUDE.md` (flujo backend con `backend-senior` 
 tests solo en MySQL, Ruff una vez por feature, migraciones ensayadas en `comic_refactor` antes de la
 base real). Quitar el punto de este archivo en el mismo commit que lo resuelve.
 
-Última actualización: 2026-10-17, en la rama `feat/mycomicshop-import`.
+Última actualización: 2026-10-17, en la rama `chore/adjustments`.
 
 ## Primera tarea de la próxima sesión
 
@@ -35,9 +35,10 @@ salen de `form_data.publishingDates` y `fillReleaseDate` en `comics/views/manage
 
 ## En curso
 
-### Solicitudes de cambio y catálogos externos (rama `feat/change-requests`)
+### Solicitudes de cambio y catálogos externos (en `develop`)
 
-Todo está commiteado y desplegado en local. Falta:
+Todo está en `develop` (PR #5, que también trajo `chore/codegraph` y `feat/mycomicshop-import`) y
+desplegado en local. Falta:
 
 - **Probar en el navegador:**
   - el importador de Metron/Comic Vine y el panel "Números de identificación" de issues y
@@ -46,7 +47,7 @@ Todo está commiteado y desplegado en local. Falta:
     borrador del formulario (`js/custom/form_draft.js`);
   - las ayudas del importador: campos obligatorios marcados, recordar alias de editoriales y crear
     los artistas que faltan.
-- **Cerrar la rama:** PR `feat/change-requests` → `develop` → `master`.
+- **Publicar:** PR `develop` → `master`.
 - **Confirmar con el usuario** tres decisiones que tomó el implementador: nadie revisa sus propias
   solicitudes; los revisores no pueden rechazar una solicitud ya validada; el autor no ve los nombres
   de quienes la revisaron.
@@ -76,11 +77,9 @@ Todo está commiteado y desplegado en local. Falta:
 - Con Metron y Comic Vine, impresión, ratio (salvo cuando el nombre de la variante lo dice, p. ej.
   "1:25"), exclusivas de tienda/evento y país siguen siendo manuales (MyComicShop sí los propone).
 
-### Importar desde MyComicShop (rama `feat/mycomicshop-import`)
+### Importar desde MyComicShop (en `develop`)
 
-Implementado y commiteado (ver README). La rama sale de `chore/codegraph` y lleva
-`feat/change-requests` fusionada (`70f6cec`), porque el importador en el que se apoya solo existe ahí.
-Falta:
+Implementado (ver README) y en `develop` con el PR #5. Falta:
 
 - **Probar en el navegador** (la migración `0116` ya está aplicada en la base real) con los TID `57389539`
   (Batman Spawn) y `65211284` (Vampirella X Witchblade): modal, teclado, importar una RI, una
