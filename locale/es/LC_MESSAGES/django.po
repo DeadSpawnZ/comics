@@ -3233,6 +3233,16 @@ msgid "Copy the %(source)s number"
 msgstr "Copiar el número de %(source)s"
 
 #: comics/catalog_sources/mapper.py
+#, python-format
+msgid "%(source)s writes the title as “%(title)s”: check it against the cover (Comi keeps the title as printed)."
+msgstr "%(source)s escribe el título como “%(title)s”: compáralo con la portada (Comi guarda el título tal como está impreso)."
+
+#: comics/catalog_sources/mapper.py
+#, python-format
+msgid "Matched “%(series)s” as “%(title)s”: check that it is the same series."
+msgstr "Se ha emparejado “%(series)s” con “%(title)s”: comprueba que sea la misma serie."
+
+#: comics/catalog_sources/mapper.py
 msgid "Only the first issue's cover date is known: check the start date."
 msgstr "Solo se conoce la fecha de portada del primer issue: revisa la fecha de inicio."
 

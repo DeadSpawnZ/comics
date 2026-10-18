@@ -11,7 +11,9 @@ Matching rules:
   Comics"), ignoring case, accents and repeated spaces; a name wins over an alias.
 - Publishing: by the series ids first (Metron, then Comic Vine, including the Comic Vine id the
   Metron series names; when the two point to different publishings, Metron's wins with a
-  warning); else by title, case-insensitively;
+  warning); else by title, case-insensitively, or by title_key when none of those has the series'
+  language and year (ignoring punctuation between words, acronym dots, "&"/"and" and
+  "vs."/"versus", e.g. "Grifter / Badrock" for "Grifter Badrock", with a warning to check it);
   then the language when the source knows it and the year the series began when it knows it (both
   strict: another language or year is another publishing); then the series number ("1st",
   "2nd"...) and the editorial, which only narrow the candidates when some of them fit. Only a
@@ -34,7 +36,7 @@ from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.utils.translation import gettext as _
 
-from comics.helper import name_key
+from comics.helper import name_key, title_key
 from comics.models import Artist, Edition, Editorial, Issue, Publishing
 
 from .http import is_allowed_cover_url
@@ -239,6 +241,14 @@ def propose_publishing(
 ) -> ProposedPublishing:
     """The values to create the publishing of `source_issue` with, and what the user should check."""
     warnings: list[str] = []
+    if " / " in source_issue.series_name:
+        # How Metron separates the titles of a crossover or flip book; the cover may not.
+        warnings.append(
+            _(
+                "%(source)s writes the title as “%(title)s”: check it against the cover (Comi keeps the title as printed)."
+            )
+            % {"source": source_issue.source_name, "title": source_issue.series_name}
+        )
     start = _start_date(source_issue, series, warnings)
     return ProposedPublishing(
         publishing_title=source_issue.series_name,
@@ -413,7 +423,8 @@ def match_publishing(
 ) -> tuple[Publishing | None, list[Publishing]]:
     """(the publishing, when exactly one fits; else None, and the title matches as candidates).
     `comicvine_volume_id`: the series' Comic Vine id, when known (the source's own or the one its
-    series names); `warnings` gets the conflicts between the series ids."""
+    series names); `warnings` gets the conflicts between the series ids and a publishing matched by
+    a title written otherwise."""
     by_id = _publishing_by_series_id(
         source_issue.metron_series_id, comicvine_volume_id or source_issue.comicvine_volume_id, warnings
     )
@@ -421,24 +432,53 @@ def match_publishing(
         return by_id, []
     if not source_issue.series_name:
         return None, []
-    by_title = list(
-        Publishing.objects.filter(publishing_title__iexact=source_issue.series_name)
-        .prefetch_related("editorials")
-        .order_by("year", "serie")[: MAX_CANDIDATES * 5]
-    )
-    remaining = by_title
-    if source_issue.language:
-        remaining = [item for item in remaining if item.language == source_issue.language]
-    if source_issue.series_year:
-        remaining = [item for item in remaining if item.year == source_issue.series_year]
+    by_title = _publishings_by_title(source_issue)
+    remaining = [item for item in by_title if _fits_language_and_year(item, source_issue)]
     if source_issue.series_volume:
         serie = ordinal(source_issue.series_volume)
         remaining = [item for item in remaining if item.serie.strip().lower() == serie] or remaining
     if editorial is not None:
         remaining = [item for item in remaining if editorial in item.editorials.all()] or remaining
     if len(remaining) == 1:
-        return remaining[0], []
+        publishing = remaining[0]
+        if warnings is not None and name_key(publishing.publishing_title) != name_key(source_issue.series_name):
+            warnings.append(
+                _("Matched “%(series)s” as “%(title)s”: check that it is the same series.")
+                % {"series": source_issue.series_name, "title": publishing.publishing_title}
+            )
+        return publishing, []
     return None, (remaining or by_title)[:MAX_CANDIDATES]
+
+
+def _fits_language_and_year(publishing: Publishing, source_issue: SourceIssue) -> bool:
+    """Whether `publishing` has the series' language and start year, when the source knows them
+    (both strict: another language or year is another publishing)."""
+    if source_issue.language and publishing.language != source_issue.language:
+        return False
+    return not source_issue.series_year or publishing.year == source_issue.series_year
+
+
+def _publishings_by_title(source_issue: SourceIssue) -> list[Publishing]:
+    """The publishings titled as the source's series: the same text ignoring case, unless none of
+    those has the series' language and year; then the same title_key (e.g. "Grifter / Badrock" for
+    "Grifter Badrock") among the publishings of that language and year, when there is one. The case
+    matches are kept otherwise, as candidates. The keys are compared on ids and titles only, so it
+    takes at most five queries (two per publishing list loaded, one for the keyed titles)."""
+    publishings = Publishing.objects.prefetch_related("editorials").order_by("year", "serie")
+    by_title = list(publishings.filter(publishing_title__iexact=source_issue.series_name)[: MAX_CANDIDATES * 5])
+    if any(_fits_language_and_year(item, source_issue) for item in by_title):
+        return by_title
+    key = title_key(source_issue.series_name)
+    if not key:
+        return by_title
+    narrowed = Publishing.objects.all()
+    if source_issue.series_year:
+        narrowed = narrowed.filter(year=source_issue.series_year)
+    if source_issue.language:
+        narrowed = narrowed.filter(language=source_issue.language)
+    pks = [pk for pk, title in narrowed.values_list("pk", "publishing_title") if title_key(title) == key]
+    by_key = list(publishings.filter(pk__in=pks)[: MAX_CANDIDATES * 5]) if pks else []
+    return by_key or by_title
 
 
 def _publishing_by_series_id(

@@ -398,6 +398,8 @@ NEW_TRANSLATIONS = {
     "Discard": "Descartar",
     "Choose a language": "Elige un idioma",
     "The Metron series is %(metron)s, but its Comic Vine volume is %(comicvine)s: the first one is used. Check whether they are the same publishing.": "La serie de Metron es %(metron)s, pero su volumen de Comic Vine es %(comicvine)s: se usa la primera. Comprueba si son el mismo publishing.",
+    "%(source)s writes the title as “%(title)s”: check it against the cover (Comi keeps the title as printed).": "%(source)s escribe el título como “%(title)s”: compáralo con la portada (Comi guarda el título tal como está impreso).",
+    "Matched “%(series)s” as “%(title)s”: check that it is the same series.": "Se ha emparejado “%(series)s” con “%(title)s”: comprueba que sea la misma serie.",
     # Import helpers: required hints, editorial aliases, creating artists.
     "Required: choose a title or create one with +.": "Obligatorio: elige un título o créalo con +.",
     "Required: choose an editorial or create one with +.": "Obligatorio: elige una editorial o créala con +.",

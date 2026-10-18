@@ -1,5 +1,6 @@
 import datetime
 import io
+import re
 import unicodedata
 
 from django.core.files import File
@@ -23,6 +24,29 @@ def name_key(name: str) -> str:
     decomposed = unicodedata.normalize("NFKD", name)
     plain = "".join(char for char in decomposed if not unicodedata.combining(char))
     return " ".join(plain.casefold().split())
+
+
+# A dot between letters when the next letter stands alone, as in an acronym ("WildC.A.T.S.",
+# "S.H.I.E.L.D."): dropped, so the letters join. Any other dot ("Mr. Fantastic", "vs.Predator",
+# "2.0") separates words.
+_ACRONYM_DOT = re.compile(r"(?<=[^\W\d_])\.(?=[^\W\d_](?![^\W\d_]))")
+# Punctuation that only separates words in a title. Hyphens and dashes are separators too:
+# "Spider-Man" ≡ "Spider Man", "X-Men" ≡ "X Men", but "Spiderman" stays another title (letters are
+# never joined or split, only punctuation is ignored). Joining instead ("Spider-Man" ≡ "Spiderman")
+# would change the words of the title and "Batman - Year One" would still need a separator rule.
+_TITLE_SEPARATORS = re.compile(r"[-‐-―−/\\:;,.#!?¡¿\"'`´‘-‟«»()\[\]{}|*~_]")
+# Words a title writes in several ways.
+_TITLE_WORDS = {"versus": "vs"}
+
+
+def title_key(title: str) -> str:
+    """A publishing title compared the way a catalogue may write it: as name_key (case, accents,
+    spaces) and also ignoring the punctuation between words ("Grifter / Badrock" ≡ "Grifter
+    Badrock", "Marvel/DC" ≡ "Marvel DC"), the dots of an acronym ("WildC.A.T.S." ≡ "WildCATS"),
+    "&" ≡ "and" and "vs" ≡ "vs." ≡ "versus". Only for matching: titles are stored as printed."""
+    text = _ACRONYM_DOT.sub("", name_key(title)).replace("&", " and ")
+    words = _TITLE_SEPARATORS.sub(" ", text).split()
+    return " ".join(_TITLE_WORDS.get(word, word) for word in words)
 
 
 def parse_date_or_none(value: str | None) -> datetime.date | None:
