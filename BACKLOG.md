@@ -82,14 +82,10 @@ Implementado y commiteado (ver README). La rama sale de `chore/codegraph` y llev
 `feat/change-requests` fusionada (`70f6cec`), porque el importador en el que se apoya solo existe ahí.
 Falta:
 
-- **Aplicar la migración `0116_edition_mycomicshop_id` a la base real** (ensayada en `comic_refactor`:
-  aplicar, revertir y reaplicar sin pérdida) y **probar en el navegador** con los TID `57389539`
+- **Probar en el navegador** (la migración `0116` ya está aplicada en la base real) con los TID `57389539`
   (Batman Spawn) y `65211284` (Vampirella X Witchblade): modal, teclado, importar una RI, una
   exclusiva con tirada y una 2.ª impresión, re-importar otra portada, portada ya existente
   deshabilitada, errores (TID `1`, texto no numérico) y que Metron/Comic Vine sigan igual.
-- **Confirmar con el usuario** si los coleccionistas pueden proponer el `MyComicShop ID` en las
-  solicitudes de cambio de una edición (hoy sí, porque `EditionProposalForm` reutiliza los campos de
-  Gestión; quitarlo es una exclusión como la de `image`).
 - **Fragilidad:** solo funciona `POST https://www.mycomicshop.com/search?TID=<id>`; un `GET` (también
   a `search?q=`) devuelve un reto JS de Imperva. Si el POST deja de funcionar: subir el HTML guardado
   desde el navegador y pasarlo por el mismo parser, o valorar Playwright (~400 MB más en la imagen).
