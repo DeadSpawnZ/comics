@@ -2,8 +2,10 @@
 // (through comics.views.manage_editions.catalog_lookup) and fills the form with it. MyComicShop is
 // loaded by series (its TID, or a pasted URL holding it): its variants are shown in a dialog
 // (catalog_mycomicshop_series, includes/catalog_series_dialog.html), the user picks one and that
-// variant is looked up and filled in like a Metron or Comic Vine issue. Nothing is saved here:
-// the user reviews the values and saves the form. The imported cover is only a URL (a hidden
+// variant is looked up and filled in like a Metron or Comic Vine issue. A variant that is probably
+// an edition Comi already has (same number and letter, no MyComicShop ID yet) can be linked to it
+// from its card (catalog_mycomicshop_link), which saves that ID on it. The import itself saves
+// nothing: the user reviews the values and saves the form. The imported cover is only a URL (a hidden
 // field); the server downloads it when the form is saved. When the publishing is not in Comi, the
 // "Create publishing" dialog (publishing_dialogs.js) is prefilled with the catalogue's series. When
 // the publisher matched no editorial, the summary offers to pick an existing one (and remember the
@@ -35,6 +37,7 @@
   const seriesTitle = document.getElementById("catalog-series-title");
   const seriesLink = document.getElementById("catalog-series-link");
   const seriesLinkText = document.getElementById("catalog-series-link-text");
+  const seriesPublishing = document.getElementById("catalog-series-publishing");
   const seriesStatus = document.getElementById("catalog-series-status");
   const seriesIssues = document.getElementById("catalog-series-issues");
   const seriesImport = document.getElementById("catalog-series-import");
@@ -543,11 +546,118 @@
     return element;
   }
 
+  // The variants of the series shown, by IVID: a card is rebuilt from them after a link.
+  const shownVariants = new Map();
+
+  // A probable match of a variant (an edition with the same number and letter, no IVID yet): its
+  // thumbnail, a link to it (new tab) and "Link", which stores the variant's IVID on it. Outside the
+  // card's label, so neither the link nor the button picks the variant.
+  function probableBlock(variant, edition) {
+    const block = document.createElement("div");
+    block.className = "catalog-series__probable";
+    if (edition.thumb_url) {
+      const image = document.createElement("img");
+      image.className = "catalog-series__probable-thumb";
+      image.loading = "lazy";
+      image.decoding = "async";
+      image.alt = "";
+      image.src = edition.thumb_url;
+      block.append(image);
+    }
+    const link = document.createElement("a");
+    link.className = "catalog-series__probable-link";
+    link.href = edition.url;
+    link.target = "_blank";
+    link.rel = "noopener";
+    link.textContent = edition.label;
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "md-btn md-btn--text catalog-series__probable-button";
+    const icon = document.createElement("span");
+    icon.className = "material-symbols-outlined";
+    icon.setAttribute("aria-hidden", "true");
+    icon.textContent = "link";
+    button.append(icon, document.createTextNode(` ${gettext("Link")}`));
+    button.title = interpolate(gettext("Mark this MyComicShop cover as %(edition)s"), { edition: edition.label }, true);
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      linkVariant(variant, edition, button);
+    });
+    block.append(link, button);
+    return block;
+  }
+
+  // Store the variant's IVID on the probable edition (after the user confirms) and show the card as
+  // already in Comi. Errors go to the dialog's status line.
+  async function linkVariant(variant, edition, button) {
+    const question = interpolate(
+      gettext("Mark the MyComicShop cover #%(label)s as %(edition)s? Its MyComicShop ID is saved on that edition."),
+      { label: variant.label, edition: edition.label },
+      true
+    );
+    if (button.disabled || !window.confirm(question)) return;
+    const request = seriesRequest; // not bumped: an import or a reload in progress keeps going
+    const body = new FormData();
+    body.append("csrfmiddlewaretoken", csrfToken);
+    body.append("edition", String(edition.id));
+    body.append("ivid", String(variant.ivid));
+    button.disabled = true;
+    try {
+      const response = await fetch(data.catalogLinkUrl, {
+        method: "POST",
+        body,
+        headers: { Accept: "application/json" },
+        credentials: "same-origin",
+      });
+      const answer = await response.json().catch(() => null);
+      if (request !== seriesRequest) return; // the dialog was closed or shows another series
+      if (!response.ok || !answer || !answer.existing) {
+        showSeriesStatus((answer && answer.error) || gettext("The cover could not be linked. Try again."), true);
+        return;
+      }
+      showLinked(variant, answer.existing);
+      // Linked to the edition open in the form: its MyComicShop ID field gets the IVID too, or
+      // saving the form would write the old (empty) value back and drop the link.
+      if (data.editionId && answer.existing.id === data.editionId) setField("id_mycomicshop_id", variant.ivid);
+      // The button is gone with the old card: focus goes to the link of the edition it now is.
+      const linked = seriesIssues.querySelector(`.catalog-series__card[data-ivid="${variant.ivid}"] .catalog-series__existing`);
+      if (linked) linked.focus();
+      showSeriesStatus(interpolate(gettext("Linked: %(edition)s is this cover now."), { edition: answer.existing.label }, true));
+    } catch (error) {
+      if (request === seriesRequest) showSeriesStatus(gettext("The cover could not be linked. Check your connection and try again."), true);
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  // After a link: the variant's card turns into "Already in Comi", and the edition is no longer a
+  // probable match of any other variant (it has an IVID now).
+  function showLinked(variant, existing) {
+    shownVariants.forEach((other) => {
+      const linked = other.ivid === variant.ivid;
+      const probable = linked ? [] : (other.probable || []).filter((item) => item.id !== existing.id);
+      if (!linked && probable.length === (other.probable || []).length) return;
+      const updated = { ...other, probable, existing: linked ? existing : other.existing };
+      const card = seriesIssues.querySelector(`.catalog-series__card[data-ivid="${other.ivid}"]`);
+      if (!card) return;
+      const wasChosen = card.querySelector("input[type=radio]").checked;
+      const replacement = variantCard(updated);
+      card.replaceWith(replacement);
+      const radio = replacement.querySelector("input[type=radio]");
+      radio.checked = wasChosen && !radio.disabled;
+    });
+    seriesImport.disabled = !chosenRadio() || Boolean(seriesImport.dataset.busy);
+  }
+
   // A variant's card: a radio (its label holds the cover and the details), disabled with a link to
-  // the edition when Comi already has it.
+  // the edition when Comi already has it; with the probable editions and their "Link" otherwise.
   function variantCard(variant) {
+    shownVariants.set(variant.ivid, variant);
+    const probable = variant.existing ? [] : variant.probable || [];
     const card = document.createElement("div");
     card.className = "catalog-series__card";
+    card.dataset.ivid = String(variant.ivid);
     const choice = document.createElement("label");
     choice.className = "catalog-series__choice";
     const radio = document.createElement("input");
@@ -587,6 +697,9 @@
     const chips = document.createElement("span");
     chips.className = "catalog-series__chips";
     if (variant.existing) chips.append(chip(gettext("Already in Comi"), "md-assist-chip--primary"));
+    probable.forEach((edition) => {
+      chips.append(chip(interpolate(gettext("Possibly in Comi: %(cover)s"), { cover: edition.cover }, true), "catalog-series__probable-chip"));
+    });
     if (variant.ratio) chips.append(chip(variant.ratio));
     if (variant.limited_to) chips.append(chip(interpolate(gettext("Limited to %(count)s"), { count: variant.limited_to }, true)));
     if (variant.printing) chips.append(chip(interpolate(gettext("Printing: %(printing)s"), { printing: variant.printing }, true)));
@@ -625,6 +738,7 @@
       link.textContent = variant.existing.label;
       card.append(link);
     }
+    probable.forEach((edition) => card.append(probableBlock(variant, edition)));
     return card;
   }
 
@@ -637,6 +751,11 @@
       seriesLink.href = info.url;
       seriesLinkText.textContent = interpolate(gettext("Open in %(source)s"), { source: series.name }, true);
     }
+    seriesPublishing.textContent = info.publishing
+      ? interpolate(gettext("Publishing in Comi: %(name)s"), { name: info.publishing.label }, true)
+      : gettext("No publishing in Comi matches this series, so the covers it already has without a MyComicShop ID are not detected.");
+    seriesPublishing.hidden = false;
+    shownVariants.clear();
     const groups = body.issues.map((issue) => {
       const group = document.createElement("fieldset");
       group.className = "catalog-series__issue";
@@ -668,6 +787,7 @@
     series = { source: sourceSelect.value, name: option.textContent.trim(), tid };
     seriesTitle.textContent = seriesDefaultTitle;
     seriesLink.hidden = true;
+    seriesPublishing.hidden = true;
     seriesIssues.replaceChildren();
     seriesImport.disabled = true;
     showSeriesStatus(gettext("Loading…"));

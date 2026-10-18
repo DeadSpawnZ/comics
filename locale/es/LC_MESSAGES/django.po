@@ -3725,3 +3725,30 @@ msgid "“%(name)s” cannot be deleted: %(count)d piece of it is registered."
 msgid_plural "“%(name)s” cannot be deleted: %(count)d pieces of it are registered."
 msgstr[0] "“%(name)s” no se puede eliminar: tiene %(count)d pieza registrada."
 msgstr[1] "“%(name)s” no se puede eliminar: tiene %(count)d piezas registradas."
+
+#: comics/forms/catalog.py
+msgid "Choose the edition to link."
+msgstr "Elige la edición que quieres vincular."
+
+#: comics/forms/catalog.py
+msgid "The MyComicShop cover is missing."
+msgstr "Falta la portada de MyComicShop."
+
+#: comics/catalog_sources/service.py
+msgid "The edition does not exist: it may have been deleted."
+msgstr "La edición no existe: puede que la hayan eliminado."
+
+#: comics/catalog_sources/service.py
+#, python-format
+msgid "%(edition)s is already linked to another MyComicShop cover (%(id)s)."
+msgstr "%(edition)s ya está vinculada a otra portada de MyComicShop (%(id)s)."
+
+#: comics/catalog_sources/service.py
+#, python-format
+msgid "%(edition)s already has this MyComicShop ID."
+msgstr "%(edition)s ya tiene este ID de MyComicShop."
+
+#: comics/catalog_sources/service.py
+#, python-format
+msgid "Linked to the MyComicShop cover %(id)s."
+msgstr "Vinculada a la portada %(id)s de MyComicShop."

@@ -341,6 +341,7 @@ class SeriesEndpointTests(CatalogTestCase):
                 "year": 2023,
                 "publisher": "IDW Publishing",
                 "url": "https://www.mycomicshop.com/search?TID=58451662",
+                "publishing": None,  # "TMNT vs. Street Fighter" is not the series' title
             },
         )
         self.assertEqual(
@@ -384,8 +385,10 @@ class SeriesEndpointTests(CatalogTestCase):
         make_edition(mycomicshop_id=58639767)
         make_edition(mycomicshop_id=59040682)
         with mock.patch(OPEN_URL, side_effect=page_answer):
-            mycomicshop.fetch_series(TMNT_TID)  # cached: only the editions are queried below
-        with self.assertNumQueries(1):
+            mycomicshop.fetch_series(TMNT_TID)  # cached: only Comi is queried below
+        # The editions holding the IVIDs, then the publishing match finding none (editorials, their
+        # aliases, publishings by title, titles by key): no candidate editions to look for.
+        with self.assertNumQueries(5):
             data = mycomicshop_series(TMNT_TID)
         existing = [v["ivid"] for issue in data["issues"] for v in issue["variants"] if v["existing"]]
         self.assertEqual(existing, [58639767, 59040682])

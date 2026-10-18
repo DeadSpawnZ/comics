@@ -131,6 +131,7 @@ flowchart TD
     admin --> views_site
     catalog_sources --> helper
     catalog_sources --> models
+    catalog_sources --> versions
     change_requests --> achievements
     change_requests --> history
     change_requests --> models

@@ -3,7 +3,11 @@
   The variants of a catalogue series (MyComicShop) to pick the one to import, opened from the import
   box of the edition form. js/custom/catalog_import.js fills it from the series API: one fieldset per
   issue number with a card (a radio) per variant; the variants already in Comi are disabled and link
-  to their edition. A sibling of the edition form, so its radios are never submitted with it.
+  to their edition. A variant that is probably an existing edition (same number and letter) stays
+  selectable and shows that edition with a "Link" button, which saves the variant's MyComicShop ID
+  on it (the status line below reports the result or the error). The header says which Comi
+  publishing the series matched, or that none did (then no probable match is looked for). A sibling of the edition form, so
+  its radios are never submitted with it.
 {% endcomment %}
 <div class="modal fade md-dialog" id="catalog-series-dialog" tabindex="-1" aria-labelledby="catalog-series-title" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-scrollable">
@@ -14,6 +18,7 @@
           <span class="material-symbols-outlined" aria-hidden="true">open_in_new</span>
           <span id="catalog-series-link-text"></span>
         </a>
+        <p class="catalog-series__publishing mb-0" id="catalog-series-publishing" hidden></p>
       </div>
       <div class="modal-body">
         <div class="catalog-import__status mb-2" id="catalog-series-status" role="status" aria-live="polite"></div>

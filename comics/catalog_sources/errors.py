@@ -57,6 +57,12 @@ class InvalidLookup(CatalogError):  # noqa: N818
     status = 400
 
 
+class Conflict(CatalogError):  # noqa: N818
+    """The change clashes with what Comi already has (e.g. a MyComicShop ID held by another edition)."""
+
+    status = 409
+
+
 def series_required_message(source: str) -> str:
     return _("%(source)s also needs the series id.") % {"source": source}
 

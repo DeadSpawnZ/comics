@@ -2,11 +2,12 @@ from __future__ import annotations
 
 import json
 from collections.abc import Callable, Iterable
-from typing import Any
+from typing import Any, cast
 from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION
+from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db import transaction
@@ -31,6 +32,7 @@ from comics.forms import (
     EditionManageForm,
     EditorialDialogForm,
     IssueSectionForm,
+    MyComicShopLinkForm,
     PublishingDialogForm,
     TitleDialogForm,
     publishing_choices,
@@ -283,6 +285,10 @@ def edition_form(request: HttpRequest, pk: int | None = None) -> HttpResponse:  
                 "issuesUrl": reverse("manage_publishing_issues"),
                 "catalogUrl": reverse("manage_catalog_lookup"),
                 "catalogSeriesUrl": reverse("manage_catalog_mycomicshop_series"),
+                "catalogLinkUrl": reverse("manage_catalog_mycomicshop_link"),
+                # The edition open in the form, if any: linking a MyComicShop cover to it from the
+                # series dialog also fills its MyComicShop ID field, so saving the form keeps the link.
+                "editionId": edition.pk if edition else None,
                 "artistsCreateUrl": reverse("manage_artists_create_api"),
                 "publishingTitles": {publishing.pk: publishing.publishing_title for publishing in publishings},
                 # Picking a publishing proposes its start date as the release date (edition_form.js), only
@@ -435,6 +441,24 @@ def catalog_mycomicshop_series(request: HttpRequest) -> JsonResponse:
     """A MyComicShop series (?id=<TID>) with all its variants, for the modal the user picks the
     variant to import from (comics.catalog_sources.service.mycomicshop_series). Reads only."""
     return _catalog_answer(CatalogSeriesForm(request.GET), lambda data: catalog.mycomicshop_series(data["id"]))
+
+
+@management_required
+@require_POST
+def catalog_mycomicshop_link(request: HttpRequest) -> JsonResponse:
+    """Link a MyComicShop cover (`ivid`) to an existing `edition` from the variants modal: its IVID
+    is stored on the edition (comics.catalog_sources.service.link_mycomicshop_edition), so the
+    cover becomes a firm match. Answers {"existing": the edition as the modal shows it}."""
+
+    def link(data: dict[str, Any]) -> dict[str, Any]:
+        with transaction.atomic():
+            user = cast(User, request.user)  # management_required: signed in
+            edition, changed = catalog.link_mycomicshop_edition(data["edition"], data["ivid"], user)
+            if changed:
+                log_action(request, edition, CHANGE, f"Vinculada a MyComicShop (IVID {data['ivid']}) desde Gestión.")
+        return {"existing": catalog.existing_edition(edition)}
+
+    return _catalog_answer(MyComicShopLinkForm(request.POST), link)
 
 
 def _catalog_answer(form: Form, read: Callable[[dict[str, Any]], dict[str, Any]]) -> JsonResponse:

@@ -1052,6 +1052,11 @@
   margin-left: -0.75rem;
 }
 
+.catalog-series__publishing {
+  color: var(--md-on-surface-variant);
+  font-size: 0.875rem;
+}
+
 .catalog-series__issue {
   margin-bottom: 1.25rem;
 }
@@ -1165,4 +1170,38 @@
   padding: 0 0.5rem;
   font-size: 0.8125rem;
   overflow-wrap: anywhere;
+}
+
+/* A probable match (same number and letter, no MyComicShop ID yet): the edition and its "Link"
+   button, below the card's choice so clicking them never picks the variant. */
+.catalog-series__chips .catalog-series__probable-chip {
+  border-style: dashed;
+  border-color: var(--md-primary);
+  color: var(--md-primary);
+}
+
+.catalog-series__probable {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.5rem;
+  padding: 0 0.5rem;
+  font-size: 0.8125rem;
+}
+
+.catalog-series__probable-thumb {
+  width: 28px;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.catalog-series__probable-link {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.catalog-series__probable-button {
+  padding-inline: 0.5rem;
 }

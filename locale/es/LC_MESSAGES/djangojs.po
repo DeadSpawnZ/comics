@@ -449,3 +449,44 @@ msgstr "No se pudieron cargar las compras"
 #: comics/static/js/custom/article_form.js
 msgid "New image: %(name)s (applied on save)"
 msgstr "Nueva imagen: %(name)s (se aplica al guardar)"
+
+#: comics/static/js/custom/catalog_import.js
+msgid "Link"
+msgstr "Vincular"
+
+#: comics/static/js/custom/catalog_import.js
+#, python-format
+msgid "Possibly in Comi: %(cover)s"
+msgstr "Posiblemente en Comi: %(cover)s"
+
+#: comics/static/js/custom/catalog_import.js
+#, python-format
+msgid "Mark this MyComicShop cover as %(edition)s"
+msgstr "Marcar esta portada de MyComicShop como %(edition)s"
+
+#: comics/static/js/custom/catalog_import.js
+#, python-format
+msgid "Mark the MyComicShop cover #%(label)s as %(edition)s? Its MyComicShop ID is saved on that edition."
+msgstr "¿Marcar la portada #%(label)s de MyComicShop como %(edition)s? Su ID de MyComicShop se guarda en esa edición."
+
+#: comics/static/js/custom/catalog_import.js
+msgid "The cover could not be linked. Try again."
+msgstr "No se pudo vincular la portada. Inténtalo de nuevo."
+
+#: comics/static/js/custom/catalog_import.js
+#, python-format
+msgid "Linked: %(edition)s is this cover now."
+msgstr "Vinculada: %(edition)s es ahora esta portada."
+
+#: comics/static/js/custom/catalog_import.js
+msgid "The cover could not be linked. Check your connection and try again."
+msgstr "No se pudo vincular la portada. Revisa tu conexión e inténtalo de nuevo."
+
+#: comics/static/js/custom/catalog_import.js
+#, python-format
+msgid "Publishing in Comi: %(name)s"
+msgstr "Publishing en Comi: %(name)s"
+
+#: comics/static/js/custom/catalog_import.js
+msgid "No publishing in Comi matches this series, so the covers it already has without a MyComicShop ID are not detected."
+msgstr "Ningún publishing de Comi coincide con esta serie, así que no se detectan las portadas que ya tiene sin ID de MyComicShop."

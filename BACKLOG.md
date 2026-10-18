@@ -103,6 +103,15 @@ Implementado (ver README) y en `develop` con el PR #5. Falta:
   ID (la consulta no sabe qué edición está abierta); el panel "Identification numbers" no muestra el
   IVID; la caché de la serie y el `throttle` usan la `LocMemCache` por proceso (sin `CACHES`
   configurado), así que con varios workers la búsqueda tras el modal puede volver a pedir la página.
+- **Coincidencia probable + "Vincular"** (rama `chore/adjustments`): el modal marca "Posiblemente en
+  Comi" las ediciones del publishing emparejado con mismo número y letra, exclusiva (tienda/evento)
+  solo si la variante lo es, y la impresión si MyComicShop la indica, sin IVID; "Vincular" guarda el
+  IVID en esa edición (versión + LogEntry). Falta probarlo en el navegador con el TID `19609941`
+  (Image United). Límites: no compara qué tienda o evento es (solo si es exclusiva o no) ni
+  normaliza números ("01" ≠ "1"); sin publishing emparejado (o con varios) no hay candidatas; las
+  exclusivas casi nunca tendrán candidata, porque el sufijo de MyComicShop ("B&N", "CUSTOM.B") rara
+  vez coincide con la letra de Comi (solo se pierden coincidencias, nunca se inventan).
+  `catalog_import.js` pasa de 850 líneas: separar el diálogo de series en su propio módulo.
 - **Para más adelante:** guardar el `TID` en `Publishing` para emparejar la serie sin depender del
   nombre, búsqueda por nombre (`search?q=` por POST, sin probar), importar varias variantes de golpe o
   como solicitudes de cambio (enlaza con la "Importación masiva" de arriba).

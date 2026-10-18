@@ -135,6 +135,11 @@ urlpatterns = [
         name="manage_catalog_mycomicshop_series",
     ),
     path(
+        "gestion/api/catalogo/mycomicshop/vincular/",
+        manage_editions.catalog_mycomicshop_link,
+        name="manage_catalog_mycomicshop_link",
+    ),
+    path(
         "gestion/api/publishings/nuevo/", manage_publishings.publishing_create_api, name="manage_publishing_create_api"
     ),
     path("gestion/api/titulos/nuevo/", manage_publishings.title_create_api, name="manage_title_create_api"),

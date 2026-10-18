@@ -350,6 +350,17 @@ class CatalogSeriesForm(forms.Form):
         return clean_series_id(self.cleaned_data["id"])
 
 
+class MyComicShopLinkForm(forms.Form):
+    """The edition and the MyComicShop cover (IVID) the variants modal links it to."""
+
+    edition = forms.IntegerField(min_value=1, error_messages={"required": _("Choose the edition to link.")})
+    ivid = forms.IntegerField(
+        min_value=1,
+        max_value=MAX_CATALOG_ID,  # Edition.mycomicshop_id is a PositiveIntegerField
+        error_messages={"required": _("The MyComicShop cover is missing.")},
+    )
+
+
 class PublishingManageForm(forms.ModelForm):
     """Publishing data for Gestión. The title (the group used by the letter filter) is typed as
     text: an existing one is reused and a new one is created when needed."""

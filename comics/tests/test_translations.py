@@ -460,6 +460,13 @@ NEW_TRANSLATIONS = {
     "Article created: %(article)s": "Artículo creado: %(article)s",
     "Article saved: %(article)s": "Artículo guardado: %(article)s",
     "Article deleted: %(article)s": "Artículo eliminado: %(article)s",
+    # Linking a MyComicShop cover to an existing edition (catalog_mycomicshop_link).
+    "Choose the edition to link.": "Elige la edición que quieres vincular.",
+    "The MyComicShop cover is missing.": "Falta la portada de MyComicShop.",
+    "The edition does not exist: it may have been deleted.": "La edición no existe: puede que la hayan eliminado.",
+    "%(edition)s is already linked to another MyComicShop cover (%(id)s).": "%(edition)s ya está vinculada a otra portada de MyComicShop (%(id)s).",
+    "%(edition)s already has this MyComicShop ID.": "%(edition)s ya tiene este ID de MyComicShop.",
+    "Linked to the MyComicShop cover %(id)s.": "Vinculada a la portada %(id)s de MyComicShop.",
 }
 
 
@@ -525,6 +532,16 @@ NEW_JS_TRANSLATIONS = {
     "The purchases could not be loaded": "No se pudieron cargar las compras",
     # Gestión article form (article_form.js).
     "New image: %(name)s (applied on save)": "Nueva imagen: %(name)s (se aplica al guardar)",
+    # Probable matches of the MyComicShop series dialog and their "Link" (catalog_import.js).
+    "Link": "Vincular",
+    "Possibly in Comi: %(cover)s": "Posiblemente en Comi: %(cover)s",
+    "Mark this MyComicShop cover as %(edition)s": "Marcar esta portada de MyComicShop como %(edition)s",
+    "Mark the MyComicShop cover #%(label)s as %(edition)s? Its MyComicShop ID is saved on that edition.": "¿Marcar la portada #%(label)s de MyComicShop como %(edition)s? Su ID de MyComicShop se guarda en esa edición.",
+    "The cover could not be linked. Try again.": "No se pudo vincular la portada. Inténtalo de nuevo.",
+    "Linked: %(edition)s is this cover now.": "Vinculada: %(edition)s es ahora esta portada.",
+    "The cover could not be linked. Check your connection and try again.": "No se pudo vincular la portada. Revisa tu conexión e inténtalo de nuevo.",
+    "Publishing in Comi: %(name)s": "Publishing en Comi: %(name)s",
+    "No publishing in Comi matches this series, so the covers it already has without a MyComicShop ID are not detected.": "Ningún publishing de Comi coincide con esta serie, así que no se detectan las portadas que ya tiene sin ID de MyComicShop.",
 }
 
 
