@@ -467,6 +467,8 @@ NEW_TRANSLATIONS = {
     "%(edition)s is already linked to another MyComicShop cover (%(id)s).": "%(edition)s ya está vinculada a otra portada de MyComicShop (%(id)s).",
     "%(edition)s already has this MyComicShop ID.": "%(edition)s ya tiene este ID de MyComicShop.",
     "Linked to the MyComicShop cover %(id)s.": "Vinculada a la portada %(id)s de MyComicShop.",
+    "Link this cover?": "¿Vincular esta portada?",
+    "Link": "Vincular",
 }
 
 

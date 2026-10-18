@@ -34,3 +34,35 @@
     </div>
   </div>
 </div>
+
+{# Confirms a "Link" of the series dialog, opened on top of it: both covers side by side, so the user can check they are the same before the MyComicShop ID is saved on the edition. #}
+<div class="modal fade md-dialog" id="catalog-link-dialog" tabindex="-1" aria-labelledby="catalog-link-title" aria-describedby="catalog-link-text" aria-hidden="true" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title md-headline-small" id="catalog-link-title">{% translate "Link this cover?" %}</h2>
+      </div>
+      <div class="modal-body">
+        <div class="catalog-link__covers mb-3">
+          <figure class="catalog-link__cover">
+            <div class="catalog-series__thumb"><img id="catalog-link-source-image" alt="" hidden></div>
+            <figcaption><strong>MyComicShop</strong><br><span id="catalog-link-source"></span></figcaption>
+          </figure>
+          <span class="material-symbols-outlined catalog-link__arrow" aria-hidden="true">arrow_forward</span>
+          <figure class="catalog-link__cover">
+            <div class="catalog-series__thumb"><img id="catalog-link-target-image" alt="" hidden></div>
+            <figcaption><strong>Comi</strong><br><span id="catalog-link-target"></span></figcaption>
+          </figure>
+        </div>
+        <p class="md-body-medium mb-0" id="catalog-link-text"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="md-btn md-btn--text" data-bs-dismiss="modal">{% translate "Cancel" %}</button>
+        <button type="button" class="md-btn md-btn--filled" id="catalog-link-confirm">
+          <span class="material-symbols-outlined" aria-hidden="true">link</span>
+          {% translate "Link" %}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

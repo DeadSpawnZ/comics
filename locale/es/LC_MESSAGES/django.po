@@ -3752,3 +3752,11 @@ msgstr "%(edition)s ya tiene este ID de MyComicShop."
 #, python-format
 msgid "Linked to the MyComicShop cover %(id)s."
 msgstr "Vinculada a la portada %(id)s de MyComicShop."
+
+#: comics/templates/manage/includes/catalog_series_dialog.html
+msgid "Link this cover?"
+msgstr "¿Vincular esta portada?"
+
+#: comics/templates/manage/includes/catalog_series_dialog.html
+msgid "Link"
+msgstr "Vincular"

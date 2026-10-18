@@ -42,6 +42,8 @@
   const seriesIssues = document.getElementById("catalog-series-issues");
   const seriesImport = document.getElementById("catalog-series-import");
   const seriesDefaultTitle = seriesTitle.textContent;
+  const linkDialog = document.getElementById("catalog-link-dialog");
+  const linkConfirm = document.getElementById("catalog-link-confirm");
 
   const coverUrlInput = document.getElementById("id_catalog_cover_url");
   const coverPreview = document.getElementById("cover-preview");
@@ -588,15 +590,81 @@
     return block;
   }
 
-  // Store the variant's IVID on the probable edition (after the user confirms) and show the card as
-  // already in Comi. Errors go to the dialog's status line.
-  async function linkVariant(variant, edition, button) {
-    const question = interpolate(
+  // ---------- Link confirmation (a dialog on top of the series dialog) ----------
+
+  // Bootstrap gives every modal the same z-index (dialog 1055, backdrop 1050): the confirmation goes
+  // one level higher, with its backdrop just below it (as publishing_dialogs.js stacks its dialogs).
+  const MODAL_Z = 1055;
+  const LEVEL_STEP = 20;
+  let linkAnswer = null; // resolves the open confirmation once it is hidden
+  let linkConfirmed = false; // "Link" was pressed (Cancel, Escape: false)
+
+  function showLinkImage(id, url) {
+    const image = document.getElementById(id);
+    image.hidden = !url;
+    if (url) image.src = url;
+    else image.removeAttribute("src");
+  }
+
+  // Ask whether the variant is the edition, showing both covers. Resolves to true or false.
+  function confirmLink(variant, edition) {
+    if (!linkDialog) return Promise.resolve(false);
+    showLinkImage("catalog-link-source-image", variant.thumb_url);
+    showLinkImage("catalog-link-target-image", edition.thumb_url);
+    document.getElementById("catalog-link-source").textContent = `#${variant.label}`;
+    document.getElementById("catalog-link-target").textContent = edition.label;
+    document.getElementById("catalog-link-text").textContent = interpolate(
       gettext("Mark the MyComicShop cover #%(label)s as %(edition)s? Its MyComicShop ID is saved on that edition."),
       { label: variant.label, edition: edition.label },
       true
     );
-    if (button.disabled || !window.confirm(question)) return;
+    return new Promise((resolve) => {
+      linkAnswer = resolve;
+      linkConfirmed = false;
+      linkDialog.style.zIndex = String(MODAL_Z + LEVEL_STEP);
+      bootstrap.Modal.getOrCreateInstance(linkDialog).show();
+      // Bootstrap appends the new backdrop synchronously in show().
+      const backdrops = document.querySelectorAll(".modal-backdrop");
+      if (backdrops.length > 1) backdrops[backdrops.length - 1].style.zIndex = String(MODAL_Z - 5 + LEVEL_STEP);
+    });
+  }
+
+  if (linkDialog) {
+    linkConfirm.addEventListener("click", () => {
+      linkConfirmed = true;
+      bootstrap.Modal.getOrCreateInstance(linkDialog).hide();
+    });
+    linkDialog.addEventListener("shown.bs.modal", () => linkConfirm.focus());
+    // The answer is given once the dialog is gone and the series dialog has its focus trap back, so
+    // whatever the caller focuses next is not taken away by the trap.
+    linkDialog.addEventListener("hidden.bs.modal", () => {
+      linkDialog.style.zIndex = "";
+      if (seriesDialog.classList.contains("show")) {
+        // Closing a modal makes Bootstrap unlock the page and drop its focus trap, but the series
+        // dialog is still open: take both back (the trap is Bootstrap's own, re-armed).
+        document.body.classList.add("modal-open");
+        const instance = bootstrap.Modal.getInstance(seriesDialog);
+        const trap = instance && instance._focustrap;
+        if (trap && typeof trap.activate === "function") {
+          trap.deactivate();
+          trap.activate();
+        }
+      }
+      const resolve = linkAnswer;
+      linkAnswer = null;
+      if (resolve) resolve(linkConfirmed);
+    });
+  }
+
+  // Store the variant's IVID on the probable edition (after the user confirms) and show the card as
+  // already in Comi. Errors go to the dialog's status line.
+  async function linkVariant(variant, edition, button) {
+    if (button.disabled) return;
+    const confirmed = await confirmLink(variant, edition);
+    if (!confirmed || !document.contains(button)) {
+      if (document.contains(button)) button.focus();
+      return;
+    }
     const request = seriesRequest; // not bumped: an import or a reload in progress keeps going
     const body = new FormData();
     body.append("csrfmiddlewaretoken", csrfToken);
