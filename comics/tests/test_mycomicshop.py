@@ -522,6 +522,14 @@ class SeriesPageTests(ComiTestCase):
                 self.assertNotIn("Add to cart", variant.details.text)
                 self.assertNotIn("eBay", variant.details.text)
 
+    def test_title_with_only_the_year(self) -> None:
+        # Older series name no publisher in the title, e.g. "Shattered Image (1996)".
+        page = BATMAN_SPAWN.replace(b"Batman Spawn (2023 DC)", b"Batman Spawn (2023)")
+        series = parse_series(decode_html(page))
+        self.assertEqual(
+            (series.title, series.year, series.publisher_short, series.publisher), ("Batman Spawn", 2023, "", "DC")
+        )
+
     def test_stray_cp1252_byte_keeps_its_character(self) -> None:
         self.assertIn(b"crossing\x85but", BATMAN_SPAWN)
         synopsis = parse_series(decode_html(BATMAN_SPAWN)).variants[0].details.synopsis

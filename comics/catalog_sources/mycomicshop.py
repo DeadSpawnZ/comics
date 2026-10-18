@@ -53,7 +53,8 @@ CHALLENGE_MARKER = "_Incapsula_Resource"
 
 NUMBER_PATTERN = re.compile(r"\d+(?:\.\d+)?")
 LABEL_PATTERN = re.compile(r"(?P<number>\d+(?:\.\d+)?)(?P<suffix>.*)")
-TITLE_PATTERN = re.compile(r"(?P<title>.*?)\s*\((?P<year>\d{4})\s+(?P<publisher>[^()]+)\)")
+# "Batman Spawn (2023 DC)"; older series only give the year: "Shattered Image (1996)".
+TITLE_PATTERN = re.compile(r"(?P<title>.*?)\s*\((?P<year>\d{4})(?:\s+(?P<publisher>[^()]+))?\)")
 IMAGE_PATTERN = re.compile(r"https://media\.mycomicshop\.com/n_iv/\d+/(?P<file>[\w-]+\.(?:jpe?g|png|gif|webp))", re.I)
 IMAGE_URL = "https://media.mycomicshop.com/n_iv/{size}/{file}"
 COVER_SIZE = 600
@@ -376,7 +377,7 @@ def parse_series(page: str) -> McsSeries:
         tid=tid,
         title=title_match.group("title") if title_match else title_text,
         year=int(title_match.group("year")) if title_match else None,
-        publisher_short=title_match.group("publisher").strip() if title_match else "",
+        publisher_short=(title_match.group("publisher") or "").strip() if title_match else "",
         publisher=publisher,
         variants=variants,
     )
