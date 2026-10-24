@@ -222,13 +222,14 @@ class Publishing(Model):
         blank=True,
         null=True,
     )
-    # The series in external catalogues. Metron and Comic Vine have one record per series (volume),
-    # so their ids are unique when set; GCD's is only indexed, as on Issue.
+    # The series in external catalogues. Metron, Comic Vine and MyComicShop (its TID) have one record
+    # per series (volume), so their ids are unique when set; GCD's is only indexed, as on Issue.
     metron_series_id = PositiveIntegerField("Metron series ID", null=True, blank=True, unique=True)
     comicvine_volume_id = PositiveIntegerField("Comic Vine volume ID", null=True, blank=True, unique=True)
     gcd_series_id = PositiveIntegerField("GCD series ID", null=True, blank=True, db_index=True)
+    mycomicshop_series_id = PositiveIntegerField("MyComicShop series ID", null=True, blank=True, unique=True)
 
-    IDENTIFIER_FIELDS = ("metron_series_id", "comicvine_volume_id", "gcd_series_id")
+    IDENTIFIER_FIELDS = ("metron_series_id", "comicvine_volume_id", "gcd_series_id", "mycomicshop_series_id")
 
     class Meta:  # noqa: DJ012
         constraints = [
@@ -265,8 +266,8 @@ class Publishing(Model):
         return f"{label} · {editorials}" if editorials else label
 
     def identification_numbers(self) -> list[ExternalIdentifier]:
-        """The series ids that are set, in a fixed order (Metron, Comic Vine, GCD), with the series
-        pages built from the integers alone (see Issue.identification_numbers)."""
+        """The series ids that are set, in a fixed order (Metron, Comic Vine, GCD, MyComicShop), with
+        the series pages built from the integers alone (see Issue.identification_numbers)."""
         identifiers = []
         if self.metron_series_id:
             identifiers.append(ExternalIdentifier("Metron", self.metron_series_id, ""))
@@ -276,6 +277,11 @@ class Publishing(Model):
         if self.gcd_series_id:
             url = f"https://www.comics.org/series/{int(self.gcd_series_id)}/"
             identifiers.append(ExternalIdentifier("GCD", self.gcd_series_id, url))
+        if self.mycomicshop_series_id:
+            # As comics.catalog_sources.mycomicshop.series_url builds it (not imported: the models
+            # do not depend on the catalogue clients).
+            url = f"https://www.mycomicshop.com/search?TID={int(self.mycomicshop_series_id)}"
+            identifiers.append(ExternalIdentifier("MyComicShop", self.mycomicshop_series_id, url))
         return identifiers
 
     def save(self, *args: Any, **kwargs: Any) -> None:  # noqa: DJ012

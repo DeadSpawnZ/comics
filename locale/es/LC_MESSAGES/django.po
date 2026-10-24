@@ -3287,6 +3287,10 @@ msgstr "ID de volumen en Comic Vine"
 msgid "GCD series ID"
 msgstr "ID de serie en GCD"
 
+#: comics/forms/catalog.py
+msgid "MyComicShop series ID"
+msgstr "ID de serie en MyComicShop"
+
 #: comics/forms.py
 msgid "Another publishing already has this Metron series ID."
 msgstr "Otro publishing ya tiene este ID de serie de Metron."
@@ -3294,6 +3298,10 @@ msgstr "Otro publishing ya tiene este ID de serie de Metron."
 #: comics/forms.py
 msgid "Another publishing already has this Comic Vine volume ID."
 msgstr "Otro publishing ya tiene este ID de volumen de Comic Vine."
+
+#: comics/forms/catalog.py
+msgid "Another publishing already has this MyComicShop series ID."
+msgstr "Otro publishing ya tiene este ID de serie de MyComicShop."
 
 #: comics/forms.py
 #: comics/views/manage_publishings.py

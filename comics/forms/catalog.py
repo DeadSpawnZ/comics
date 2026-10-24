@@ -351,7 +351,8 @@ class CatalogSeriesForm(forms.Form):
 
 
 class MyComicShopLinkForm(forms.Form):
-    """The edition and the MyComicShop cover (IVID) the variants modal links it to."""
+    """The edition and the MyComicShop cover (IVID) the variants modal links it to, and the cover's
+    series (TID), stored on the edition's publishing when it has none yet (optional)."""
 
     edition = forms.IntegerField(min_value=1, error_messages={"required": _("Choose the edition to link.")})
     ivid = forms.IntegerField(
@@ -359,6 +360,7 @@ class MyComicShopLinkForm(forms.Form):
         max_value=MAX_CATALOG_ID,  # Edition.mycomicshop_id is a PositiveIntegerField
         error_messages={"required": _("The MyComicShop cover is missing.")},
     )
+    tid = forms.IntegerField(min_value=1, max_value=MAX_CATALOG_ID, required=False)
 
 
 class PublishingManageForm(forms.ModelForm):
@@ -384,6 +386,7 @@ class PublishingManageForm(forms.ModelForm):
             "metron_series_id",
             "comicvine_volume_id",
             "gcd_series_id",
+            "mycomicshop_series_id",
         ]
         labels = {
             "publishing_title": _("Publishing title"),
@@ -395,6 +398,7 @@ class PublishingManageForm(forms.ModelForm):
             "metron_series_id": _("Metron series ID"),
             "comicvine_volume_id": _("Comic Vine volume ID"),
             "gcd_series_id": _("GCD series ID"),
+            "mycomicshop_series_id": _("MyComicShop series ID"),
         }
         help_texts = {"year": _("Empty: taken from the start date.")}
         widgets = {
@@ -407,6 +411,7 @@ class PublishingManageForm(forms.ModelForm):
             },
             "metron_series_id": {"unique": _("Another publishing already has this Metron series ID.")},
             "comicvine_volume_id": {"unique": _("Another publishing already has this Comic Vine volume ID.")},
+            "mycomicshop_series_id": {"unique": _("Another publishing already has this MyComicShop series ID.")},
         }
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:

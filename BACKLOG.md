@@ -112,9 +112,22 @@ Implementado (ver README) y en `develop` con el PR #5. Falta:
   exclusivas casi nunca tendrán candidata, porque el sufijo de MyComicShop ("B&N", "CUSTOM.B") rara
   vez coincide con la letra de Comi (solo se pierden coincidencias, nunca se inventan).
   `catalog_import.js` pasa de 850 líneas: separar el diálogo de series en su propio módulo.
-- **Para más adelante:** guardar el `TID` en `Publishing` para emparejar la serie sin depender del
-  nombre, búsqueda por nombre (`search?q=` por POST, sin probar), importar varias variantes de golpe o
-  como solicitudes de cambio (enlaza con la "Importación masiva" de arriba).
+- **TID en `Publishing`** (rama `chore/adjustments`, migración `0120` sin aplicar):
+  `Publishing.mycomicshop_series_id` empareja la serie antes que el título (importación y modal), la
+  propuesta de publishing nuevo lo lleva y "Vincular" lo rellena en el publishing de la edición si
+  está vacío (sin sobrescribir otro TID; si otro publishing ya lo tiene, no se toca). Falta: guardar
+  la edición importada desde MyComicShop en un publishing ya existente (envío del formulario) no
+  rellena el TID; habría que llevarlo en un campo oculto del formulario de ediciones. El enlace del
+  panel de identificadores abre `search?TID=` por GET (sin probar si el reto de Imperva lo deja
+  pasar en un navegador real).
+  Menores de revisión: un publishing emparejado por título que ya tiene **otro** TID (otra serie de
+  MyComicShop) se acepta igual y el modal ofrece sus ediciones como probables (descartarlo o avisar;
+  Metron/Comic Vine se comportan igual); `link_mycomicshop_edition` devuelve `(Edition, bool, bool)`
+  (pasar a un `NamedTuple`); la URL de la serie está duplicada en `Publishing` y
+  `mycomicshop.series_url` (un test la vigila); en `test_publishing_mycomicshop_tid.py`, helpers
+  con `Any` y un parche global de `QuerySet.exists`.
+- **Para más adelante:** búsqueda por nombre (`search?q=` por POST, sin probar), importar varias
+  variantes de golpe o como solicitudes de cambio (enlaza con la "Importación masiva" de arriba).
 
 ### Logros que esperan otra feature
 - **Popular / Super Popular** (20 / 100 seguidores): necesitan un sistema de seguidores.

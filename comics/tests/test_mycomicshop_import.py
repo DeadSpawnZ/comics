@@ -387,8 +387,9 @@ class SeriesEndpointTests(CatalogTestCase):
         with mock.patch(OPEN_URL, side_effect=page_answer):
             mycomicshop.fetch_series(TMNT_TID)  # cached: only Comi is queried below
         # The editions holding the IVIDs, then the publishing match finding none (editorials, their
-        # aliases, publishings by title, titles by key): no candidate editions to look for.
-        with self.assertNumQueries(5):
+        # aliases, the publishing holding the TID, publishings by title, titles by key): no
+        # candidate editions to look for.
+        with self.assertNumQueries(6):
             data = mycomicshop_series(TMNT_TID)
         existing = [v["ivid"] for issue in data["issues"] for v in issue["variants"] if v["existing"]]
         self.assertEqual(existing, [58639767, 59040682])

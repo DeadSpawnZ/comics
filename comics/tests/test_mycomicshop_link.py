@@ -129,14 +129,15 @@ class ProbableMatchTests(CatalogTestCase):
         with mock.patch(OPEN_URL, side_effect=page_answer):
             mycomicshop.fetch_series(BATMAN_TID)  # cached: only Comi is queried below
         make_edition(publishing=self.publishing, number="1", variant="A")
-        # IVIDs, editorials, publishings by title (+ their editorials), candidate editions.
-        with self.assertNumQueries(5):
+        # IVIDs, editorials, the publishing holding the TID (none), publishings by title (+ their
+        # editorials), candidate editions.
+        with self.assertNumQueries(6):
             mycomicshop_series(BATMAN_TID)
         for letter in ("L", "P"):
             make_edition(publishing=self.publishing, number="1", variant=letter)
         make_edition(publishing=self.publishing, number="1", variant="U", printing="2nd")
         make_edition(publishing=self.publishing, number="1", variant="B&N", mycomicshop_id=58320841)
-        with self.assertNumQueries(5):
+        with self.assertNumQueries(6):
             data = mycomicshop_series(BATMAN_TID)
         variants = variants_by_label(data)
         self.assertEqual(

@@ -72,9 +72,10 @@
         {% for error in form.editorials.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
       </div>
       <div class="col-12 md-section-label">{% translate "Series in external catalogues" %}</div>
-      <div class="col-12 col-md-4">{% include 'manage/includes/field.html' with field=form.metron_series_id %}</div>
-      <div class="col-12 col-md-4">{% include 'manage/includes/field.html' with field=form.comicvine_volume_id %}</div>
-      <div class="col-12 col-md-4">{% include 'manage/includes/field.html' with field=form.gcd_series_id %}</div>
+      <div class="col-12 col-md-6 col-xl-3">{% include 'manage/includes/field.html' with field=form.metron_series_id %}</div>
+      <div class="col-12 col-md-6 col-xl-3">{% include 'manage/includes/field.html' with field=form.comicvine_volume_id %}</div>
+      <div class="col-12 col-md-6 col-xl-3">{% include 'manage/includes/field.html' with field=form.gcd_series_id %}</div>
+      <div class="col-12 col-md-6 col-xl-3">{% include 'manage/includes/field.html' with field=form.mycomicshop_series_id %}</div>
     </div>
   </div>
 

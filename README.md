@@ -25,6 +25,8 @@ en español e inglés.
   (respaldo) o [MyComicShop](https://www.mycomicshop.com), para las variantes que no están en los otros
   dos (incentivos, exclusivas de tienda o convención…): con el `TID` de la serie se abre un modal con
   todas sus portadas, se elige una y se rellenan variante, ratio, impresión, tirada y exclusivas.
+  El `TID` queda guardado en el publishing (al crearlo desde la importación o al vincular una
+  portada a una edición) y empareja la serie antes que el título.
   Desde los mismos diálogos se crean el publishing, el título, la editorial y los
   artistas que falten. Las editoriales tienen alias para emparejar los nombres de cada fuente.
 - **Colección personal** ("Mis comics"): compras y ventas de cada edición (con vendedor, precio y
@@ -243,6 +245,7 @@ erDiagram
         PositiveIntegerField metron_series_id UK "null"
         PositiveIntegerField comicvine_volume_id UK "null"
         PositiveIntegerField gcd_series_id "null"
+        PositiveIntegerField mycomicshop_series_id UK "null"
     }
     Artist {
         BigAutoField id PK

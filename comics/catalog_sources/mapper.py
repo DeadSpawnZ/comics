@@ -106,6 +106,7 @@ class ProposedPublishing:
     metron_series_id: int | None
     comicvine_volume_id: int | None
     gcd_series_id: int | None
+    mycomicshop_series_id: int | None  # the TID, when the issue comes from MyComicShop
     editorial: dict[str, Any] | None  # {"id", "name"} of the matched editorial
     new_editorial: dict[str, str] | None  # {"name", "country"} to create it with, when it did not match
     warnings: list[str] = field(default_factory=list)
@@ -259,6 +260,7 @@ def propose_publishing(
         metron_series_id=source_issue.metron_series_id,
         comicvine_volume_id=series.comicvine_volume_id or source_issue.comicvine_volume_id,
         gcd_series_id=series.gcd_series_id,
+        mycomicshop_series_id=source_issue.mycomicshop_series_id,
         editorial={"id": editorial.pk, "name": editorial.name} if editorial else None,
         new_editorial=_new_editorial(source_issue, series, editorial, warnings),
         warnings=warnings,
@@ -422,11 +424,15 @@ def match_publishing(
     warnings: list[str] | None = None,
 ) -> tuple[Publishing | None, list[Publishing]]:
     """(the publishing, when exactly one fits; else None, and the title matches as candidates).
-    `comicvine_volume_id`: the series' Comic Vine id, when known (the source's own or the one its
-    series names); `warnings` gets the conflicts between the series ids and a publishing matched by
-    a title written otherwise."""
+    A publishing holding one of the series' ids (Metron, Comic Vine or MyComicShop's TID) wins over
+    the title. `comicvine_volume_id`: the series' Comic Vine id, when known (the source's own or the
+    one its series names); `warnings` gets the conflicts between the series ids and a publishing
+    matched by a title written otherwise."""
     by_id = _publishing_by_series_id(
-        source_issue.metron_series_id, comicvine_volume_id or source_issue.comicvine_volume_id, warnings
+        source_issue.metron_series_id,
+        comicvine_volume_id or source_issue.comicvine_volume_id,
+        source_issue.mycomicshop_series_id,
+        warnings,
     )
     if by_id is not None:
         return by_id, []
@@ -482,21 +488,32 @@ def _publishings_by_title(source_issue: SourceIssue) -> list[Publishing]:
 
 
 def _publishing_by_series_id(
-    metron_series_id: int | None, comicvine_volume_id: int | None, warnings: list[str] | None
+    metron_series_id: int | None,
+    comicvine_volume_id: int | None,
+    mycomicshop_series_id: int | None,
+    warnings: list[str] | None,
 ) -> Publishing | None:
-    """The publishing that already holds the series' Metron id, else its Comic Vine id. When they are
-    held by two different publishings, Metron's is kept and `warnings` says so (likely a duplicate)."""
+    """The publishing that already holds the series' Metron id, else its Comic Vine id, else its
+    MyComicShop TID (no catalogue says both a TID and the others, so only the first two can
+    disagree). When Metron's and Comic Vine's are held by two different publishings, Metron's is
+    kept and `warnings` says so (likely a duplicate)."""
     lookups = Q()
     if metron_series_id:
         lookups |= Q(metron_series_id=metron_series_id)
     if comicvine_volume_id:
         lookups |= Q(comicvine_volume_id=comicvine_volume_id)
+    if mycomicshop_series_id:
+        lookups |= Q(mycomicshop_series_id=mycomicshop_series_id)
     if not lookups:
         return None
     found = list(Publishing.objects.filter(lookups).prefetch_related("editorials"))
     by_metron = next((item for item in found if metron_series_id and item.metron_series_id == metron_series_id), None)
     by_comicvine = next(
         (item for item in found if comicvine_volume_id and item.comicvine_volume_id == comicvine_volume_id), None
+    )
+    by_mycomicshop = next(
+        (item for item in found if mycomicshop_series_id and item.mycomicshop_series_id == mycomicshop_series_id),
+        None,
     )
     if by_metron and by_comicvine and by_metron.pk != by_comicvine.pk and warnings is not None:
         warnings.append(
@@ -506,7 +523,7 @@ def _publishing_by_series_id(
             )
             % {"metron": by_metron.select_label, "comicvine": by_comicvine.select_label}
         )
-    return by_metron or by_comicvine
+    return by_metron or by_comicvine or by_mycomicshop
 
 
 def match_issue(source_issue: SourceIssue, publishing: Publishing | None) -> tuple[Issue | None, list[Issue]]:

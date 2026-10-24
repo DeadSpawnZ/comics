@@ -379,6 +379,8 @@ NEW_TRANSLATIONS = {
     "GCD series ID": "ID de serie en GCD",
     "Another publishing already has this Metron series ID.": "Otro publishing ya tiene este ID de serie de Metron.",
     "Another publishing already has this Comic Vine volume ID.": "Otro publishing ya tiene este ID de volumen de Comic Vine.",
+    "MyComicShop series ID": "ID de serie en MyComicShop",
+    "Another publishing already has this MyComicShop series ID.": "Otro publishing ya tiene este ID de serie de MyComicShop.",
     "A title with that name already exists.": "Ya existe un título con ese nombre.",
     "An editorial with that name already exists.": "Ya existe una editorial con ese nombre.",
     "Country": "País",

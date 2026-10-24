@@ -448,14 +448,24 @@ def catalog_mycomicshop_series(request: HttpRequest) -> JsonResponse:
 def catalog_mycomicshop_link(request: HttpRequest) -> JsonResponse:
     """Link a MyComicShop cover (`ivid`) to an existing `edition` from the variants modal: its IVID
     is stored on the edition (comics.catalog_sources.service.link_mycomicshop_edition), so the
-    cover becomes a firm match. Answers {"existing": the edition as the modal shows it}."""
+    cover becomes a firm match, and the series' `tid` on its publishing when it has none yet.
+    Answers {"existing": the edition as the modal shows it}."""
 
     def link(data: dict[str, Any]) -> dict[str, Any]:
         with transaction.atomic():
             user = cast(User, request.user)  # management_required: signed in
-            edition, changed = catalog.link_mycomicshop_edition(data["edition"], data["ivid"], user)
+            edition, changed, filled = catalog.link_mycomicshop_edition(
+                data["edition"], data["ivid"], user, data["tid"]
+            )
             if changed:
                 log_action(request, edition, CHANGE, f"Vinculada a MyComicShop (IVID {data['ivid']}) desde Gestión.")
+            if filled:
+                log_action(
+                    request,
+                    edition.publishing,
+                    CHANGE,
+                    f"Serie de MyComicShop (TID {data['tid']}) guardada al vincular {edition.short_name} desde Gestión.",
+                )
         return {"existing": catalog.existing_edition(edition)}
 
     return _catalog_answer(MyComicShopLinkForm(request.POST), link)

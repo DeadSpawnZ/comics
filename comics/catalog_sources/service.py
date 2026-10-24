@@ -148,8 +148,8 @@ def mycomicshop_series(tid: int) -> dict[str, Any]:
 
 
 def _mycomicshop_publishing(series: mycomicshop.McsSeries) -> Publishing | None:
-    """The Comi publishing of the series, matched as the importer does (title, year, language "en"
-    and the editorial of its publisher); None when none or several fit."""
+    """The Comi publishing of the series, matched as the importer does: the one holding its TID, else
+    by title, year, language "en" and the editorial of its publisher; None when none or several fit."""
     if not series.variants:
         return None
     # The series-level values (title, year, publisher, language) are the same for every variant.
@@ -237,11 +237,16 @@ def _mycomicshop_variant(
     }
 
 
-def link_mycomicshop_edition(edition_id: int, ivid: int, user: User) -> tuple[Edition, bool]:
+def link_mycomicshop_edition(
+    edition_id: int, ivid: int, user: User, tid: int | None = None
+) -> tuple[Edition, bool, bool]:
     """Store MyComicShop's cover `ivid` on the edition `edition_id` (the user confirmed a probable
-    match of the variants modal), so it becomes a firm match. Returns (the edition, whether it
-    changed): linking the IVID it already has changes nothing. The change is saved through
-    comics.versions.apply_changes, so its version records `user` and when.
+    match of the variants modal), so it becomes a firm match, and the cover's series `tid` on the
+    edition's publishing when it has no TID yet (see _fill_publishing_series_id). Returns (the
+    edition, whether it changed, whether its publishing got the TID): linking the IVID it already
+    has changes nothing on the edition. The edition's change is saved through
+    comics.versions.apply_changes, so its version records `user` and when; Publishing has no
+    history, so the view records the TID in its LogEntry.
 
     Raises NotFound when the edition does not exist, and Conflict when it already has another IVID
     or another edition has this one."""
@@ -251,7 +256,7 @@ def link_mycomicshop_edition(edition_id: int, ivid: int, user: User) -> tuple[Ed
         if edition is None:
             raise NotFound(_("The edition does not exist: it may have been deleted."))
         if edition.mycomicshop_id == ivid:
-            return edition, False
+            return edition, False, _fill_publishing_series_id(edition.publishing_id, tid)
         if edition.mycomicshop_id is not None:
             raise Conflict(
                 _("%(edition)s is already linked to another MyComicShop cover (%(id)s).")
@@ -267,4 +272,23 @@ def link_mycomicshop_edition(edition_id: int, ivid: int, user: User) -> tuple[Ed
             raise Conflict(" ".join(exc.messages)) from None
         except IntegrityError:  # another edition took the IVID after the check above
             raise Conflict(_("Another edition already has this MyComicShop ID.")) from None
-    return edition, True
+        filled = _fill_publishing_series_id(edition.publishing_id, tid)
+    return edition, True, filled
+
+
+def _fill_publishing_series_id(publishing_id: int, tid: int | None) -> bool:
+    """Store MyComicShop's series `tid` on the publishing `publishing_id` when it has none; whether it
+    did. A TID it already has (this one or another) is never overwritten, and a TID another
+    publishing holds is left there: nothing changes and the link it comes with still succeeds. Only
+    that column is written (QuerySet.update), so the publishing's other values are not revalidated."""
+    if not tid or Publishing.objects.filter(mycomicshop_series_id=tid).exists():
+        return False
+    try:
+        # A savepoint: if another publishing took the TID after the check, only this write is undone.
+        with transaction.atomic():
+            updated = Publishing.objects.filter(pk=publishing_id, mycomicshop_series_id__isnull=True).update(
+                mycomicshop_series_id=tid
+            )
+    except IntegrityError:
+        return False
+    return updated > 0

@@ -106,6 +106,7 @@ class SeriesProposalTests(CatalogTestCase):
                 "metron_series_id": 1440,
                 "comicvine_volume_id": 2865,
                 "gcd_series_id": 4321,
+                "mycomicshop_series_id": None,
                 "editorial": None,
                 "new_editorial": {"name": "Marvel", "country": "US"},
                 "warnings": [],

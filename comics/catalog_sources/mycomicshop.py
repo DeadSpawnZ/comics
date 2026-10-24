@@ -305,6 +305,7 @@ def to_source_issue(series: McsSeries, variant: McsVariant) -> SourceIssue:
         metron_id=None,
         comicvine_id=None,
         gcd_id=None,
+        mycomicshop_series_id=series.tid,
         source_series_id=series.tid,
         variant=variant.suffix,
         printing=details.printing,

@@ -670,6 +670,8 @@
     body.append("csrfmiddlewaretoken", csrfToken);
     body.append("edition", String(edition.id));
     body.append("ivid", String(variant.ivid));
+    // The series' TID: stored on the edition's publishing when it has none yet.
+    if (series && series.tid) body.append("tid", String(series.tid));
     button.disabled = true;
     try {
       const response = await fetch(data.catalogLinkUrl, {
