@@ -52,7 +52,8 @@
           {% if entry.can_revert %}
             <button type="button" class="md-btn md-btn--text" data-bs-toggle="modal" data-bs-target="#revertDialog"
                     data-revert-url="{% url revert_url_name object_pk entry.version.history_id %}"
-                    data-revert-date="{{ entry.version.history_date|date:'DATETIME_FORMAT' }}">
+                    data-revert-date="{{ entry.version.history_date|date:'DATETIME_FORMAT' }}"{% if entry.revert_blocked %}
+                    data-revert-blocked="{{ entry.revert_blocked }}"{% endif %}>
               <span class="material-symbols-outlined" aria-hidden="true">history</span>
               {% translate "Revert to this version" %}
             </button>

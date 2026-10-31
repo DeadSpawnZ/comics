@@ -629,6 +629,18 @@ NEW_PLURALS = {
         "“%(name)s” no se puede eliminar: tiene %(count)d pieza registrada.",
         "“%(name)s” no se puede eliminar: tiene %(count)d piezas registradas.",
     ),
+    # Reverting an issue's series or number while editions follow it.
+    (
+        "it changes the series or number, and %(count)d edition that shares them would no longer match "
+        "its issue. Correct them from the edition.",
+        "it changes the series or number, and %(count)d editions that share them would no longer match "
+        "their issue. Correct them from the editions.",
+    ): (
+        "cambia la serie o el número, y %(count)d edición que los comparte dejaría de coincidir con su issue. "
+        "Corrígelos desde la edición.",
+        "cambia la serie o el número, y %(count)d ediciones que los comparten dejarían de coincidir con su "
+        "issue. Corrígelos desde las ediciones.",
+    ),
 }
 
 

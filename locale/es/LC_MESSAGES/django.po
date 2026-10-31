@@ -2660,6 +2660,21 @@ msgid "its %(field)s (#%(id)s) no longer exists."
 msgstr "su %(field)s (#%(id)s) ya no existe."
 
 #: comics/versions.py
+#, python-format
+msgid ""
+"it changes the series or number, and %(count)d edition that shares them "
+"would no longer match its issue. Correct them from the edition."
+msgid_plural ""
+"it changes the series or number, and %(count)d editions that share them "
+"would no longer match their issue. Correct them from the editions."
+msgstr[0] ""
+"cambia la serie o el número, y %(count)d edición que los comparte dejaría "
+"de coincidir con su issue. Corrígelos desde la edición."
+msgstr[1] ""
+"cambia la serie o el número, y %(count)d ediciones que los comparten "
+"dejarían de coincidir con su issue. Corrígelos desde las ediciones."
+
+#: comics/versions.py
 msgid "A deleted state cannot be restored: choose an earlier version."
 msgstr "No se puede restaurar un estado eliminado: elige una versión anterior."
 

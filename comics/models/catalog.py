@@ -415,6 +415,15 @@ class Issue(Model):
             identifiers.append(ExternalIdentifier("GCD", self.gcd_id, url))
         return identifiers
 
+    def following_editions_count(self) -> int:
+        """How many editions follow this issue: they point to it and have its publishing and number
+        (see Edition.assign_default_issue). Changing the issue's publishing or number would leave them
+        out of sync; foreign or anniversary editions linked to it never matched, so they do not count.
+        Compared in Python, as assign_default_issue does (exact, with the edition's number stripped)."""
+        rows = self.editions.values_list("publishing_id", "number")
+        own = (self.publishing_id, self.number)
+        return sum(1 for publishing_id, number in rows if (publishing_id, number.strip()) == own)
+
 
 class IssueCreator(Model):
     """An artist credited on an issue (the rows of Issue.creators). An artist cannot be deleted
