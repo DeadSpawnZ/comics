@@ -25,8 +25,11 @@ en español e inglés.
   (respaldo) o [MyComicShop](https://www.mycomicshop.com), para las variantes que no están en los otros
   dos (incentivos, exclusivas de tienda o convención…): con el `TID` de la serie se abre un modal con
   todas sus portadas, se elige una y se rellenan variante, ratio, impresión, tirada y exclusivas.
-  El `TID` queda guardado en el publishing (al crearlo desde la importación o al vincular una
-  portada a una edición) y empareja la serie antes que el título.
+  El modal marca como "Posiblemente en Comi" las ediciones ya catalogadas que parecen ser esa portada
+  (mismo publishing, número y letra, misma condición de exclusiva y la impresión si MyComicShop la
+  indica) y que aún no tienen ID de MyComicShop; "Vincular" guarda ese ID en la edición (como una
+  versión más del historial). El `TID` queda guardado en el publishing (al crearlo desde la
+  importación o al vincular una portada, si no tenía otro) y empareja la serie antes que el título.
   Desde los mismos diálogos se crean el publishing, el título, la editorial y los
   artistas que falten. Las editoriales tienen alias para emparejar los nombres de cada fuente.
 - **Colección personal** ("Mis comics"): compras y ventas de cada edición (con vendedor, precio y
@@ -55,6 +58,8 @@ en español e inglés.
 | **Edition** | La pieza física, lo que se suele llamar "un cómic": portada o variante, impresión, formato, precio de portada, fecha de salida e imagen. Apunta al issue que contiene; si es una compilación, a varios issues en orden. Puede pertenecer a un publishing distinto al del issue (reediciones, ediciones extranjeras). |
 | **Artist** | Creadores del interior (`IssueCreator`) y artistas de portada (`EditionCoverArtist`). No se puede borrar mientras tenga créditos. |
 | **Collection** | Una compra o una venta de una edición por un coleccionista. Una venta apunta a la compra que cierra (`previous_trade`). |
+| **Article** | Un artículo del catálogo de collectables (figura, print, pin…), compartido por todos. Se mantiene desde Gestión. |
+| **Collectable** | Una compra o una venta de un artículo por un coleccionista. Como en `Collection`, una venta apunta a la compra que cierra (`previous_trade`). |
 
 ## Roles y áreas
 
@@ -71,11 +76,11 @@ Los roles son grupos de Django; las vistas comprueban permisos, nunca nombres de
 | Ruta | Área |
 | --- | --- |
 | `/comics/` | Mis comics: colección, ediciones, arcos, connectings y solicitudes propias |
-| `/collectables/` | Collectables propios (las piezas que se conservan) |
+| `/collectables/` | Collectables propios (las piezas que se conservan) y catálogo de artículos |
 | `/perfil/`, `/u/<usuario>/` | Perfil propio y perfiles de otros usuarios |
 | `/notificaciones/` | Notificaciones |
 | `/revisiones/` | Cola de revisión de solicitudes (Reviewers y Administrators) |
-| `/gestion/` | Gestión: catálogo, colecciones, arcos, connectings, historial, logros y anuncios (Administrators) |
+| `/gestion/` | Gestión: catálogo, colecciones, artículos y collectables, arcos, connectings, historial, logros y anuncios (Administrators) |
 | `/admin/` | Admin de Django (superusuarios) |
 
 ## Arquitectura
@@ -687,17 +692,7 @@ docker compose exec web python manage.py award_achievements
 
 Es seguro correrlo varias veces: nunca quita logros ni baja niveles. Cada usuario ve un solo aviso con el total de logros desbloqueados. Opciones: `--user <usuario>` y `--code <código>` para limitarlo.
 
-Además, prográmalo para que corra solo una vez al día. Los logros por fecha (como «Veterano», por años de antigüedad) se revisan al iniciar sesión; con el comando programado también los reciben quienes no vuelven a iniciar sesión. Por ejemplo, con cron en Linux (todos los días a las 4:00):
-
-```cron
-0 4 * * * cd /ruta/al/proyecto && docker compose exec -T web python manage.py award_achievements
-```
-
-En Windows, con el Programador de tareas (desde PowerShell, en la raíz del repo):
-
-```powershell
-schtasks /Create /TN "Comi award_achievements" /SC DAILY /ST 04:00 /TR "cmd /c cd /d $PWD && docker compose exec -T web python manage.py award_achievements"
-```
+Los logros por fecha (como «Veterano», por años de antigüedad) solo se revisan al iniciar sesión o al correr este comando: quien no vuelve a iniciar sesión no los recibe hasta entonces. No se usan programadores del sistema (cron, Programador de tareas de Windows); las tareas periódicas tienen que vivir dentro de la app o del stack de Docker (pendiente en `BACKLOG.md`).
 
 ## Respaldo completo en SQL (`mysqldump`)
 

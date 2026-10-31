@@ -8,9 +8,25 @@ Cómo trabajar un punto: seguir `CLAUDE.md` (flujo backend con `backend-senior` 
 tests solo en MySQL, Ruff una vez por feature, migraciones ensayadas en `comic_refactor` antes de la
 base real). Quitar el punto de este archivo en el mismo commit que lo resuelve.
 
-Última actualización: 2026-10-17, en la rama `chore/adjustments`.
+Última actualización: 2026-10-31, en la rama `chore/adjustments`.
 
 ## Primera tarea de la próxima sesión
+
+### Terminar la tanda de integridad de datos (rama `chore/adjustments`)
+
+Commiteada (bloqueo del borrado de compras vendidas, reglas de compra previa compartidas, bloqueo de
+la reversión de serie/número de un issue con ediciones, versión del dueño al escribir filas de
+créditos). Falta, en orden: aplicar la migración `0121` a la base real (sin DDL, ensayada en
+`comic_refactor`; antes, copia con `mysqldump`), reconstruir la imagen y probar en el navegador los
+diálogos bloqueados de borrado y de reversión.
+
+Decisión pendiente del usuario: los receptores de filas de créditos también se aplican a
+`CollectedIssue`, lo que cambia dos casos de script fuera de un lote
+(`edition.collected_issues.remove(x)` escribe 1 versión en vez de 2;
+`edition.collected_entries.all().delete()` con N filas escribe 1 en vez de N). Las rutas de la app
+no cambian.
+
+### Probar la fecha de salida propuesta
 
 **Probar en el navegador la fecha de salida propuesta desde el publishing** (commit `7af8afd`).
 Antes hay que reconstruir la imagen, porque los estáticos van dentro de ella. El cambio no tiene
@@ -47,7 +63,9 @@ desplegado en local. Falta:
     borrador del formulario (`js/custom/form_draft.js`);
   - las ayudas del importador: campos obligatorios marcados, recordar alias de editoriales y crear
     los artistas que faltan.
-- **Publicar:** PR `develop` → `master`.
+- **Publicar:** PR `develop` → `master`. Antes, llevar a `develop` la rama `chore/adjustments`
+  (collectables con catálogo de artículos, coincidencias y "Vincular" de MyComicShop, TID en
+  `Publishing`; migraciones `0117`–`0120`, ya aplicadas en la base real).
 - **Confirmar con el usuario** tres decisiones que tomó el implementador: nadie revisa sus propias
   solicitudes; los revisores no pueden rechazar una solicitud ya validada; el autor no ve los nombres
   de quienes la revisaron.
@@ -103,23 +121,18 @@ Implementado (ver README) y en `develop` con el PR #5. Falta:
   ID (la consulta no sabe qué edición está abierta); el panel "Identification numbers" no muestra el
   IVID; la caché de la serie y el `throttle` usan la `LocMemCache` por proceso (sin `CACHES`
   configurado), así que con varios workers la búsqueda tras el modal puede volver a pedir la página.
-- **Coincidencia probable + "Vincular"** (rama `chore/adjustments`): el modal marca "Posiblemente en
-  Comi" las ediciones del publishing emparejado con mismo número y letra, exclusiva (tienda/evento)
-  solo si la variante lo es, y la impresión si MyComicShop la indica, sin IVID; "Vincular" guarda el
-  IVID en esa edición (versión + LogEntry). Falta probarlo en el navegador con el TID `19609941`
-  (Image United). Límites: no compara qué tienda o evento es (solo si es exclusiva o no) ni
-  normaliza números ("01" ≠ "1"); sin publishing emparejado (o con varios) no hay candidatas; las
-  exclusivas casi nunca tendrán candidata, porque el sufijo de MyComicShop ("B&N", "CUSTOM.B") rara
-  vez coincide con la letra de Comi (solo se pierden coincidencias, nunca se inventan).
-  `catalog_import.js` pasa de 850 líneas: separar el diálogo de series en su propio módulo.
-- **TID en `Publishing`** (rama `chore/adjustments`, migración `0120` sin aplicar):
-  `Publishing.mycomicshop_series_id` empareja la serie antes que el título (importación y modal), la
-  propuesta de publishing nuevo lo lleva y "Vincular" lo rellena en el publishing de la edición si
-  está vacío (sin sobrescribir otro TID; si otro publishing ya lo tiene, no se toca). Falta: guardar
-  la edición importada desde MyComicShop en un publishing ya existente (envío del formulario) no
-  rellena el TID; habría que llevarlo en un campo oculto del formulario de ediciones. El enlace del
-  panel de identificadores abre `search?TID=` por GET (sin probar si el reto de Imperva lo deja
-  pasar en un navegador real).
+- **Coincidencia probable + "Vincular"** (rama `chore/adjustments`, ver README): falta probarlo en el
+  navegador con el TID `19609941` (Image United). Límites: no compara qué tienda o evento es (solo
+  si es exclusiva o no) ni normaliza números ("01" ≠ "1"); sin publishing emparejado (o con varios)
+  no hay candidatas; las exclusivas casi nunca tendrán candidata, porque el sufijo de MyComicShop
+  ("B&N", "CUSTOM.B") rara vez coincide con la letra de Comi (solo se pierden coincidencias, nunca
+  se inventan). `catalog_import.js` pasa de 900 líneas: separar el diálogo de series en su propio
+  módulo.
+- **TID en `Publishing`** (rama `chore/adjustments`, migración `0120` ya aplicada en la base real,
+  ver README). Falta: guardar la edición importada desde MyComicShop en un publishing ya existente
+  (envío del formulario) no rellena el TID; habría que llevarlo en un campo oculto del formulario de
+  ediciones. El enlace del panel de identificadores abre `search?TID=` por GET (sin probar si el
+  reto de Imperva lo deja pasar en un navegador real).
   Menores de revisión: un publishing emparejado por título que ya tiene **otro** TID (otra serie de
   MyComicShop) se acepta igual y el modal ofrece sus ediciones como probables (descartarlo o avisar;
   Metron/Comic Vine se comportan igual); `link_mycomicshop_edition` devuelve `(Edition, bool, bool)`
@@ -139,29 +152,41 @@ Los logros por fecha (Veterano) solo se comprueban al iniciar sesión o con `awa
 usuario **no** quiere programadores del sistema (Programador de tareas de Windows / cron del host):
 cualquier tarea periódica debe vivir dentro de la app o del stack de Docker. Opciones comentadas:
 evaluar las reglas por fecha en la primera visita del día de cada usuario (recomendada) o un servicio
-`scheduler` en `docker-compose`. La sección "Logros" del README todavía muestra ejemplos de
-cron/`schtasks` y habrá que reescribirla cuando se haga.
+`scheduler` en `docker-compose`. Al hacerlo, actualizar la sección "Logros" del README.
 
 ## Deuda técnica
 
 ### Historial (de la revisión de la tarea 1)
 - Revertir una edición puede restaurar un issue borrado; si uno de los creadores de ese issue ya no
   existe, el mensaje de rechazo menciona "Creators", lo que confunde en la reversión de una edición.
-- Revertir la serie/número de un Issue mientras hay ediciones que apuntan a él puede dejarlas
-  desincronizadas; valorar impedirlo.
-- Crear o borrar directamente filas de `IssueCreator` / `EditionCoverArtist` (p. ej. en un script:
-  `IssueCreator.objects.filter(artist=a).delete()`, la forma natural de desvincular un artista ahora
-  que `PROTECT` lo exige) no escribe versión del issue/edición. Las rutas de la app sí lo hacen.
-  Añadir receptores `post_save`/`post_delete` como los de `CollectedIssue` (ojo: un `post_delete`
-  desactiva el borrado rápido y `.remove()` fuera de un lote escribiría dos versiones).
 - `IssueCreator.__str__` y `EditionCoverArtist.__str__` consultan la base (issue → publishing,
   `edition.short_name`); la página de "objetos protegidos" del admin hace ~2 consultas por crédito.
 - Faltan tests de `process_image` para reemplazar una portada existente y para filas antiguas con
   miniatura pero sin imagen.
 - No hay forma desde la interfaz de llegar al historial de una edición borrada (el servicio sí puede
   restaurarla).
+- Versión del dueño al escribir filas de créditos (menores de revisión):
+  - `VERSIONED_RELATION_ROWS` (`comics/signals.py`) copia a mano los `m2m_fields` de
+    `TrackedHistory`; derivarlo de `TrackedHistory.tracked` + `versioned_m2m_fields()`.
+  - Si un `remove()`/`clear()` falla fuera de un lote, su marcador queda vivo en el hilo y silencia
+    borrados directos posteriores de ese dueño; limpiarlo en el siguiente `pre_remove`/`pre_clear`
+    o documentar el límite en `note_manager_removal`.
+  - Tipos: `relation_owner_field -> ForeignKey`; `origin` como `Model | QuerySet[Model] | None`;
+    helpers del test sin `Any`.
+  - `relation_row_saving` hace un SELECT extra aunque `update_fields` no incluya el FK del dueño.
+  - El test de consultas (`assertLess(len(queries), 20)`) debería comparar 1 vs 5 créditos.
 - Los respaldos anteriores a la existencia del historial se restauran sin versión inicial; un comando
   `ensure_history` podría crearlas.
+- **Renombrar un issue desde el admin:** `IssueAdmin` deja cambiar `publishing`/`number` de un issue
+  al que siguen ediciones, lo que las desincroniza (Gestión, las solicitudes y las importaciones no
+  lo permiten). Además, tras un renombrado así, revertir una edición a una versión anterior restaura
+  el número viejo con el mismo `issue` (`restoring=True` no pasa por `assign_default_issue`) y la
+  desincroniza. Propuesta: campos de solo lectura en el admin si `following_editions_count() > 0`,
+  y en la reversión de ediciones rechazarla o volver a asignar el issue por defecto.
+- Bloqueo de reversiones de issues (menores de revisión): la regla está escrita dos veces en
+  `comics/versions.py` (`revert_to_version` y `version_entries`; sacar un helper); `version_entries`
+  pasa un `Issue | None` a `changes_issue_identity` y lee la fila del issue dos veces; falta un test
+  con una edición cuyo número tiene espacios ("5 ").
 
 ### Catálogos externos (menores de revisión)
 - Con Comic Vine (no da número de volumen) el diálogo de publishing conserva la serie por defecto
@@ -188,19 +213,31 @@ cron/`schtasks` y habrá que reescribirla cuando se haga.
   en `EditorialAliasForm`; `RepeatableTextInput.format_value` sin uso real.
 
 ### General
-- `Collection.validate_previous_trade` (piezas de cómics) solo impide que una venta apunte a sí misma;
-  `Collectable` ya exige que solo una venta tenga compra previa, que sea una compra del mismo
-  coleccionista y artículo y que no se haya vendido antes. Igualar las reglas de `Collection`.
-- Collectables: dos ventas guardadas a la vez podrían pasar las dos la comprobación de "ya vendida"
-  (sin bloqueo de fila); el autocompletado de "compra previa" del admin solo muestra el nombre del
-  artículo, así que varias piezas del mismo artículo se ven iguales.
+- Bloqueo del borrado de compras vendidas (menores de revisión): `collectable_delete` pasa a
+  `date_format` el resultado de `first_sale_date` sin comprobar `None` (hoy no ocurre, porque solo
+  una venta protege un collectable; devolver el mensaje genérico si pasa); el texto "no se puede
+  borrar… se vendió el …" se arma igual en `collection_delete` y `collectable_delete` (extraer un
+  helper en `views/utils.py`); `delete_dialog.html` lee `event.relatedTarget.dataset` sin
+  comprobar que exista (abrir el diálogo desde JS sin botón fallaría).
+- **Compra ya vendida editable:** las reglas de compra previa (`PreviousTradeRules`) solo se
+  comprueban desde la venta. Una compra ya vendida todavía puede cambiar de coleccionista, de
+  edición/artículo o pasar a venta, y su venta queda apuntando a una compra inválida (al volver a
+  guardarla falla o pierde el vínculo). Rechazar esos cambios si la pieza tiene `next_trades`.
+- Reglas de compra previa (menores de revisión): los `clean()` de `CollectionEntryForm` y
+  `CollectableEntryForm` son idénticos (sacar un mixin de formulario); en el admin,
+  `CollectionForm.filter_previous_trade` usa el coleccionista y la edición guardados, no los
+  enviados, así que cambiar ambos y elegir una compra del nuevo da "Select a valid choice";
+  `PreviousTradeRules` no declara los atributos que usa (como hace `CurrentValuesMixin`); el test de
+  bloqueo compara el SQL exacto; si la carrera se detecta en el `save()` del admin, sale un 500 en
+  vez de un error de formulario.
+- Collectables: el autocompletado de "compra previa" del admin solo muestra el nombre del artículo,
+  así que varias piezas del mismo artículo se ven iguales.
 - Collectables, pendientes de la feature:
   - Los coleccionistas solo pueden dar de alta sus piezas; editarlas o borrarlas solo se puede desde
     Gestión (igual que las piezas de cómics).
   - `Article` no tiene miniatura: las listas cargan la imagen completa (en diferido). Añadir una si
     el catálogo crece.
   - Gestión no puede quitar la imagen de un artículo, solo reemplazarla (`FileInput`).
-  - Borrar una compra ya vendida desvincula la venta sin avisar (también en cómics).
   - Código repetido: las pestañas por tipo de operación (`TYPE_TABS` y sus contadores) están copiadas
     entre `manage_collectables.collectable_list` y `collection_entries.collection_list`, y
     `manage_collectables` importa constantes de otros tres módulos de vistas; moverlas a
@@ -216,9 +253,9 @@ cron/`schtasks` y habrá que reescribirla cuando se haga.
   `MaterialFieldsMixin`.
 - Dos archivos JS tienen las URLs `/ajax/...` escritas a mano en lugar de usar `{% url %}`:
   `comics/static/js/custom/collection_form_events.js`, `fill_release_date.js`.
-- `edition_form` y `_clean_content` en `comics/views/manage_editions.py` y `evaluate` en
-  `comics/achievements/engine.py` son demasiado complejas (`# noqa: C901`); dividirlas ahora que hay
-  tests.
+- `edition_form` y `_clean_content` en `comics/views/manage_editions.py`, `evaluate` en
+  `comics/achievements/engine.py` y `_edition_values` en `comics/catalog_sources/mapper.py` son
+  demasiado complejas (`# noqa: C901`); dividirlas ahora que hay tests.
 - Las excepciones de `comics/catalog_sources/errors.py` y `InvalidTransition` no llevan el sufijo
   `Error` (`# noqa: N818`); renombrarlas si se toca esa zona.
 - La re-evaluación de logros tras cambiar el contenido de una edición está duplicada en
