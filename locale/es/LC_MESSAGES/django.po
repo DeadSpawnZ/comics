@@ -203,14 +203,6 @@ msgstr ""
 msgid "Choose a publishing first"
 msgstr "Elige primero un publishing"
 
-#: comics/forms.py:476
-msgid ""
-"Choose a purchase of this edition by the same collector, made on or before "
-"the sale date and not sold yet."
-msgstr ""
-"Elige una compra de esta edición del mismo coleccionista, hecha en o antes "
-"de la fecha de venta y que no se haya vendido."
-
 #: comics/forms.py:498 comics/views/manage_home.py:46
 msgid "Artist"
 msgstr "Artista"
@@ -3533,6 +3525,10 @@ msgstr "Una pieza no puede ser su propia operación anterior."
 #: comics/models/collections.py
 msgid "The previous trade must be a purchase of the same article by the same collector."
 msgstr "La operación anterior debe ser una compra del mismo artículo por el mismo coleccionista."
+
+#: comics/models/collections.py
+msgid "The previous trade must be a purchase of the same edition by the same collector."
+msgstr "La operación anterior debe ser una compra de la misma edición por el mismo coleccionista."
 
 #: comics/models/collections.py
 msgid "Print run, when the article is limited."

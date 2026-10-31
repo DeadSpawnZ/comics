@@ -83,9 +83,12 @@ class CollectionForm(forms.ModelForm):
                 used_previous_trades_ids = [
                     uid for uid in used_previous_trades_ids if uid != self.instance.previous_trade.id
                 ]
-            qs = Collection.objects.filter(edition_id=edition_id, trade_type=Collection.TradeChoices.BUYING).exclude(
-                id__in=used_previous_trades_ids
-            )
+            # Only purchases of the same collector can be sold (Collection.validate_previous_trade).
+            qs = Collection.objects.filter(
+                edition_id=edition_id,
+                collector_id=self.instance.collector_id,
+                trade_type=Collection.TradeChoices.BUYING,
+            ).exclude(id__in=used_previous_trades_ids)
 
             # A record cannot be its own previous_trade.
             if self.instance.pk:
@@ -191,7 +194,9 @@ class CurrentValuesMixin:
 
 class CollectionEntryForm(CurrentValuesMixin, forms.ModelForm):
     """A piece bought or sold by a collector. In Gestión the collector is chosen; in Mis comics
-    it is the signed-in user (pass `collector`). The publishing field only narrows the edition list."""
+    it is the signed-in user (pass `collector`). The publishing field only narrows the edition list.
+    The previous trade rules live in Collection.validate_previous_trade; this form adds the date rule
+    and only lists the purchases a sale can point to."""
 
     publishing = forms.ModelChoiceField(queryset=Publishing.objects.none(), required=False, label="Publishing")
 
@@ -299,21 +304,15 @@ class CollectionEntryForm(CurrentValuesMixin, forms.ModelForm):
         self.fields["notes"].widget.attrs["style"] = "height: 90px"
 
     def clean(self) -> dict[str, Any]:
+        # The other previous trade rules (a purchase of the same edition by the same collector, not sold
+        # yet) live in Collection.validate_previous_trade, which the model validation runs next.
         cleaned = super().clean()
-        collector = self.fixed_collector or cleaned.get("collector")
         previous = cleaned.get("previous_trade")
+        sale_date = cleaned.get("trade_date")
         if cleaned.get("trade_type") != Collection.TradeChoices.SELLING:
             cleaned["previous_trade"] = None
-        elif previous and collector and cleaned.get("edition"):
-            allowed = available_purchases(collector, cleaned["edition"].pk, cleaned.get("trade_date"), self.instance)
-            if not allowed.filter(pk=previous.pk).exists():
-                self.add_error(
-                    "previous_trade",
-                    _(
-                        "Choose a purchase of this edition by the same collector, "
-                        "made on or before the sale date and not sold yet."
-                    ),
-                )
+        elif previous and sale_date and previous.trade_date > sale_date:
+            self.add_error("previous_trade", _("Choose a purchase made on or before the sale date."))
         return cleaned
 
     def save(self, commit: bool = True) -> Collection:

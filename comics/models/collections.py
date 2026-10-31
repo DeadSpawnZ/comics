@@ -4,11 +4,12 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from datetime import date, datetime
-from typing import Any, Self
+from typing import Any, ClassVar, Self
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
+from django.db import transaction
 from django.db.models import (
     CASCADE,
     PROTECT,
@@ -27,11 +28,12 @@ from django.db.models import (
     PositiveSmallIntegerField,
     Q,
     QuerySet,
-    TextChoices,
     Subquery,
+    TextChoices,
     TextField,
     UniqueConstraint,
 )
+from django.utils.functional import Promise
 from django.utils.translation import gettext, ngettext, pgettext_lazy
 from django.utils.translation import gettext_lazy as _
 
@@ -88,18 +90,72 @@ class TradeQuerySet(QuerySet):
         )
         return self.annotate(is_sold=Exists(sales))
 
-
-class CollectionQuerySet(TradeQuerySet):
     def with_sale_date(self) -> Self:
         """Annotate `sold_on`: the date of the earliest trade that points to the piece as its previous
         trade (its sale), or None. Such a piece cannot be deleted (previous_trade is PROTECT)."""
         sales = self.model.objects.filter(previous_trade=OuterRef("pk")).order_by("trade_date", "pk")
         return self.annotate(sold_on=Subquery(sales.values("trade_date")[:1]))
 
+
+class CollectionQuerySet(TradeQuerySet):
     """Trades of editions (Collection)."""
 
 
-class Collection(Model):
+class PreviousTradeRules:
+    """Rules of `previous_trade`, shared by Collection (editions) and Collectable (articles): only a sale
+    has a previous trade, and it is another piece, a purchase of the same item (`item_field`) by the
+    same collector that no other sale has sold yet. MySQL cannot check this with a CHECK constraint
+    (see Collection.Meta). Checked in clean() (forms, admin) and again in save(), so code paths that
+    skip form validation cannot link a wrong previous trade."""
+
+    item_field: ClassVar[str]  # the traded item: "edition" or "article"
+    wrong_purchase_message: ClassVar[str | Promise]  # the previous trade is not a purchase of that item
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        # One transaction (a savepoint inside the caller's), so the purchase locked by
+        # validate_previous_trade stays locked until this sale is written.
+        with transaction.atomic():
+            self.validate_previous_trade(lock=True)
+            super().save(*args, **kwargs)
+
+    def clean(self) -> None:
+        super().clean()
+        self.validate_previous_trade()
+
+    def validate_previous_trade(self, *, lock: bool = False) -> None:
+        """Raise a ValidationError on `previous_trade` if it breaks the rules. With `lock` (on save,
+        inside a transaction) the purchase row is locked first (SELECT ... FOR UPDATE): two sales of the
+        same purchase saved at the same time are then checked one after the other, and the second one
+        sees the first (locking reads always read the latest committed rows)."""
+        if self.previous_trade_id is None:
+            return
+        if self.pk and self.previous_trade_id == self.pk:
+            raise ValidationError({"previous_trade": _("A piece can't be its own previous trade.")})
+        if self.trade_type != self.TradeChoices.SELLING:
+            raise ValidationError({"previous_trade": _("Only a sale can have a previous trade.")})
+        manager = type(self)._default_manager
+        purchases = manager.filter(pk=self.previous_trade_id)
+        if lock:
+            purchases = purchases.select_for_update()
+        previous = purchases.first()
+        item_id = f"{self.item_field}_id"
+        if (
+            previous is None
+            or previous.trade_type != self.TradeChoices.BUYING
+            or previous.collector_id != self.collector_id
+            or getattr(previous, item_id) != getattr(self, item_id)
+        ):
+            raise ValidationError({"previous_trade": self.wrong_purchase_message})
+        other_sales = manager.filter(previous_trade_id=self.previous_trade_id, trade_type=self.TradeChoices.SELLING)
+        if self.pk:
+            other_sales = other_sales.exclude(pk=self.pk)
+        if lock:
+            other_sales = other_sales.select_for_update()
+        if other_sales.exists():
+            raise ValidationError({"previous_trade": _("This purchase has already been sold.")})
+
+
+class Collection(PreviousTradeRules, Model):
     class TradeChoices(TextChoices):
         BUYING = "buying", _("Buying")
         SELLING = "selling", _("Selling")
@@ -130,18 +186,17 @@ class Collection(Model):
             # validate_previous_trade), not at the database level.
         ]
 
+    item_field = "edition"
+    wrong_purchase_message = _("The previous trade must be a purchase of the same edition by the same collector.")
+
     def __str__(self) -> str:
         return self.edition.__str__()
 
     def save(self, *args: Any, **kwargs: Any) -> None:
-        self.validate_previous_trade()
         self.validate_duplicate()
 
+        # PreviousTradeRules.save validates the previous trade too.
         super().save(*args, **kwargs)
-
-    def validate_previous_trade(self) -> None:
-        if self.pk and self.previous_trade_id == self.pk:
-            raise ValidationError("A collection can't be its own previous trade.")
 
     def validate_duplicate(self) -> None:
         coincidences = (
@@ -439,7 +494,7 @@ class CollectableQuerySet(TradeQuerySet):
         return {row["article_id"]: row["pieces"] for row in grouped}
 
 
-class Collectable(Model):
+class Collectable(PreviousTradeRules, Model):
     """A collector's purchase or sale of an Article, the way Collection is for editions. A sale points
     to the purchase it sells through previous_trade."""
 
@@ -467,42 +522,8 @@ class Collectable(Model):
             ),
         ]
 
+    item_field = "article"
+    wrong_purchase_message = _("The previous trade must be a purchase of the same article by the same collector.")
+
     def __str__(self) -> str:
         return str(self.article)
-
-    def save(self, *args: Any, **kwargs: Any) -> None:
-        # Also checked here (not only in clean) so code paths that skip form validation cannot
-        # link a wrong previous trade, as Collection.save does.
-        self.validate_previous_trade()
-
-        super().save(*args, **kwargs)
-
-    def clean(self) -> None:
-        super().clean()
-        self.validate_previous_trade()
-
-    def validate_previous_trade(self) -> None:
-        """Only a sale has a previous trade: another piece, a purchase of the same article by the same
-        collector that no other sale has sold yet. MySQL cannot check this with a CHECK constraint
-        (see Collection.Meta)."""
-        if self.previous_trade_id is None:
-            return
-        if self.pk and self.previous_trade_id == self.pk:
-            raise ValidationError({"previous_trade": _("A piece can't be its own previous trade.")})
-        if self.trade_type != self.TradeChoices.SELLING:
-            raise ValidationError({"previous_trade": _("Only a sale can have a previous trade.")})
-        previous = self.previous_trade
-        if (
-            previous.trade_type != self.TradeChoices.BUYING
-            or previous.collector_id != self.collector_id
-            or previous.article_id != self.article_id
-        ):
-            message = _("The previous trade must be a purchase of the same article by the same collector.")
-            raise ValidationError({"previous_trade": message})
-        other_sales = Collectable.objects.filter(
-            previous_trade_id=self.previous_trade_id, trade_type=self.TradeChoices.SELLING
-        )
-        if self.pk:
-            other_sales = other_sales.exclude(pk=self.pk)
-        if other_sales.exists():
-            raise ValidationError({"previous_trade": _("This purchase has already been sold.")})

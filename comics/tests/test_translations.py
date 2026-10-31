@@ -474,6 +474,10 @@ NEW_TRANSLATIONS = {
     # Deleting a purchase that has been sold.
     "It was sold on %(date)s: delete the sale first.": "Se vendió el %(date)s: elimina primero la venta.",
     "It was sold on %(date)s and it has signatures registered.": "Se vendió el %(date)s y tiene firmas registradas.",
+    # Rules of the previous trade of a comic piece (Collection).
+    "The previous trade must be a purchase of the same edition by the same collector.": (
+        "La operación anterior debe ser una compra de la misma edición por el mismo coleccionista."
+    ),
 }
 
 
