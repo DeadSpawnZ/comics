@@ -14,6 +14,7 @@ from django.db.models import Count, ProtectedError, Q
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils.formats import date_format
 from django.utils.translation import gettext as _
 from django.utils.translation import ngettext
 from django.views.decorators.http import require_POST
@@ -24,7 +25,7 @@ from comics.models import Article, Collectable
 from comics.views.collectables import CARRY_OVER, piece_form_context, save_piece
 from comics.views.collection_entries import TYPE_TABS
 from comics.views.manage_editions import PAGE_SIZE, RECENT_COUNT
-from comics.views.utils import carry_over_query, initial_from_query, log_action, safe_next_url
+from comics.views.utils import carry_over_query, first_sale_date, initial_from_query, log_action, safe_next_url
 
 ORIGIN = "Gestión"  # where the history entries say the change was made
 
@@ -138,6 +139,7 @@ def collectable_list(request: HttpRequest) -> HttpResponse:
     pieces = (
         (base.filter(trade_type=type_filter) if type_filter else base)
         .select_related(*related)
+        .with_sale_date()
         .order_by("article__name", "trade_date", "pk")
     )
 
@@ -145,7 +147,7 @@ def collectable_list(request: HttpRequest) -> HttpResponse:
     # The latest additions go first (only on the unfiltered first page), then the A-Z list.
     recent: list[Collectable] = []
     if page_obj.number == 1 and not (query or collector_filter or article_filter or type_filter):
-        recent = list(Collectable.objects.select_related(*related).order_by("-pk")[:RECENT_COUNT])
+        recent = list(Collectable.objects.select_related(*related).with_sale_date().order_by("-pk")[:RECENT_COUNT])
     return render(
         request,
         "manage/collectable_list.html",
@@ -166,7 +168,7 @@ def collectable_list(request: HttpRequest) -> HttpResponse:
 
 @management_required
 def collectable_form(request: HttpRequest, pk: int | None = None) -> HttpResponse:
-    piece = get_object_or_404(Collectable.objects.select_related("article"), pk=pk) if pk else None
+    piece = get_object_or_404(Collectable.objects.select_related("article").with_sale_date(), pk=pk) if pk else None
     back_url = safe_next_url(request, reverse("manage_collectables"))
     # A new piece starts as the signed-in user's; "Save and add another" and `?article=` fill the rest.
     initial: dict[str, int | str] = {}
@@ -191,13 +193,20 @@ def collectable_form(request: HttpRequest, pk: int | None = None) -> HttpRespons
 @management_required
 @require_POST
 def collectable_delete(request: HttpRequest, pk: int) -> HttpResponseRedirect:
-    """Delete a piece. As in the comics collection, a sale that sold a deleted purchase stays, with
-    no previous trade (Collectable.previous_trade is SET_NULL)."""
+    """Delete a piece. A purchase that has been sold is refused: its sale points to it and
+    Collectable.previous_trade is PROTECT, so the sale has to be deleted first."""
     piece = get_object_or_404(Collectable.objects.select_related("article"), pk=pk)
     label = str(piece)
     back_url = safe_next_url(request, reverse("manage_collectables"))
-    with transaction.atomic():
-        log_action(request, piece, DELETION, f"Eliminado desde {ORIGIN}.")
-        piece.delete()
-    messages.success(request, _("Piece deleted: %(piece)s") % {"piece": label})
+    try:
+        with transaction.atomic():
+            log_action(request, piece, DELETION, f"Eliminado desde {ORIGIN}.")
+            piece.delete()
+    except ProtectedError as error:
+        # A sale is the only thing that can protect a piece.
+        sold_on = first_sale_date(piece, error)
+        reason = _("It was sold on %(date)s: delete the sale first.") % {"date": date_format(sold_on)}
+        messages.error(request, _("“%(name)s” cannot be deleted. %(reason)s") % {"name": label, "reason": reason})
+    else:
+        messages.success(request, _("Piece deleted: %(piece)s") % {"piece": label})
     return redirect(back_url)

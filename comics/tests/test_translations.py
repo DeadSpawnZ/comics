@@ -471,6 +471,9 @@ NEW_TRANSLATIONS = {
     "Linked to the MyComicShop cover %(id)s.": "Vinculada a la portada %(id)s de MyComicShop.",
     "Link this cover?": "¿Vincular esta portada?",
     "Link": "Vincular",
+    # Deleting a purchase that has been sold.
+    "It was sold on %(date)s: delete the sale first.": "Se vendió el %(date)s: elimina primero la venta.",
+    "It was sold on %(date)s and it has signatures registered.": "Se vendió el %(date)s y tiene firmas registradas.",
 }
 
 

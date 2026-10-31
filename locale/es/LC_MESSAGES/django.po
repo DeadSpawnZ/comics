@@ -3768,3 +3768,18 @@ msgstr "¿Vincular esta portada?"
 #: comics/templates/manage/includes/catalog_series_dialog.html
 msgid "Link"
 msgstr "Vincular"
+
+#: comics/templates/manage/includes/delete_dialog.html
+msgid "<strong id=\"deleteDialogBlockedName\"></strong> cannot be deleted."
+msgstr "<strong id=\"deleteDialogBlockedName\"></strong> no se puede eliminar."
+
+#: comics/templates/manage/includes/sold_purchase_blocked.html
+#: comics/views/collection_entries.py comics/views/manage_collectables.py
+#, python-format
+msgid "It was sold on %(date)s: delete the sale first."
+msgstr "Se vendió el %(date)s: elimina primero la venta."
+
+#: comics/views/collection_entries.py
+#, python-format
+msgid "It was sold on %(date)s and it has signatures registered."
+msgstr "Se vendió el %(date)s y tiene firmas registradas."

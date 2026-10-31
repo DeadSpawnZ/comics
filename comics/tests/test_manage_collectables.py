@@ -504,17 +504,25 @@ class ManageCollectableDeleteTests(ManageCollectablesTestCase):
         self.assertEqual((entry.action_flag, entry.change_message), (DELETION, "Eliminado desde Gestión."))
         self.assertEqual(self.messages(response), ["Piece deleted: Spawn figure"])
 
-    def test_deleting_a_sold_purchase_keeps_the_sale_unlinked(self) -> None:
-        # Same as the comics collection: previous_trade is SET_NULL, so the sale stays.
+    def test_a_sold_purchase_is_not_deleted(self) -> None:
+        # Same as the comics collection: previous_trade is PROTECT (see test_sold_purchases).
         purchase = make_collectable(collector=self.collector, article=self.article)
         sale = make_collectable(
-            collector=self.collector, article=self.article, trade_type=SELLING, previous_trade=purchase
+            collector=self.collector,
+            article=self.article,
+            trade_type=SELLING,
+            previous_trade=purchase,
+            trade_date=datetime.date(2024, 3, 1),
         )
         response = self.client.post(reverse("manage_collectable_delete", args=[purchase.pk]))
         self.assertRedirects(response, reverse("manage_collectables"), fetch_redirect_response=False)
+        self.assertEqual(
+            self.messages(response),
+            ["“Spawn figure” cannot be deleted. It was sold on March 1, 2024: delete the sale first."],
+        )
         sale.refresh_from_db()
-        self.assertIsNone(sale.previous_trade)
-        self.assertEqual(list(Collectable.objects.all()), [sale])
+        self.assertEqual(sale.previous_trade, purchase)
+        self.assertFalse(LogEntry.objects.filter(object_id=str(purchase.pk), action_flag=DELETION).exists())
 
 
 # ---------- Side nav, Gestión home ----------

@@ -3,19 +3,23 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable
-from typing import Protocol, TypeVar
+from datetime import date
+from typing import TYPE_CHECKING, Protocol, TypeVar
 from urllib.parse import urlencode
 
 from django.contrib.admin.models import LogEntry
 from django.contrib.auth.models import User
 from django.db import IntegrityError
-from django.db.models import Model
+from django.db.models import Model, ProtectedError
 from django.forms import BaseForm
 from django.http import HttpRequest
 from django.utils.http import url_has_allowed_host_and_scheme
 
 from comics.helper import parse_id_or_none
 from comics.roles import can_access_management
+
+if TYPE_CHECKING:
+    from comics.models import Collectable, Collection
 
 
 def safe_next_url(request: HttpRequest, fallback: str) -> str:
@@ -54,6 +58,13 @@ def log_action(request: HttpRequest, obj: Model, flag: int, message: str) -> Non
     LogEntry.objects.log_actions(
         user_id=request.user.pk, queryset=[obj], action_flag=flag, change_message=message, single_object=True
     )
+
+
+def first_sale_date(piece: Collection | Collectable, error: ProtectedError) -> date | None:
+    """Date of the earliest sale that blocked deleting `piece` (a trade of the same model pointing to it
+    as its previous trade, see previous_trade PROTECT), or None when no sale blocked it."""
+    sales = [obj for obj in error.protected_objects if isinstance(obj, type(piece))]
+    return min((sale.trade_date for sale in sales), default=None)
 
 
 T = TypeVar("T")

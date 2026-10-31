@@ -12,7 +12,6 @@ from django.core.validators import MinValueValidator
 from django.db.models import (
     CASCADE,
     PROTECT,
-    SET_NULL,
     BooleanField,
     CharField,
     Count,
@@ -29,6 +28,7 @@ from django.db.models import (
     Q,
     QuerySet,
     TextChoices,
+    Subquery,
     TextField,
     UniqueConstraint,
 )
@@ -90,6 +90,12 @@ class TradeQuerySet(QuerySet):
 
 
 class CollectionQuerySet(TradeQuerySet):
+    def with_sale_date(self) -> Self:
+        """Annotate `sold_on`: the date of the earliest trade that points to the piece as its previous
+        trade (its sale), or None. Such a piece cannot be deleted (previous_trade is PROTECT)."""
+        sales = self.model.objects.filter(previous_trade=OuterRef("pk")).order_by("trade_date", "pk")
+        return self.annotate(sold_on=Subquery(sales.values("trade_date")[:1]))
+
     """Trades of editions (Collection)."""
 
 
@@ -106,7 +112,8 @@ class Collection(Model):
     participant = ForeignKey(Dealer, on_delete=PROTECT, null=True, blank=True)
     valuation = DecimalField(max_digits=4, decimal_places=2, default=0.00)
     signatures = ManyToManyField(Artist, blank=True, through="Signature")
-    previous_trade = ForeignKey("self", on_delete=SET_NULL, null=True, blank=True, related_name="next_trades")
+    # PROTECT: a purchase that has been sold cannot be deleted while its sale points to it.
+    previous_trade = ForeignKey("self", on_delete=PROTECT, null=True, blank=True, related_name="next_trades")
     notes = TextField(max_length=500, blank=True)
 
     objects = CollectionQuerySet.as_manager()
@@ -445,7 +452,8 @@ class Collectable(Model):
     trade_type = CharField(max_length=50, choices=TradeChoices.choices, default=TradeChoices.BUYING)
     participant = ForeignKey(Dealer, on_delete=PROTECT, null=True, blank=True)
     valuation = DecimalField(max_digits=4, decimal_places=2, default=0.00)
-    previous_trade = ForeignKey("self", on_delete=SET_NULL, null=True, blank=True, related_name="next_trades")
+    # PROTECT: a purchase that has been sold cannot be deleted while its sale points to it.
+    previous_trade = ForeignKey("self", on_delete=PROTECT, null=True, blank=True, related_name="next_trades")
     notes = TextField(max_length=500, blank=True)
 
     objects = CollectableQuerySet.as_manager()
