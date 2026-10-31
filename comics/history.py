@@ -37,6 +37,7 @@ from __future__ import annotations
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
+from functools import cache
 from typing import Any
 
 from asgiref.local import Local
@@ -58,7 +59,7 @@ from django.dispatch import receiver
 from django.http import HttpRequest, HttpResponse
 from simple_history.models import HistoricalRecords
 from simple_history.signals import pre_create_historical_record
-from simple_history.utils import get_m2m_field_name
+from simple_history.utils import get_m2m_field_name, get_m2m_reverse_field_name
 
 CREATED = "+"
 CHANGED = "~"
@@ -66,6 +67,8 @@ DELETED = "-"
 
 # Many-to-many actions after which the relation rows are final.
 M2M_DONE_ACTIONS = ("post_add", "post_remove", "post_clear")
+# Many-to-many actions around the related manager deleting relation rows (remove(), clear()).
+MANAGER_REMOVAL_ACTIONS = ("pre_remove", "post_remove", "pre_clear", "post_clear")
 
 _local = Local()
 
@@ -126,6 +129,7 @@ class TrackedHistory(HistoricalRecords):
     def m2m_changed(
         self, instance: Model, action: str, attr: str, pk_set: set[Any] | None, reverse: bool, **kwargs: Any
     ) -> None:
+        self.note_manager_removal(kwargs["sender"], attr, instance, action, reverse)
         if not history_enabled() or hasattr(instance, "skip_history_when_saving"):
             return
         if getattr(instance, "_history_raw", False):
@@ -144,6 +148,24 @@ class TrackedHistory(HistoricalRecords):
             pks = instance.__dict__.pop("_history_cleared_pks", []) if action == "post_clear" else pk_set
             for pk in pks or ():
                 record_change(model, pk)
+
+    def note_manager_removal(
+        self, through: type[Model], attr: str, instance: Model, action: str, reverse: bool
+    ) -> None:
+        """The related manager's remove() and clear() delete the relation rows with QuerySet.delete(),
+        which sends post_delete for each row. While they run, those rows write no version of their
+        own (see relation_row_deleted): m2m_changed writes the one for the whole change, with the
+        instance's user and reason."""
+        if action not in MANAGER_REMOVAL_ACTIONS:
+            return
+        field = self.cls._meta.get_field(attr)
+        source = get_m2m_reverse_field_name(field) if reverse else get_m2m_field_name(field)
+        marker = (through._meta.concrete_model, through._meta.get_field(source).attname, instance.pk)
+        removals = _manager_removals()
+        if action.startswith("pre_"):
+            removals.append(marker)
+        elif marker in removals:
+            removals.remove(marker)
 
 
 def tracked_history(model: type[Model]) -> TrackedHistory:
@@ -346,22 +368,33 @@ def history_batch(*, user: User | None = None, reason: str | None = None) -> Ite
         yield batch
     finally:
         batches.remove(batch)
+        if not batches:
+            # A remove() or clear() that failed halfway never unmarks its rows; drop them here so
+            # they cannot silence later deletions (each request is a batch).
+            _manager_removals().clear()
     batch.flush()
 
 
-def record_change(model: type[Model], pk: Any) -> None:
+def record_change(model: type[Model], pk: Any, *, user: User | None = None, reason: str | None = None) -> None:
     """A tracked row changed without a save() of its own (its relation rows were inserted or
     deleted, or it was updated with QuerySet.update()): note it in the current batch, or write a
-    version now outside one. Does nothing for models without history."""
+    version now outside one, by `user` with `reason` (a batch's own user and reason win). Does
+    nothing for models without history."""
     concrete = model._meta.concrete_model
     if concrete not in TrackedHistory.tracked or not history_enabled():
         return
     batch = current_batch()
     if batch is not None:
-        batch.register_pk(concrete, pk, CHANGED)
+        entry = batch.register_pk(concrete, pk, CHANGED)
+        entry.user = user or entry.user
+        entry.reason = reason or entry.reason
         return
     instance = concrete._default_manager.filter(pk=pk).order_by().first()
     if instance is not None:
+        if user is not None:
+            instance._history_user = user
+        if reason:
+            instance._change_reason = reason
         write_version(instance, CHANGED)
 
 
@@ -372,6 +405,90 @@ def record_instance_change(instance: Model) -> None:
         batch.register(instance, CHANGED)
     else:
         write_version(instance, CHANGED)
+
+
+# ---------- Relation rows changed on their own ----------
+#
+# The rows of a versioned many-to-many relation (e.g. IssueCreator, CollectedIssue) are part of
+# their owner's versions. The related manager (add, remove, set, clear) records the change through
+# m2m_changed, but saving or deleting a row directly (the admin's inline rows, a script's
+# `IssueCreator.objects.filter(artist=a).delete()`) does not: comics.signals connects the functions
+# below to those rows' pre/post save and delete signals. Each records a change of the owner, so a
+# batch coalesces it with the rest and, outside one, one version per owner and operation is written.
+# Bulk inserts and QuerySet.update() send no signals: call record_change() after them.
+
+
+@cache
+def relation_owner_field(through: type[Model]) -> Field:
+    """The foreign key of a relation row to its tracked owner (e.g. IssueCreator.issue)."""
+    for model in TrackedHistory.tracked:
+        for field in versioned_m2m_fields(model):
+            if field.remote_field.through._meta.concrete_model is through:
+                return through._meta.get_field(get_m2m_field_name(field))
+    raise LookupError(f"{through._meta.label} is not the through model of a versioned many-to-many field")
+
+
+def record_owner_change(row: Model, owner_pk: Any) -> None:
+    """record_change() of a relation row's owner, by the row's `_history_user` with its `_change_reason`."""
+    field = relation_owner_field(type(row)._meta.concrete_model)
+    user = getattr(row, "_history_user", None)
+    record_change(field.related_model, owner_pk, user=user, reason=getattr(row, "_change_reason", None))
+
+
+def relation_row_saving(row: Model) -> None:
+    """pre_save of a relation row: remember the owner it had, since an update may move it to another."""
+    if row._state.adding or not history_enabled():
+        return
+    field = relation_owner_field(type(row)._meta.concrete_model)
+    stored = type(row)._default_manager.filter(pk=row.pk).values_list(field.attname, flat=True)
+    row._history_previous_owner = stored.first()
+
+
+def relation_row_saved(row: Model) -> None:
+    """post_save of a relation row: its owner changed (and the one it left, when it moved)."""
+    owner_pk = getattr(row, relation_owner_field(type(row)._meta.concrete_model).attname)
+    previous = row.__dict__.pop("_history_previous_owner", None)
+    if previous is not None and previous != owner_pk:
+        record_owner_change(row, previous)
+    record_owner_change(row, owner_pk)
+
+
+def relation_rows_deleting() -> None:
+    """pre_delete of a relation row. A deletion sends pre_delete for all its rows before any
+    post_delete: forget the owners recorded by the previous deletion."""
+    _local.recorded_owners = set()
+
+
+def relation_row_deleted(row: Model, origin: object) -> None:
+    """post_delete of a relation row: its owner changed, once per deletion (a QuerySet.delete() of
+    several rows of the same owner writes one version). Nothing is recorded when the deletion
+    started with the owner itself (the cascade of deleting an issue or edition, which writes its
+    own "deleted" version), or while the related manager removes the rows (m2m_changed records it)."""
+    through = type(row)._meta.concrete_model
+    field = relation_owner_field(through)
+    owner = field.related_model._meta.concrete_model
+    if origin is not None:
+        origin_model = origin.model if isinstance(origin, QuerySet) else type(origin)
+        if origin_model._meta.concrete_model is owner:
+            return
+    if any(model is through and getattr(row, column) == pk for model, column, pk in _manager_removals()):
+        return
+    owner_pk = getattr(row, field.attname)
+    recorded = getattr(_local, "recorded_owners", None)
+    if recorded is None:
+        recorded = _local.recorded_owners = set()
+    if (owner, owner_pk) in recorded:
+        return
+    recorded.add((owner, owner_pk))
+    record_owner_change(row, owner_pk)
+
+
+def _manager_removals() -> list[tuple[type[Model], str, Any]]:
+    """The relation rows the related manager is deleting (see TrackedHistory.note_manager_removal),
+    as (through model, column, value) of the side the manager belongs to."""
+    if not hasattr(_local, "manager_removals"):
+        _local.manager_removals = []
+    return _local.manager_removals
 
 
 class HistoryMiddleware:
