@@ -16,15 +16,10 @@ base real). Quitar el punto de este archivo en el mismo commit que lo resuelve.
 
 Commiteada (bloqueo del borrado de compras vendidas, reglas de compra previa compartidas, bloqueo de
 la reversión de serie/número de un issue con ediciones, versión del dueño al escribir filas de
-créditos). Falta, en orden: aplicar la migración `0121` a la base real (sin DDL, ensayada en
-`comic_refactor`; antes, copia con `mysqldump`), reconstruir la imagen y probar en el navegador los
-diálogos bloqueados de borrado y de reversión.
-
-Decisión pendiente del usuario: los receptores de filas de créditos también se aplican a
-`CollectedIssue`, lo que cambia dos casos de script fuera de un lote
-(`edition.collected_issues.remove(x)` escribe 1 versión en vez de 2;
-`edition.collected_entries.all().delete()` con N filas escribe 1 en vez de N). Las rutas de la app
-no cambian.
+créditos). La migración `0121` ya está aplicada en la base real (2026-10-31, copia previa en
+`backups/comic-pre-0121-20261031_174524.sql`) y la imagen reconstruida. Falta probar en el navegador
+los diálogos bloqueados de borrado (hay 15 compras de cómics vendidas; ningún collectable vendido) y
+de reversión.
 
 ### Probar la fecha de salida propuesta
 
