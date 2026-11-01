@@ -134,8 +134,74 @@ Implementado (ver README) y en `develop` con el PR #5. Falta:
   (pasar a un `NamedTuple`); la URL de la serie está duplicada en `Publishing` y
   `mycomicshop.series_url` (un test la vigila); en `test_publishing_mycomicshop_tid.py`, helpers
   con `Any` y un parche global de `QuerySet.exists`.
-- **Para más adelante:** búsqueda por nombre (`search?q=` por POST, sin probar), importar varias
-  variantes de golpe o como solicitudes de cambio (enlaza con la "Importación masiva" de arriba).
+- **Para más adelante:** búsqueda por nombre (`search?q=` por POST, sin probar), importar como
+  solicitudes de cambio. Importar varias variantes de golpe: ver "Lotes de importación desde
+  MyComicShop".
+
+### Lotes de importación desde MyComicShop (diseño aprobado el 2026-10-31, sin empezar)
+
+Crear varias ediciones de una serie de MyComicShop (TID) con un paso de revisión antes de guardar.
+Resuelve tres límites de hacerlo desde el formulario de una edición o en automático: cada edición
+tiene sus propios artistas de portada; los créditos salen de una regex sobre texto libre y pueden
+venir cortados o mal; y en automático no se puede configurar nada antes de guardar.
+
+Rama: `feat/mycomicshop-batch-import` desde `develop`, **después** de fusionar el PR #6 (usa el modal
+de variantes, "Vincular" y el TID de `chore/adjustments`).
+
+Decisiones del usuario:
+- El lote se guarda en la base (sobrevive a recargas; se puede dejar a medias).
+- Las variantes "probables" se pueden vincular **o** crear como edición nueva (por si la coincidencia
+  es falsa); salen sin marcar. Las que ya tienen su IVID (`existing`) no se pueden importar.
+- Si el issue de un número ya existe, sus artistas de historia **no se tocan** (solo se muestran).
+- Solo Gestión (`management_required`, Administrators) de momento.
+- `ArtistAlias` (recordar correcciones de nombres entre lotes) va en la fase 2.
+
+Datos que ya hay: una página de serie (`mycomicshop.fetch_series`, cacheada) trae todas las
+variantes con su texto ya leído (`McsDetails`), así que el lote hace una sola petición a MyComicShop;
+las portadas se descargan al crear cada edición (`catalog_cover_url`, `download_cover`). Los artistas
+de historia son del issue (`Issue.creators`), los de portada de cada edición
+(`Edition.cover_artists`); `SourceCredit.uncertain` marca los nombres adivinados y
+`ArtistMatcher.match` separa los que no coinciden con ningún artista.
+
+Flujo:
+1. Modal de variantes: una casilla por variante y "Importar seleccionadas" crea el lote y lleva a su
+   página. Límite propuesto: 30 variantes por lote (las portadas se descargan en la misma petición).
+2. Página del lote (Gestión → Importaciones): valores del lote (publishing, formato, rareza, regla de
+   fecha de salida, notas) que heredan todas las filas; un grupo por número con su issue (existente o
+   nuevo) y sus artistas de historia, una vez; una fila por variante con letra, impresión, ratio,
+   tirada, exclusivas, precio, miniatura, artistas de portada, el texto original de MyComicShop y el
+   aviso "posible coincidencia" con su "Vincular". Cada campo de fila hereda del lote salvo que se
+   cambie. "Guardar cambios" guarda la revisión sin crear nada.
+3. Nombres: cada nombre sin coincidencia o adivinado se resuelve **una vez por lote** (asociar a un
+   artista existente, crear artista nuevo o descartar) y se aplica a todas sus filas. Una fila con
+   nombres sin resolver no se puede crear.
+4. "Crear seleccionadas": cada fila pasa por `EditionManageForm` (+ `IssueSectionForm` para los
+   artistas de historia de un issue nuevo), con su propia transacción, `history_batch` y `LogEntry`.
+   Las válidas se crean, las que fallan se quedan con su error, las creadas enlazan a su edición. Los
+   artistas nuevos se crean antes, una vez. Al terminar, el TID se rellena en el publishing si estaba
+   vacío (como en `link_mycomicshop_edition`).
+
+Tareas (una por `backend-senior`, en orden):
+1. Modelos y migración: `ImportBatch` (creado por, TID, título/año/editorial de la serie, publishing,
+   valores del lote en JSON, resoluciones de nombres en JSON, estado abierto/cerrado, fechas),
+   `ImportBatchNumber` (lote, número, issue existente o None, artistas de historia propuestos) e
+   `ImportBatchRow` (lote, IVID único por lote, etiqueta, orden, propuesta en JSON, cambios en JSON,
+   tipo de coincidencia y ediciones probables, seleccionada, estado pendiente/creada/error,
+   errores, edición creada con `SET_NULL`). Sin historial.
+2. Servicio `comics/catalog_sources/batches.py`: crear el lote desde un TID y una lista de IVIDs
+   (una `fetch_series`, `to_source_issue` + `build_proposal` por variante con un solo `ArtistMatcher`;
+   consultas fijas, no por variante), valores efectivos de una fila (lote + cambios), nombres
+   pendientes y aplicar una resolución.
+3. Sacar el alta de ediciones de la vista (`_save_edition` y la lógica de issue de `edition_form` en
+   `comics/views/manage_editions.py`) a un servicio reutilizable, sin cambiar el comportamiento.
+4. Crear las filas del lote con ese servicio (lo del paso 4 del flujo).
+5. Vistas, URL y plantilla de la página del lote; lista de lotes en Gestión.
+6. Modal: casillas, "Importar seleccionadas" y JS (separar antes el diálogo de series de
+   `catalog_import.js`, que pasa de 900 líneas).
+
+Fase 2: `ArtistAlias` (texto de origen → artista, como `EditorialAlias`) rellenado con las
+resoluciones y usado por `ArtistMatcher`; "Editar completa" de una fila en un diálogo con todos los
+campos de la edición.
 
 ### Logros que esperan otra feature
 - **Popular / Super Popular** (20 / 100 seguidores): necesitan un sistema de seguidores.
