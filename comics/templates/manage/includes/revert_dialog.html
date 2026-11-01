@@ -1,5 +1,9 @@
 {% load i18n %}
-{# Confirmation for "Revert to this version": the trigger button sets data-revert-url and data-revert-date. #}
+{% comment %}
+  Confirmation for "Revert to this version": the trigger button sets data-revert-url and data-revert-date. An
+  optional data-revert-blocked="<reason>" turns it into a notice: it says why that version cannot be restored and
+  hides the reason field and the Revert button (as delete_dialog.html does).
+{% endcomment %}
 <div class="modal fade md-dialog" id="revertDialog" tabindex="-1" aria-labelledby="revertDialogTitle" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
@@ -10,13 +14,14 @@
           <h2 class="modal-title md-headline-small" id="revertDialogTitle">{% translate "Revert to this version?" %}</h2>
         </div>
         <div class="modal-body">
-          <p>
+          <p id="revertDialogWarning">
             {% blocktranslate trimmed %}
               Everything goes back to how it was on <strong id="revertDialogDate"></strong>. The current state stays
               in the history, so this can be undone too.
             {% endblocktranslate %}
           </p>
-          <div class="form-floating md-field">
+          <p id="revertDialogBlocked" hidden></p>
+          <div class="form-floating md-field" id="revertDialogReasonField">
             <input type="text" class="form-control" id="revertDialogReason" name="{{ form.reason.html_name }}"
                    maxlength="{{ form.fields.reason.max_length }}" placeholder=" ">
             <label for="revertDialogReason">{{ form.reason.label }}</label>
@@ -24,7 +29,7 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="md-btn md-btn--text" data-bs-dismiss="modal">{% translate "Cancel" %}</button>
-          <button type="submit" class="md-btn md-btn--filled">{% translate "Revert" %}</button>
+          <button type="submit" class="md-btn md-btn--filled" id="revertDialogSubmit">{% translate "Revert" %}</button>
         </div>
       </form>
     </div>
@@ -35,5 +40,19 @@
     var trigger = event.relatedTarget;
     document.getElementById("revertDialogForm").action = trigger.dataset.revertUrl;
     document.getElementById("revertDialogDate").textContent = trigger.dataset.revertDate;
+    var blocked = trigger.dataset.revertBlocked || "";
+    var submit = document.getElementById("revertDialogSubmit");
+    document.getElementById("revertDialogBlocked").textContent = blocked;
+    document.getElementById("revertDialogBlocked").hidden = !blocked;
+    document.getElementById("revertDialogWarning").hidden = Boolean(blocked);
+    document.getElementById("revertDialogReasonField").hidden = Boolean(blocked);
+    submit.hidden = Boolean(blocked);
+    submit.disabled = Boolean(blocked);
+  });
+  // A blocked dialog never posts, even if the form is submitted some other way (e.g. Enter in a field).
+  document.getElementById("revertDialogForm").addEventListener("submit", function (event) {
+    if (document.getElementById("revertDialogSubmit").disabled) {
+      event.preventDefault();
+    }
   });
 </script>

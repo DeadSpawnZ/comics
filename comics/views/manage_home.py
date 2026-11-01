@@ -22,6 +22,8 @@ from comics.models import (
     Achievement,
     AchievementCategory,
     Announcement,
+    Article,
+    Collectable,
     Collection,
     Connecting,
     Edition,
@@ -41,6 +43,8 @@ MANAGE_PAGES = {
     "achievement": (Achievement, "manage_achievement_edit"),
     "achievementcategory": (AchievementCategory, "manage_achievement_category_edit"),
     "announcement": (Announcement, "manage_announcement_edit"),
+    "article": (Article, "manage_article_edit"),
+    "collectable": (Collectable, "manage_collectable_edit"),
 }
 
 TYPE_FILTERS = [
@@ -53,6 +57,8 @@ TYPE_FILTERS = [
     ("achievement", gettext_lazy("Achievements")),
     ("achievementcategory", gettext_lazy("Achievement categories")),
     ("announcement", gettext_lazy("Announcements")),
+    ("article", gettext_lazy("Articles")),
+    ("collectable", "Collectables"),
     ("other", gettext_lazy("Other")),
 ]
 
@@ -65,6 +71,8 @@ TYPE_LABELS = {
     "achievement": gettext_lazy("Achievement"),
     "achievementcategory": gettext_lazy("Achievement category"),
     "announcement": gettext_lazy("Announcement"),
+    "article": gettext_lazy("Article"),
+    "collectable": "Collectable",
     "issue": "Issue",
     "title": gettext_lazy("Title"),
     "dealer": gettext_lazy("Participant"),
@@ -148,6 +156,8 @@ def manage_home(request: HttpRequest) -> HttpResponse:
         (_("Editions"), Edition.objects.count(), "manage_editions", "menu_book"),
         (_("Reading arcs"), ReadingArc.objects.count(), "manage_arcs", "format_list_numbered"),
         ("Connectings", Connecting.objects.count(), "manage_connectings", "grid_view"),
+        (_("Articles"), Article.objects.count(), "manage_articles", "category"),
+        ("Collectables", Collectable.objects.count(), "manage_collectables", "inventory"),
     ]
     return render(
         request,

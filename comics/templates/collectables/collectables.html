@@ -1,96 +1,157 @@
-{% extends 'base.html' %}
+{% extends 'collectables/base_collectables.html' %}
 {% load static i18n %}
-{% block content %}
 
-<div class="my-4">
-  <div class="d-flex align-items-baseline justify-content-between mb-3 flex-wrap gap-2">
-    <h1 class="md-headline-small mb-0">Collectables</h1>
-    <span class="md-body-medium">{% blocktranslate count counter=page_obj.paginator.count %}{{ counter }} item{% plural %}{{ counter }} items{% endblocktranslate %}</span>
-  </div>
+{% block breadcrumb %}<span class="is-current">{% translate "Collection" %}</span>{% endblock %}
 
-  <div class="md-surface-card mb-4">
-    <div class="md-section-label">{% translate "Letter" %}</div>
-    {% include 'includes/letter_chips.html' %}
-  </div>
+{% block side_panels %}
+      <!-- FILTERS -->
+      <button
+        class="md-btn md-btn--tonal w-100 d-lg-none"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#filtersPanel"
+        aria-expanded="false"
+        aria-controls="filtersPanel"
+      >
+        <span class="material-symbols-outlined" aria-hidden="true">filter_list</span>
+        {% translate "Filters" %}
+      </button>
 
-  {% if not page_obj.object_list %}
-    <div class="md-surface-card text-center py-5">
-      <span class="material-symbols-outlined d-block mb-2 empty-state-icon" aria-hidden="true">search_off</span>
-      <p class="md-body-medium mb-0">{% translate "No collectables match these filters." %}</p>
-    </div>
-  {% endif %}
+      <div class="filters-panel collapse d-lg-block" id="filtersPanel">
+        <div class="md-surface-card">
+          <h2 class="md-title-medium mb-3 d-flex align-items-center gap-2">
+            <span class="material-symbols-outlined" aria-hidden="true">tune</span>
+            {% translate "Filters" %}
+          </h2>
 
-  <div class="row g-3">
-    {% for collectable in page_obj %}
-    <div class="col-12 col-sm-6 col-lg-4 col-xxl-3">
-      <div class="md-card" role="button" data-bs-toggle="modal" data-bs-target="#collectableModal{{ collectable.id }}">
-        <div class="card-img-container card-img-container--landscape">
-          {% if collectable.image %}
-            <img src="{{ collectable.image.url }}" class="comic-img" alt="{{ collectable.name }}" loading="lazy">
-          {% else %}
-            <div class="comic-img img-placeholder">
-              <span class="material-symbols-outlined" aria-hidden="true">image</span>
+          <form method="get" class="mb-4 d-flex flex-column gap-3" role="search">
+            <input type="hidden" name="letter" value="{{ selected_letter }}">
+            <div class="form-floating md-field">
+              <input type="search" class="form-control" id="filter-q" name="q" value="{{ query }}" placeholder="{% translate 'Search' %}">
+              <label for="filter-q">{% translate "Search name or description" %}</label>
             </div>
-          {% endif %}
+            <div class="form-floating md-field">
+              <select name="category" id="filter-category" class="form-select" onchange="this.form.submit()">
+                <option value="">{% translate "All" context "categories" %}</option>
+                {% for value, label in category_choices %}
+                  <option value="{{ value }}" {% if value == selected_category %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+              <label for="filter-category">{% translate "Category" %}</label>
+            </div>
+            {% if query or selected_category %}
+              <a class="md-btn md-btn--text align-self-start" href="{% querystring q=None category=None page=None %}">{% translate "Clear" %}</a>
+            {% endif %}
+          </form>
 
-          <div class="overlay-info">
-            <div class="fw-bold">{{ collectable.name }}</div>
-            <small>${{ collectable.amount }} MXN</small>
-          </div>
+          <div class="md-section-label">{% translate "Letter" %}</div>
+          {% include 'includes/letter_chips.html' %}
         </div>
       </div>
-    </div>
+{% endblock %}
 
-    <!-- Detail dialog -->
-    <div class="modal fade md-dialog" id="collectableModal{{ collectable.id }}" tabindex="-1" aria-labelledby="collectableLabel{{ collectable.id }}" aria-hidden="true">
-      <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h2 class="modal-title md-headline-small" id="collectableLabel{{ collectable.id }}">{{ collectable.name }}</h2>
+{% block collectables_content %}
+    <!-- CONTENT -->
+    <div>
+      <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+        <div>
+          <h1 class="md-headline-small mb-0">{% translate "Collection" %}</h1>
+          <span class="md-body-medium">{% blocktranslate count counter=page_obj.paginator.count %}{{ counter }} piece{% plural %}{{ counter }} pieces{% endblocktranslate %}</span>
+        </div>
+        <a class="md-btn md-btn--filled" href="{% url 'collectables_piece_new' %}">
+          <span class="material-symbols-outlined" aria-hidden="true">add</span>
+          {% translate "New piece" %}
+        </a>
+      </div>
+
+      {% if not page_obj.object_list %}
+        <div class="md-surface-card text-center py-5">
+          <span class="material-symbols-outlined d-block mb-2 empty-state-icon" aria-hidden="true">search_off</span>
+          <p class="md-body-medium mb-0">{% translate "No pieces match these filters." %}</p>
+        </div>
+      {% endif %}
+
+      <div class="row g-3">
+        {% for piece in page_obj %}
+        <div class="col-12 col-sm-6 col-lg-4 col-xxl-3">
+          <div class="md-card" role="button" data-bs-toggle="modal" data-bs-target="#pieceModal{{ piece.id }}">
+            <div class="card-img-container card-img-container--landscape">
+              {% if piece.article.image %}
+                <img src="{{ piece.article.image.url }}" class="comic-img" alt="{{ piece.article.name }}" loading="lazy">
+              {% else %}
+                <div class="comic-img img-placeholder">
+                  <span class="material-symbols-outlined" aria-hidden="true">image</span>
+                </div>
+              {% endif %}
+
+              <div class="overlay-info">
+                <div class="fw-bold">{{ piece.article.name }}</div>
+                <small>{{ piece.article.get_category_display }} · ${{ piece.amount }} MXN</small>
+              </div>
+            </div>
           </div>
-          <div class="modal-body">
-            <div class="row g-4">
-              <div class="col-md-5">
-                {% if collectable.image %}
-                  <img src="{{ collectable.image.url }}" alt="{{ collectable.name }}" class="img-fluid rounded-4 shadow-sm" loading="lazy">
-                {% else %}
-                  <div class="img-placeholder rounded-4 ratio ratio-3x2">
-                    <span class="d-flex align-items-center justify-content-center">
-                      <span class="material-symbols-outlined" aria-hidden="true">image</span>
-                    </span>
+        </div>
+
+        <!-- Detail dialog -->
+        <div class="modal fade md-dialog" id="pieceModal{{ piece.id }}" tabindex="-1" aria-labelledby="pieceLabel{{ piece.id }}" aria-hidden="true">
+          <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+              <div class="modal-header">
+                <div>
+                  <h2 class="modal-title md-headline-small" id="pieceLabel{{ piece.id }}">{{ piece.article.name }}</h2>
+                  <div class="md-body-medium">
+                    {{ piece.article.get_category_display }}{% if piece.article.limited_to %} · {% blocktranslate with count=piece.article.limited_to %}Limited to {{ count }}{% endblocktranslate %}{% endif %}
                   </div>
-                {% endif %}
+                </div>
               </div>
+              <div class="modal-body">
+                <div class="row g-4">
+                  <div class="col-md-5">
+                    {% if piece.article.image %}
+                      <img src="{{ piece.article.image.url }}" alt="{{ piece.article.name }}" class="img-fluid rounded-4 shadow-sm" loading="lazy">
+                    {% else %}
+                      <div class="img-placeholder rounded-4 ratio ratio-3x2">
+                        <span class="d-flex align-items-center justify-content-center">
+                          <span class="material-symbols-outlined" aria-hidden="true">image</span>
+                        </span>
+                      </div>
+                    {% endif %}
+                  </div>
 
-              <div class="col-md-7 d-flex flex-column gap-4">
-                <section>
-                  <div class="md-section-label">{% translate "Details" %}</div>
-                  <dl class="md-list">
-                    <dt>{% translate "Amount" %}</dt><dd>${{ collectable.amount }} MXN</dd>
-                    <dt>{% translate "Date" %}</dt><dd>{{ collectable.trade_date }}</dd>
-                    <dt>{% translate "Participant" %}</dt><dd>{{ collectable.participant|default:"—" }}</dd>
-                  </dl>
-                </section>
+                  <div class="col-md-7 d-flex flex-column gap-4">
+                    <section>
+                      <div class="md-section-label">{% translate "Collection" %}</div>
+                      <dl class="md-list">
+                        <dt>{% translate "Amount paid" %}</dt><dd>${{ piece.amount }} MXN</dd>
+                        <dt>{% translate "Date" %}</dt><dd>{{ piece.trade_date }}</dd>
+                        <dt>{% translate "Seller" %}</dt><dd>{{ piece.participant|default:"—" }}</dd>
+                        <dt>{% translate "Valuation" %}</dt><dd>{{ piece.valuation }}</dd>
+                        {% if piece.notes %}<dt>{% translate "Notes" %}</dt><dd>{{ piece.notes|linebreaksbr }}</dd>{% endif %}
+                      </dl>
+                    </section>
 
-                {% if collectable.description %}
-                <section>
-                  <div class="md-section-label">{% translate "Description" %}</div>
-                  <p class="mb-0">{{ collectable.description }}</p>
-                </section>
-                {% endif %}
+                    {% if piece.article.description %}
+                    <section>
+                      <div class="md-section-label">{% translate "Description" %}</div>
+                      <p class="mb-0">{{ piece.article.description|linebreaksbr }}</p>
+                    </section>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <a class="md-btn md-btn--text" href="{% url 'collectables_article_detail' piece.article_id %}?next={{ request.get_full_path|urlencode }}">
+                  <span class="material-symbols-outlined" aria-hidden="true">visibility</span>
+                  {% translate "View article" %}
+                </a>
+                <button type="button" class="md-btn md-btn--text" data-bs-dismiss="modal">{% translate "Close" %}</button>
               </div>
             </div>
           </div>
-          <div class="modal-footer">
-            <button type="button" class="md-btn md-btn--text" data-bs-dismiss="modal">{% translate "Close" %}</button>
-          </div>
         </div>
+        {% endfor %}
       </div>
+
+      {% include 'includes/paginator.html' %}
     </div>
-    {% endfor %}
-  </div>
-
-  {% include 'includes/paginator.html' %}
-</div>
-
 {% endblock %}

@@ -379,6 +379,8 @@ NEW_TRANSLATIONS = {
     "GCD series ID": "ID de serie en GCD",
     "Another publishing already has this Metron series ID.": "Otro publishing ya tiene este ID de serie de Metron.",
     "Another publishing already has this Comic Vine volume ID.": "Otro publishing ya tiene este ID de volumen de Comic Vine.",
+    "MyComicShop series ID": "ID de serie en MyComicShop",
+    "Another publishing already has this MyComicShop series ID.": "Otro publishing ya tiene este ID de serie de MyComicShop.",
     "A title with that name already exists.": "Ya existe un título con ese nombre.",
     "An editorial with that name already exists.": "Ya existe una editorial con ese nombre.",
     "Country": "País",
@@ -398,6 +400,8 @@ NEW_TRANSLATIONS = {
     "Discard": "Descartar",
     "Choose a language": "Elige un idioma",
     "The Metron series is %(metron)s, but its Comic Vine volume is %(comicvine)s: the first one is used. Check whether they are the same publishing.": "La serie de Metron es %(metron)s, pero su volumen de Comic Vine es %(comicvine)s: se usa la primera. Comprueba si son el mismo publishing.",
+    "%(source)s writes the title as “%(title)s”: check it against the cover (Comi keeps the title as printed).": "%(source)s escribe el título como “%(title)s”: compáralo con la portada (Comi guarda el título tal como está impreso).",
+    "Matched “%(series)s” as “%(title)s”: check that it is the same series.": "Se ha emparejado “%(series)s” con “%(title)s”: comprueba que sea la misma serie.",
     # Import helpers: required hints, editorial aliases, creating artists.
     "Required: choose a title or create one with +.": "Obligatorio: elige un título o créalo con +.",
     "Required: choose an editorial or create one with +.": "Obligatorio: elige una editorial o créala con +.",
@@ -419,6 +423,61 @@ NEW_TRANSLATIONS = {
     "The artists could not be created. Try again.": "No se pudieron crear los artistas. Inténtalo de nuevo.",
     "Create artist": "Crear artista",
     "It is added to the list you opened this from. If an artist already has that name, that one is added instead.": "Se añade a la lista desde la que lo abriste. Si un artista ya tiene ese nombre, se añade ese.",
+    # Collectables module: the user's pieces and the article catalogue.
+    "Collectables sections": "Secciones de collectables",
+    "Articles": "Artículos",
+    "Search name or description": "Buscar nombre o descripción",
+    "Limited to %(count)s": "Limitado a %(count)s",
+    "Seller": "Vendedor",
+    "View article": "Ver artículo",
+    "No articles match these filters.": "Ningún artículo coincide con estos filtros.",
+    "View %(name)s": "Ver %(name)s",
+    "Article data": "Datos del artículo",
+    "Your purchases and sales": "Tus compras y ventas",
+    "Seller / buyer": "Vendedor / comprador",
+    "Sold": "Vendido",
+    "You have no purchases or sales of this article.": "No tienes compras ni ventas de este artículo.",
+    "Image": "Imagen",
+    # Collectables: "New piece" form.
+    "Article": "Artículo",
+    "That piece is already registered (same article, date, amount, type and participant).": "Esa pieza ya está registrada (mismo artículo, fecha, monto, tipo y participante).",
+    "Choose a purchase made on or before the sale date.": "Elige una compra hecha en o antes de la fecha de venta.",
+    "Add to my collection": "Agregar a mi colección",
+    "The piece you are selling. Once linked, it no longer counts as yours. Only pieces of this article bought on or before the sale date are listed.": "La pieza que vendes. Al vincularla deja de contar como tuya. Solo se listan las piezas de este artículo compradas en o antes de la fecha de venta.",
+    "Choose an article": "Elige un artículo",
+    # Gestión of the Collectables module (articles and pieces).
+    "New article": "Nuevo artículo",
+    "Delete article?": "¿Eliminar artículo?",
+    "See its pieces": "Ver sus piezas",
+    "Edit %(name)s": "Editar %(name)s",
+    "Back to articles": "Volver a artículos",
+    "Edit article": "Editar artículo",
+    "Replace image": "Reemplazar imagen",
+    "Upload image": "Subir imagen",
+    "Current image": "Imagen actual",
+    "JPEG, PNG or WebP. It is converted to JPEG on save.": "JPEG, PNG o WebP. Se convierte a JPEG al guardar.",
+    "Collectable pieces": "Piezas de collectables",
+    "Search article or participant": "Buscar artículo o participante",
+    "Back to pieces": "Volver a piezas",
+    "Article created: %(article)s": "Artículo creado: %(article)s",
+    "Article saved: %(article)s": "Artículo guardado: %(article)s",
+    "Article deleted: %(article)s": "Artículo eliminado: %(article)s",
+    # Linking a MyComicShop cover to an existing edition (catalog_mycomicshop_link).
+    "Choose the edition to link.": "Elige la edición que quieres vincular.",
+    "The MyComicShop cover is missing.": "Falta la portada de MyComicShop.",
+    "The edition does not exist: it may have been deleted.": "La edición no existe: puede que la hayan eliminado.",
+    "%(edition)s is already linked to another MyComicShop cover (%(id)s).": "%(edition)s ya está vinculada a otra portada de MyComicShop (%(id)s).",
+    "%(edition)s already has this MyComicShop ID.": "%(edition)s ya tiene este ID de MyComicShop.",
+    "Linked to the MyComicShop cover %(id)s.": "Vinculada a la portada %(id)s de MyComicShop.",
+    "Link this cover?": "¿Vincular esta portada?",
+    "Link": "Vincular",
+    # Deleting a purchase that has been sold.
+    "It was sold on %(date)s: delete the sale first.": "Se vendió el %(date)s: elimina primero la venta.",
+    "It was sold on %(date)s and it has signatures registered.": "Se vendió el %(date)s y tiene firmas registradas.",
+    # Rules of the previous trade of a comic piece (Collection).
+    "The previous trade must be a purchase of the same edition by the same collector.": (
+        "La operación anterior debe ser una compra de la misma edición por el mismo coleccionista."
+    ),
 }
 
 
@@ -477,6 +536,23 @@ NEW_JS_TRANSLATIONS = {
     "Create all missing artists": "Crear todos los artistas que faltan",
     "“%(source)s” is now an alias of %(editorial)s: next imports find it.": "“%(source)s” ahora es un alias de %(editorial)s: las próximas importaciones la encuentran.",
     "Editorial chosen: %(editorial)s.": "Editorial elegida: %(editorial)s.",
+    # Collectables piece form (collectable_form.js).
+    "Choose an article": "Elige un artículo",
+    "Choose an article first": "Elige primero un artículo",
+    "No purchases of this article to sell": "No hay compras de este artículo para vender",
+    "The purchases could not be loaded": "No se pudieron cargar las compras",
+    # Gestión article form (article_form.js).
+    "New image: %(name)s (applied on save)": "Nueva imagen: %(name)s (se aplica al guardar)",
+    # Probable matches of the MyComicShop series dialog and their "Link" (catalog_import.js).
+    "Link": "Vincular",
+    "Possibly in Comi: %(cover)s": "Posiblemente en Comi: %(cover)s",
+    "Mark this MyComicShop cover as %(edition)s": "Marcar esta portada de MyComicShop como %(edition)s",
+    "Mark the MyComicShop cover #%(label)s as %(edition)s? Its MyComicShop ID is saved on that edition.": "¿Marcar la portada #%(label)s de MyComicShop como %(edition)s? Su ID de MyComicShop se guarda en esa edición.",
+    "The cover could not be linked. Try again.": "No se pudo vincular la portada. Inténtalo de nuevo.",
+    "Linked: %(edition)s is this cover now.": "Vinculada: %(edition)s es ahora esta portada.",
+    "The cover could not be linked. Check your connection and try again.": "No se pudo vincular la portada. Revisa tu conexión e inténtalo de nuevo.",
+    "Publishing in Comi: %(name)s": "Publishing en Comi: %(name)s",
+    "No publishing in Comi matches this series, so the covers it already has without a MyComicShop ID are not detected.": "Ningún publishing de Comi coincide con esta serie, así que no se detectan las portadas que ya tiene sin ID de MyComicShop.",
 }
 
 
@@ -541,6 +617,30 @@ NEW_PLURALS = {
         "Leído por %(read)s de %(counter)s destinatario",
         "Leído por %(read)s de %(counter)s destinatarios",
     ),
+    ("%(counter)s article", "%(counter)s articles"): ("%(counter)s artículo", "%(counter)s artículos"),
+    ("%(counter)s piece registered", "%(counter)s pieces registered"): (
+        "%(counter)s pieza registrada",
+        "%(counter)s piezas registradas",
+    ),
+    (
+        "“%(name)s” cannot be deleted: %(count)d piece of it is registered.",
+        "“%(name)s” cannot be deleted: %(count)d pieces of it are registered.",
+    ): (
+        "“%(name)s” no se puede eliminar: tiene %(count)d pieza registrada.",
+        "“%(name)s” no se puede eliminar: tiene %(count)d piezas registradas.",
+    ),
+    # Reverting an issue's series or number while editions follow it.
+    (
+        "it changes the series or number, and %(count)d edition that shares them would no longer match "
+        "its issue. Correct them from the edition.",
+        "it changes the series or number, and %(count)d editions that share them would no longer match "
+        "their issue. Correct them from the editions.",
+    ): (
+        "cambia la serie o el número, y %(count)d edición que los comparte dejaría de coincidir con su issue. "
+        "Corrígelos desde la edición.",
+        "cambia la serie o el número, y %(count)d ediciones que los comparten dejarían de coincidir con su "
+        "issue. Corrígelos desde las ediciones.",
+    ),
 }
 
 
@@ -558,6 +658,9 @@ NEW_CONTEXT_TRANSLATIONS = {
     ("change request", "New"): "Nueva",
     ("requests", "All"): "Todas",
     ("save button", "Update"): "Actualizar",
+    ("categories", "All"): "Todas",
+    ("article", "Limited to"): "Limitado a",
+    ("articles", "All"): "Todos",
 }
 
 

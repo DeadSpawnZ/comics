@@ -22,8 +22,10 @@ from .models import (
     AchievementCategory,
     AchievementTier,
     Announcement,
+    Article,
     Artist,
     ChangeRequest,
+    Collectable,
     CollectedIssue,
     Collection,
     Connecting,
@@ -33,7 +35,6 @@ from .models import (
     EditionCoverArtist,
     Editorial,
     EditorialAlias,
-    GeekCollectable,
     Issue,
     IssueCreator,
     Notification,
@@ -477,12 +478,29 @@ class CollectionAdmin(admin.ModelAdmin):
         return TemplateResponse(request, "admin/collection_stats.html", context)
 
 
-@admin.register(GeekCollectable)
-class GeekCollectableAdmin(admin.ModelAdmin):
-    list_display = ["name", "amount", "trade_date", "participant"]
+@admin.register(Article)
+class ArticleAdmin(admin.ModelAdmin):
+    list_display = ["name", "category", "limited_to", "piece_count"]
     ordering = ["name"]
-    search_fields = ["name", "participant__name"]
-    list_filter = ["trade_date", "participant"]
+    search_fields = ["name", "description"]
+    list_filter = ["category"]
+
+    def get_queryset(self, request: HttpRequest) -> QuerySet[Article]:
+        return super().get_queryset(request).annotate(piece_count=Count("pieces"))
+
+    @admin.display(description="Pieces", ordering="piece_count")
+    def piece_count(self, obj: Article) -> int:
+        return obj.piece_count
+
+
+@admin.register(Collectable)
+class CollectableAdmin(admin.ModelAdmin):
+    list_display = ["article", "collector", "amount", "trade_date", "trade_type", "participant"]
+    list_select_related = ["article", "collector", "participant"]
+    ordering = ["article__name", "trade_date"]
+    search_fields = ["article__name", "collector__username", "participant__name"]
+    list_filter = ["trade_type", "article__category", "trade_date", "participant"]
+    autocomplete_fields = ["article", "participant", "previous_trade"]
 
 
 class ConnectingPieceInline(admin.TabularInline):

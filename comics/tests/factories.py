@@ -10,7 +10,17 @@ from django.contrib.auth.models import Group, User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from PIL import Image
 
-from comics.models import Achievement, AchievementCategory, Collection, Dealer, Edition, Editorial, Publishing
+from comics.models import (
+    Achievement,
+    AchievementCategory,
+    Article,
+    Collectable,
+    Collection,
+    Dealer,
+    Edition,
+    Editorial,
+    Publishing,
+)
 
 _sequence = itertools.count(1)
 
@@ -62,6 +72,17 @@ def make_collection(*, collector: User, edition: Edition, **fields: Any) -> Coll
     fields.setdefault("amount", Decimal(next(_sequence)))
     fields.setdefault("trade_date", datetime.date(2020, 1, 1))
     return Collection.objects.create(collector=collector, edition=edition, **fields)
+
+
+def make_article(**fields: Any) -> Article:
+    fields.setdefault("name", f"Article {next(_sequence)}")
+    return Article.objects.create(**fields)
+
+
+def make_collectable(*, collector: User, article: Article, **fields: Any) -> Collectable:
+    fields.setdefault("amount", Decimal(next(_sequence)))
+    fields.setdefault("trade_date", datetime.date(2020, 1, 1))
+    return Collectable.objects.create(collector=collector, article=article, **fields)
 
 
 def image_upload(name: str = "cover.png", *, mode: str = "RGBA", fmt: str = "PNG") -> SimpleUploadedFile:

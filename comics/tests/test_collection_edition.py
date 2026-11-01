@@ -40,6 +40,37 @@ class CollectionEditionRequiredTests(ComiTestCase):
         self.assertFalse(form.is_valid())
         self.assertIn("edition", form.errors)
 
+    def test_gestion_form_rejects_moving_a_sale_to_another_collector_with_its_purchase(self) -> None:
+        # Editing a sale of one collector and switching it to another: the first collector's purchase
+        # is not offered nor accepted for the new collector.
+        purchase = make_collection(collector=self.user, edition=self.edition)
+        sale = make_collection(
+            collector=self.user,
+            edition=self.edition,
+            trade_type=Collection.TradeChoices.SELLING,
+            trade_date=datetime.date(2021, 1, 1),
+            previous_trade=purchase,
+        )
+        other = make_user()
+        data = {
+            "collector": other.pk,
+            "edition": self.edition.pk,
+            "trade_type": "selling",
+            "trade_date": "2021-01-01",
+            "amount": str(sale.amount),
+            "valuation": "0",
+            "previous_trade": purchase.pk,
+        }
+        form = CollectionEntryForm(data=data, instance=sale)
+        self.assertNotIn(purchase.pk, [value for value, _label in form.fields["previous_trade"].widget.choices])
+        self.assertFalse(form.is_valid())
+        self.assertIn("previous_trade", form.errors)
+
+    def test_mis_comics_form_only_accepts_own_purchases(self) -> None:
+        theirs = make_collection(collector=make_user(), edition=self.edition)
+        form = CollectionEntryForm(collector=self.user)
+        self.assertNotIn(theirs, form.fields["previous_trade"].queryset)
+
     def test_admin_form_builds_for_a_new_collection(self) -> None:
         # A new Collection has no edition yet: the admin form must not touch the unset relation.
         form = CollectionForm()

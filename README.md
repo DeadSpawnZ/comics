@@ -25,12 +25,18 @@ en español e inglés.
   (respaldo) o [MyComicShop](https://www.mycomicshop.com), para las variantes que no están en los otros
   dos (incentivos, exclusivas de tienda o convención…): con el `TID` de la serie se abre un modal con
   todas sus portadas, se elige una y se rellenan variante, ratio, impresión, tirada y exclusivas.
+  El modal marca como "Posiblemente en Comi" las ediciones ya catalogadas que parecen ser esa portada
+  (mismo publishing, número y letra, misma condición de exclusiva y la impresión si MyComicShop la
+  indica) y que aún no tienen ID de MyComicShop; "Vincular" guarda ese ID en la edición (como una
+  versión más del historial). El `TID` queda guardado en el publishing (al crearlo desde la
+  importación o al vincular una portada, si no tenía otro) y empareja la serie antes que el título.
   Desde los mismos diálogos se crean el publishing, el título, la editorial y los
   artistas que falten. Las editoriales tienen alias para emparejar los nombres de cada fuente.
 - **Colección personal** ("Mis comics"): compras y ventas de cada edición (con vendedor, precio y
   valoración), firmas de artistas, lo que se tiene y lo que falta de cada publishing. También
   **arcos de lectura** (issues en orden, de varias series), **connectings** (portadas que forman una
-  imagen mayor) y **coleccionables** geek.
+  imagen mayor) y **collectables** (figuras, prints, pines...: un catálogo de artículos
+  compartido y las piezas que compra o vende cada coleccionista).
 - **Historial de versiones** de issues y ediciones: cada guardado es una versión (quién, cuándo,
   motivo), sea cual sea su origen. Cualquier versión se puede restaurar desde Gestión.
 - **Solicitudes de cambio:** los coleccionistas proponen correcciones o altas de issues y ediciones;
@@ -52,6 +58,8 @@ en español e inglés.
 | **Edition** | La pieza física, lo que se suele llamar "un cómic": portada o variante, impresión, formato, precio de portada, fecha de salida e imagen. Apunta al issue que contiene; si es una compilación, a varios issues en orden. Puede pertenecer a un publishing distinto al del issue (reediciones, ediciones extranjeras). |
 | **Artist** | Creadores del interior (`IssueCreator`) y artistas de portada (`EditionCoverArtist`). No se puede borrar mientras tenga créditos. |
 | **Collection** | Una compra o una venta de una edición por un coleccionista. Una venta apunta a la compra que cierra (`previous_trade`). |
+| **Article** | Un artículo del catálogo de collectables (figura, print, pin…), compartido por todos. Se mantiene desde Gestión. |
+| **Collectable** | Una compra o una venta de un artículo por un coleccionista. Como en `Collection`, una venta apunta a la compra que cierra (`previous_trade`). |
 
 ## Roles y áreas
 
@@ -68,11 +76,11 @@ Los roles son grupos de Django; las vistas comprueban permisos, nunca nombres de
 | Ruta | Área |
 | --- | --- |
 | `/comics/` | Mis comics: colección, ediciones, arcos, connectings y solicitudes propias |
-| `/collectables/` | Coleccionables geek |
+| `/collectables/` | Collectables propios (las piezas que se conservan) y catálogo de artículos |
 | `/perfil/`, `/u/<usuario>/` | Perfil propio y perfiles de otros usuarios |
 | `/notificaciones/` | Notificaciones |
 | `/revisiones/` | Cola de revisión de solicitudes (Reviewers y Administrators) |
-| `/gestion/` | Gestión: catálogo, colecciones, arcos, connectings, historial, logros y anuncios (Administrators) |
+| `/gestion/` | Gestión: catálogo, colecciones, artículos y collectables, arcos, connectings, historial, logros y anuncios (Administrators) |
 | `/admin/` | Admin de Django (superusuarios) |
 
 ## Arquitectura
@@ -130,6 +138,7 @@ flowchart TD
     admin --> views_site
     catalog_sources --> helper
     catalog_sources --> models
+    catalog_sources --> versions
     change_requests --> achievements
     change_requests --> history
     change_requests --> models
@@ -193,7 +202,7 @@ Cada caja es un módulo de `comics/models/`; una flecha indica que los modelos d
 ```mermaid
 flowchart LR
     catalog["<b>Catálogo</b><br/>Artist, CollectedIssue, Edition, EditionCoverArtist, Editorial, EditorialAlias, Issue, IssueCreator, Publishing, Title"]
-    collections["<b>Colecciones</b><br/>Collection, Connecting, ConnectingPiece, Dealer, GeekCollectable, ReadingArc, ReadingArcEntry, Signature"]
+    collections["<b>Colecciones</b><br/>Article, Collectable, Collection, Connecting, ConnectingPiece, Dealer, ReadingArc, ReadingArcEntry, Signature"]
     change_requests["<b>Solicitudes de cambio</b><br/>ChangeRequest"]
     achievements["<b>Logros</b><br/>Achievement, AchievementCategory, AchievementTier, UserAchievement"]
     notifications["<b>Notificaciones y anuncios</b><br/>Announcement, Notification"]
@@ -201,7 +210,7 @@ flowchart LR
     auth["<b>django.contrib.auth</b><br/>User, Group"]
     achievements -->|1| auth
     change_requests -->|3| auth
-    collections -->|1| auth
+    collections -->|2| auth
     collections -->|7| catalog
     notifications -->|1| achievements
     notifications -->|3| auth
@@ -241,6 +250,7 @@ erDiagram
         PositiveIntegerField metron_series_id UK "null"
         PositiveIntegerField comicvine_volume_id UK "null"
         PositiveIntegerField gcd_series_id "null"
+        PositiveIntegerField mycomicshop_series_id UK "null"
     }
     Artist {
         BigAutoField id PK
@@ -361,14 +371,25 @@ erDiagram
         PositiveSmallIntegerField row
         PositiveSmallIntegerField column
     }
-    GeekCollectable {
+    Article {
         BigAutoField id PK
         CharField name
         TextField description
+        CharField category
+        PositiveIntegerField limited_to "null"
+        ImageField image "null"
+    }
+    Collectable {
+        BigAutoField id PK
+        ForeignKey collector FK
+        ForeignKey article FK
         DecimalField amount
         DateField trade_date
-        ForeignKey participant FK
-        ImageField image "null"
+        CharField trade_type
+        ForeignKey participant FK "null"
+        DecimalField valuation
+        ForeignKey previous_trade FK "null"
+        TextField notes
     }
     User ||--o{ Collection : "collector"
     Edition ||--o{ Collection : "edition"
@@ -380,7 +401,10 @@ erDiagram
     Issue ||--o{ ReadingArcEntry : "issue"
     Connecting ||--o{ ConnectingPiece : "connecting"
     Edition ||--o{ ConnectingPiece : "edition"
-    Dealer ||--o{ GeekCollectable : "participant"
+    User ||--o{ Collectable : "collector"
+    Article ||--o{ Collectable : "article"
+    Dealer |o--o{ Collectable : "participant"
+    Collectable |o--o{ Collectable : "previous_trade"
 ```
 
 ### Solicitudes de cambio
@@ -668,17 +692,7 @@ docker compose exec web python manage.py award_achievements
 
 Es seguro correrlo varias veces: nunca quita logros ni baja niveles. Cada usuario ve un solo aviso con el total de logros desbloqueados. Opciones: `--user <usuario>` y `--code <código>` para limitarlo.
 
-Además, prográmalo para que corra solo una vez al día. Los logros por fecha (como «Veterano», por años de antigüedad) se revisan al iniciar sesión; con el comando programado también los reciben quienes no vuelven a iniciar sesión. Por ejemplo, con cron en Linux (todos los días a las 4:00):
-
-```cron
-0 4 * * * cd /ruta/al/proyecto && docker compose exec -T web python manage.py award_achievements
-```
-
-En Windows, con el Programador de tareas (desde PowerShell, en la raíz del repo):
-
-```powershell
-schtasks /Create /TN "Comi award_achievements" /SC DAILY /ST 04:00 /TR "cmd /c cd /d $PWD && docker compose exec -T web python manage.py award_achievements"
-```
+Los logros por fecha (como «Veterano», por años de antigüedad) solo se revisan al iniciar sesión o al correr este comando: quien no vuelve a iniciar sesión no los recibe hasta entonces. No se usan programadores del sistema (cron, Programador de tareas de Windows); las tareas periódicas tienen que vivir dentro de la app o del stack de Docker (pendiente en `BACKLOG.md`).
 
 ## Respaldo completo en SQL (`mysqldump`)
 

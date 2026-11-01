@@ -1,0 +1,38 @@
+{% load i18n %}
+{# One row of the Gestión article list. Needs `article` (with piece_count). #}
+<li class="manage-row">
+  <div class="manage-row__thumb">
+    {% if article.image %}
+      <img src="{{ article.image.url }}" alt="" loading="lazy">
+    {% else %}
+      <span class="material-symbols-outlined" aria-hidden="true">image</span>
+    {% endif %}
+  </div>
+  <div class="manage-row__main">
+    <a class="manage-row__title" href="{% url 'manage_article_edit' article.pk %}?next={{ request.get_full_path|urlencode }}">
+      {{ article.name }}
+    </a>
+    <div class="md-body-medium">
+      {{ article.get_category_display }}{% if article.limited_to %} · {% blocktranslate with count=article.limited_to %}Limited to {{ count }}{% endblocktranslate %}{% endif %}
+    </div>
+  </div>
+  <div class="manage-row__chips">
+    <a class="md-assist-chip text-decoration-none{% if article.piece_count %} md-assist-chip--primary{% endif %}"
+       href="{% url 'manage_collectables' %}?article={{ article.pk }}"
+       title="{% translate 'See its pieces' %}">
+      <span class="material-symbols-outlined" aria-hidden="true">inventory</span>
+      {% blocktranslate count counter=article.piece_count %}{{ counter }} piece{% plural %}{{ counter }} pieces{% endblocktranslate %}
+    </a>
+  </div>
+  <div class="manage-row__actions">
+    <a class="md-icon-btn" href="{% url 'manage_article_edit' article.pk %}?next={{ request.get_full_path|urlencode }}"
+       aria-label="{% blocktranslate with name=article.name %}Edit {{ name }}{% endblocktranslate %}" title="{% translate 'Edit' %}">
+      <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+    </a>
+    <button type="button" class="md-btn md-btn--danger-outlined" data-bs-toggle="modal" data-bs-target="#deleteDialog"
+            data-delete-url="{% url 'manage_article_delete' article.pk %}" data-delete-name="{{ article.name }}">
+      <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+      {% translate "Delete" %}
+    </button>
+  </div>
+</li>

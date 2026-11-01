@@ -518,3 +518,99 @@ class InitialVersionTests(ComiTestCase):
             self.assertEqual(versions_of(Issue, issue.pk).filter(is_initial=True).count(), 1)
         entries = version_entries(Edition, compilation.pk)
         self.assertEqual((entries[0].kind, entries[0].user_label), ("initial", "System"))
+
+
+class IssueIdentityRevertTests(ComiTestCase):
+    """An issue's publishing and number are what its editions follow: a version that changes them is
+    not restored while editions follow the issue (they would no longer match it)."""
+
+    def setUp(self) -> None:
+        self.manager = make_user(role=ADMINISTRATORS, username="manager")
+        self.edition = make_edition(number="5")
+        self.issue = self.edition.issue
+        self.as_created = versions_of(Issue, self.issue.pk).first()
+
+    def renamed(self, **changes: Any) -> None:
+        """Rename the issue (as the admin can) and move its edition along, so it follows the new values."""
+        apply_changes(self.issue, changes, user=self.manager)
+        edition_changes = {"publishing": changes.get("publishing", self.edition.publishing)}
+        edition_changes["number"] = changes.get("number", self.edition.number)
+        apply_changes(self.edition, edition_changes, user=self.manager)
+        self.assertEqual(Edition.objects.get(pk=self.edition.pk).issue_id, self.issue.pk)
+
+    def assert_refused(self, version: Any, message: str) -> None:
+        current = Issue.objects.values("publishing_id", "number").get(pk=self.issue.pk)
+        versions = versions_of(Issue, self.issue.pk).count()
+        with self.assertRaisesMessage(ValidationError, message):
+            revert_to_version(version, user=self.manager)
+        self.assertEqual(Issue.objects.values("publishing_id", "number").get(pk=self.issue.pk), current)
+        self.assertEqual(versions_of(Issue, self.issue.pk).count(), versions)
+
+    def test_refused_when_the_number_changes_and_an_edition_follows_it(self) -> None:
+        self.renamed(number="6")
+        self.assert_refused(
+            self.as_created,
+            "This version cannot be restored: it changes the series or number, and 1 edition that shares them "
+            "would no longer match its issue. Correct them from the edition.",
+        )
+
+    def test_refused_when_the_publishing_changes_and_editions_follow_it(self) -> None:
+        self.renamed(publishing=make_publishing())
+        make_edition(publishing=Edition.objects.get(pk=self.edition.pk).publishing, number="5", variant="B")
+        self.assertEqual(self.issue.editions.count(), 2)
+        self.assert_refused(self.as_created, "and 2 editions that share them would no longer match their issue.")
+
+    def test_restored_when_the_series_and_number_stay(self) -> None:
+        apply_changes(self.issue, {"synopsis": "Later"}, user=self.manager)
+        revert_to_version(self.as_created, user=self.manager)
+        self.assertEqual(Issue.objects.get(pk=self.issue.pk).synopsis, "")
+
+    def test_restored_when_no_edition_follows_it(self) -> None:
+        # A foreign edition and a compilation point to the issue; its own edition moves to issue #7.
+        foreign = make_edition(issue=self.issue)
+        compilation = make_edition()
+        apply_changes(compilation, {"collected_issues": [self.issue]}, user=self.manager)
+        apply_changes(self.edition, {"number": "7"}, user=self.manager)
+        self.assertNotEqual(Edition.objects.get(pk=self.edition.pk).issue_id, self.issue.pk)
+        apply_changes(Issue.objects.get(pk=self.issue.pk), {"number": "6"}, user=self.manager)
+        self.assertEqual(Issue.objects.get(pk=self.issue.pk).following_editions_count(), 0)
+
+        revert_to_version(self.as_created, user=self.manager)
+        self.assertEqual(Issue.objects.get(pk=self.issue.pk).number, "5")
+        self.assertEqual(Edition.objects.get(pk=foreign.pk).issue_id, self.issue.pk)
+
+    def test_restored_when_it_brings_the_editions_back_in_sync(self) -> None:
+        # Renamed without moving its edition (as the admin can): going back matches them again.
+        apply_changes(self.issue, {"number": "6"}, user=self.manager)
+        revert_to_version(self.as_created, user=self.manager)
+        self.assertEqual(Issue.objects.get(pk=self.issue.pk).following_editions_count(), 1)
+
+    def test_an_issue_without_editions(self) -> None:
+        issue = Issue.objects.create(publishing=make_publishing(), number="1")
+        created = versions_of(Issue, issue.pk).first()
+        apply_changes(issue, {"number": "2", "publishing": make_publishing()}, user=self.manager)
+        revert_to_version(created, user=self.manager)
+        self.assertEqual(
+            Issue.objects.values_list("publishing_id", "number").get(pk=issue.pk), (created.publishing_id, "1")
+        )
+
+    def test_history_page_marks_the_blocked_versions(self) -> None:
+        self.renamed(number="6")
+        apply_changes(self.issue, {"synopsis": "Later"}, user=self.manager)
+        self.client.force_login(self.manager)
+        response = self.client.get(reverse("manage_issue_history", args=[self.issue.pk]))
+        entries = {entry.version.history_id: entry for entry in response.context["page_obj"].object_list}
+        self.assertIn("1 edition that shares them", entries[self.as_created.history_id].revert_blocked)
+        renamed_version = versions_of(Issue, self.issue.pk)[1]  # #6, before the synopsis: restorable
+        self.assertTrue(entries[renamed_version.history_id].can_revert)
+        self.assertEqual(entries[renamed_version.history_id].revert_blocked, "")
+        self.assertContains(response, "data-revert-blocked=", count=1)
+
+    def test_a_blocked_revert_from_the_page_shows_why(self) -> None:
+        self.renamed(number="6")
+        self.client.force_login(self.manager)
+        response = self.client.post(
+            reverse("manage_issue_revert", args=[self.issue.pk, self.as_created.history_id]), follow=True
+        )
+        self.assertContains(response, "1 edition that shares them would no longer match its issue.")
+        self.assertEqual(Issue.objects.get(pk=self.issue.pk).number, "6")

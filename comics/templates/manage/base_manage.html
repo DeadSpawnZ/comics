@@ -85,6 +85,31 @@
           {% translate "Announcements" %}
         </a>
       </li>
+      {# Submenu: the article catalogue and the collectors' pieces of the Collectables module. #}
+      <li class="md-side-nav__group {% if 'manage_article' in url_name or 'manage_collectable' in url_name %}has-active{% endif %}">
+        <span class="md-side-nav__group-title" id="manage-nav-collectables">
+          <span class="material-symbols-outlined" aria-hidden="true">toys</span>
+          Collectables
+        </span>
+        <ul class="md-side-nav__sublist" aria-labelledby="manage-nav-collectables">
+          <li>
+            <a class="md-side-nav__link {% if 'manage_article' in url_name %}is-active{% endif %}"
+               {% if 'manage_article' in url_name %}aria-current="page"{% endif %}
+               href="{% url 'manage_articles' %}">
+              <span class="material-symbols-outlined" aria-hidden="true">category</span>
+              {% translate "Articles" %}
+            </a>
+          </li>
+          <li>
+            <a class="md-side-nav__link {% if 'manage_collectable' in url_name %}is-active{% endif %}"
+               {% if 'manage_collectable' in url_name %}aria-current="page"{% endif %}
+               href="{% url 'manage_collectables' %}">
+              <span class="material-symbols-outlined" aria-hidden="true">inventory</span>
+              {% translate "Pieces" %}
+            </a>
+          </li>
+        </ul>
+      </li>
     </ul>
   </nav>
   </aside>

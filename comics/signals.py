@@ -6,11 +6,12 @@ from typing import Any
 
 from django.contrib.auth.models import User
 from django.contrib.auth.signals import user_logged_in
-from django.db.models import QuerySet
-from django.db.models.signals import post_delete, post_save
+from django.db.models import Model
+from django.db.models.signals import post_delete, post_save, pre_delete, pre_save
 from django.dispatch import receiver
 from django.http import HttpRequest
 
+from comics import history
 from comics.achievements.engine import (
     schedule,
     schedule_compilation_owners,
@@ -19,12 +20,13 @@ from comics.achievements.engine import (
     schedule_reading_arc_owners,
 )
 from comics.achievements.registry import Event, rule_keys_for
-from comics.history import record_change
 from comics.models import (
     CollectedIssue,
     Collection,
     ConnectingPiece,
     Edition,
+    EditionCoverArtist,
+    IssueCreator,
     Profile,
     ReadingArcEntry,
     Signature,
@@ -138,15 +140,37 @@ def collected_issue_changed(sender: type[CollectedIssue], instance: CollectedIss
 # ---------- Versions (comics.history) ----------
 
 
-def deleting_edition(origin: object) -> bool:
-    """Whether a deletion started with an edition (its collected issues go with it)."""
-    return isinstance(origin, Edition) or (isinstance(origin, QuerySet) and origin.model is Edition)
+# The rows of the versioned many-to-many relations: part of their issue's or edition's versions,
+# but the admin (inline rows) and scripts save and delete them one by one, without saving the owner.
+# See "Relation rows changed on their own" in comics.history.
+VERSIONED_RELATION_ROWS: tuple[type[Model], ...] = (IssueCreator, EditionCoverArtist, CollectedIssue)
 
 
-@receiver(post_save, sender=CollectedIssue, dispatch_uid="comics.history.collected_issue_saved")
-@receiver(post_delete, sender=CollectedIssue, dispatch_uid="comics.history.collected_issue_deleted")
-def collected_issue_versioned(sender: type[CollectedIssue], instance: CollectedIssue, **kwargs: Any) -> None:
-    """The collected issues are part of their edition's versions, but the admin and scripts change
-    them row by row, without saving the edition."""
-    if not kwargs.get("raw") and not deleting_edition(kwargs.get("origin")):
-        record_change(Edition, instance.edition_id)
+def relation_row_saving(sender: type[Model], instance: Model, raw: bool, **kwargs: Any) -> None:
+    if not raw:
+        history.relation_row_saving(instance)
+
+
+def relation_row_saved(sender: type[Model], instance: Model, raw: bool, **kwargs: Any) -> None:
+    if not raw:
+        history.relation_row_saved(instance)
+
+
+def relation_row_deleting(sender: type[Model], instance: Model, **kwargs: Any) -> None:
+    history.relation_rows_deleting()
+
+
+def relation_row_deleted(sender: type[Model], instance: Model, origin: object = None, **kwargs: Any) -> None:
+    history.relation_row_deleted(instance, origin)
+
+
+def connect_relation_rows() -> None:
+    for model in VERSIONED_RELATION_ROWS:
+        uid = f"comics.history.{model._meta.model_name}"
+        pre_save.connect(relation_row_saving, sender=model, dispatch_uid=f"{uid}_saving")
+        post_save.connect(relation_row_saved, sender=model, dispatch_uid=f"{uid}_saved")
+        pre_delete.connect(relation_row_deleting, sender=model, dispatch_uid=f"{uid}_deleting")
+        post_delete.connect(relation_row_deleted, sender=model, dispatch_uid=f"{uid}_deleted")
+
+
+connect_relation_rows()

@@ -21,7 +21,7 @@
     <div class="d-flex align-items-center gap-2 flex-wrap">
       {% if piece %}
         <button type="button" class="md-btn md-btn--danger-outlined" data-bs-toggle="modal" data-bs-target="#deleteDialog"
-                data-delete-url="{% url 'manage_collection_delete' piece.pk %}" data-delete-name="{{ piece.edition }}">
+                data-delete-url="{% url 'manage_collection_delete' piece.pk %}" data-delete-name="{{ piece.edition }}"{% include 'manage/includes/sold_purchase_blocked.html' %}>
           <span class="material-symbols-outlined" aria-hidden="true">delete</span>
           {% translate "Delete" %}
         </button>

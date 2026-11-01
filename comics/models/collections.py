@@ -3,32 +3,38 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from datetime import datetime
-from typing import Any, Self
+from datetime import date, datetime
+from typing import Any, ClassVar, Self
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
+from django.db import transaction
 from django.db.models import (
     CASCADE,
     PROTECT,
-    SET_NULL,
     BooleanField,
     CharField,
+    Count,
     DateField,
     DecimalField,
+    Exists,
     ForeignKey,
     ImageField,
     ManyToManyField,
     Model,
+    OuterRef,
+    PositiveIntegerField,
     PositiveSmallIntegerField,
     Q,
     QuerySet,
+    Subquery,
     TextChoices,
     TextField,
     UniqueConstraint,
 )
-from django.utils.translation import gettext, ngettext
+from django.utils.functional import Promise
+from django.utils.translation import gettext, ngettext, pgettext_lazy
 from django.utils.translation import gettext_lazy as _
 
 from ..helper import generate_image_jpeg
@@ -47,7 +53,10 @@ class Dealer(Model):
         return self.name
 
 
-class CollectionQuerySet(QuerySet):
+class TradeQuerySet(QuerySet):
+    """Purchases and sales of a collector (Collection for editions, Collectable for articles). The
+    model needs a `TradeChoices` with BUYING/SELLING, a `collector` and a `previous_trade`."""
+
     def owned_by(self, user: User) -> Self:
         """Purchases by `user` that have not been sold (they are not the previous_trade of a sale)."""
         selling = self.model.TradeChoices.SELLING
@@ -56,8 +65,97 @@ class CollectionQuerySet(QuerySet):
         ).values_list("previous_trade_id", flat=True)
         return self.filter(collector=user).exclude(Q(trade_type=selling) | Q(id__in=sold_ids))
 
+    def sellable_by(
+        self, collector: User, before: date | None = None, current: Collection | Collectable | None = None
+    ) -> Self:
+        """Purchases in this queryset that `collector` still owns, made on or before `before`: the ones a
+        sale can point to as its previous trade. `current` (the sale being edited) keeps the purchase it
+        already points to, as long as it belongs to `collector`, and is never listed itself."""
+        purchases = self.owned_by(collector).filter(trade_type=self.model.TradeChoices.BUYING)
+        if current is not None and current.previous_trade_id:
+            purchases = purchases | self.filter(pk=current.previous_trade_id, collector=collector)
+        if before:
+            purchases = purchases.filter(trade_date__lte=before)
+        if current is not None and current.pk:
+            purchases = purchases.exclude(pk=current.pk)
+        return purchases.order_by("trade_date", "id")
 
-class Collection(Model):
+    def with_sold_flag(self) -> Self:
+        """Annotate `is_sold`: whether a sale of the same collector points to the piece as its previous
+        trade. Only a purchase can be sold (validate_previous_trade), so a sale is never flagged."""
+        sales = self.model.objects.filter(
+            previous_trade=OuterRef("pk"),
+            collector=OuterRef("collector"),
+            trade_type=self.model.TradeChoices.SELLING,
+        )
+        return self.annotate(is_sold=Exists(sales))
+
+    def with_sale_date(self) -> Self:
+        """Annotate `sold_on`: the date of the earliest trade that points to the piece as its previous
+        trade (its sale), or None. Such a piece cannot be deleted (previous_trade is PROTECT)."""
+        sales = self.model.objects.filter(previous_trade=OuterRef("pk")).order_by("trade_date", "pk")
+        return self.annotate(sold_on=Subquery(sales.values("trade_date")[:1]))
+
+
+class CollectionQuerySet(TradeQuerySet):
+    """Trades of editions (Collection)."""
+
+
+class PreviousTradeRules:
+    """Rules of `previous_trade`, shared by Collection (editions) and Collectable (articles): only a sale
+    has a previous trade, and it is another piece, a purchase of the same item (`item_field`) by the
+    same collector that no other sale has sold yet. MySQL cannot check this with a CHECK constraint
+    (see Collection.Meta). Checked in clean() (forms, admin) and again in save(), so code paths that
+    skip form validation cannot link a wrong previous trade."""
+
+    item_field: ClassVar[str]  # the traded item: "edition" or "article"
+    wrong_purchase_message: ClassVar[str | Promise]  # the previous trade is not a purchase of that item
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        # One transaction (a savepoint inside the caller's), so the purchase locked by
+        # validate_previous_trade stays locked until this sale is written.
+        with transaction.atomic():
+            self.validate_previous_trade(lock=True)
+            super().save(*args, **kwargs)
+
+    def clean(self) -> None:
+        super().clean()
+        self.validate_previous_trade()
+
+    def validate_previous_trade(self, *, lock: bool = False) -> None:
+        """Raise a ValidationError on `previous_trade` if it breaks the rules. With `lock` (on save,
+        inside a transaction) the purchase row is locked first (SELECT ... FOR UPDATE): two sales of the
+        same purchase saved at the same time are then checked one after the other, and the second one
+        sees the first (locking reads always read the latest committed rows)."""
+        if self.previous_trade_id is None:
+            return
+        if self.pk and self.previous_trade_id == self.pk:
+            raise ValidationError({"previous_trade": _("A piece can't be its own previous trade.")})
+        if self.trade_type != self.TradeChoices.SELLING:
+            raise ValidationError({"previous_trade": _("Only a sale can have a previous trade.")})
+        manager = type(self)._default_manager
+        purchases = manager.filter(pk=self.previous_trade_id)
+        if lock:
+            purchases = purchases.select_for_update()
+        previous = purchases.first()
+        item_id = f"{self.item_field}_id"
+        if (
+            previous is None
+            or previous.trade_type != self.TradeChoices.BUYING
+            or previous.collector_id != self.collector_id
+            or getattr(previous, item_id) != getattr(self, item_id)
+        ):
+            raise ValidationError({"previous_trade": self.wrong_purchase_message})
+        other_sales = manager.filter(previous_trade_id=self.previous_trade_id, trade_type=self.TradeChoices.SELLING)
+        if self.pk:
+            other_sales = other_sales.exclude(pk=self.pk)
+        if lock:
+            other_sales = other_sales.select_for_update()
+        if other_sales.exists():
+            raise ValidationError({"previous_trade": _("This purchase has already been sold.")})
+
+
+class Collection(PreviousTradeRules, Model):
     class TradeChoices(TextChoices):
         BUYING = "buying", _("Buying")
         SELLING = "selling", _("Selling")
@@ -70,7 +168,8 @@ class Collection(Model):
     participant = ForeignKey(Dealer, on_delete=PROTECT, null=True, blank=True)
     valuation = DecimalField(max_digits=4, decimal_places=2, default=0.00)
     signatures = ManyToManyField(Artist, blank=True, through="Signature")
-    previous_trade = ForeignKey("self", on_delete=SET_NULL, null=True, blank=True, related_name="next_trades")
+    # PROTECT: a purchase that has been sold cannot be deleted while its sale points to it.
+    previous_trade = ForeignKey("self", on_delete=PROTECT, null=True, blank=True, related_name="next_trades")
     notes = TextField(max_length=500, blank=True)
 
     objects = CollectionQuerySet.as_manager()
@@ -87,18 +186,17 @@ class Collection(Model):
             # validate_previous_trade), not at the database level.
         ]
 
+    item_field = "edition"
+    wrong_purchase_message = _("The previous trade must be a purchase of the same edition by the same collector.")
+
     def __str__(self) -> str:
         return self.edition.__str__()
 
     def save(self, *args: Any, **kwargs: Any) -> None:
-        self.validate_previous_trade()
         self.validate_duplicate()
 
+        # PreviousTradeRules.save validates the previous trade too.
         super().save(*args, **kwargs)
-
-    def validate_previous_trade(self) -> None:
-        if self.pk and self.previous_trade_id == self.pk:
-            raise ValidationError("A collection can't be its own previous trade.")
 
     def validate_duplicate(self) -> None:
         coincidences = (
@@ -338,13 +436,33 @@ class ConnectingPiece(Model):
             raise ValidationError(errors)
 
 
-class GeekCollectable(Model):
+class Article(Model):
+    """A collectable object of the shared catalogue (figure, print, pin...), the way Edition is for
+    comics; what each collector bought or sold of it is a Collectable."""
+
+    class CategoryChoices(TextChoices):
+        FIGURE = "figure", _("Figure")
+        PRINT = "print", _("Print")
+        PIN = "pin", _("Pin")
+        CARD = "card", _("Card")
+        POSTER = "poster", _("Poster")
+        VIDEO = "video", _("Video")
+        # "Other" alone is already translated as a plural ("Otros") elsewhere.
+        OTHER = "other", pgettext_lazy("article category", "Other")
+
     name = CharField(max_length=100)
     description = TextField(max_length=500, blank=True)
-    amount = DecimalField(max_digits=8, decimal_places=2, default=0.00)
-    trade_date = DateField(default=datetime.now)
-    participant = ForeignKey(Dealer, on_delete=PROTECT, default=1)
-    image = ImageField(upload_to="collectables/", null=True, blank=True)
+    category = CharField(max_length=20, choices=CategoryChoices, default=CategoryChoices.OTHER)
+    limited_to = PositiveIntegerField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(1)],
+        help_text=_("Print run, when the article is limited."),
+    )
+    image = ImageField(upload_to="articles/", null=True, blank=True)
+
+    class Meta:
+        ordering = ["name"]
 
     def __str__(self) -> str:
         return self.name
@@ -358,10 +476,54 @@ class GeekCollectable(Model):
         """Convert a newly uploaded image to JPEG. An image that did not change was already converted
         when it was uploaded, so it is left as is (same rule as Edition.process_image)."""
         if self.pk:
-            old_image = GeekCollectable.objects.filter(pk=self.pk).values_list("image", flat=True).first()
+            old_image = Article.objects.filter(pk=self.pk).values_list("image", flat=True).first()
             if self.image == old_image:
                 return
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         base_name = f"{self.name}_{timestamp}".replace(" ", "_")
         self.image = generate_image_jpeg(base_name, self.image)
+
+
+class CollectableQuerySet(TradeQuerySet):
+    """Trades of articles (Collectable)."""
+
+    def count_by_article(self) -> dict[int, int]:
+        """{article_id: number of pieces} in this queryset, in one grouped query."""
+        grouped = self.order_by().values("article_id").annotate(pieces=Count("id"))
+        return {row["article_id"]: row["pieces"] for row in grouped}
+
+
+class Collectable(PreviousTradeRules, Model):
+    """A collector's purchase or sale of an Article, the way Collection is for editions. A sale points
+    to the purchase it sells through previous_trade."""
+
+    TradeChoices = Collection.TradeChoices
+
+    collector = ForeignKey(User, on_delete=PROTECT)
+    article = ForeignKey(Article, on_delete=PROTECT, related_name="pieces")
+    amount = DecimalField(max_digits=8, decimal_places=2, default=0.00)
+    trade_date = DateField(default=datetime.now)
+    trade_type = CharField(max_length=50, choices=TradeChoices.choices, default=TradeChoices.BUYING)
+    participant = ForeignKey(Dealer, on_delete=PROTECT, null=True, blank=True)
+    valuation = DecimalField(max_digits=4, decimal_places=2, default=0.00)
+    # PROTECT: a purchase that has been sold cannot be deleted while its sale points to it.
+    previous_trade = ForeignKey("self", on_delete=PROTECT, null=True, blank=True, related_name="next_trades")
+    notes = TextField(max_length=500, blank=True)
+
+    objects = CollectableQuerySet.as_manager()
+
+    class Meta:
+        constraints = [
+            # A NULL participant counts as distinct in MySQL, so pieces without one are not covered.
+            UniqueConstraint(
+                fields=["collector", "article", "trade_date", "amount", "trade_type", "participant"],
+                name="unique_collectable_per_collector_trade",
+            ),
+        ]
+
+    item_field = "article"
+    wrong_purchase_message = _("The previous trade must be a purchase of the same article by the same collector.")
+
+    def __str__(self) -> str:
+        return str(self.article)

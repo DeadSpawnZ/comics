@@ -21,7 +21,7 @@ from django.utils.translation import gettext as _
 from django.views.decorators.http import require_GET
 
 from comics.decorators import admin_site_required
-from comics.helper import parse_date_or_none
+from comics.helper import parse_date_or_none, parse_id_or_none
 from comics.models import Collection, Edition, Editorial, Signature
 
 PAGE_LIMIT = 30
@@ -140,6 +140,11 @@ def get_previous_trades(request: HttpRequest, edition_id: int) -> JsonResponse:
         .select_related("edition__publishing", "participant")
         .prefetch_related("edition__publishing__editorials")
     )
+
+    # Only purchases of the collector of the sale can be sold (Collection.validate_previous_trade).
+    collector_id = parse_id_or_none(request.GET.get("collector"))
+    if collector_id:
+        trades = trades.filter(collector_id=collector_id)
 
     # You cannot sell something you did not own yet: only purchases made
     # on or before the sale date are offered.

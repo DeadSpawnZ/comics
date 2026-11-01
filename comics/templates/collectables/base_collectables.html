@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block content %}
+{% with url_name=request.resolver_match.url_name %}
+<div class="md-side-layout my-4">
+  <aside class="md-side-column">
+  <nav class="md-side-nav" aria-label="{% translate 'Collectables sections' %}">
+    <div class="md-side-nav__title">Collectables</div>
+    <ul>
+      <li>
+        <a class="md-side-nav__link {% if url_name == 'collectables' or url_name == 'collectables_piece_new' %}is-active{% endif %}"
+           {% if url_name == 'collectables' or url_name == 'collectables_piece_new' %}aria-current="page"{% endif %}
+           href="{% url 'collectables' %}">
+          <span class="material-symbols-outlined" aria-hidden="true">collections_bookmark</span>
+          {% translate "Collection" %}
+        </a>
+      </li>
+      <li>
+        <a class="md-side-nav__link {% if 'article' in url_name %}is-active{% endif %}"
+           {% if 'article' in url_name %}aria-current="page"{% endif %}
+           href="{% url 'collectables_articles' %}">
+          <span class="material-symbols-outlined" aria-hidden="true">toys</span>
+          {% translate "Articles" %}
+        </a>
+      </li>
+    </ul>
+  </nav>
+  {% block side_panels %}{% endblock %}
+  </aside>
+
+  <div class="comics-content">
+    <nav class="md-breadcrumb" aria-label="{% translate 'Breadcrumb' %}">
+      <a href="{% url 'collectables' %}">Collectables</a>
+      <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+      {% block breadcrumb %}{% endblock %}
+    </nav>
+    {% block collectables_content %}{% endblock %}
+  </div>
+</div>
+{% endwith %}
+{% endblock %}

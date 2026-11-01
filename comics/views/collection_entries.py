@@ -18,6 +18,7 @@ from django.forms.models import BaseInlineFormSet
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils.formats import date_format
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_GET, require_POST
 
@@ -31,23 +32,20 @@ from comics.forms import (
     purchase_label,
 )
 from comics.helper import parse_date_or_none, parse_id_or_none
-from comics.models import Collection, Edition
-from comics.roles import can_access_management
+from comics.models import Collection, Edition, Signature
 from comics.views.manage_editions import PAGE_SIZE, RECENT_COUNT
-from comics.views.utils import log_action, safe_next_url
+from comics.views.utils import (
+    carry_over_query,
+    first_sale_date,
+    initial_from_query,
+    log_action,
+    requested_collector,
+    safe_next_url,
+)
 
 # Values carried over by "Save and add another" (a batch bought the same day from the same person).
 CARRY_OVER = ("publishing", "trade_date", "trade_type", "participant", "collector")
 TYPE_TABS = [("", "all"), (Collection.TradeChoices.BUYING, "buying"), (Collection.TradeChoices.SELLING, "selling")]
-
-
-def _carried_initial(request: HttpRequest) -> dict[str, str]:
-    return {key: request.GET[key] for key in CARRY_OVER if request.GET.get(key)}
-
-
-def _carry_over_query(form: CollectionEntryForm) -> str:
-    values = {key: form.data.get(key) for key in CARRY_OVER if form.data.get(key)}
-    return urlencode(values)
 
 
 def _signature_formset(request: HttpRequest, form: CollectionEntryForm) -> BaseInlineFormSet:
@@ -55,10 +53,10 @@ def _signature_formset(request: HttpRequest, form: CollectionEntryForm) -> BaseI
 
 
 def _save_entry(
-    request: HttpRequest, form: CollectionEntryForm, signatures: BaseInlineFormSet, created: bool
+    request: HttpRequest, form: CollectionEntryForm, signatures: BaseInlineFormSet, *, created: bool, origin: str
 ) -> Collection | None:
-    """Save the piece and its signatures together; on success log it and return the piece,
-    otherwise add the error to the form."""
+    """Save the piece and its signatures together; on success log it (made "desde `origin`", the
+    page it was made from) and return the piece, otherwise add the error to the form."""
     try:
         with transaction.atomic():
             piece = form.save()
@@ -67,7 +65,6 @@ def _save_entry(
     except ValidationError as exc:
         form.add_error(None, exc)
         return None
-    origin = "Gestión" if request.resolver_match.url_name.startswith("manage_") else "Mis comics"
     log_action(
         request, piece, ADDITION if created else CHANGE, f"{'Creado' if created else 'Modificado'} desde {origin}."
     )
@@ -125,9 +122,7 @@ def api_editions(request: HttpRequest) -> JsonResponse:
 @require_GET
 def api_purchases(request: HttpRequest) -> JsonResponse:
     """Purchases a sale can point to. Only Gestión users may ask about another collector's pieces."""
-    collector = request.user
-    if can_access_management(request.user) and request.GET.get("collector", "").isdigit():
-        collector = User.objects.filter(pk=request.GET["collector"]).first() or collector
+    collector = requested_collector(request)
     try:
         edition_id = int(request.GET.get("edition", ""))
     except ValueError:
@@ -144,13 +139,14 @@ def api_purchases(request: HttpRequest) -> JsonResponse:
 
 @login_required
 def my_piece_new(request: HttpRequest) -> HttpResponse:
-    form = CollectionEntryForm(request.POST or None, collector=request.user, initial=_carried_initial(request))
+    initial = initial_from_query(request, CARRY_OVER)
+    form = CollectionEntryForm(request.POST or None, collector=request.user, initial=initial)
     signatures = _signature_formset(request, form)
     if request.method == "POST" and all([form.is_valid(), signatures.is_valid()]):
-        piece = _save_entry(request, form, signatures, created=True)
+        piece = _save_entry(request, form, signatures, created=True, origin="Mis comics")
         if piece:
             if "save_add_another" in request.POST:
-                return redirect(f"{reverse('comics_piece_new')}?{_carry_over_query(form)}")
+                return redirect(f"{reverse('comics_piece_new')}?{carry_over_query(form, CARRY_OVER)}")
             # Show the collection on the letter where the new piece is listed.
             title = piece.edition.publishing.title
             letter = (title.name if title else piece.edition.publishing.publishing_title)[:1].upper()
@@ -179,9 +175,12 @@ def collection_list(request: HttpRequest) -> HttpResponse:
         (value, labels[key], (base.filter(trade_type=value) if value else base).count()) for value, key in TYPE_TABS
     ]
     related = ("collector", "participant", "edition__publishing")
+    editorials = "edition__publishing__editorials"  # read by Edition.__str__ (the delete button's name)
     pieces = (
         (base.filter(trade_type=type_filter) if type_filter else base)
         .select_related(*related)
+        .prefetch_related(editorials)
+        .with_sale_date()
         .order_by(
             "edition__publishing__publishing_title",
             "edition__publishing__year",
@@ -195,7 +194,8 @@ def collection_list(request: HttpRequest) -> HttpResponse:
     # The latest additions go first (only on the unfiltered first page), then the A-Z list.
     recent = []
     if page_obj.number == 1 and not (query or collector_filter or type_filter):
-        recent = list(Collection.objects.select_related(*related).order_by("-id")[:RECENT_COUNT])
+        rows = Collection.objects.select_related(*related).prefetch_related(editorials).with_sale_date()
+        recent = list(rows.order_by("-id")[:RECENT_COUNT])
     return render(
         request,
         "manage/collection_list.html",
@@ -214,16 +214,16 @@ def collection_list(request: HttpRequest) -> HttpResponse:
 
 @management_required
 def collection_form(request: HttpRequest, pk: int | None = None) -> HttpResponse:
-    piece = get_object_or_404(Collection.objects.select_related("edition"), pk=pk) if pk else None
+    piece = get_object_or_404(Collection.objects.select_related("edition").with_sale_date(), pk=pk) if pk else None
     back_url = safe_next_url(request, reverse("manage_collections"))
-    initial = {} if piece else {"collector": request.user.pk, **_carried_initial(request)}
+    initial = {} if piece else {"collector": request.user.pk, **initial_from_query(request, CARRY_OVER)}
     form = CollectionEntryForm(request.POST or None, instance=piece, initial=initial)
     signatures = _signature_formset(request, form)
     if request.method == "POST" and all([form.is_valid(), signatures.is_valid()]):
-        saved = _save_entry(request, form, signatures, created=piece is None)
+        saved = _save_entry(request, form, signatures, created=piece is None, origin="Gestión")
         if saved:
             if "save_add_another" in request.POST:
-                query = _carry_over_query(form)
+                query = carry_over_query(form, CARRY_OVER)
                 return redirect(f"{reverse('manage_collection_new')}?{query}&{urlencode({'next': back_url})}")
             if "save_continue" in request.POST:
                 return redirect(f"{reverse('manage_collection_edit', args=[saved.pk])}?{urlencode({'next': back_url})}")
@@ -231,6 +231,21 @@ def collection_form(request: HttpRequest, pk: int | None = None) -> HttpResponse
     context = _form_context(form, signatures, piece)
     context["back_url"] = back_url
     return render(request, "manage/collection_form.html", context)
+
+
+def _delete_refusal(piece: Collection, label: str, error: ProtectedError) -> str:
+    """Why `piece` could not be deleted: a sale points to it (previous_trade), it has signatures
+    (Signature.collectable), or both."""
+    sold_on = first_sale_date(piece, error)
+    signed = any(isinstance(obj, Signature) for obj in error.protected_objects)
+    if sold_on is None:
+        return _("“%(name)s” cannot be deleted: it has signatures registered.") % {"name": label}
+    sale_date = date_format(sold_on)
+    if signed:
+        reason = _("It was sold on %(date)s and it has signatures registered.") % {"date": sale_date}
+    else:
+        reason = _("It was sold on %(date)s: delete the sale first.") % {"date": sale_date}
+    return _("“%(name)s” cannot be deleted. %(reason)s") % {"name": label, "reason": reason}
 
 
 @management_required
@@ -243,8 +258,8 @@ def collection_delete(request: HttpRequest, pk: int) -> HttpResponseRedirect:
         with transaction.atomic():
             log_action(request, piece, DELETION, "Eliminado desde Gestión.")
             piece.delete()
-    except ProtectedError:
-        messages.error(request, _("“%(name)s” cannot be deleted: it has signatures registered.") % {"name": label})
+    except ProtectedError as error:
+        messages.error(request, _delete_refusal(piece, label, error))
     else:
         messages.success(request, _("Piece deleted: %(piece)s") % {"piece": label})
     return redirect(back_url)

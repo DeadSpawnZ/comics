@@ -702,6 +702,39 @@ a.md-paginator__page:hover {
   color: var(--md-on-secondary-container);
 }
 
+/* A group of related links: a heading (not a link) and its indented children, set a bit apart
+   from the links above it. The nested list is labelled by the heading. */
+.md-side-nav__group {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--md-outline-variant);
+}
+
+.md-side-nav__group-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  height: 36px;
+  padding: 0 1rem;
+  color: var(--md-on-surface-variant);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.md-side-nav__group.has-active .md-side-nav__group-title {
+  color: var(--md-primary);
+}
+
+.md-side-nav .md-side-nav__sublist {
+  padding-left: 1rem;
+}
+
+.md-side-nav__sublist .md-side-nav__link {
+  height: 40px;
+}
+
 .md-breadcrumb {
   display: flex;
   flex-wrap: wrap;
@@ -753,6 +786,27 @@ a.md-paginator__page:hover {
   .md-side-nav ul {
     flex-direction: row;
     overflow-x: auto;
+  }
+
+  /* In the horizontal bar a group follows the other links, after a vertical separator. */
+  .md-side-nav__group {
+    display: flex;
+    align-items: center;
+    margin: 0 0 0 0.25rem;
+    padding: 0 0 0 0.25rem;
+    border-top: none;
+    border-left: 1px solid var(--md-outline-variant);
+  }
+
+  .md-side-nav__group-title {
+    height: auto;
+    padding: 0 0.5rem;
+    white-space: nowrap;
+  }
+
+  .md-side-nav .md-side-nav__sublist {
+    padding-left: 0;
+    overflow: visible;
   }
 }
 

@@ -3,7 +3,11 @@
   The variants of a catalogue series (MyComicShop) to pick the one to import, opened from the import
   box of the edition form. js/custom/catalog_import.js fills it from the series API: one fieldset per
   issue number with a card (a radio) per variant; the variants already in Comi are disabled and link
-  to their edition. A sibling of the edition form, so its radios are never submitted with it.
+  to their edition. A variant that is probably an existing edition (same number and letter) stays
+  selectable and shows that edition with a "Link" button, which saves the variant's MyComicShop ID
+  on it (the status line below reports the result or the error). The header says which Comi
+  publishing the series matched, or that none did (then no probable match is looked for). A sibling of the edition form, so
+  its radios are never submitted with it.
 {% endcomment %}
 <div class="modal fade md-dialog" id="catalog-series-dialog" tabindex="-1" aria-labelledby="catalog-series-title" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-scrollable">
@@ -14,6 +18,7 @@
           <span class="material-symbols-outlined" aria-hidden="true">open_in_new</span>
           <span id="catalog-series-link-text"></span>
         </a>
+        <p class="catalog-series__publishing mb-0" id="catalog-series-publishing" hidden></p>
       </div>
       <div class="modal-body">
         <div class="catalog-import__status mb-2" id="catalog-series-status" role="status" aria-live="polite"></div>
@@ -24,6 +29,38 @@
         <button type="button" class="md-btn md-btn--filled" id="catalog-series-import" disabled>
           <span class="material-symbols-outlined" aria-hidden="true">download</span>
           {% translate "Import" %}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# Confirms a "Link" of the series dialog, opened on top of it: both covers side by side, so the user can check they are the same before the MyComicShop ID is saved on the edition. #}
+<div class="modal fade md-dialog" id="catalog-link-dialog" tabindex="-1" aria-labelledby="catalog-link-title" aria-describedby="catalog-link-text" aria-hidden="true" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title md-headline-small" id="catalog-link-title">{% translate "Link this cover?" %}</h2>
+      </div>
+      <div class="modal-body">
+        <div class="catalog-link__covers mb-3">
+          <figure class="catalog-link__cover">
+            <div class="catalog-series__thumb"><img id="catalog-link-source-image" alt="" hidden></div>
+            <figcaption><strong>MyComicShop</strong><br><span id="catalog-link-source"></span></figcaption>
+          </figure>
+          <span class="material-symbols-outlined catalog-link__arrow" aria-hidden="true">arrow_forward</span>
+          <figure class="catalog-link__cover">
+            <div class="catalog-series__thumb"><img id="catalog-link-target-image" alt="" hidden></div>
+            <figcaption><strong>Comi</strong><br><span id="catalog-link-target"></span></figcaption>
+          </figure>
+        </div>
+        <p class="md-body-medium mb-0" id="catalog-link-text"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="md-btn md-btn--text" data-bs-dismiss="modal">{% translate "Cancel" %}</button>
+        <button type="button" class="md-btn md-btn--filled" id="catalog-link-confirm">
+          <span class="material-symbols-outlined" aria-hidden="true">link</span>
+          {% translate "Link" %}
         </button>
       </div>
     </div>

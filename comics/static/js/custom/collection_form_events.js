@@ -36,6 +36,7 @@ function filterPreviousTrade() {
   const previousTradeField = document.getElementById("id_previous_trade");
   const tradeTypeField = document.getElementById("id_trade_type");
   const tradeDateField = document.getElementById("id_trade_date");
+  const collectorField = document.getElementById("id_collector");
 
   if (!(comicField && previousTradeField && tradeTypeField && tradeDateField)) {
     return;
@@ -57,6 +58,10 @@ function filterPreviousTrade() {
     }
 
     const params = new URLSearchParams();
+    if (collectorField && collectorField.value) {
+      // Only purchases of the collector of the sale can be sold.
+      params.set("collector", collectorField.value);
+    }
     if (tradeDateField.value) {
       // Only purchases made on or before the sale date are offered.
       params.set("before", tradeDateField.value);
@@ -81,4 +86,7 @@ function filterPreviousTrade() {
   comicField.addEventListener("change", loadPreviousTrades);
   tradeDateField.addEventListener("change", loadPreviousTrades);
   tradeTypeField.addEventListener("change", loadPreviousTrades);
+  if (collectorField) {
+    collectorField.addEventListener("change", loadPreviousTrades);
+  }
 }

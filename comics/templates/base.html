@@ -96,8 +96,8 @@
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link md-nav-link {% if url_name == 'collectables' %}active{% endif %}"
-                 {% if url_name == 'collectables' %}aria-current="page"{% endif %}
+              <a class="nav-link md-nav-link {% if url_name|slice:':12' == 'collectables' %}active{% endif %}"
+                 {% if url_name|slice:':12' == 'collectables' %}aria-current="page"{% endif %}
                  href="{% url 'collectables' %}">
                 <span class="material-symbols-outlined" aria-hidden="true">toys</span>
                 Collectables

@@ -116,6 +116,7 @@ class SourceIssue:
     # The series (volume) and publisher ids in the source, when its issue answer says them.
     metron_series_id: int | None = None
     comicvine_volume_id: int | None = None
+    mycomicshop_series_id: int | None = None  # the TID, matched against Publishing.mycomicshop_series_id
     source_publisher_id: int | None = None
     # The series id in the source when its series hooks need it (MyComicShop's TID).
     source_series_id: int | None = None

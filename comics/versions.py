@@ -18,7 +18,7 @@ from django.db.models import Field, FileField, ForeignKey, ManyToManyField, Mode
 from django.utils import formats, timezone
 from django.utils.functional import Promise
 from django.utils.translation import gettext as _
-from django.utils.translation import gettext_lazy
+from django.utils.translation import gettext_lazy, ngettext
 from simple_history.utils import get_m2m_field_name, get_m2m_reverse_field_name
 
 from comics.achievements.engine import schedule_compilation_owners, schedule_for_owners
@@ -170,13 +170,34 @@ def cannot_restore(message: str) -> ValidationError:
     return ValidationError(_("This version cannot be restored: %(reason)s") % {"reason": message})
 
 
+def changes_issue_identity(issue: Issue, version: Model) -> bool:
+    """Whether restoring `version` (of `issue`) would change the issue's publishing or number."""
+    return (version.publishing_id, version.number) != (issue.publishing_id, issue.number)
+
+
+def identity_change_refusal(following: int) -> ValidationError:
+    """Why an issue version that changes its publishing or number cannot be restored while
+    `following` editions follow the issue (see Issue.following_editions_count): they would keep the
+    old ones and no longer match it. Their series and number are corrected through each edition."""
+    reason = ngettext(
+        "it changes the series or number, and %(count)d edition that shares them would no longer match "
+        "its issue. Correct them from the edition.",
+        "it changes the series or number, and %(count)d editions that share them would no longer match "
+        "their issue. Correct them from the editions.",
+        following,
+    ) % {"count": following}
+    return cannot_restore(reason)
+
+
 def revert_to_version(version: Model, *, user: User | None, reason: str = "") -> Model:
     """Bring a row back to the state stored in one of its versions (fields and relations) and
     return the version this writes, marked `reverted_to=version`, by `user`, with `reason` (it can
     be reverted too). A deleted row is recreated with its id.
 
     Raises ValidationError, changing nothing, when that state cannot be restored: the version is a
-    deletion, a row it points to no longer exists, or another row now has its unique values. An issue
+    deletion, a row it points to no longer exists, another row now has its unique values, or it
+    changes the publishing or number of an issue that editions follow (they would no longer match it;
+    see identity_change_refusal). An issue
     it points to that was deleted since (e.g. left orphaned when its edition moved to another number)
     is restored from its own history first, or replaced by the issue that now has its publishing and
     number. Image paths are restored as stored: the files are never deleted, so they still exist."""
@@ -187,6 +208,10 @@ def revert_to_version(version: Model, *, user: User | None, reason: str = "") ->
     with transaction.atomic():
         with history_batch(user=user, reason=reason) as batch:
             instance = model._default_manager.select_for_update().filter(pk=pk).order_by().first() or model(pk=pk)
+            if isinstance(instance, Issue) and not instance._state.adding and changes_issue_identity(instance, version):
+                following = instance.following_editions_count()
+                if following:
+                    raise identity_change_refusal(following)
             values = restorable_values(version, user=user, reason=reason)
             relations = restorable_relations(version, user=user, reason=reason)
             old_issue_id = instance.issue_id if isinstance(instance, Edition) else None
@@ -302,6 +327,7 @@ class VersionEntry:
     changes: list[FieldChange]
     relation_changes: list[RelationChange]
     can_revert: bool
+    revert_blocked: str = ""  # why reverting to it would be refused (see revert_to_version), if known up front
 
 
 class RelatedNames:
@@ -352,6 +378,8 @@ def version_entries(model: type[Model], pk: Any) -> list[VersionEntry]:
     names = RelatedNames(related_ids(model, versions, rows, m2m_fields))
     by_id = {version.history_id: version for version in versions}
     exists = model._default_manager.filter(pk=pk).exists()
+    issue = Issue.objects.filter(pk=pk).first() if model is Issue else None
+    following = issue.following_editions_count() if issue is not None else 0
 
     entries = []
     for index, version in enumerate(versions):
@@ -367,6 +395,10 @@ def version_entries(model: type[Model], pk: Any) -> list[VersionEntry]:
                 if change is not None:
                     relation_changes.append(change)
         kind, kind_label = version_kind(version, by_id)
+        can_revert = version.history_type != DELETED and not (index == 0 and exists)
+        revert_blocked = ""
+        if can_revert and following and changes_issue_identity(issue, version):
+            revert_blocked = " ".join(identity_change_refusal(following).messages)
         entries.append(
             VersionEntry(
                 version=version,
@@ -376,7 +408,8 @@ def version_entries(model: type[Model], pk: Any) -> list[VersionEntry]:
                 reason=version.history_change_reason or "",
                 changes=changes,
                 relation_changes=relation_changes,
-                can_revert=version.history_type != DELETED and not (index == 0 and exists),
+                can_revert=can_revert,
+                revert_blocked=revert_blocked,
             )
         )
     return entries

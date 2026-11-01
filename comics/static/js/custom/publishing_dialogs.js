@@ -447,7 +447,7 @@ window.ComiPublishingDialogs = (function () {
     setValue(publishingForm, "serie", proposed.serie, true);
     setValue(publishingForm, "language", proposed.language, false);
     setValue(publishingForm, "date", proposed.date, false);
-    for (const name of ["metron_series_id", "comicvine_volume_id", "gcd_series_id"]) {
+    for (const name of ["metron_series_id", "comicvine_volume_id", "gcd_series_id", "mycomicshop_series_id"]) {
       setValue(publishingForm, name, proposed[name], false);
     }
     const editorials = field(publishingForm, "editorials");
