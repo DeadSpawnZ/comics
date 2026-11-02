@@ -12,7 +12,7 @@ base real). Quitar el punto de este archivo en el mismo commit que lo resuelve.
 
 ## Primera tarea de la próxima sesión
 
-### Cerrar los lotes de importación desde MyComicShop (implementados, sin commit)
+### Probar los lotes de importación desde MyComicShop (commiteados, sin push)
 
 Rama `feat/mycomicshop-batch-import` (sale de `develop` tras el PR #6; sin push). Spec en "Próximas
 features → Lotes de importación desde MyComicShop". Todas las tareas están APPROVED y en staged
@@ -24,10 +24,11 @@ publishing con recálculo y selección de filas; 5c valores del lote y de cada f
 (`catalog_series_dialog.js`, separado de `catalog_import.js`) y "Nuevo lote" en Gestión →
 Importaciones. Suite MySQL: 1137 OK. No hay tests de JS: el diálogo no se ha probado en un navegador.
 
-Falta, en orden: Ruff (commit `style:`); ensayar `0122` en `comic_refactor`; con el visto bueno del
-usuario, copia con `mysqldump` y aplicarla a la base real; reconstruir la imagen y probar en el
-navegador (crear un lote desde el formulario de ediciones y desde Importaciones, resolver nombres,
-editar valores, crear, vincular); commits por tarea cuando el usuario lo pida; PR a `develop`.
+Commiteado en `55dfcc1` (feature) y `c316d32` (Ruff). La migración `0122` ya está aplicada en la base
+real (2026-11-01, copia previa en `backups/comic-pre-0122-20261101_185727.sql`, ensayada antes en
+`comic_refactor`) y la imagen reconstruida. Falta: probar en el navegador (crear un lote desde el
+formulario de ediciones y desde Importaciones, resolver nombres, editar valores, crear, vincular);
+push y PR a `develop`.
 
 MINOR que quedaron de las revisiones (para después):
 - En el formulario de ediciones, "Importar seleccionadas" navega a la página del lote y pierde lo que
