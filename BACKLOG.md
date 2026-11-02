@@ -8,9 +8,43 @@ Cómo trabajar un punto: seguir `CLAUDE.md` (flujo backend con `backend-senior` 
 tests solo en MySQL, Ruff una vez por feature, migraciones ensayadas en `comic_refactor` antes de la
 base real). Quitar el punto de este archivo en el mismo commit que lo resuelve.
 
-Última actualización: 2026-10-31, en la rama `chore/adjustments`.
+Última actualización: 2026-11-01, en la rama `feat/mycomicshop-batch-import`.
 
 ## Primera tarea de la próxima sesión
+
+### Cerrar los lotes de importación desde MyComicShop (implementados, sin commit)
+
+Rama `feat/mycomicshop-batch-import` (sale de `develop` tras el PR #6; sin push). Spec en "Próximas
+features → Lotes de importación desde MyComicShop". Todas las tareas están APPROVED y en staged
+(2026-11-01/02): 1 modelos + `0122` (sin aplicar); 2 servicio del lote (`batches.py`); 3 alta de
+ediciones en `comics/editions.py`; 4 creación de filas (`batch_creation.py`, "preseleccionar, pero
+nunca inventar"); 5a página del lote (resolver nombres, crear, vincular, cerrar); 5b elegir/cambiar
+publishing con recálculo y selección de filas; 5c valores del lote y de cada fila
+(`comics/import_batch_values.py`); 6 casillas e "Importar seleccionadas" en el diálogo de series
+(`catalog_series_dialog.js`, separado de `catalog_import.js`) y "Nuevo lote" en Gestión →
+Importaciones. Suite MySQL: 1137 OK. No hay tests de JS: el diálogo no se ha probado en un navegador.
+
+Falta, en orden: Ruff (commit `style:`); ensayar `0122` en `comic_refactor`; con el visto bueno del
+usuario, copia con `mysqldump` y aplicarla a la base real; reconstruir la imagen y probar en el
+navegador (crear un lote desde el formulario de ediciones y desde Importaciones, resolver nombres,
+editar valores, crear, vincular); commits por tarea cuando el usuario lo pida; PR a `develop`.
+
+MINOR que quedaron de las revisiones (para después):
+- En el formulario de ediciones, "Importar seleccionadas" navega a la página del lote y pierde lo que
+  no se haya guardado del formulario; avisarlo en el diálogo o pedir confirmación si hay cambios.
+- `manage_imports.py` importa `catalog_answer` y `series_dialog_data` de `manage_editions.py`;
+  moverlos a `comics/views/utils.py` o a un `comics/views/catalog_api.py`.
+- `series_dialog_data()` devuelve `dict[str, Any]`; usar un `TypedDict`.
+- `comics/diagrams.py` no tiene componente para los servicios de primer nivel
+  (`comics.import_batch_values`, `comics.editions`), así que el diagrama del README no los muestra.
+- `row.is_edited` solo mira `EDITED_KEYS`, pero "Reset to proposal" borra todas las claves (también
+  `cover_url`): revisarlo si algo empieza a escribir otras claves.
+- El candado del lote se mantiene durante la descarga de cada portada: una acción enviada durante una
+  creación espera (si pasa `innodb_lock_wait_timeout` se muestra "el lote está ocupado").
+- Carrera conocida: dos transacciones que crean a la vez el mismo issue nuevo pueden escribir los
+  créditos de historia de la segunda sobre el issue de la primera (app local, un usuario).
+- `djangojs.po` tiene dos entradas que ya no usa ningún JS ("Creators not found in Comi (not added)…"
+  y "Cover artists not found in Comi (not added)…").
 
 ### Terminar la tanda de integridad de datos (rama `chore/adjustments`)
 
@@ -58,9 +92,7 @@ desplegado en local. Falta:
     borrador del formulario (`js/custom/form_draft.js`);
   - las ayudas del importador: campos obligatorios marcados, recordar alias de editoriales y crear
     los artistas que faltan.
-- **Publicar:** PR `develop` → `master`. Antes, llevar a `develop` la rama `chore/adjustments`
-  (collectables con catálogo de artículos, coincidencias y "Vincular" de MyComicShop, TID en
-  `Publishing`; migraciones `0117`–`0120`, ya aplicadas en la base real).
+- **Publicar:** PR `develop` → `master` (`chore/adjustments` ya está en `develop` por el PR #6).
 - **Confirmar con el usuario** tres decisiones que tomó el implementador: nadie revisa sus propias
   solicitudes; los revisores no pueden rechazar una solicitud ya validada; el autor no ve los nombres
   de quienes la revisaron.
@@ -138,7 +170,7 @@ Implementado (ver README) y en `develop` con el PR #5. Falta:
   solicitudes de cambio. Importar varias variantes de golpe: ver "Lotes de importación desde
   MyComicShop".
 
-### Lotes de importación desde MyComicShop (diseño aprobado el 2026-10-31, sin empezar)
+### Lotes de importación desde MyComicShop (diseño aprobado el 2026-10-31, implementado: ver arriba)
 
 Crear varias ediciones de una serie de MyComicShop (TID) con un paso de revisión antes de guardar.
 Resuelve tres límites de hacerlo desde el formulario de una edición o en automático: cada edición
@@ -166,8 +198,8 @@ de historia son del issue (`Issue.creators`), los de portada de cada edición
 Flujo:
 1. Modal de variantes: una casilla por variante y "Importar seleccionadas" crea el lote y lleva a su
    página. Límite propuesto: 30 variantes por lote (las portadas se descargan en la misma petición).
-2. Página del lote (Gestión → Importaciones): valores del lote (publishing, formato, rareza, regla de
-   fecha de salida, notas) que heredan todas las filas; un grupo por número con su issue (existente o
+2. Página del lote (Gestión → Importaciones): valores del lote (publishing, formato, rareza, fecha de
+   salida, notas) que heredan todas las filas; un grupo por número con su issue (existente o
    nuevo) y sus artistas de historia, una vez; una fila por variante con letra, impresión, ratio,
    tirada, exclusivas, precio, miniatura, artistas de portada, el texto original de MyComicShop y el
    aviso "posible coincidencia" con su "Vincular". Cada campo de fila hereda del lote salvo que se
@@ -189,12 +221,21 @@ Tareas (una por `backend-senior`, en orden):
    tipo de coincidencia y ediciones probables, seleccionada, estado pendiente/creada/error,
    errores, edición creada con `SET_NULL`). Sin historial.
 2. Servicio `comics/catalog_sources/batches.py`: crear el lote desde un TID y una lista de IVIDs
-   (una `fetch_series`, `to_source_issue` + `build_proposal` por variante con un solo `ArtistMatcher`;
-   consultas fijas, no por variante), valores efectivos de una fila (lote + cambios), nombres
+   (una `fetch_series`; por variante `to_source_issue` + las piezas del mapper (`edition_values`), sin
+   `build_proposal`, que vuelve a buscar el publishing y el issue; un solo `ArtistMatcher`; consultas
+   fijas, no por variante), valores efectivos de una fila (lote + cambios), nombres
    pendientes y aplicar una resolución.
 3. Sacar el alta de ediciones de la vista (`_save_edition` y la lógica de issue de `edition_form` en
    `comics/views/manage_editions.py`) a un servicio reutilizable, sin cambiar el comportamiento.
-4. Crear las filas del lote con ese servicio (lo del paso 4 del flujo).
+4. Crear las filas del lote con ese servicio (lo del paso 4 del flujo):
+   `comics/catalog_sources/batch_creation.py` (`create_rows`, `link_row`). Los artistas nuevos se
+   crean con el nombre corregido de la resolución (`new_name`) y la resolución pasa a "artist".
+   "Preseleccionar, pero nunca inventar": si el catálogo no dice nada de impresión/formato/rareza,
+   la fila toma lo que preselecciona la página de Gestión (1st, single issue, common); si dio un
+   valor que Comi rechazó (7th+, tipo de serie sin formato; `proposal["rejected"]`), la fila falla
+   en ese campo hasta que lo den los valores del lote o la fila. Fecha de salida y precio nunca se
+   rellenan. La fila que crea el issue de un número lo deja como issue del número. Vincular no
+   guarda su error en la fila (se responde al momento).
 5. Vistas, URL y plantilla de la página del lote; lista de lotes en Gestión.
 6. Modal: casillas, "Importar seleccionadas" y JS (separar antes el diálogo de series de
    `catalog_import.js`, que pasa de 900 líneas).
@@ -314,13 +355,13 @@ evaluar las reglas por fecha en la primera visita del día de cada usuario (reco
   `MaterialFieldsMixin`.
 - Dos archivos JS tienen las URLs `/ajax/...` escritas a mano en lugar de usar `{% url %}`:
   `comics/static/js/custom/collection_form_events.js`, `fill_release_date.js`.
-- `edition_form` y `_clean_content` en `comics/views/manage_editions.py`, `evaluate` en
-  `comics/achievements/engine.py` y `_edition_values` en `comics/catalog_sources/mapper.py` son
-  demasiado complejas (`# noqa: C901`); dividirlas ahora que hay tests.
+- `edition_form` en `comics/views/manage_editions.py`, `evaluate` en
+  `comics/achievements/engine.py`, `edition_values` en `comics/catalog_sources/mapper.py`,
+  `resolved_credits` en `comics/catalog_sources/batches.py` y `_create_new_artists_once` en
+  `comics/catalog_sources/batch_creation.py` son demasiado complejas (`# noqa: C901`); dividirlas
+  ahora que hay tests.
 - Las excepciones de `comics/catalog_sources/errors.py` y `InvalidTransition` no llevan el sufijo
   `Error` (`# noqa: N818`); renombrarlas si se toca esa zona.
-- La re-evaluación de logros tras cambiar el contenido de una edición está duplicada en
-  `manage_editions._schedule_owners_after_content_change` y `versions.schedule_edition_owners`.
 
 ## Limitaciones conocidas y seguridad
 

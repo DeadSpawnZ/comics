@@ -478,6 +478,146 @@ NEW_TRANSLATIONS = {
     "The previous trade must be a purchase of the same edition by the same collector.": (
         "La operación anterior debe ser una compra de la misma edición por el mismo coleccionista."
     ),
+    # MyComicShop import batches.
+    "The number belongs to another batch.": "El número pertenece a otro lote.",
+    "Select at least one variant.": "Selecciona al menos una variante.",
+    "A batch can have at most %(count)s variants.": "Un lote puede tener como máximo %(count)s variantes.",
+    "Choose what to do with the name.": "Elige qué hacer con el nombre.",
+    "Choose an existing artist.": "Elige un artista existente.",
+    "An artist is only given to associate the name with it.": "Solo se indica un artista para asociarle el nombre.",
+    "“%(name)s” is not a name of this batch.": "“%(name)s” no es un nombre de este lote.",
+    "The batch is closed.": "El lote está cerrado.",
+    "A new name is only given to create an artist.": "Solo se indica un nombre nuevo para crear un artista.",
+    "The edition could not be saved: something it uses changed meanwhile. Try again.": (
+        "No se pudo guardar la edición: algo que usa cambió mientras tanto. Inténtalo de nuevo."
+    ),
+    "Choose the publishing of the batch first.": "Elige primero el publishing del lote.",
+    "Imported from MyComicShop (batch #%(batch)s).": "Importada desde MyComicShop (lote #%(batch)s).",
+    "Resolve these names first: %(names)s.": "Resuelve primero estos nombres: %(names)s.",
+    "The variant is not in this batch.": "La variante no está en este lote.",
+    "The variant already has its edition.": "La variante ya tiene su edición.",
+    "Choose one of the editions the variant may be.": "Elige una de las ediciones que puede ser la variante.",
+    "Comi did not accept the catalogue's value: fill it in yourself.": (
+        "Comi no aceptó el valor del catálogo: rellénalo tú."
+    ),
+    # Gestión of the MyComicShop import batches.
+    "preselected": "preseleccionado",
+    "Name resolved: %(name)s": "Nombre resuelto: %(name)s",
+    "Resolution undone: %(name)s": "Resolución deshecha: %(name)s",
+    "There was nothing to create: no selected variant is pending.": "No había nada que crear: ninguna variante seleccionada está pendiente.",
+    "%(variant)s linked to %(edition)s.": "%(variant)s vinculada a %(edition)s.",
+    "Batch closed.": "Lote cerrado.",
+    "The name is missing.": "Falta el nombre.",
+    "Imports": "Importaciones",
+    "No import batches yet.": "Todavía no hay lotes de importación.",
+    "No publishing": "Sin publishing",
+    "By %(user)s on %(date)s": "Por %(user)s el %(date)s",
+    "Open the batch of %(title)s": "Abrir el lote de %(title)s",
+    "Open": "Abrir",
+    "Back to imports": "Volver a importaciones",
+    "Close batch": "Cerrar lote",
+    "Create selected": "Crear seleccionadas",
+    "MyComicShop series": "Serie de MyComicShop",
+    "Publisher": "Editorial",
+    "No publishing of Comi matched this series, so every number counts as a new issue. The variants cannot be created until the batch has a publishing.": "Ningún publishing de Comi coincide con esta serie, así que todos los números cuentan como issues nuevos. Las variantes no se pueden crear hasta que el lote tenga un publishing.",
+    "The batch is closed: it is kept as a record of what was imported and can no longer change.": "El lote está cerrado: se guarda como registro de lo importado y ya no puede cambiar.",
+    "Credit names": "Nombres de los créditos",
+    "Resolve each name once: it applies to every variant of the batch. A variant with names still to resolve is not created.": "Resuelve cada nombre una vez: se aplica a todas las variantes del lote. Una variante con nombres sin resolver no se crea.",
+    "Guessed from the text: %(artist)s?": "Adivinado del texto: ¿%(artist)s?",
+    "No artist has this name": "Ningún artista tiene este nombre",
+    "Existing artist": "Artista existente",
+    "Associate": "Asociar",
+    "New artist": "Artista nuevo",
+    "No names to resolve.": "No hay nombres que resolver.",
+    "Resolved": "Resueltos",
+    "Deleted artist": "Artista eliminado",
+    "New artist: %(name)s": "Artista nuevo: %(name)s",
+    "Discarded": "Descartado",
+    "Undo": "Deshacer",
+    "Existing issue:": "Issue existente:",
+    "New issue": "Issue nuevo",
+    "The batch does not change the story creators of an existing issue.": "El lote no cambia los creadores de la historia de un issue existente.",
+    "Story creators": "Creadores de la historia",
+    "None proposed.": "Ninguno propuesto.",
+    "Selected": "Seleccionada",
+    "Not selected": "Sin seleccionar",
+    "to fill in": "por rellenar",
+    "None.": "Ninguno.",
+    "It may be one of these editions": "Puede ser una de estas ediciones",
+    "Those editions are no longer in Comi.": "Esas ediciones ya no están en Comi.",
+    "MyComicShop text": "Texto de MyComicShop",
+    "Close the batch?": "¿Cerrar el lote?",
+    "A closed batch can no longer change: its pending variants are not created. The editions already created stay as they are.": "Un lote cerrado ya no puede cambiar: sus variantes pendientes no se crean. Las ediciones ya creadas se quedan como están.",
+    "Matched an artist": "Coincide con un artista",
+    "Guessed from the text: confirm it": "Adivinado del texto: confírmalo",
+    "No artist has this name: resolve it": "Ningún artista tiene este nombre: resuélvelo",
+    "Resolved as an existing artist": "Resuelto como un artista existente",
+    "New artist, created with the batch": "Artista nuevo, se crea con el lote",
+    # Choosing the publishing of an import batch and selecting its variants.
+    "The publishing can no longer change: some variants of the batch already have their edition.": (
+        "El publishing ya no puede cambiar: algunas variantes del lote ya tienen su edición."
+    ),
+    "Choose a publishing.": "Elige un publishing.",
+    "Choose an existing publishing.": "Elige un publishing existente.",
+    "The selection is not valid.": "La selección no es válida.",
+    "The batch now goes to %(publishing)s.": "El lote va ahora a %(publishing)s.",
+    "The batch already goes to %(publishing)s.": "El lote ya va a %(publishing)s.",
+    "Selection saved.": "Selección guardada.",
+    "Change publishing": "Cambiar publishing",
+    "Use this publishing": "Usar este publishing",
+    "Which numbers already have their issue and which variants Comi may already have are looked up again in it.": (
+        "Se vuelve a buscar en él qué números ya tienen su issue y qué variantes puede tener ya Comi."
+    ),
+    "Check the variants to create, then save the selection.": "Marca las variantes que quieres crear y guarda la selección.",
+    "Save selection": "Guardar selección",
+    "Select all": "Seleccionar todas",
+    "Select none": "No seleccionar ninguna",
+    "The batch changed meanwhile (closed or given another publishing): the other variants were not tried.": (
+        "El lote cambió mientras tanto (se cerró o se le dio otro publishing): las demás variantes no se intentaron."
+    ),
+    "Save the selection before creating.": "Guarda la selección antes de crear.",
+    # Editing the values of an import batch and of its variants.
+    "Not set": "Sin fijar",
+    "Inherit": "Heredar",
+    "Remove from this variant": "Quitar de esta variante",
+    "Add existing artists": "Añadir artistas existentes",
+    "Leave blank": "Dejar en blanco",
+    "Choose existing artists.": "Elige artistas existentes.",
+    "left blank": "en blanco",
+    "Inherits nothing: Comi did not accept the catalogue's value.": (
+        "No hereda nada: Comi no aceptó el valor del catálogo."
+    ),
+    "Inherits nothing.": "No hereda nada.",
+    "Inherits the preselected value: %(value)s": "Hereda el valor preseleccionado: %(value)s",
+    "Inherits the batch value: %(value)s": "Hereda el valor del lote: %(value)s",
+    "Inherits the catalogue value: %(value)s": "Hereda el valor del catálogo: %(value)s",
+    "The batch is busy (it is creating editions): try again in a moment.": (
+        "El lote está ocupado (está creando ediciones): vuelve a intentarlo en un momento."
+    ),
+    "Values for every variant saved.": "Valores para todas las variantes guardados.",
+    "%(variant)s saved.": "%(variant)s guardada.",
+    "%(variant)s had no changes.": "%(variant)s no tenía cambios.",
+    "%(variant)s is back to the proposal.": "%(variant)s vuelve a la propuesta.",
+    "Values for every variant": "Valores para todas las variantes",
+    "None set: each variant keeps what the catalogue gives.": (
+        "No hay ninguno: cada variante se queda con lo que da el catálogo."
+    ),
+    "Change the values for every variant": "Cambiar los valores para todas las variantes",
+    "A value set here replaces the catalogue's in every variant that does not change it. Leave a field empty to keep the catalogue's.": (
+        "Un valor fijado aquí sustituye al del catálogo en todas las variantes que no lo cambian. Deja un campo vacío para mantener el del catálogo."
+    ),
+    "A field left empty inherits the value below it. Check “Leave blank” to save the edition without that value.": (
+        "Un campo vacío hereda el valor que aparece debajo. Marca “Dejar en blanco” para guardar la edición sin ese valor."
+    ),
+    "Save changes": "Guardar cambios",
+    "Reset to proposal": "Volver a la propuesta",
+    # A new import batch from the MyComicShop series dialog.
+    "Import selected": "Importar seleccionadas",
+    "New batch": "Nuevo lote",
+    "To start a batch, enter a MyComicShop series ID or paste its URL, then check the variants to import.": (
+        "Para empezar un lote, escribe el ID de una serie de MyComicShop o pega su URL y marca las variantes que quieres importar."
+    ),
+    "The MyComicShop series is missing.": "Falta la serie de MyComicShop.",
 }
 
 
@@ -553,6 +693,13 @@ NEW_JS_TRANSLATIONS = {
     "The cover could not be linked. Check your connection and try again.": "No se pudo vincular la portada. Revisa tu conexión e inténtalo de nuevo.",
     "Publishing in Comi: %(name)s": "Publishing en Comi: %(name)s",
     "No publishing in Comi matches this series, so the covers it already has without a MyComicShop ID are not detected.": "Ningún publishing de Comi coincide con esta serie, así que no se detectan las portadas que ya tiene sin ID de MyComicShop.",
+    # A new import batch from the series dialog (catalog_series_dialog.js).
+    "Import selected (%(count)s)": "Importar seleccionadas (%(count)s)",
+    "A batch can have at most %(count)s variants.": "Un lote puede tener como máximo %(count)s variantes.",
+    "Add to the batch": "Añadir al lote",
+    "Creating the import batch…": "Creando el lote de importación…",
+    "The import batch could not be created. Try again.": "No se pudo crear el lote de importación. Inténtalo de nuevo.",
+    "The import batch could not be created. Check your connection and try again.": "No se pudo crear el lote de importación. Revisa tu conexión e inténtalo de nuevo.",
 }
 
 
@@ -641,6 +788,18 @@ NEW_PLURALS = {
         "cambia la serie o el número, y %(count)d ediciones que los comparten dejarían de coincidir con su "
         "issue. Corrígelos desde las ediciones.",
     ),
+    # Gestión of the MyComicShop import batches.
+    ("%(count)d edition created.", "%(count)d editions created."): ("%(count)d edición creada.", "%(count)d ediciones creadas."),
+    ("%(count)d artist created.", "%(count)d artists created."): ("%(count)d artista creado.", "%(count)d artistas creados."),
+    ("%(count)d variant could not be created: see its errors.", "%(count)d variants could not be created: see their errors."): ("%(count)d variante no se pudo crear: mira sus errores.", "%(count)d variantes no se pudieron crear: mira sus errores."),
+    ("%(counter)s import batch", "%(counter)s import batches"): ("%(counter)s lote de importación", "%(counter)s lotes de importación"),
+    ("%(counter)s variant", "%(counter)s variants"): ("%(counter)s variante", "%(counter)s variantes"),
+    ("%(counter)s pending", "%(counter)s pending"): ("%(counter)s pendiente", "%(counter)s pendientes"),
+    ("%(counter)s created", "%(counter)s created"): ("%(counter)s creada", "%(counter)s creadas"),
+    ("%(counter)s linked", "%(counter)s linked"): ("%(counter)s vinculada", "%(counter)s vinculadas"),
+    ("%(counter)s failed", "%(counter)s failed"): ("%(counter)s con error", "%(counter)s con errores"),
+    ("Story: %(counter)s number", "Story: %(counter)s numbers"): ("Historia: %(counter)s número", "Historia: %(counter)s números"),
+    ("Cover: %(counter)s variant", "Cover: %(counter)s variants"): ("Portada: %(counter)s variante", "Portada: %(counter)s variantes"),
 }
 
 
@@ -648,6 +807,10 @@ NEW_JS_PLURALS = {
     ("%(count)s cover. Choose the one to import.", "%(count)s covers. Choose the one to import."): (
         "%(count)s portada. Elige la que quieres importar.",
         "%(count)s portadas. Elige la que quieres importar.",
+    ),
+    ("%(count)s cover. Select the ones to import.", "%(count)s covers. Select the ones to import."): (
+        "%(count)s portada. Marca las que quieres importar.",
+        "%(count)s portadas. Marca las que quieres importar.",
     ),
 }
 
@@ -661,6 +824,16 @@ NEW_CONTEXT_TRANSLATIONS = {
     ("categories", "All"): "Todas",
     ("article", "Limited to"): "Limitado a",
     ("articles", "All"): "Todos",
+    # MyComicShop import batches.
+    ("import batch", "Open"): "Abierto",
+    ("import batch", "Closed"): "Cerrado",
+    ("import row", "No match"): "Sin coincidencia",
+    ("import row", "Possible match"): "Posible coincidencia",
+    ("import row", "Pending"): "Pendiente",
+    ("import row", "Created"): "Creada",
+    ("import row", "Linked"): "Vinculada",
+    ("import row", "Failed"): "Con error",
+    ("import row", "Changed"): "Modificada",
 }
 
 

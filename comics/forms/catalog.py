@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import copy
 import re
+from collections.abc import Mapping, Sequence
+from datetime import date
 from typing import Any
 
 from django import forms
@@ -11,9 +14,11 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import IntegrityError, transaction
 from django.db.models import QuerySet, prefetch_related_objects
 from django.http import QueryDict
+from django.utils.functional import Promise
 from django.utils.translation import gettext_lazy as _
 
 from ..catalog_sources import service as catalog_service
+from ..catalog_sources.batches import NameAction
 from ..catalog_sources.errors import CoverRejected, series_required_message
 from ..catalog_sources.http import MAX_COVER_BYTES, download_cover, is_allowed_cover_url
 from ..models import Artist, Edition, Editorial, Issue, Publishing, Title
@@ -90,8 +95,8 @@ def recent_publishings() -> list[Publishing]:
 
 
 class EditionManageForm(MaterialFieldsMixin, forms.ModelForm):
-    """Edition data for Gestion. The content (issue or collected issues) is
-    handled separately in the view because they are not direct model fields."""
+    """Edition data for Gestion. The content (issue or collected issues) is not a direct model
+    field: it is validated and saved by comics.editions (clean_content, save_edition)."""
 
     # Set by the import box (comics/catalog_sources) to a catalogue's cover; downloaded on save.
     catalog_cover_url = forms.CharField(required=False, max_length=500, widget=forms.HiddenInput)
@@ -361,6 +366,246 @@ class MyComicShopLinkForm(forms.Form):
         error_messages={"required": _("The MyComicShop cover is missing.")},
     )
     tid = forms.IntegerField(min_value=1, max_value=MAX_CATALOG_ID, required=False)
+
+
+class BatchNameForm(forms.Form):
+    """A credit name of an import batch, as the batch page posts it (e.g. to undo its resolution)."""
+
+    name = forms.CharField(max_length=200, error_messages={"required": _("The name is missing.")})
+
+
+class BatchNameResolutionForm(BatchNameForm):
+    """How the batch page resolves a credit name of an import batch (batches.resolve_name): as an
+    existing `artist`, as a new artist named `new_name`, or discarded. The page posts each action
+    from its own small form; only the value the chosen action uses is kept in cleaned_data (the
+    other one is None), so a stray value never reaches resolve_name. The service validates the
+    rest (the artist exists, the new name is not empty nor too long)."""
+
+    action = forms.ChoiceField(
+        choices=[(action.value, action.value) for action in NameAction],
+        error_messages={"required": _("Choose what to do with the name.")},
+    )
+    artist = forms.IntegerField(min_value=1, required=False)
+    new_name = forms.CharField(required=False, strip=False)
+
+    def clean(self) -> dict[str, Any]:
+        cleaned = super().clean()
+        action = cleaned.get("action")
+        if action != NameAction.ARTIST:
+            cleaned["artist"] = None
+        if action != NameAction.NEW:
+            cleaned["new_name"] = None
+        return cleaned
+
+
+class BatchRowLinkForm(forms.Form):
+    """The edition the batch page links a probable row of an import batch to (batch_creation.link_row)."""
+
+    edition = forms.IntegerField(min_value=1, error_messages={"required": _("Choose the edition to link.")})
+
+
+class BatchPublishingForm(forms.Form):
+    """The publishing the batch page gives an import batch (batches.set_publishing)."""
+
+    publishing = forms.ModelChoiceField(
+        queryset=Publishing.objects.all(),
+        error_messages={
+            "required": _("Choose a publishing."),
+            "invalid_choice": _("Choose an existing publishing."),
+        },
+    )
+
+
+class IdListField(forms.Field):
+    """Positive ids posted under one name (e.g. checked checkboxes), as a list of ints; none is []."""
+
+    widget = forms.MultipleHiddenInput
+    default_error_messages = {"invalid": _("The selection is not valid.")}
+
+    def to_python(self, value: Any) -> list[int]:
+        if not value:
+            return []
+        if not isinstance(value, (list, tuple)):
+            value = [value]
+        try:
+            ids = [int(item) for item in value]
+        except (TypeError, ValueError):
+            raise ValidationError(self.error_messages["invalid"], code="invalid") from None
+        if any(item < 1 for item in ids):
+            raise ValidationError(self.error_messages["invalid"], code="invalid")
+        return ids
+
+
+class BatchSelectionForm(forms.Form):
+    """The rows the batch page selects in an import batch (batches.set_selection): the checked
+    `rows`, or every row (`select` "all") or none ("none") with the page's shortcut buttons."""
+
+    ALL, NONE = "all", "none"
+
+    rows = IdListField(required=False)
+    select = forms.ChoiceField(choices=[(ALL, ALL), (NONE, NONE)], required=False)
+
+    def selection(self) -> set[int] | None:
+        """The ids to select (set_selection's `selected`): None for all of them. Call once valid."""
+        if self.cleaned_data["select"] == self.ALL:
+            return None
+        if self.cleaned_data["select"] == self.NONE:
+            return set()
+        return set(self.cleaned_data["rows"])
+
+
+class BatchCreateForm(forms.Form):
+    """The MyComicShop series (`tid`) and the variants of it (`ivids`) the series dialog makes an
+    import batch of (batches.create_batch, which rejects an empty or too long selection)."""
+
+    tid = forms.IntegerField(
+        min_value=1,
+        max_value=MAX_CATALOG_ID,
+        error_messages={"required": _("The MyComicShop series is missing.")},
+    )
+    ivids = IdListField(required=False)
+
+
+# The edition values an import batch gives every variant (comics.import_batch_values.set_defaults): the ones that
+# make sense for every variant of a series.
+BATCH_DEFAULT_FIELDS = ("printing", "format", "rarity", "release_date", "cover_price", "notes")
+# The edition values a variant of an import batch can change (comics.import_batch_values.set_row_overrides), in
+# the edition form's order.
+BATCH_ROW_FIELDS = (
+    "variant",
+    "printing",
+    "format",
+    "rarity",
+    "release_date",
+    "cover_price",
+    "ratio",
+    "limited_to",
+    "retailer_exclusive",
+    "event_exclusive",
+    "notes",
+)
+
+
+class EditionValuesForm(MaterialFieldsMixin, forms.Form):
+    """Some edition values of an import batch (`field_names`), each optional: an empty one is not
+    given, so the layer below applies (see batches.effective_values).
+
+    The fields are EditionManageForm's own (copied, without their model defaults as initial values),
+    and a value is also checked with the Edition model field's validators (e.g. the ratio's
+    pattern), which EditionManageForm runs when it validates the edition: a value accepted here is
+    one the edition form accepts. A choice field gets an empty choice labelled `empty_label`."""
+
+    field_names: tuple[str, ...] = ()
+    empty_label: str | Promise = ""
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        declared = self.fields
+        self.fields = {}
+        for name in self.field_names:
+            field = copy.deepcopy(EditionManageForm.base_fields[name])
+            # No model default as initial value (nor its hidden copy: release_date defaults to a callable).
+            field.required, field.initial, field.show_hidden_initial = False, None, False
+            if isinstance(field, forms.ChoiceField):
+                field.choices = [("", self.empty_label), *(choice for choice in field.choices if choice[0] != "")]
+            self.fields[name] = field
+        self.style_fields()  # only the edition values; the declared fields have widgets of their own
+        self.fields.update(declared)
+
+    def clean(self) -> dict[str, Any]:
+        cleaned = super().clean()
+        for name in self.field_names:
+            value = cleaned.get(name)
+            if value in (None, ""):
+                continue
+            try:
+                Edition._meta.get_field(name).run_validators(value)
+            except ValidationError as exc:
+                self.add_error(name, exc)
+        return cleaned
+
+    def given_values(self) -> dict[str, str]:
+        """{field: value} of the edition values given (not empty), in the shape the edition form is
+        posted, so they can be stored as JSON: dates in ISO format, decimals and choices as text.
+        Call once valid."""
+        values = {}
+        for name in self.field_names:
+            value = self.cleaned_data.get(name)
+            if value in (None, ""):
+                continue
+            values[name] = value.isoformat() if isinstance(value, date) else str(value)
+        return values
+
+
+class BatchDefaultsForm(EditionValuesForm):
+    """The values every variant of an import batch inherits (comics.import_batch_values.set_defaults); an empty
+    field is not set."""
+
+    field_names = BATCH_DEFAULT_FIELDS
+    empty_label = _("Not set")
+
+
+class BatchRowForm(EditionValuesForm):
+    """The values a variant of an import batch changes (comics.import_batch_values.set_row_overrides). Each value
+    is inherited (left empty), given, or, for the optional ones (the edition form does not require
+    them), left blank on purpose with its `blank_<field>` box, which wins over a value typed too. A
+    required value cannot be left blank: the variant could not be created without it.
+
+    The cover artists are changed from the variant's current list: `drop_artists` (the names of
+    `cover_artists`, (name, label) pairs, to remove) and `add_artists` (ids of existing artists; the
+    page fills the select's options). `hints` gives a value field its help text (what it inherits)."""
+
+    BLANK_PREFIX = "blank_"
+    field_names = BATCH_ROW_FIELDS
+    empty_label = _("Inherit")
+
+    drop_artists = forms.MultipleChoiceField(
+        label=_("Remove from this variant"),
+        required=False,
+        widget=forms.CheckboxSelectMultiple(attrs={"class": "form-check-input"}),
+    )
+    add_artists = IdListField(
+        label=_("Add existing artists"),
+        required=False,
+        widget=forms.SelectMultiple(attrs={"data-import-artists": "", "data-multiselect": ""}),
+    )
+
+    def __init__(
+        self,
+        *args: Any,
+        cover_artists: Sequence[tuple[str, str]] = (),
+        hints: Mapping[str, str] | None = None,
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(*args, **kwargs)
+        self.fields["drop_artists"].choices = list(cover_artists)
+        for name, hint in (hints or {}).items():
+            self.fields[name].help_text = hint
+        for name in self.optional_fields():
+            self.fields[self.BLANK_PREFIX + name] = forms.BooleanField(
+                label=_("Leave blank"),
+                required=False,
+                # data-leave-blank: the batch page disables the value field while the box is checked.
+                widget=forms.CheckboxInput(attrs={"class": "form-check-input", "data-leave-blank": ""}),
+            )
+
+    @classmethod
+    def optional_fields(cls) -> list[str]:
+        """The value fields that can be left blank: those EditionManageForm does not require."""
+        return [name for name in cls.field_names if not EditionManageForm.base_fields[name].required]
+
+    def value_fields(self) -> list[tuple[forms.BoundField, forms.BoundField | None]]:
+        """(value field, its "leave blank" box or None) pairs, for the page."""
+        optional = set(self.optional_fields())
+        return [(self[name], self[self.BLANK_PREFIX + name] if name in optional else None) for name in self.field_names]
+
+    def value_overrides(self) -> dict[str, str]:
+        """The values given (given_values) plus "" for those left blank on purpose. Call once valid."""
+        values = self.given_values()
+        for name in self.optional_fields():
+            if self.cleaned_data.get(self.BLANK_PREFIX + name):
+                values[name] = ""
+        return values
 
 
 class PublishingManageForm(forms.ModelForm):

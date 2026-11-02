@@ -198,9 +198,7 @@ def build_proposal(source_issue: SourceIssue, series: SeriesLoaders | None = Non
 
     variants = [_variant(variant, index, cover_credits, artists) for index, variant in enumerate(source_issue.variants)]
 
-    cover_url = source_issue.image if is_allowed_cover_url(source_issue.image) else ""
-    if source_issue.image and not cover_url:
-        warnings.append(_("The cover is on a server Comi does not download from: upload it yourself."))
+    cover_url = allowed_cover_url(source_issue.image, warnings)
 
     return Proposal(
         source=source_issue.source,
@@ -212,7 +210,7 @@ def build_proposal(source_issue: SourceIssue, series: SeriesLoaders | None = Non
             "comicvine_id": source_issue.comicvine_id,
             "gcd_id": source_issue.gcd_id,
         },
-        edition=_edition_values(source_issue, warnings),
+        edition=edition_values(source_issue, warnings),
         synopsis=source_issue.description,
         publishing={"id": publishing.pk, "label": publishing.select_label} if publishing else None,
         publishing_candidates=[{"id": item.pk, "label": item.select_label} for item in candidates],
@@ -235,6 +233,15 @@ def build_proposal(source_issue: SourceIssue, series: SeriesLoaders | None = Non
         warnings=warnings,
         new_publishing=new_publishing,
     )
+
+
+def allowed_cover_url(url: str, warnings: list[str]) -> str:
+    """`url` when Comi downloads covers from it, else "" (with a warning when there was a URL)."""
+    if is_allowed_cover_url(url):
+        return url
+    if url:
+        warnings.append(_("The cover is on a server Comi does not download from: upload it yourself."))
+    return ""
 
 
 def propose_publishing(
@@ -351,6 +358,10 @@ def _rejected_value(source_issue: SourceIssue, name: str, value: str, warnings: 
     )
 
 
+# The Edition text fields a source may give (besides the variant), checked by _checked_edition_value.
+EDITION_TEXT_FIELDS = ("ratio", "limited_to", "retailer_exclusive", "event_exclusive")
+
+
 def _checked_edition_value(source_issue: SourceIssue, name: str, warnings: list[str]) -> str:
     """The source's value for the Edition text field `name` when the field accepts it (length,
     format), else "" (with a warning when the source had a value)."""
@@ -377,14 +388,19 @@ def _printing(source_issue: SourceIssue, warnings: list[str]) -> str:
     return ""
 
 
-def _edition_values(source_issue: SourceIssue, warnings: list[str]) -> dict[str, str]:  # noqa: C901
+def edition_values(  # noqa: C901
+    source_issue: SourceIssue, warnings: list[str], rejected: list[str] | None = None
+) -> dict[str, str]:
+    """The Gestión edition form values the source gives for its issue (only what it knows), adding
+    to `warnings` what the user should check and, when given, to `rejected` the fields whose value
+    Comi refused (see _rejected_fields), so a caller filling in defaults can leave those out."""
     # A Metron or Comic Vine issue is the original publication: the main cover (A) of the first
     # printing. Catalogues with one record per cover (MyComicShop) say which cover and printing.
     # A value Comi rejects is left out (not sent empty), so the form keeps what it has.
     variant = _checked_edition_value(source_issue, "variant", warnings) if source_issue.variant.strip() else "A"
     values = {"variant": variant, "printing": _printing(source_issue, warnings)}
     values = {name: value for name, value in values.items() if value}
-    for name in ("ratio", "limited_to", "retailer_exclusive", "event_exclusive"):
+    for name in EDITION_TEXT_FIELDS:
         value = _checked_edition_value(source_issue, name, warnings)
         if value:
             values[name] = value
@@ -414,7 +430,22 @@ def _edition_values(source_issue: SourceIssue, warnings: list[str]) -> dict[str,
                 _("The series type “%(type)s” has no matching format: choose it yourself.")
                 % {"type": source_issue.series_type}
             )
+    if rejected is not None:
+        rejected.extend(_rejected_fields(source_issue, values))
     return values
+
+
+def _rejected_fields(source_issue: SourceIssue, values: dict[str, str]) -> list[str]:
+    """The edition form fields the source gave a value for that edition_values left out of `values`
+    because Comi has no place for it (a 7th printing, a series type without format, a text the
+    field refuses), in form order. A field the source says nothing about is not one of them."""
+    given = {
+        "variant": bool(source_issue.variant.strip()),
+        "printing": source_issue.printing is not None,
+        "format": bool(source_issue.series_type),
+        **{name: bool(getattr(source_issue, name).strip()) for name in EDITION_TEXT_FIELDS},
+    }
+    return [name for name, has_value in given.items() if has_value and name not in values]
 
 
 def match_publishing(
@@ -557,6 +588,11 @@ class ArtistMatcher:
                 self._by_key.setdefault(name_key(name), (pk, name))
         return self._by_key
 
+    def find(self, name: str) -> ProposedArtist | None:
+        """The artist named `name`, or None when none is."""
+        found = self._artists().get(name_key(name))
+        return ProposedArtist(id=found[0], name=found[1]) if found else None
+
     def match(self, names: Iterable[str]) -> tuple[list[ProposedArtist], list[str]]:
         """(the matched artists, the names that matched none), each once, in the given order."""
         matched: list[ProposedArtist] = []
@@ -567,9 +603,9 @@ class ArtistMatcher:
             if not key or key in seen:
                 continue
             seen.add(key)
-            found = self._artists().get(key)
+            found = self.find(name)
             if found:
-                matched.append(ProposedArtist(id=found[0], name=found[1]))
+                matched.append(found)
             else:
                 unmatched.append(name)
         return matched, unmatched

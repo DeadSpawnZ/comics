@@ -204,6 +204,7 @@ flowchart LR
     catalog["<b>Catálogo</b><br/>Artist, CollectedIssue, Edition, EditionCoverArtist, Editorial, EditorialAlias, Issue, IssueCreator, Publishing, Title"]
     collections["<b>Colecciones</b><br/>Article, Collectable, Collection, Connecting, ConnectingPiece, Dealer, ReadingArc, ReadingArcEntry, Signature"]
     change_requests["<b>Solicitudes de cambio</b><br/>ChangeRequest"]
+    imports["<b>Lotes de importación</b><br/>ImportBatch, ImportBatchNumber, ImportBatchRow"]
     achievements["<b>Logros</b><br/>Achievement, AchievementCategory, AchievementTier, UserAchievement"]
     notifications["<b>Notificaciones y anuncios</b><br/>Announcement, Notification"]
     profiles["<b>Perfiles y permisos</b><br/>AreaAccess, Profile"]
@@ -212,6 +213,8 @@ flowchart LR
     change_requests -->|3| auth
     collections -->|2| auth
     collections -->|7| catalog
+    imports -->|1| auth
+    imports -->|4| catalog
     notifications -->|1| achievements
     notifications -->|3| auth
     notifications -->|1| change_requests
@@ -435,6 +438,60 @@ erDiagram
     User |o--o{ ChangeRequest : "author"
     User |o--o{ ChangeRequest : "validated_by"
     User |o--o{ ChangeRequest : "decided_by"
+```
+
+### Lotes de importación
+
+```mermaid
+erDiagram
+    ImportBatch {
+        BigAutoField id PK
+        ForeignKey created_by FK "null"
+        CharField source
+        PositiveIntegerField series_id
+        CharField series_title
+        PositiveSmallIntegerField series_year "null"
+        CharField series_publisher
+        ForeignKey publishing FK "null"
+        JSONField defaults
+        JSONField name_resolutions
+        JSONField warnings
+        CharField status
+        DateTimeField created_at
+        DateTimeField updated_at
+    }
+    ImportBatchNumber {
+        BigAutoField id PK
+        ForeignKey batch FK
+        CharField number
+        PositiveSmallIntegerField position
+        ForeignKey issue FK "null"
+        JSONField creators
+    }
+    ImportBatchRow {
+        BigAutoField id PK
+        ForeignKey batch FK
+        ForeignKey group FK
+        PositiveSmallIntegerField position
+        PositiveIntegerField ivid
+        CharField label
+        TextField source_text
+        JSONField proposal
+        JSONField overrides
+        CharField match
+        BooleanField selected
+        CharField status
+        JSONField errors
+        ForeignKey edition FK "null"
+    }
+    User |o--o{ ImportBatch : "created_by"
+    Publishing |o--o{ ImportBatch : "publishing"
+    ImportBatch ||--o{ ImportBatchNumber : "batch"
+    Issue |o--o{ ImportBatchNumber : "issue"
+    ImportBatch ||--o{ ImportBatchRow : "batch"
+    ImportBatchNumber ||--o{ ImportBatchRow : "group"
+    Edition |o--o{ ImportBatchRow : "edition"
+    ImportBatchRow }o--o{ Edition : "probable_editions"
 ```
 
 ### Logros

@@ -3,7 +3,7 @@ MyComicShop's series (the variants the user picks one from, and linking one to a
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import Any
 
@@ -127,8 +127,11 @@ def mycomicshop_series(tid: int) -> dict[str, Any]:
         edition.mycomicshop_id: edition
         for edition in Edition.objects.filter(mycomicshop_id__in=ivids).select_related("publishing")
     }
-    publishing = _mycomicshop_publishing(series)
-    probable = _probable_editions(publishing, [variant for variant in series.variants if variant.ivid not in existing])
+    publishing = mycomicshop_publishing(series)
+    probable = probable_editions(
+        publishing,
+        {variant.ivid: CoverKey.of(variant) for variant in series.variants if variant.ivid not in existing},
+    )
     issues: dict[str, list[dict[str, Any]]] = {}
     for variant in series.variants:
         issues.setdefault(variant.number, []).append(
@@ -147,24 +150,47 @@ def mycomicshop_series(tid: int) -> dict[str, Any]:
     }
 
 
-def _mycomicshop_publishing(series: mycomicshop.McsSeries) -> Publishing | None:
+def mycomicshop_publishing(series: mycomicshop.McsSeries, warnings: list[str] | None = None) -> Publishing | None:
     """The Comi publishing of the series, matched as the importer does: the one holding its TID, else
-    by title, year, language "en" and the editorial of its publisher; None when none or several fit."""
+    by title, year, language "en" and the editorial of its publisher; None when none or several fit.
+    `warnings`, when given, gets what the user should check (see match_publishing), e.g. a
+    publishing matched by a title written otherwise. Also used by comics.catalog_sources.batches."""
     if not series.variants:
         return None
     # The series-level values (title, year, publisher, language) are the same for every variant.
     source_issue = mycomicshop.to_source_issue(series, series.variants[0])
     editorial = Editorial.objects.matching(source_issue.publisher) if source_issue.publisher else None
-    publishing, _candidates = match_publishing(source_issue, editorial)
+    publishing, _candidates = match_publishing(source_issue, editorial, warnings=warnings)
     return publishing
 
 
-def _probable_editions(
-    publishing: Publishing | None, variants: list[mycomicshop.McsVariant]
-) -> dict[int, list[Edition]]:
-    """{IVID: the editions of `publishing` that are probably that variant} (see mycomicshop_series),
-    in one query; variants without any are left out."""
-    numbers = {variant.number for variant in variants if variant.number}
+@dataclass(frozen=True)
+class CoverKey:
+    """What the probable-match rule (probable_editions) compares of a catalogue cover, as plain
+    values, so the variants modal (from a McsVariant) and an import batch (from what its row stores)
+    apply the same rule."""
+
+    number: str
+    letter: str  # the variant letter, uppercased: MyComicShop's suffix, "A" when it has none
+    printing: str  # as Edition.printing ("2nd"); "" when the catalogue does not state it
+    exclusive: bool  # a store or event exclusive
+
+    @classmethod
+    def of(cls, variant: mycomicshop.McsVariant) -> CoverKey:
+        details = variant.details
+        return cls(
+            number=variant.number,
+            letter=variant.suffix.strip().upper() or "A",
+            printing=ordinal(details.printing) if details.printing else "",
+            exclusive=bool(details.stores or details.event),
+        )
+
+
+def probable_editions(publishing: Publishing | None, covers: Mapping[int, CoverKey]) -> dict[int, list[Edition]]:
+    """{key: the editions of `publishing` that are probably the cover `covers[key]`} (see
+    mycomicshop_series), in one query; covers without any are left out. The keys are the caller's
+    (IVIDs for the modal, row ids for a batch). Also used by comics.catalog_sources.batches."""
+    numbers = {cover.number for cover in covers.values() if cover.number}
     if publishing is None or not numbers:
         return {}
     by_cover: dict[tuple[str, str], list[Edition]] = {}
@@ -173,16 +199,14 @@ def _probable_editions(
         edition.publishing = publishing  # already loaded: short_name needs no query
         by_cover.setdefault((edition.number.strip(), edition.variant.strip().upper()), []).append(edition)
     probable: dict[int, list[Edition]] = {}
-    for variant in variants:
-        found = by_cover.get((variant.number, variant.suffix.strip().upper() or "A"), [])
-        if variant.details.printing:
-            printing = ordinal(variant.details.printing)
-            found = [edition for edition in found if edition.printing == printing]
+    for key, cover in covers.items():
+        found = by_cover.get((cover.number, cover.letter), [])
+        if cover.printing:
+            found = [edition for edition in found if edition.printing == cover.printing]
         # An exclusive (store or event) is only probably an exclusive, and a regular cover a regular one.
-        exclusive = bool(variant.details.stores or variant.details.event)
-        found = [edition for edition in found if _is_exclusive(edition) == exclusive]
+        found = [edition for edition in found if _is_exclusive(edition) == cover.exclusive]
         if found:
-            probable[variant.ivid] = found
+            probable[key] = found
     return probable
 
 
@@ -242,7 +266,7 @@ def link_mycomicshop_edition(
 ) -> tuple[Edition, bool, bool]:
     """Store MyComicShop's cover `ivid` on the edition `edition_id` (the user confirmed a probable
     match of the variants modal), so it becomes a firm match, and the cover's series `tid` on the
-    edition's publishing when it has no TID yet (see _fill_publishing_series_id). Returns (the
+    edition's publishing when it has no TID yet (see fill_publishing_series_id). Returns (the
     edition, whether it changed, whether its publishing got the TID): linking the IVID it already
     has changes nothing on the edition. The edition's change is saved through
     comics.versions.apply_changes, so its version records `user` and when; Publishing has no
@@ -256,7 +280,7 @@ def link_mycomicshop_edition(
         if edition is None:
             raise NotFound(_("The edition does not exist: it may have been deleted."))
         if edition.mycomicshop_id == ivid:
-            return edition, False, _fill_publishing_series_id(edition.publishing_id, tid)
+            return edition, False, fill_publishing_series_id(edition.publishing_id, tid)
         if edition.mycomicshop_id is not None:
             raise Conflict(
                 _("%(edition)s is already linked to another MyComicShop cover (%(id)s).")
@@ -272,15 +296,16 @@ def link_mycomicshop_edition(
             raise Conflict(" ".join(exc.messages)) from None
         except IntegrityError:  # another edition took the IVID after the check above
             raise Conflict(_("Another edition already has this MyComicShop ID.")) from None
-        filled = _fill_publishing_series_id(edition.publishing_id, tid)
+        filled = fill_publishing_series_id(edition.publishing_id, tid)
     return edition, True, filled
 
 
-def _fill_publishing_series_id(publishing_id: int, tid: int | None) -> bool:
+def fill_publishing_series_id(publishing_id: int, tid: int | None) -> bool:
     """Store MyComicShop's series `tid` on the publishing `publishing_id` when it has none; whether it
     did. A TID it already has (this one or another) is never overwritten, and a TID another
     publishing holds is left there: nothing changes and the link it comes with still succeeds. Only
-    that column is written (QuerySet.update), so the publishing's other values are not revalidated."""
+    that column is written (QuerySet.update), so the publishing's other values are not revalidated.
+    Also used by comics.catalog_sources.batch_creation, once a batch has created editions."""
     if not tid or Publishing.objects.filter(mycomicshop_series_id=tid).exists():
         return False
     try:

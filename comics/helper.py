@@ -8,6 +8,10 @@ from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.utils.dateparse import parse_date
 from PIL import Image, ImageOps
 
+# MyComicShop's catalogue key (comics.catalog_sources.mycomicshop.KEY), kept here so comics.models
+# can use it (ImportBatch.source) without depending on the catalogue clients.
+MYCOMICSHOP_KEY = "mycomicshop"
+
 
 def parse_id_or_none(value: object) -> int | None:
     """Parse a primary key from user input (or a model instance); None when it is empty or not a number."""

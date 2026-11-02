@@ -30,6 +30,7 @@ SCHEMA_AREAS: dict[str, str] = {
     "catalog": "Catálogo",
     "collections": "Colecciones",
     "change_requests": "Solicitudes de cambio",
+    "imports": "Lotes de importación",
     "achievements": "Logros",
     "notifications": "Notificaciones y anuncios",
     "profiles": "Perfiles y permisos",

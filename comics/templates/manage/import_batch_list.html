@@ -1,0 +1,95 @@
+{% extends 'manage/base_manage.html' %}
+{% load static i18n %}
+
+{% block breadcrumb %}
+<span class="is-current">{% translate "Imports" %}</span>
+{% endblock %}
+
+{% block manage_content %}
+<div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+  <div>
+    <h1 class="md-headline-small mb-0">{% translate "Imports" %}</h1>
+    <span class="md-body-medium">{% blocktranslate count counter=page_obj.paginator.count %}{{ counter }} import batch{% plural %}{{ counter }} import batches{% endblocktranslate %}</span>
+  </div>
+  {# A new batch: the series' variants open in the series dialog, where the ones to import are checked. Handled by the script below; without it the form only reloads the page. #}
+  <form class="import-new" id="import-new">
+    <div class="form-floating md-field">
+      <input type="text" class="form-control" id="import-new-series" aria-describedby="import-new-help" autocomplete="off" maxlength="500" placeholder="{% translate 'MyComicShop series ID (TID)' %}">
+      <label for="import-new-series">{% translate "MyComicShop series ID (TID)" %}</label>
+    </div>
+    <button type="submit" class="md-btn md-btn--filled">
+      <span class="material-symbols-outlined" aria-hidden="true">add</span>
+      {% translate "New batch" %}
+    </button>
+  </form>
+</div>
+<p class="md-body-medium" id="import-new-help">{% translate "To start a batch, enter a MyComicShop series ID or paste its URL, then check the variants to import." %}</p>
+<div class="catalog-import__status mb-2" id="import-new-status" role="status" aria-live="polite"></div>
+
+<div class="md-surface-card manage-table">
+  {% if not page_obj.object_list %}
+    <div class="text-center py-5">
+      <span class="material-symbols-outlined d-block mb-2 empty-state-icon" aria-hidden="true">download</span>
+      <p class="md-body-medium mb-0">{% translate "No import batches yet." %}</p>
+    </div>
+  {% else %}
+    <ul class="manage-rows">
+      {% for batch in page_obj %}
+      <li class="manage-row manage-row--no-thumb">
+        <div class="manage-row__main">
+          <a class="manage-row__title" href="{% url 'manage_import_batch' batch.pk %}">
+            {{ batch.series_title }}{% if batch.series_year %} ({{ batch.series_year }}){% endif %}
+          </a>
+          <div class="md-body-medium">
+            {% if batch.publishing %}{{ batch.publishing.publishing_title }}{% if batch.publishing.year %} ({{ batch.publishing.year }}){% endif %}{% else %}{% translate "No publishing" %}{% endif %}
+            · {% blocktranslate with user=batch.created_by.username|default:"—" date=batch.created_at|date:"SHORT_DATETIME_FORMAT" %}By {{ user }} on {{ date }}{% endblocktranslate %}
+          </div>
+        </div>
+        <div class="manage-row__chips">
+          <span class="md-assist-chip{% if batch.status == 'open' %} md-assist-chip--primary{% endif %}">{{ batch.get_status_display }}</span>
+          <span class="md-assist-chip">{% blocktranslate count counter=batch.row_count %}{{ counter }} variant{% plural %}{{ counter }} variants{% endblocktranslate %}</span>
+          {% if batch.pending_count %}<span class="md-assist-chip">{% blocktranslate count counter=batch.pending_count %}{{ counter }} pending{% plural %}{{ counter }} pending{% endblocktranslate %}</span>{% endif %}
+          {% if batch.created_count %}<span class="md-assist-chip md-assist-chip--primary">{% blocktranslate count counter=batch.created_count %}{{ counter }} created{% plural %}{{ counter }} created{% endblocktranslate %}</span>{% endif %}
+          {% if batch.linked_count %}<span class="md-assist-chip md-assist-chip--primary">{% blocktranslate count counter=batch.linked_count %}{{ counter }} linked{% plural %}{{ counter }} linked{% endblocktranslate %}</span>{% endif %}
+          {% if batch.failed_count %}<span class="md-assist-chip md-assist-chip--error">{% blocktranslate count counter=batch.failed_count %}{{ counter }} failed{% plural %}{{ counter }} failed{% endblocktranslate %}</span>{% endif %}
+        </div>
+        <div class="manage-row__actions">
+          <a class="md-icon-btn" href="{% url 'manage_import_batch' batch.pk %}"
+             aria-label="{% blocktranslate with title=batch.series_title %}Open the batch of {{ title }}{% endblocktranslate %}" title="{% translate 'Open' %}">
+            <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+          </a>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+</div>
+
+{% include 'includes/paginator.html' %}
+
+{% include 'manage/includes/catalog_series_dialog.html' %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/custom/catalog_series_dialog.js' %}"></script>
+<script>
+  (function () {
+    "use strict";
+    const form = document.getElementById("import-new");
+    const input = document.getElementById("import-new-series");
+    const status = document.getElementById("import-new-status");
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
+      const tid = window.ComiSeriesDialog.seriesIdFrom(input.value.trim());
+      status.textContent = tid ? "" : gettext("Enter the series ID (TID) or paste its MyComicShop URL.");
+      status.classList.toggle("catalog-import__status--error", !tid);
+      if (!tid) {
+        input.focus();
+        return;
+      }
+      // No form to fill here: the dialog only checks variants for a batch.
+      window.ComiSeriesDialog.open(tid, { returnFocus: input });
+    });
+  })();
+</script>
+{% endblock %}

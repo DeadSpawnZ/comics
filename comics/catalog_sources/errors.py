@@ -57,6 +57,12 @@ class InvalidLookup(CatalogError):  # noqa: N818
     status = 400
 
 
+class InvalidSelection(CatalogError):  # noqa: N818
+    """The variants picked for an import batch cannot make one (none, too many, a number Comi rejects)."""
+
+    status = 400
+
+
 class Conflict(CatalogError):  # noqa: N818
     """The change clashes with what Comi already has (e.g. a MyComicShop ID held by another edition)."""
 

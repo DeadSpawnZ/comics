@@ -1,13 +1,17 @@
 {% load i18n %}
 {% comment %}
-  The variants of a catalogue series (MyComicShop) to pick the one to import, opened from the import
-  box of the edition form. js/custom/catalog_import.js fills it from the series API: one fieldset per
-  issue number with a card (a radio) per variant; the variants already in Comi are disabled and link
-  to their edition. A variant that is probably an existing edition (same number and letter) stays
-  selectable and shows that edition with a "Link" button, which saves the variant's MyComicShop ID
-  on it (the status line below reports the result or the error). The header says which Comi
-  publishing the series matched, or that none did (then no probable match is looked for). A sibling of the edition form, so
-  its radios are never submitted with it.
+  The variants of a catalogue series (MyComicShop), opened from the import box of the edition form
+  (to pick the one to fill the form with) or from Gestión → Imports (to start an import batch).
+  js/custom/catalog_series_dialog.js fills it from the series API: one fieldset per issue number with
+  a card per variant; the variants already in Comi cannot be picked and link to their edition. Each
+  other variant has a checkbox: "Import selected" makes an import batch of the checked ones and opens
+  its page. On the edition form a card is also a radio, and "Import" fills the form with the chosen
+  variant; elsewhere that button is hidden. A variant that is probably an existing edition (same
+  number and letter) stays selectable and shows that edition with a "Link" button, which saves the
+  variant's MyComicShop ID on it (the status line below reports the result or the error). The header
+  says which Comi publishing the series matched, or that none did (then no probable match is looked
+  for). A sibling of the edition form, so its inputs are never submitted with it.
+  Needs `series_dialog` in the context (comics.views.manage_editions.series_dialog_data).
 {% endcomment %}
 <div class="modal fade md-dialog" id="catalog-series-dialog" tabindex="-1" aria-labelledby="catalog-series-title" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-scrollable">
@@ -25,7 +29,14 @@
         <div class="catalog-series" id="catalog-series-issues"></div>
       </div>
       <div class="modal-footer">
+        {% csrf_token %}
+        <span class="catalog-series__batch-hint" id="catalog-series-batch-hint" hidden></span>
         <button type="button" class="md-btn md-btn--text" data-bs-dismiss="modal">{% translate "Cancel" %}</button>
+        {# Its text, with the number of checked variants, is kept up to date by the script. #}
+        <button type="button" class="md-btn md-btn--tonal" id="catalog-series-batch" aria-describedby="catalog-series-batch-hint" disabled>
+          <span class="material-symbols-outlined" aria-hidden="true">playlist_add</span>
+          <span id="catalog-series-batch-text">{% translate "Import selected" %}</span>
+        </button>
         <button type="button" class="md-btn md-btn--filled" id="catalog-series-import" disabled>
           <span class="material-symbols-outlined" aria-hidden="true">download</span>
           {% translate "Import" %}
@@ -66,3 +77,4 @@
     </div>
   </div>
 </div>
+{{ series_dialog|json_script:"catalog-series-dialog-data" }}
