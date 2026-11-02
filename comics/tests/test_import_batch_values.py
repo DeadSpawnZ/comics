@@ -8,8 +8,8 @@ from typing import Any
 
 from django.core.exceptions import ValidationError
 
-from comics.import_batch_values import clear_row_overrides, set_defaults, set_row_overrides
 from comics.catalog_sources.batches import close_batch, pending_names, resolve_name
+from comics.import_batch_values import clear_row_overrides, set_defaults, set_row_overrides
 from comics.models import Artist, ImportBatch, ImportBatchRow
 
 from .factories import make_edition

@@ -236,7 +236,9 @@ def batch_detail(request: HttpRequest, pk: int) -> HttpResponse:
             "series_url": mycomicshop.series_url(batch.series_id),
             "numbers": numbers,
             "pending": [
-                PendingView(name.name, name.artist_id, artist_names.get(name.artist_id or 0, ""), name.numbers, name.rows)
+                PendingView(
+                    name.name, name.artist_id, artist_names.get(name.artist_id or 0, ""), name.numbers, name.rows
+                )
                 for name in pending
             ],
             "resolved": _resolved_names(batch, artist_names),
@@ -263,7 +265,9 @@ def _artist_names(
 ) -> dict[int, str]:
     """{artist id: name} of every artist the page names (credits, resolutions, guesses), in one query."""
     ids = {status.artist_id for group in statuses for status in group if status.artist_id}
-    ids |= {resolution.get("artist_id") for resolution in batch.name_resolutions.values() if resolution.get("artist_id")}
+    ids |= {
+        resolution.get("artist_id") for resolution in batch.name_resolutions.values() if resolution.get("artist_id")
+    }
     ids |= {name.artist_id for name in pending if name.artist_id}
     return dict(Artist.objects.filter(pk__in=ids).values_list("pk", "name")) if ids else {}
 
@@ -690,4 +694,3 @@ def batch_close(request: HttpRequest, pk: int) -> HttpResponseRedirect:
     else:
         messages.success(request, _("Batch closed."))
     return redirect(_batch_url(batch))
-

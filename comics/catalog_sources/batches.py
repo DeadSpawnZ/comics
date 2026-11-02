@@ -396,9 +396,7 @@ def _new_artist_name(name: str) -> str:
         raise ValidationError(_("Enter a name."))
     limit = Artist._meta.get_field("name").max_length
     if len(cleaned) > limit:
-        raise ValidationError(
-            _("“%(name)s” is longer than %(limit)d characters.") % {"name": cleaned, "limit": limit}
-        )
+        raise ValidationError(_("“%(name)s” is longer than %(limit)d characters.") % {"name": cleaned, "limit": limit})
     return cleaned
 
 
@@ -433,7 +431,7 @@ class ResolvedCredits:
     unresolved: list[str]  # names that need a resolution and have none
 
 
-def resolved_credits(batch: ImportBatch, credits: Iterable[BatchCredit]) -> ResolvedCredits:
+def resolved_credits(batch: ImportBatch, credits: Iterable[BatchCredit]) -> ResolvedCredits:  # noqa: C901
     """`credits` (a batch credit list) as their batch resolutions say: a resolved name becomes its
     artist, a new artist or nothing (discarded); an unresolved one keeps its matched artist unless
     it needs a resolution (see needs_resolution), then it is reported in `unresolved`. A `chosen`

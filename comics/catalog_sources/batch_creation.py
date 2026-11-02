@@ -58,7 +58,7 @@ class BatchCreation:
     interrupted: bool = False
 
 
-class _BatchChanged(Exception):
+class _BatchChangedError(Exception):
     """The batch is no longer open with the publishing a create_rows run started with."""
 
 
@@ -124,13 +124,11 @@ def create_rows(
     if reason is None:
         reason = _("Imported from MyComicShop (batch #%(batch)s).") % {"batch": current.pk}
     publishing_id = cast(int, current.publishing_id)  # checked by _create_new_artists
-    result = BatchCreation(
-        created=[], failed=[], artists=artists, publishing_id=publishing_id, series_id_filled=False
-    )
+    result = BatchCreation(created=[], failed=[], artists=artists, publishing_id=publishing_id, series_id_filled=False)
     for row_id in list(pending):
         try:
             row = _create_row(current, row_id, user=user, reason=reason, on_created=on_row_created)
-        except _BatchChanged:
+        except _BatchChangedError:
             result.interrupted = True
             break
         if row is None:
@@ -162,7 +160,7 @@ def _create_new_artists(
         raise ValidationError(_("The artists could not be created. Try again.")) from None
 
 
-def _create_new_artists_once(
+def _create_new_artists_once(  # noqa: C901
     batch: ImportBatch, on_created: Callable[[Artist], None] | None
 ) -> tuple[ImportBatch, list[Artist]]:
     locked = locked_open_batch(batch)
@@ -208,7 +206,7 @@ def _create_row(
 ) -> ImportBatchRow | None:
     """Try the row `row_id` of `batch` (as create_rows read it once locked; see create_rows) and save
     how it went, calling `on_created` in the same transaction when its edition was created; None
-    when it is no longer selected, pending or failed (another run took it). Raises _BatchChanged,
+    when it is no longer selected, pending or failed (another run took it). Raises _BatchChangedError,
     trying nothing, when the batch is no longer open with the publishing `batch` has.
 
     The batch is read again under its lock, and the row uses that reading: a name resolution or a
@@ -224,7 +222,7 @@ def _create_row(
             .first()
         )
         if locked is None:
-            raise _BatchChanged
+            raise _BatchChangedError
         row = (
             ImportBatchRow.objects.select_for_update(skip_locked=True)
             .filter(pk=row_id, selected=True, status__in=RETRIED)

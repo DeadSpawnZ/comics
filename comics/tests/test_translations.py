@@ -789,17 +789,38 @@ NEW_PLURALS = {
         "issue. Corrígelos desde las ediciones.",
     ),
     # Gestión of the MyComicShop import batches.
-    ("%(count)d edition created.", "%(count)d editions created."): ("%(count)d edición creada.", "%(count)d ediciones creadas."),
-    ("%(count)d artist created.", "%(count)d artists created."): ("%(count)d artista creado.", "%(count)d artistas creados."),
-    ("%(count)d variant could not be created: see its errors.", "%(count)d variants could not be created: see their errors."): ("%(count)d variante no se pudo crear: mira sus errores.", "%(count)d variantes no se pudieron crear: mira sus errores."),
-    ("%(counter)s import batch", "%(counter)s import batches"): ("%(counter)s lote de importación", "%(counter)s lotes de importación"),
+    ("%(count)d edition created.", "%(count)d editions created."): (
+        "%(count)d edición creada.",
+        "%(count)d ediciones creadas.",
+    ),
+    ("%(count)d artist created.", "%(count)d artists created."): (
+        "%(count)d artista creado.",
+        "%(count)d artistas creados.",
+    ),
+    (
+        "%(count)d variant could not be created: see its errors.",
+        "%(count)d variants could not be created: see their errors.",
+    ): (
+        "%(count)d variante no se pudo crear: mira sus errores.",
+        "%(count)d variantes no se pudieron crear: mira sus errores.",
+    ),
+    ("%(counter)s import batch", "%(counter)s import batches"): (
+        "%(counter)s lote de importación",
+        "%(counter)s lotes de importación",
+    ),
     ("%(counter)s variant", "%(counter)s variants"): ("%(counter)s variante", "%(counter)s variantes"),
     ("%(counter)s pending", "%(counter)s pending"): ("%(counter)s pendiente", "%(counter)s pendientes"),
     ("%(counter)s created", "%(counter)s created"): ("%(counter)s creada", "%(counter)s creadas"),
     ("%(counter)s linked", "%(counter)s linked"): ("%(counter)s vinculada", "%(counter)s vinculadas"),
     ("%(counter)s failed", "%(counter)s failed"): ("%(counter)s con error", "%(counter)s con errores"),
-    ("Story: %(counter)s number", "Story: %(counter)s numbers"): ("Historia: %(counter)s número", "Historia: %(counter)s números"),
-    ("Cover: %(counter)s variant", "Cover: %(counter)s variants"): ("Portada: %(counter)s variante", "Portada: %(counter)s variantes"),
+    ("Story: %(counter)s number", "Story: %(counter)s numbers"): (
+        "Historia: %(counter)s número",
+        "Historia: %(counter)s números",
+    ),
+    ("Cover: %(counter)s variant", "Cover: %(counter)s variants"): (
+        "Portada: %(counter)s variante",
+        "Portada: %(counter)s variantes",
+    ),
 }
 
 

@@ -36,13 +36,13 @@ from .base import (
     save_formset_reinserting,
 )
 from .catalog import (
+    BATCH_DEFAULT_FIELDS,
+    BATCH_ROW_FIELDS,
     CATALOG_ID_PATTERN,
     COVER_EXTENSIONS,
     MAX_CATALOG_ID,
     NEWEST_PUBLISHINGS,
     RECENT_PUBLISHINGS,
-    BATCH_DEFAULT_FIELDS,
-    BATCH_ROW_FIELDS,
     ArtistCreateForm,
     BatchCreateForm,
     BatchDefaultsForm,

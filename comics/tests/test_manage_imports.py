@@ -16,6 +16,7 @@ from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 
 from comics.catalog_sources import batch_creation
+from comics.catalog_sources.batch_creation import create_rows
 from comics.catalog_sources.batches import (
     MAX_BATCH_ROWS,
     CreditState,
@@ -24,7 +25,6 @@ from comics.catalog_sources.batches import (
     credit_statuses,
     set_publishing,
 )
-from comics.catalog_sources.batch_creation import create_rows
 from comics.catalog_sources.errors import Unavailable
 from comics.models import Artist, Edition, ImportBatch, ImportBatchNumber, ImportBatchRow
 from comics.roles import ADMINISTRATORS
@@ -126,7 +126,9 @@ class PermissionTests(ManageImportsTestCase):
                 self.assertEqual(self.client.get(url).status_code, 403)
         for url in self.actions():
             with self.subTest(url=url):
-                self.assertEqual(self.client.post(url, {"name": "Todd McFarlane", "action": "discard"}).status_code, 403)
+                self.assertEqual(
+                    self.client.post(url, {"name": "Todd McFarlane", "action": "discard"}).status_code, 403
+                )
         self.batch.refresh_from_db()
         self.assertEqual((self.batch.status, self.batch.name_resolutions), (ImportBatch.Status.OPEN, {}))
         self.assertEqual(self.batch.defaults, {})
@@ -328,7 +330,10 @@ class BatchPageTests(ManageImportsTestCase):
         self.assertEqual(response.context["resolved"], [ResolvedView("Greg Capulo", "artist", "Greg Capullo")])
         self.assertContains(response, reverse("manage_import_batch_clear_name", args=[self.batch.pk]))
         chips = response.context["numbers"][0].row_list[0].chips
-        self.assertEqual([(chip.label, chip.state, chip.source_name) for chip in chips], [("Greg Capullo", "resolved", "Greg Capulo")])
+        self.assertEqual(
+            [(chip.label, chip.state, chip.source_name) for chip in chips],
+            [("Greg Capullo", "resolved", "Greg Capulo")],
+        )
         story = response.context["numbers"][0].chips
         self.assertEqual([chip.state for chip in story], ["unmatched", "guessed"])
 
@@ -502,7 +507,10 @@ class ResolveNameTests(ManageImportsTestCase):
             ({"name": "Greg Capulo", "action": "artist", "artist": 999999}, "Choose an existing artist."),
             ({"name": "Greg Capulo", "action": "new", "new_name": "   "}, "Enter a name."),
             ({"name": "Somebody Else", "action": "discard"}, "“Somebody Else” is not a name of this batch."),
-            ({"name": "Greg Capulo", "action": "rename"}, "Select a valid choice. rename is not one of the available choices."),
+            (
+                {"name": "Greg Capulo", "action": "rename"},
+                "Select a valid choice. rename is not one of the available choices.",
+            ),
             ({"action": "discard"}, "The name is missing."),
         ]
         for data, message in cases:
@@ -535,8 +543,12 @@ class CreateTests(ManageImportsTestCase):
         )
         self.second = self.row(self.group, 202, 1, "B", proposal=proposal("B", cover_artists=[credit("Greg Capulo")]))
         self.batch.name_resolutions = {
-            "jonathan glapion": {"name": "Jonathan Glapion", "action": "new", "artist_id": None,
-                                 "new_name": "Jonathan Glapion"},
+            "jonathan glapion": {
+                "name": "Jonathan Glapion",
+                "action": "new",
+                "artist_id": None,
+                "new_name": "Jonathan Glapion",
+            },
         }
         self.batch.save()
 
@@ -986,7 +998,7 @@ class RowEditTests(ManageImportsTestCase):
         # Every "Leave blank" box names its field for screen readers, and the page script finds it.
         self.assertContains(page, '<span class="visually-hidden"> (Variant)</span>')
         self.assertContains(page, "data-leave-blank")
-        form ={row.pk: row for row in page.context["numbers"][0].row_list}[self.pending.pk].edit_form
+        form = {row.pk: row for row in page.context["numbers"][0].row_list}[self.pending.pk].edit_form
         hints = {name: form.fields[name].help_text for name in ("printing", "format", "rarity", "ratio", "notes")}
         self.assertEqual(
             hints,
@@ -1091,7 +1103,9 @@ class BusyBatchTests(ManageImportsTestCase):
 
     def test_other_database_errors_are_not_swallowed(self) -> None:
         for error in (OperationalError(2006, "MySQL server has gone away"), OperationalError("no code")):
-            with self.subTest(error=error):
-                with mock.patch("comics.views.manage_imports.close_batch", side_effect=error):
-                    with self.assertRaises(OperationalError):
-                        self.post("manage_import_batch_close")
+            with (
+                self.subTest(error=error),
+                mock.patch("comics.views.manage_imports.close_batch", side_effect=error),
+                self.assertRaises(OperationalError),
+            ):
+                self.post("manage_import_batch_close")

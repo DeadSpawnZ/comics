@@ -223,7 +223,6 @@ class CreateRowsTests(BatchCreationTestCase):
         self.assertFalse(Issue.objects.filter(number="2").exists())
         self.assertFalse(Edition.objects.filter(mycomicshop_id__in=[201, 202]).exists())
 
-
     def test_the_issue_a_row_creates_becomes_the_numbers_issue(self) -> None:
         self.two_b.overrides = {"cover_price": "lots"}
         self.two_b.save()
