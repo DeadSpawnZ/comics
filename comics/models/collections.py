@@ -555,9 +555,7 @@ class WantedEditionQuerySet(QuerySet):
     def edition_ids_wanted_by(self, user: User, edition_ids: Iterable[int]) -> set[int]:
         """The ids among `edition_ids` that `user` is hunting (active marks), in one query."""
         return set(
-            self.active()
-            .filter(collector=user, edition_id__in=list(edition_ids))
-            .values_list("edition_id", flat=True)
+            self.active().filter(collector=user, edition_id__in=list(edition_ids)).values_list("edition_id", flat=True)
         )
 
     def set_wanted(self, user: User, edition: Edition, wanted: bool) -> None:

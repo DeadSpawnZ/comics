@@ -67,9 +67,9 @@ def complete_hunt_on_purchase(
     same edition are never touched. loaddata (`raw`) restores the dumped marks as they were.
     Runs inside the transaction of Collection.save(), so the purchase, the completed mark and the
     notification are saved together or not at all."""
-    if created and not raw and instance.trade_type == Collection.TradeChoices.BUYING:
-        if WantedEdition.objects.complete_hunt(instance.collector_id, instance.edition_id):
-            Notification.objects.hunt_completed(instance.collector_id, instance.edition_id)
+    is_new_purchase = created and not raw and instance.trade_type == Collection.TradeChoices.BUYING
+    if is_new_purchase and WantedEdition.objects.complete_hunt(instance.collector_id, instance.edition_id):
+        Notification.objects.hunt_completed(instance.collector_id, instance.edition_id)
 
 
 # ---------- Achievement triggers: re-evaluate the rules an event can affect, after commit ----------
