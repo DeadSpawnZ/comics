@@ -33,7 +33,7 @@ from comics.forms import (
 )
 from comics.helper import parse_date_or_none, parse_id_or_none
 from comics.models import Collection, Edition, Signature
-from comics.views.manage_editions import PAGE_SIZE, RECENT_COUNT
+from comics.views.manage_editions import PAGE_SIZE, RECENT_COUNT_LONG
 from comics.views.utils import (
     carry_over_query,
     first_sale_date,
@@ -195,7 +195,7 @@ def collection_list(request: HttpRequest) -> HttpResponse:
     recent = []
     if page_obj.number == 1 and not (query or collector_filter or type_filter):
         rows = Collection.objects.select_related(*related).prefetch_related(editorials).with_sale_date()
-        recent = list(rows.order_by("-id")[:RECENT_COUNT])
+        recent = list(rows.order_by("-id")[:RECENT_COUNT_LONG])
     return render(
         request,
         "manage/collection_list.html",

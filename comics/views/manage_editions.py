@@ -43,6 +43,7 @@ from comics.views.utils import log_action, safe_next_url
 
 PAGE_SIZE = 25
 RECENT_COUNT = 5  # latest additions listed before the A-Z catalog
+RECENT_COUNT_LONG = 10  # editions and collection pieces are added in bulk, so they list more
 TYPE_TABS = [
     ("", pgettext_lazy("editions", "All")),
     ("individual", gettext_lazy("Single")),
@@ -138,7 +139,9 @@ def edition_catalog_context(request: HttpRequest) -> dict[str, Any]:
     # The latest additions go first (only on the unfiltered first page), then the A-Z list.
     recent = []
     if page_obj.number == 1 and not (query or format_filter or rarity_filter or type_filter):
-        recent = list(Edition.objects.select_related("publishing", "issue__publishing").order_by("-id")[:RECENT_COUNT])
+        recent = list(
+            Edition.objects.select_related("publishing", "issue__publishing").order_by("-id")[:RECENT_COUNT_LONG]
+        )
         _add_row_details(recent)
 
     return {
