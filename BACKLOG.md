@@ -19,12 +19,14 @@ Feature nueva (2026-11-16), en `feat/mycomicshop-batch-import`. Tres tareas, tod
 busco" en lista y detalle de ediciones, nota editable en la página (1 ronda); 3 comprar una edición
 buscada completa la marca (`completed_at`, conserva la nota) y crea una notificación
 `hunt_completed` con la acción "Seguir buscándolo", que la reactiva sin tocar la compra (2 rondas).
-Suite en MySQL: 1221 tests OK. La migración `0123` (crea `comics_wantededition`, añade
-`notification.edition` y amplía la CHECK de notificaciones) está ensayada en `comic_refactor`
-(aplicar, revertir con una notificación de cacería presente, aplicar). Falta: **ver las páginas en
-el navegador** (nadie las ha visto: fila de la cacería, chips, desplegable de la nota, icono
-`travel_explore`, botones en lista y detalle, la acción de la notificación en la página y dentro del
-menú de la campana, el texto de la notificación en español).
+Commiteado en `1fdc3eb` (feature) y `a22e8d6` (Ruff), sin push. Suite en MySQL: 1221 tests OK. La
+migración `0123` (crea `comics_wantededition`, añade `notification.edition` y amplía la CHECK de
+notificaciones) ya está aplicada en la base real (2026-11-16, copia previa en
+`backups/comic-pre-0123-20261116_142810.sql`, ensayada antes en `comic_refactor`: aplicar, revertir
+con una notificación de cacería presente, aplicar) y la imagen reconstruida. Falta: **ver las
+páginas en el navegador** (nadie las ha visto: fila de la cacería, chips, desplegable de la nota,
+icono `travel_explore`, botones en lista y detalle, la acción de la notificación en la página y
+dentro del menú de la campana, el texto de la notificación en español).
 
 ### Probar los lotes de importación desde MyComicShop (commiteados, sin push)
 
