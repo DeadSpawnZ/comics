@@ -1,0 +1,86 @@
+{% extends 'my_comics/base_comics.html' %}
+{% load static i18n %}
+
+{% block extra_css %}
+{# Row list styles are shared with Gestión. #}
+<link rel="stylesheet" href="{% static 'css/custom/manage.css' %}">
+{% endblock %}
+
+{% block breadcrumb %}<span class="is-current">{% translate "Hunt" %}</span>{% endblock %}
+
+{% block comics_content %}
+<div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+  <div>
+    <h1 class="md-headline-small mb-0">{% translate "Hunt" %}</h1>
+    <span class="md-body-medium">{% blocktranslate count counter=page_obj.paginator.count %}{{ counter }} edition{% plural %}{{ counter }} editions{% endblocktranslate %}</span>
+  </div>
+</div>
+
+<div class="md-surface-card manage-table">
+  {% if not page_obj.object_list %}
+    <div class="text-center py-5">
+      <span class="material-symbols-outlined d-block mb-2 empty-state-icon" aria-hidden="true">travel_explore</span>
+      <p class="md-body-medium">{% translate "You're not looking for any edition yet. Mark the ones you want from the Editions list." %}</p>
+      <a class="md-btn md-btn--tonal" href="{% url 'comics_editions' %}">
+        <span class="material-symbols-outlined" aria-hidden="true">menu_book</span>
+        {% translate "Go to Editions" %}
+      </a>
+    </div>
+  {% else %}
+    <ul class="manage-rows">
+      {% for mark in page_obj %}
+      {% with edition=mark.edition %}
+      <li class="manage-row" id="hunt-{{ mark.pk }}">
+        <div class="manage-row__thumb">
+          {% if edition.thumbnail %}
+            <img src="{{ edition.thumbnail.url }}" alt="" loading="lazy">
+          {% else %}
+            <span class="material-symbols-outlined" aria-hidden="true">image</span>
+          {% endif %}
+        </div>
+        <div class="manage-row__main">
+          <a class="manage-row__title" href="{% url 'comics_edition_detail' edition.pk %}?next={{ request.get_full_path|urlencode }}">
+            {{ edition.short_name }}
+          </a>
+          <div class="md-body-medium">
+            {% blocktranslate with printing=edition.printing %}{{ printing }} printing{% endblocktranslate %} · {% blocktranslate with serie=edition.publishing.serie %}Series {{ serie }}{% endblocktranslate %}{% if edition.publishing.year %} · {{ edition.publishing.year }}{% endif %} · {{ edition.publishing.language|upper }}
+          </div>
+          {% if mark.notes %}
+            <p class="md-body-medium hunt-note">{{ mark.notes|linebreaksbr }}</p>
+          {% endif %}
+          <details class="hunt-note-edit">
+            <summary>{% if mark.notes %}{% translate "Edit note" %}{% else %}{% translate "Add a note" %}{% endif %}</summary>
+            <form method="post" action="{% url 'comics_hunt_note' mark.pk %}" class="hunt-note-edit__form">
+              {% csrf_token %}
+              <input type="hidden" name="next" value="{{ request.get_full_path }}">
+              {% include 'manage/includes/field.html' with field=mark.note_form.notes %}
+              <div class="hunt-note-edit__hint" id="{{ mark.note_form.notes.auto_id }}_helptext">{{ mark.note_form.notes.help_text }}</div>
+              <button type="submit" class="md-btn md-btn--tonal">
+                <span class="material-symbols-outlined" aria-hidden="true">save</span>
+                {% translate "Save" %}
+              </button>
+            </form>
+          </details>
+        </div>
+        <div class="manage-row__chips">
+          {% include 'includes/rarity_badge.html' %}
+          <span class="md-assist-chip">{{ edition.get_format_display }}</span>
+          {% if mark.owned_count %}
+            <span class="md-assist-chip md-assist-chip--primary">
+              <span class="material-symbols-outlined" aria-hidden="true">check</span>
+              {% if mark.owned_count > 1 %}{% blocktranslate with count=mark.owned_count %}You own {{ count }}{% endblocktranslate %}{% else %}{% translate "You own it" %}{% endif %}
+            </span>
+          {% endif %}
+        </div>
+        <div class="manage-row__actions">
+          {% include 'includes/hunt_button.html' with wanted=True compact=True %}
+        </div>
+      </li>
+      {% endwith %}
+      {% endfor %}
+    </ul>
+  {% endif %}
+</div>
+
+{% include 'includes/paginator.html' %}
+{% endblock %}

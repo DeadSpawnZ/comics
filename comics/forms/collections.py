@@ -1,4 +1,4 @@
-"""What collectors own and follow: purchases and sales, their signatures and reading arcs."""
+"""What collectors own and follow: purchases and sales, their signatures, reading arcs and hunted editions."""
 
 from __future__ import annotations
 
@@ -12,7 +12,8 @@ from django.db.models import QuerySet
 from django.utils.translation import gettext_lazy as _
 
 from ..helper import parse_date_or_none, parse_id_or_none
-from ..models import Collectable, Collection, Dealer, Edition, Publishing, ReadingArc, Signature
+from ..models import Collectable, Collection, Dealer, Edition, Publishing, ReadingArc, Signature, WantedEdition
+from .base import MaterialFieldsMixin
 from .catalog import publishing_label, publishings_for_select, recent_publishings
 
 
@@ -354,3 +355,39 @@ class SignatureForm(forms.ModelForm):
 SignatureFormSet = forms.inlineformset_factory(
     Collection, Signature, form=SignatureForm, fk_name="collectable", extra=0, can_delete=True
 )
+
+
+class HuntMarkForm(forms.Form):
+    """The hunt state a button asks for, stated explicitly ("1" hunt, "0" stop) instead of toggling the
+    current one, so submitting the same button twice leaves the same result."""
+
+    wanted = forms.TypedChoiceField(choices=[("1", "1"), ("0", "0")], coerce=int)
+
+
+class NoteField(forms.CharField):
+    """A textarea's text with its line breaks as LF. Browsers count a line break as one character for
+    `maxlength` but submit it as CRLF; normalizing it makes the server limit the one the browser enforced."""
+
+    def to_python(self, value: Any) -> str:
+        return super().to_python(value).replace("\r\n", "\n")
+
+
+class WantedEditionNoteForm(MaterialFieldsMixin, forms.ModelForm):
+    """The note of a hunt mark: what the collector is after (e.g. a better copy than the one they own).
+    It may be emptied."""
+
+    notes = NoteField(
+        label=_("Note"),
+        max_length=WantedEdition._meta.get_field("notes").max_length,
+        required=False,
+        help_text=_("Up to 500 characters. Leave it empty to remove the note."),
+        widget=forms.Textarea(attrs={"rows": 3, "style": "height: 90px"}),
+    )
+
+    class Meta:
+        model = WantedEdition
+        fields = ["notes"]
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.style_fields()

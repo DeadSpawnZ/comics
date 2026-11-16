@@ -12,7 +12,7 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 
-from comics.models import Collection, Connecting, Edition, ReadingArc
+from comics.models import Collection, Connecting, Edition, ReadingArc, WantedEdition
 from comics.views.manage_editions import edition_catalog_context, sibling_editions_of
 from comics.views.utils import safe_next_url
 
@@ -100,7 +100,7 @@ def connecting_detail(request: HttpRequest, pk: int) -> HttpResponse:
     return render(request, "my_comics/connecting_detail.html", summary)
 
 
-def _owned_counts(user: User, edition_ids: Iterable[int]) -> dict[int, int]:
+def owned_counts(user: User, edition_ids: Iterable[int]) -> dict[int, int]:
     """{edition_id: number of copies `user` owns} for the given editions."""
     counts = {}
     for edition_id in (
@@ -112,12 +112,15 @@ def _owned_counts(user: User, edition_ids: Iterable[int]) -> dict[int, int]:
 
 @login_required
 def edition_list(request: HttpRequest) -> HttpResponse:
-    """Read-only edition catalog with the same filters as Gestión, flagged with what the user owns."""
+    """Read-only edition catalog with the same filters as Gestión, flagged with what the user owns and hunts."""
     context = edition_catalog_context(request)
     page_obj = context["page_obj"]
-    counts = _owned_counts(request.user, [edition.id for edition in page_obj])
+    edition_ids = [edition.id for edition in page_obj]
+    counts = owned_counts(request.user, edition_ids)
+    wanted_ids = WantedEdition.objects.edition_ids_wanted_by(request.user, edition_ids)
     for edition in page_obj:
         edition.owned_count = counts.get(edition.id, 0)
+        edition.wanted = edition.id in wanted_ids
     return render(request, "my_comics/edition_list.html", context)
 
 
@@ -125,7 +128,7 @@ def edition_list(request: HttpRequest) -> HttpResponse:
 def edition_detail(request: HttpRequest, pk: int) -> HttpResponse:
     edition = get_object_or_404(Edition.objects.select_related("publishing", "issue__publishing"), pk=pk)
     siblings = sibling_editions_of(edition)
-    owned_ids = set(_owned_counts(request.user, [edition.id] + [sibling.id for sibling in siblings]))
+    owned_ids = set(owned_counts(request.user, [edition.id] + [sibling.id for sibling in siblings]))
     for sibling in siblings:
         sibling.owned = sibling.id in owned_ids
     copies = (
@@ -141,6 +144,7 @@ def edition_detail(request: HttpRequest, pk: int) -> HttpResponse:
             "edition": edition,
             "back_url": safe_next_url(request, reverse("comics_editions")),
             "copies": copies,
+            "is_wanted": WantedEdition.objects.active().filter(collector=request.user, edition=edition).exists(),
             "cover_artists": edition.cover_artists.order_by("name"),
             "collected": edition.collected_entries.select_related("issue__publishing").order_by("order"),
             "sibling_editions": siblings,

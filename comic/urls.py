@@ -27,6 +27,7 @@ from comics.views import (
     collectables,
     collection,
     collection_entries,
+    hunt,
     manage,
     manage_achievement_categories,
     manage_achievements,
@@ -58,6 +59,11 @@ urlpatterns = [
     path("notificaciones/menu/", notifications.notification_menu, name="notification_menu"),
     path("notificaciones/<int:pk>/abrir/", notifications.notification_open, name="notification_open"),
     path(
+        "notificaciones/<int:pk>/seguir-buscando/",
+        notifications.notification_resume_hunt,
+        name="notification_resume_hunt",
+    ),
+    path(
         "notificaciones/marcar-leidas/",
         notifications.notification_mark_all_read,
         name="notifications_mark_all_read",
@@ -71,6 +77,10 @@ urlpatterns = [
     path("comics/api/compras/", collection_entries.api_purchases, name="comics_api_purchases"),
     path("comics/ediciones/", my_comics.edition_list, name="comics_editions"),
     path("comics/ediciones/<int:pk>/", my_comics.edition_detail, name="comics_edition_detail"),
+    # Url names of the Hunt pages contain "hunt" (and no "edition"): the side menu highlights by it.
+    path("comics/ediciones/<int:pk>/caceria/", hunt.hunt_mark, name="comics_hunt_mark"),
+    path("comics/caceria/", hunt.hunt_list, name="comics_hunt"),
+    path("comics/caceria/<int:pk>/nota/", hunt.hunt_note, name="comics_hunt_note"),
     path(
         "comics/ediciones/<int:pk>/sugerir/",
         change_requests.suggest_edition_change,

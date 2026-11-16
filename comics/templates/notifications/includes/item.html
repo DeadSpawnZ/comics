@@ -1,7 +1,11 @@
 {% load i18n humanize %}
 {% comment %}One notification, as a button that marks it read and opens what it is about (POST).
 Expects `notification` and, on the notifications page, `show_detail` (an announcement's body).
-Every text is autoescaped.{% endcomment %}
+A completed hunt that can still be brought back (`can_resume_hunt`, see
+NotificationQuerySet.for_display) gets its action in a second form right after the first one: a
+form cannot sit inside another form, nor a button inside a button. Its accessible name includes the
+edition, so several of them can be told apart. It returns to `next_url` (the page the bell's menu is
+shown on) or to this page. Every text is autoescaped.{% endcomment %}
 <form method="post" action="{% url 'notification_open' notification.pk %}" class="notif-item__form">
   {% csrf_token %}
   <button type="submit" class="dropdown-item notif-item{% if notification.is_unread %} is-unread{% endif %}">
@@ -19,3 +23,14 @@ Every text is autoescaped.{% endcomment %}
     {% endif %}
   </button>
 </form>
+{% if notification.can_resume_hunt %}
+  <form method="post" action="{% url 'notification_resume_hunt' notification.pk %}" class="notif-item__actions{% if notification.is_unread %} is-unread{% endif %}">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{% firstof next_url request.get_full_path %}">
+    {% translate "Keep looking for it" as label %}
+    <button type="submit" class="md-btn md-btn--text" aria-label="{{ label }}: {{ notification.edition.short_name }}">
+      <span class="material-symbols-outlined" aria-hidden="true">bookmark_add</span>
+      {{ label }}
+    </button>
+  </form>
+{% endif %}

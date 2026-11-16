@@ -85,9 +85,11 @@ from .collectables import (
 from .collections import (
     CollectionEntryForm,
     CollectionForm,
+    HuntMarkForm,
     ReadingArcForm,
     SignatureForm,
     SignatureFormSet,
+    WantedEditionNoteForm,
     _number_key,
     available_purchases,
     edition_label,
@@ -154,9 +156,11 @@ __all__ = [
     # collections
     "CollectionEntryForm",
     "CollectionForm",
+    "HuntMarkForm",
     "ReadingArcForm",
     "SignatureForm",
     "SignatureFormSet",
+    "WantedEditionNoteForm",
     "_number_key",
     "available_purchases",
     "edition_label",

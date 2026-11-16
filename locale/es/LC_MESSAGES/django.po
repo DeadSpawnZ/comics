@@ -4381,3 +4381,79 @@ msgstr "Para empezar un lote, escribe el ID de una serie de MyComicShop o pega s
 #: comics/forms/catalog.py
 msgid "The MyComicShop series is missing."
 msgstr "Falta la serie de MyComicShop."
+
+#: comics/templates/my_comics/base_comics.html
+#: comics/templates/my_comics/hunt_list.html
+msgid "Hunt"
+msgstr "Cacería"
+
+#: comics/templates/includes/hunt_button.html
+#: comics/templates/my_comics/edition_detail.html
+#: comics/templates/my_comics/edition_list.html
+msgid "Looking for it"
+msgstr "Lo busco"
+
+#: comics/templates/includes/hunt_button.html
+msgid "Stop looking for it"
+msgstr "Ya no lo busco"
+
+#: comics/templates/my_comics/hunt_list.html
+msgid "You're not looking for any edition yet. Mark the ones you want from the Editions list."
+msgstr "Todavía no buscas ninguna edición. Marca las que quieras desde la lista de Ediciones."
+
+#: comics/templates/my_comics/hunt_list.html
+msgid "Go to Editions"
+msgstr "Ir a Ediciones"
+
+#: comics/templates/my_comics/hunt_list.html
+msgid "Edit note"
+msgstr "Editar nota"
+
+#: comics/templates/my_comics/hunt_list.html
+msgid "Add a note"
+msgstr "Agregar una nota"
+
+#: comics/forms/collections.py
+msgid "Note"
+msgstr "Nota"
+
+#: comics/forms/collections.py
+msgid "Up to 500 characters. Leave it empty to remove the note."
+msgstr "Hasta 500 caracteres. Déjala vacía para quitar la nota."
+
+#: comics/views/hunt.py
+#, python-format
+msgid "%(edition)s is now in your hunt."
+msgstr "%(edition)s ya está en tu cacería."
+
+#: comics/views/hunt.py
+#, python-format
+msgid "%(edition)s is no longer in your hunt."
+msgstr "%(edition)s ya no está en tu cacería."
+
+#: comics/views/hunt.py
+msgid "Note saved."
+msgstr "Nota guardada."
+
+#: comics/views/hunt.py
+msgid "Note removed."
+msgstr "Nota eliminada."
+
+#: comics/views/hunt.py
+#, python-format
+msgid "The note was not saved: %(error)s"
+msgstr "No se guardó la nota: %(error)s"
+
+#: comics/models/notifications.py
+#, python-format
+msgid "You got %(edition)s: it left your hunt."
+msgstr "Conseguiste %(edition)s: salió de tu cacería."
+
+#: comics/templates/notifications/includes/item.html
+msgid "Keep looking for it"
+msgstr "Seguir buscándolo"
+
+#: comics/views/notifications.py
+#, python-format
+msgid "%(edition)s is back in your hunt."
+msgstr "%(edition)s volvió a tu cacería."

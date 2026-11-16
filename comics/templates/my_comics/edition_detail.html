@@ -20,8 +20,15 @@
     </a>
     <h1 class="md-headline-small mb-0">{{ edition.short_name }}</h1>
     {% include 'includes/rarity_badge.html' %}
+    {% if is_wanted %}
+      <span class="md-assist-chip md-assist-chip--primary">
+        <span class="material-symbols-outlined" aria-hidden="true">bookmark</span>
+        {% translate "Looking for it" %}
+      </span>
+    {% endif %}
   </div>
   <div class="d-flex align-items-center gap-2 flex-wrap">
+    {% include 'includes/hunt_button.html' with wanted=is_wanted %}
     <a class="md-btn md-btn--text" href="{% url 'comics_edition_suggest' edition.pk %}?next={{ request.get_full_path|urlencode }}">
       <span class="material-symbols-outlined" aria-hidden="true">edit_note</span>
       {% translate "Suggest a correction" %}

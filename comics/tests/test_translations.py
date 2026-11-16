@@ -618,6 +618,27 @@ NEW_TRANSLATIONS = {
         "Para empezar un lote, escribe el ID de una serie de MyComicShop o pega su URL y marca las variantes que quieres importar."
     ),
     "The MyComicShop series is missing.": "Falta la serie de MyComicShop.",
+    # Hunt (Cacería): editions the collector is looking for.
+    "Hunt": "Cacería",
+    "Looking for it": "Lo busco",
+    "Stop looking for it": "Ya no lo busco",
+    "You're not looking for any edition yet. Mark the ones you want from the Editions list.": (
+        "Todavía no buscas ninguna edición. Marca las que quieras desde la lista de Ediciones."
+    ),
+    "Go to Editions": "Ir a Ediciones",
+    "Edit note": "Editar nota",
+    "Add a note": "Agregar una nota",
+    "Note": "Nota",
+    "Up to 500 characters. Leave it empty to remove the note.": "Hasta 500 caracteres. Déjala vacía para quitar la nota.",
+    "%(edition)s is now in your hunt.": "%(edition)s ya está en tu cacería.",
+    "%(edition)s is no longer in your hunt.": "%(edition)s ya no está en tu cacería.",
+    "Note saved.": "Nota guardada.",
+    "Note removed.": "Nota eliminada.",
+    "The note was not saved: %(error)s": "No se guardó la nota: %(error)s",
+    # A purchase completing a hunt, and bringing it back from the notification.
+    "You got %(edition)s: it left your hunt.": "Conseguiste %(edition)s: salió de tu cacería.",
+    "Keep looking for it": "Seguir buscándolo",
+    "%(edition)s is back in your hunt.": "%(edition)s volvió a tu cacería.",
 }
 
 

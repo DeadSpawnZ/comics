@@ -8,9 +8,23 @@ Cómo trabajar un punto: seguir `CLAUDE.md` (flujo backend con `backend-senior` 
 tests solo en MySQL, Ruff una vez por feature, migraciones ensayadas en `comic_refactor` antes de la
 base real). Quitar el punto de este archivo en el mismo commit que lo resuelve.
 
-Última actualización: 2026-11-01, en la rama `feat/mycomicshop-batch-import`.
+Última actualización: 2026-11-16, en la rama `feat/mycomicshop-batch-import`.
 
 ## Primera tarea de la próxima sesión
+
+### Probar la Cacería en el navegador
+
+Feature nueva (2026-11-16), en `feat/mycomicshop-batch-import`. Tres tareas, todas APPROVED:
+1 modelo `WantedEdition` + `0123` (2 rondas de revisión); 2 página Mis comics → Cacería, botón "Lo
+busco" en lista y detalle de ediciones, nota editable en la página (1 ronda); 3 comprar una edición
+buscada completa la marca (`completed_at`, conserva la nota) y crea una notificación
+`hunt_completed` con la acción "Seguir buscándolo", que la reactiva sin tocar la compra (2 rondas).
+Suite en MySQL: 1221 tests OK. La migración `0123` (crea `comics_wantededition`, añade
+`notification.edition` y amplía la CHECK de notificaciones) está ensayada en `comic_refactor`
+(aplicar, revertir con una notificación de cacería presente, aplicar). Falta: **ver las páginas en
+el navegador** (nadie las ha visto: fila de la cacería, chips, desplegable de la nota, icono
+`travel_explore`, botones en lista y detalle, la acción de la notificación en la página y dentro del
+menú de la campana, el texto de la notificación en español).
 
 ### Probar los lotes de importación desde MyComicShop (commiteados, sin push)
 
@@ -316,6 +330,41 @@ evaluar las reglas por fecha en la primera visita del día de cada usuario (reco
   en `EditorialAliasForm`; `RepeatableTextInput.format_value` sin uso real.
 
 ### General
+- **`makemessages` daña el catálogo:** el comando documentado en el README (sección Traducciones),
+  corrido sobre este árbol, reescribe y reordena todo `django.po` (unas 7,000 líneas) y
+  `djangojs.po`, marca como obsoletas (`#~`) entradas que se siguen usando ("Community" y
+  "Seniority", que `test_translations.py` comprueba, además de "Treasures", "Sagas", "Details" y una
+  cadena de JS) y propone traducciones fuzzy equivocadas. Por eso las 14 cadenas de la Cacería se
+  añadieron a mano al final de `django.po`. Averiguar por qué no extrae esas cadenas y arreglar el
+  comando (o documentar el procedimiento manual) antes de volver a regenerar el catálogo.
+- Cacería (menores de revisión):
+  - El texto de ayuda "Up to 500 characters" de `WantedEditionNoteForm` lleva el límite escrito a
+    mano; usar un msgid con marcador que lea `max_length` del modelo.
+  - `comics/views/hunt.py` repite `PAGE_SIZE = 25`; importarla de `manage_editions` como hacen
+    `collection_entries.py` y `manage_collectables.py`.
+  - `hunt_list.html` copia la fila de `edition_list.html` (miniatura, título, metadatos, chip "You
+    own") y el chip "Looking for it" está en tres plantillas; sacarlos a includes. La página de
+    Cacería no muestra el chip de compilación que sí tiene la lista.
+  - `my_comics.edition_detail` consulta `WantedEdition` con el ORM en la vista; añadir
+    `WantedEditionQuerySet.is_wanted_by`. `owned_counts` es una consulta de dominio que vive en
+    `views/my_comics.py` y ya la importa `hunt.py`; moverla al QuerySet de `Collection`.
+  - La altura del `textarea` de la nota va en `attrs={"style": ...}` del formulario; pasarla a
+    `.hunt-note-edit__form textarea` en `collections.css`.
+  - Falta un test de que la nota se renderiza escapada (hoy lo está, por autoescape).
+  - Guardar vacía una nota que ya estaba vacía muestra "Note removed."; comparar con
+    `form.has_changed()`.
+  - Si una nota se rechaza se pierde lo escrito (solo ocurre con una petición manipulada: el
+    navegador limita a 500 caracteres y es igual o más estricto que el servidor).
+  - Las marcas completadas (`completed_at`) no se pueden borrar desde la interfaz: se acumulan hasta
+    que se borra la edición o el usuario. Inofensivo hoy; si molesta, borrarlas al dejar de buscar o
+    mostrarlas como historial de cacerías completadas.
+  - `set_wanted(True)` reactiva una marca completada con una actualización condicionada al estado
+    leído, sin test de concurrencia (se consideró desproporcionado).
+  - `NotificationAdmin` no tiene `change_request` en `raw_id_fields`: el formulario del admin carga
+    un select con todas las solicitudes (ya estaba así antes de la Cacería).
+- El listado de ediciones de Mis comics calcula `recent` (las últimas 10 ediciones, en
+  `edition_catalog_context`) aunque su plantilla no lo muestra: una consulta de más en la primera
+  página.
 - Bloqueo del borrado de compras vendidas (menores de revisión): `collectable_delete` pasa a
   `date_format` el resultado de `first_sale_date` sin comprobar `None` (hoy no ocurre, porque solo
   una venta protege un collectable; devolver el mensaje genérico si pasa); el texto "no se puede

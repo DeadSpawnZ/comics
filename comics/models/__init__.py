@@ -4,8 +4,8 @@ Migrations and the rest of the project import from `comics.models` (e.g. the val
 comics.models.validate_phone, comics.models.validate_site_path and
 comics.models.Publishing.max_value_current_year), so every public name stays available here.
 Module dependencies run one way: base <- catalog <- collections and change_requests;
-base <- profiles and achievements; achievements and change_requests <- notifications;
-catalog <- imports."""
+base <- profiles and achievements; achievements, change_requests, catalog and collections <-
+notifications; catalog <- imports."""
 
 # isort: off
 # Same order as the models were defined in the former single module: Django registers models in
@@ -42,6 +42,8 @@ from .collections import (
     ReadingArcEntry,
     Signature,
     TradeQuerySet,
+    WantedEdition,
+    WantedEditionQuerySet,
 )
 from .profiles import PHONE_ALLOWED, AreaAccess, Profile, ProfileManager, validate_phone
 from .achievements import (
@@ -96,6 +98,8 @@ __all__ = [
     "ReadingArcEntry",
     "Signature",
     "TradeQuerySet",
+    "WantedEdition",
+    "WantedEditionQuerySet",
     # profiles
     "PHONE_ALLOWED",
     "AreaAccess",

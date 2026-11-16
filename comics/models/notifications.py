@@ -10,12 +10,14 @@ from django.db.models import (
     CharField,
     CheckConstraint,
     DateTimeField,
+    Exists,
     F,
     ForeignKey,
     Index,
     Manager,
     ManyToManyField,
     Model,
+    OuterRef,
     PositiveIntegerField,
     PositiveSmallIntegerField,
     Q,
@@ -31,12 +33,15 @@ from django.utils.translation import gettext_lazy as _
 
 from .achievements import Achievement
 from .base import localized
+from .catalog import Edition
 from .change_requests import ChangeRequest
+from .collections import WantedEdition
 
 # ---------- Notifications ----------
 # What users are told about (achievements, announcements from Gestión, the steps of their change
-# requests), shown under the navbar bell. A notification stores references, never texts: it is
-# rendered in the viewer's language from what it points to, so later edits show up in it.
+# requests, a hunt completed by a purchase), shown under the navbar bell. A notification stores
+# references, never texts: it is rendered in the viewer's language from what it points to, so later
+# edits show up in it.
 
 
 def validate_site_path(value: str) -> None:
@@ -102,8 +107,19 @@ class Announcement(Model):
 
 class NotificationQuerySet(QuerySet["Notification"]):
     def for_display(self) -> NotificationQuerySet:
-        """With what rendering them reads (achievement and its category, announcement, request)."""
-        return self.select_related("achievement__category", "announcement", "change_request")
+        """With what rendering them reads (achievement and its category, announcement, request, the
+        edition with its publishing and, in one extra query for all rows, the publishings' editorials)
+        and `can_resume_hunt`: whether the hunt a `hunt_completed` notification tells about can still
+        be brought back (the recipient keeps a completed mark of that edition). Computed in the same
+        query for every row; always False for the other kinds, which have no edition."""
+        completed_mark = WantedEdition.objects.completed().filter(
+            collector_id=OuterRef("recipient_id"), edition_id=OuterRef("edition_id")
+        )
+        return (
+            self.select_related("achievement__category", "announcement", "change_request", "edition__publishing")
+            .prefetch_related("edition__publishing__editorials")
+            .annotate(can_resume_hunt=Exists(completed_mark))
+        )
 
     def unread(self) -> NotificationQuerySet:
         return self.filter(read_at__isnull=True)
@@ -138,10 +154,15 @@ class NotificationManager(Manager.from_queryset(NotificationQuerySet)):  # type:
         kind = Notification.CHANGE_REQUEST_KINDS[change_request.status]
         return self.create(recipient_id=change_request.author_id, kind=kind, change_request=change_request)
 
+    def hunt_completed(self, collector_id: int, edition_id: int) -> Notification:
+        """Tell a collector that a purchase of `edition_id` completed their hunt of it."""
+        return self.create(recipient_id=collector_id, kind=Notification.Kind.HUNT_COMPLETED, edition_id=edition_id)
+
 
 class Notification(Model):
     """Something a user is told about. `kind` says which references it uses: an achievement and
-    the level reached, an announcement, a number of achievements (summaries) or a change request."""
+    the level reached, an announcement, a number of achievements (summaries), a change request or an
+    edition (a hunt completed by a purchase)."""
 
     class Kind(TextChoices):
         ACHIEVEMENT = "achievement"  # a live award or level-up
@@ -151,6 +172,7 @@ class Notification(Model):
         CHANGE_REQUEST_VALIDATED = "change_request_validated"  # the author's request steps
         CHANGE_REQUEST_APPROVED = "change_request_approved"
         CHANGE_REQUEST_REJECTED = "change_request_rejected"
+        HUNT_COMPLETED = "hunt_completed"  # a purchase completed the recipient's hunt of an edition
 
     # The kind telling a request's author about each status their request can reach.
     CHANGE_REQUEST_KINDS = {
@@ -166,6 +188,9 @@ class Notification(Model):
     achievement = ForeignKey(Achievement, on_delete=CASCADE, null=True, blank=True, related_name="notifications")
     announcement = ForeignKey(Announcement, on_delete=CASCADE, null=True, blank=True, related_name="notifications")
     change_request = ForeignKey(ChangeRequest, on_delete=CASCADE, null=True, blank=True, related_name="notifications")
+    # The edition, not the hunt mark: the notification stays in the history whatever later happens
+    # to the mark (stopping the hunt deletes it). Deleting the edition removes its notifications.
+    edition = ForeignKey(Edition, on_delete=CASCADE, null=True, blank=True, related_name="notifications")
     level = PositiveSmallIntegerField(null=True, blank=True)
     count = PositiveIntegerField(null=True, blank=True)
     created_at = DateTimeField(default=timezone.now)
@@ -187,7 +212,8 @@ class Notification(Model):
                 | Q(
                     kind__in=["change_request_validated", "change_request_approved", "change_request_rejected"],
                     change_request__isnull=False,
-                ),
+                )
+                | Q(kind="hunt_completed", edition__isnull=False),
                 name="notification_kind_references",
             )
         ]
@@ -210,6 +236,8 @@ class Notification(Model):
             return "task_alt"
         if self.kind == self.Kind.CHANGE_REQUEST_REJECTED:
             return "cancel"
+        if self.kind == self.Kind.HUNT_COMPLETED:
+            return "bookmark_added"
         if self.kind == self.Kind.ACHIEVEMENT:
             return "emoji_events"
         return "military_tech"
@@ -249,6 +277,8 @@ class Notification(Model):
                 self.Kind.CHANGE_REQUEST_REJECTED: gettext("Your request was rejected: %(title)s"),
             }
             return texts[self.kind] % {"title": self.change_request.title}
+        if self.kind == self.Kind.HUNT_COMPLETED and self.edition is not None:
+            return gettext("You got %(edition)s: it left your hunt.") % {"edition": self.edition}
         if self.announcement is not None:
             return self.announcement.title
         return ""
@@ -272,6 +302,8 @@ class Notification(Model):
             return (self.announcement.link or None) if self.announcement is not None else None
         if self.change_request_id is not None:
             return reverse("comics_request_detail", args=[self.change_request_id])
+        if self.edition_id is not None:
+            return reverse("comics_edition_detail", args=[self.edition_id])
         return f"{reverse('profile')}#achievements"
 
     def mark_read(self) -> None:

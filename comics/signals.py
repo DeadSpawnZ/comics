@@ -27,9 +27,11 @@ from comics.models import (
     Edition,
     EditionCoverArtist,
     IssueCreator,
+    Notification,
     Profile,
     ReadingArcEntry,
     Signature,
+    WantedEdition,
 )
 from comics.roles import assign_default_role
 
@@ -52,6 +54,22 @@ def create_profile(sender: type[User], instance: User, created: bool, raw: bool,
     (Profile.objects.for_user), so no repair command is needed."""
     if created and not raw:
         Profile.objects.get_or_create(user=instance)
+
+
+@receiver(post_save, sender=Collection, dispatch_uid="comics.complete_hunt_on_purchase")
+def complete_hunt_on_purchase(
+    sender: type[Collection], instance: Collection, created: bool, raw: bool, **kwargs: Any
+) -> None:
+    """A new purchase completes the buyer's hunt of that edition, whatever registered the purchase
+    (My comics, Gestión, the admin): their active WantedEdition mark is kept as completed (with its
+    note) and they are notified, so they can bring the hunt back. No active mark, no notification.
+    Editing a purchase or registering a sale leaves marks alone, and other collectors' marks of the
+    same edition are never touched. loaddata (`raw`) restores the dumped marks as they were.
+    Runs inside the transaction of Collection.save(), so the purchase, the completed mark and the
+    notification are saved together or not at all."""
+    if created and not raw and instance.trade_type == Collection.TradeChoices.BUYING:
+        if WantedEdition.objects.complete_hunt(instance.collector_id, instance.edition_id):
+            Notification.objects.hunt_completed(instance.collector_id, instance.edition_id)
 
 
 # ---------- Achievement triggers: re-evaluate the rules an event can affect, after commit ----------

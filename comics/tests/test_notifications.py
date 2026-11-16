@@ -1,29 +1,51 @@
 """Notifications: the navbar bell (badge, lazy menu), the notifications page, marking read and
 opening (own notifications only, POST + CSRF, same-site targets), notifications created by the
-achievement engine (live, level-ups, bulk summaries, the data migration for existing awards) and
-announcements from Gestión (audience fan-out, edits, deletion, permissions)."""
+achievement engine (live, level-ups, bulk summaries, the data migration for existing awards),
+announcements from Gestión (audience fan-out, edits, deletion, permissions) and hunts completed by a
+purchase (rendering, bringing the hunt back from the notification)."""
 
 import importlib
 from io import StringIO
+from types import SimpleNamespace
+from urllib.parse import urlencode
 
 from django.apps import apps
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION, LogEntry
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, User
 from django.core.management import call_command
-from django.db import connection
+from django.db import IntegrityError, connection, transaction
 from django.test import Client
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django.utils import timezone, translation
 
 from comics.achievements import engine
-from comics.models import Achievement, AchievementTier, Announcement, Notification, UserAchievement
+from comics.models import (
+    Achievement,
+    AchievementTier,
+    Announcement,
+    Collection,
+    Edition,
+    Notification,
+    UserAchievement,
+    WantedEdition,
+)
 from comics.roles import ADMINISTRATORS, REVIEWERS
 
 from .base import ComiTestCase
-from .factories import make_achievement, make_category, make_collection, make_edition, make_user
+from .factories import (
+    make_achievement,
+    make_category,
+    make_collection,
+    make_edition,
+    make_editorial,
+    make_publishing,
+    make_user,
+    make_wanted_edition,
+)
 
 retro_migration = importlib.import_module("comics.migrations.0106_notify_existing_achievements")
+hunt_migration = importlib.import_module("comics.migrations.0123_wanted_editions")
 
 PAGE = {"accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"}
 
@@ -523,3 +545,223 @@ class AnnouncementGestionTests(ComiTestCase):
         response = self.client.get(reverse("manage_home"), {"tipo": "announcement"})
         news = Announcement.objects.get()
         self.assertContains(response, reverse("manage_announcement_edit", args=[news.pk]))
+
+
+def complete_hunt(user: User, edition: Edition | None = None, notes: str = "") -> Notification:
+    """`user` hunts `edition` (a new one, with an editorial, by default) and buys it: the hunt_completed
+    notification that purchase creates."""
+    edition = edition or make_edition(publishing=make_publishing(editorials=[make_editorial()]))
+    make_wanted_edition(collector=user, edition=edition, notes=notes)
+    make_collection(collector=user, edition=edition)
+    return Notification.objects.get(recipient=user, kind=Notification.Kind.HUNT_COMPLETED, edition=edition)
+
+
+class HuntCompletedNotificationTests(ComiTestCase):
+    def setUp(self) -> None:
+        self.user = make_user()
+        self.client.force_login(self.user)
+
+    def resume_url(self, notification: Notification) -> str:
+        return reverse("notification_resume_hunt", args=[notification.pk])
+
+    def test_renders_its_text_icon_and_target(self) -> None:
+        notification = complete_hunt(self.user)
+        edition = notification.edition
+
+        self.assertEqual(notification.text, f"You got {edition}: it left your hunt.")
+        self.assertEqual(notification.icon, "bookmark_added")
+        self.assertEqual(notification.target_url, reverse("comics_edition_detail", args=[edition.pk]))
+        for url in [reverse("notification_menu"), reverse("notifications")]:
+            with self.subTest(url=url):
+                self.assertContains(self.client.get(url), f"You got {edition}: it left your hunt.")
+
+    def test_opening_it_goes_to_the_edition(self) -> None:
+        notification = complete_hunt(self.user)
+
+        response = self.client.post(reverse("notification_open", args=[notification.pk]))
+
+        self.assertRedirects(
+            response, reverse("comics_edition_detail", args=[notification.edition_id]), fetch_redirect_response=False
+        )
+
+    def test_the_action_shows_only_while_the_hunt_can_be_brought_back(self) -> None:
+        notification = complete_hunt(self.user)
+        url = self.resume_url(notification)
+        for page in [reverse("notification_menu"), reverse("notifications")]:
+            with self.subTest(page=page):
+                response = self.client.get(page)
+                self.assertContains(response, f'action="{url}"', count=1)
+                label = f"Keep looking for it: {notification.edition.short_name}"
+                self.assertContains(response, f'aria-label="{label}"', count=1)
+
+        # Brought back: the mark is active, there is nothing left to bring back.
+        WantedEdition.objects.resume_hunt(self.user, notification.edition)
+        self.assertNotContains(self.client.get(reverse("notifications")), url)
+
+        # Then not hunted any more: the mark is gone.
+        WantedEdition.objects.set_wanted(self.user, notification.edition, False)
+        self.assertNotContains(self.client.get(reverse("notifications")), url)
+
+    def test_other_kinds_have_no_action(self) -> None:
+        notify(self.user)
+        Notification.objects.achievement_unlocked(self.user, Achievement.objects.get(code="origin"), 1)
+
+        response = self.client.get(reverse("notifications"))
+
+        self.assertNotContains(response, "Keep looking for it")
+        self.assertFalse(any(item.can_resume_hunt for item in response.context["page_obj"]))
+
+    def test_the_action_returns_to_the_page_it_is_shown_on(self) -> None:
+        notification = complete_hunt(self.user)
+        action = f'action="{self.resume_url(notification)}"'
+        responses = [
+            (self.client.get(reverse("notification_menu"), {"next": "/comics/"}), "/comics/"),
+            (self.client.get(reverse("notifications"), {"page": 1}), f"{reverse('notifications')}?page=1"),
+        ]
+        for response, back in responses:
+            with self.subTest(back=back):
+                html = response.content.decode()
+                form = html[html.index(action) : html.index("</form>", html.index(action))]
+                self.assertIn(f'name="next" value="{back}"', form)
+
+    def test_keep_looking_brings_the_hunt_back_and_keeps_the_purchase(self) -> None:
+        notification = complete_hunt(self.user, notes="A 9.8 to replace mine")
+        purchase = Collection.objects.get()
+        purchase_values = Collection.objects.filter(pk=purchase.pk).values().get()
+
+        response = self.client.post(self.resume_url(notification), follow=True)
+
+        self.assertRedirects(response, reverse("notifications"))
+        self.assertContains(response, f"{notification.edition.short_name} is back in your hunt.")
+        mark = WantedEdition.objects.get()
+        self.assertIsNone(mark.completed_at)
+        self.assertEqual(mark.notes, "A 9.8 to replace mine")
+        notification.refresh_from_db()
+        self.assertIsNotNone(notification.read_at)
+        self.assertEqual(list(Collection.objects.values()), [purchase_values])
+
+    def test_keep_looking_twice_changes_nothing_more(self) -> None:
+        notification = complete_hunt(self.user, notes="Signed")
+        self.client.post(self.resume_url(notification))
+        notification.refresh_from_db()
+        first_read = notification.read_at
+
+        response = self.client.post(self.resume_url(notification), {"next": "/comics/"})
+
+        self.assertRedirects(response, "/comics/", fetch_redirect_response=False)
+        self.assertEqual(WantedEdition.objects.count(), 1)
+        self.assertEqual(WantedEdition.objects.active().get().notes, "Signed")
+        notification.refresh_from_db()
+        self.assertEqual(notification.read_at, first_read)
+
+    def test_keep_looking_after_the_hunt_was_dropped_creates_nothing(self) -> None:
+        notification = complete_hunt(self.user)
+        WantedEdition.objects.resume_hunt(self.user, notification.edition)
+        WantedEdition.objects.set_wanted(self.user, notification.edition, False)  # stopped hunting it
+
+        response = self.client.post(self.resume_url(notification), follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, f"{notification.edition.short_name} is no longer in your hunt.")
+        self.assertFalse(WantedEdition.objects.exists())
+        notification.refresh_from_db()
+        self.assertIsNotNone(notification.read_at)
+
+    def test_keep_looking_ignores_an_external_next(self) -> None:
+        notification = complete_hunt(self.user)
+
+        response = self.client.post(self.resume_url(notification), {"next": "https://evil.example/"})
+
+        self.assertRedirects(response, reverse("notifications"), fetch_redirect_response=False)
+
+    def test_keep_looking_needs_post_and_the_csrf_token(self) -> None:
+        notification = complete_hunt(self.user)
+        url = self.resume_url(notification)
+
+        self.assertEqual(self.client.get(url).status_code, 405)
+        client = Client(enforce_csrf_checks=True)
+        client.force_login(self.user)
+        self.assertEqual(client.post(url).status_code, 403)
+
+        self.assertFalse(WantedEdition.objects.active().exists())
+        notification.refresh_from_db()
+        self.assertIsNone(notification.read_at)
+
+    def test_keep_looking_needs_a_signed_in_user(self) -> None:
+        notification = complete_hunt(self.user)
+        url = self.resume_url(notification)
+        self.client.logout()
+
+        response = self.client.post(url)
+
+        self.assertRedirects(response, f"{reverse('login')}?{urlencode({'next': url})}", fetch_redirect_response=False)
+        self.assertFalse(WantedEdition.objects.active().exists())
+
+    def test_another_users_notification_is_not_found(self) -> None:
+        theirs = complete_hunt(make_user(), notes="Theirs")
+
+        response = self.client.post(self.resume_url(theirs))
+
+        self.assertEqual(response.status_code, 404)
+        self.assertFalse(WantedEdition.objects.active().exists())
+        self.assertFalse(WantedEdition.objects.filter(collector=self.user).exists())
+        theirs.refresh_from_db()
+        self.assertIsNone(theirs.read_at)
+
+    def test_other_kinds_cannot_bring_a_hunt_back(self) -> None:
+        mine = notify(self.user)
+
+        self.assertEqual(self.client.post(self.resume_url(mine)).status_code, 404)
+        mine.refresh_from_db()
+        self.assertIsNone(mine.read_at)
+
+    def test_pages_do_not_query_per_hunt_notification(self) -> None:
+        editorial = make_editorial()
+
+        def add_one() -> None:
+            complete_hunt(self.user, make_edition(publishing=make_publishing(editorials=[editorial])))
+
+        def queries(url: str) -> int:
+            with CaptureQueriesContext(connection) as captured:
+                self.assertEqual(self.client.get(url).status_code, 200)
+            return len(captured)
+
+        add_one()
+        notify(self.user)  # other kinds on the same page
+        for url in [reverse("notification_menu"), reverse("notifications")]:
+            with self.subTest(url=url):
+                one = queries(url)
+                for _ in range(4):
+                    add_one()
+                self.assertEqual(queries(url), one)
+
+    def test_a_hunt_notification_needs_an_edition(self) -> None:
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            Notification.objects.create(recipient=self.user, kind=Notification.Kind.HUNT_COMPLETED)
+
+    def test_deleting_the_edition_removes_its_notifications(self) -> None:
+        notification = complete_hunt(self.user)
+        Collection.objects.all().delete()  # trades PROTECT the edition
+
+        notification.edition.delete()
+
+        self.assertFalse(Notification.objects.filter(pk=notification.pk).exists())
+
+    def test_stopping_the_hunt_keeps_the_notification(self) -> None:
+        notification = complete_hunt(self.user)
+        WantedEdition.objects.resume_hunt(self.user, notification.edition)
+
+        WantedEdition.objects.set_wanted(self.user, notification.edition, False)
+
+        self.assertTrue(Notification.objects.filter(pk=notification.pk).exists())
+
+    def test_reversing_the_migration_drops_the_hunt_notifications_first(self) -> None:
+        complete_hunt(self.user)
+        other = notify(self.user)
+
+        hunt_migration.delete_hunt_completed_notifications(apps, SimpleNamespace(connection=connection))
+
+        self.assertEqual(list(Notification.objects.filter(recipient=self.user)), [other])
+        operations = hunt_migration.Migration.operations
+        # Last forwards, so it runs before the old CHECK constraint is put back when reversing.
+        self.assertIs(operations[-1].reverse_code, hunt_migration.delete_hunt_completed_notifications)

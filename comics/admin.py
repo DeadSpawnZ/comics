@@ -45,6 +45,7 @@ from .models import (
     Signature,
     Title,
     UserAchievement,
+    WantedEdition,
 )
 
 admin.site.register(Signature)
@@ -94,14 +95,29 @@ class AnnouncementAdmin(admin.ModelAdmin):
 
 @admin.register(Notification)
 class NotificationAdmin(admin.ModelAdmin):
-    list_display = ("recipient", "kind", "achievement", "announcement", "level", "count", "created_at", "read_at")
+    list_display = (
+        "recipient",
+        "kind",
+        "achievement",
+        "announcement",
+        "edition",
+        "level",
+        "count",
+        "created_at",
+        "read_at",
+    )
     list_filter = ("kind",)
-    list_select_related = ("recipient", "achievement", "announcement")
+    list_select_related = ("recipient", "achievement", "announcement", "edition__publishing")
     search_fields = ("recipient__username",)
-    raw_id_fields = ("recipient", "achievement", "announcement")
+    raw_id_fields = ("recipient", "achievement", "announcement", "edition")
+
+    def get_queryset(self, request: HttpRequest) -> QuerySet[Notification]:
+        # Edition.__str__ reads the publishing's editorials.
+        return super().get_queryset(request).prefetch_related("edition__publishing__editorials")
 
     def has_add_permission(self, request: HttpRequest) -> bool:
-        # Notifications are only created by the app (achievements, announcements).
+        # Notifications are only created by the app (achievements, announcements, change requests,
+        # completed hunts).
         return False
 
 
@@ -501,6 +517,19 @@ class CollectableAdmin(admin.ModelAdmin):
     search_fields = ["article__name", "collector__username", "participant__name"]
     list_filter = ["trade_type", "article__category", "trade_date", "participant"]
     autocomplete_fields = ["article", "participant", "previous_trade"]
+
+
+@admin.register(WantedEdition)
+class WantedEditionAdmin(admin.ModelAdmin):
+    list_display = ["edition", "collector", "created_at", "completed_at"]
+    list_filter = [("completed_at", admin.EmptyFieldListFilter)]
+    list_select_related = ["edition__publishing", "collector"]
+    search_fields = ["edition__publishing__publishing_title", "collector__username"]
+    autocomplete_fields = ["edition"]
+
+    def get_queryset(self, request: HttpRequest) -> QuerySet[WantedEdition]:
+        # Edition.__str__ reads the publishing's editorials.
+        return super().get_queryset(request).prefetch_related("edition__publishing__editorials")
 
 
 class ConnectingPieceInline(admin.TabularInline):
