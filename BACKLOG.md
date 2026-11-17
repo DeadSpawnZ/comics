@@ -24,9 +24,38 @@ migración `0123` (crea `comics_wantededition`, añade `notification.edition` y 
 notificaciones) ya está aplicada en la base real (2026-11-16, copia previa en
 `backups/comic-pre-0123-20261116_142810.sql`, ensayada antes en `comic_refactor`: aplicar, revertir
 con una notificación de cacería presente, aplicar) y la imagen reconstruida. Falta: **ver las
-páginas en el navegador** (nadie las ha visto: fila de la cacería, chips, desplegable de la nota,
-icono `travel_explore`, botones en lista y detalle, la acción de la notificación en la página y
-dentro del menú de la campana, el texto de la notificación en español).
+páginas en el navegador** (nadie las ha visto: icono `travel_explore`, botones en lista y detalle,
+la acción de la notificación en la página y dentro del menú de la campana, el texto de la
+notificación en español).
+
+**Cacería en cuadrícula de portadas** (2026-11-16, commit `f5f00ff`, APPROVED en 1 ronda): la lista pasó
+a tarjetas como las de Colección; la portada de lo que no tienes sale al 50 % de opacidad (100 % al
+pasar el cursor o con foco), lo que ya tienes (cacería de reemplazo) sale entera con el trofeo de "La
+tienes"; insignia de cacería, indicador de nota y bandera; cada tarjeta es un botón que abre un
+diálogo con la nota y su editor, "Ver edición" y "Dejar de buscarla". Falta verla en el navegador
+(opacidad y posición de las insignias son propuesta, validarlas; ancho de móvil; tema oscuro).
+Arreglado de paso: los diálogos dentro de `.row` (también en Colección) se desplazaban por el gutter
+de Bootstrap (`.row > .modal` en `collections.css`).
+
+### Probar en el navegador: selección del lote, recientes, trofeo y corazón, Connectings
+
+Commits `3b78362` (lotes) y `f5f00ff` (Mis comics), 2026-11-16, sin push; suite en MySQL 1273 OK, Ruff limpio; imagen reconstruida.
+- **Lotes de importación:** las casillas de las variantes se perdían al guardar cualquier otro
+  formulario de la página (p. ej. "Guardar cambios" de una variante). Ahora cada cambio de casilla se
+  guarda solo (`js/custom/import_batch_selection.js` → `batch_select_rows` con JSON) y los demás
+  formularios del lote esperan a que termine (si falla, no se envían y el estado lo dice). APPROVED
+  en 1 ronda. Probar: marcar/desmarcar y guardar una variante, "Crear seleccionadas" justo después
+  de un cambio, "Cerrar lote" con un guardado fallido, y que logout/idioma no esperen.
+- **Mis comics → Ediciones:** bloque "Agregadas recientemente" con las 5 últimas ediciones (Gestión
+  sigue con 10), solo en la primera página sin filtros.
+- **Trofeo y corazón:** en la lista de ediciones de Mis comics, "La tienes" es un trofeo amarillo
+  relleno (con "×N" si hay varias copias; en tema claro lleva un borde oscuro fino para el
+  contraste) y la cacería es un corazón que también es el botón (gris de contorno / rojo relleno).
+  Cada uno tiene su columna fija (`.edition-row` en `manage.css`), vacía si no aplica. El corazón
+  sustituye al marcador en el detalle de la edición y en la Cacería. Probar: alineación entre filas,
+  ancho de móvil, tema claro/oscuro y que el borde del trofeo se vea bien.
+- **Connectings:** cada pieza que falta tiene el corazón para buscarla (en la esquina de la celda y
+  en la lista "Piezas que faltan"), y el encabezado dice "Buscas X de Y". APPROVED en 1 ronda.
 
 ### Probar los filtros de Gestión → Colecciones en el navegador
 
@@ -352,20 +381,38 @@ evaluar las reglas por fecha en la primera visita del día de cada usuario (reco
   cadena de JS) y propone traducciones fuzzy equivocadas. Por eso las 14 cadenas de la Cacería se
   añadieron a mano al final de `django.po`. Averiguar por qué no extrae esas cadenas y arreglar el
   comando (o documentar el procedimiento manual) antes de volver a regenerar el catálogo.
+- Guardado automático de la selección del lote (menores de revisión):
+  - `to_create` se calcula de dos formas: `count()` en `batch_select_rows` y un `sum(...)` en
+    `batch_detail`; sacar la regla "seleccionadas pendientes de crear" a `batches.py` o al QuerySet
+    de `ImportBatchRow`.
+  - `_json_error` (`manage_imports.py`) no tiene docstring y repite el `JsonResponse({"error": ...})`
+    de `manage_editions.py`; moverlo a `views/utils.py` si se reutiliza.
+  - Las referencias `#: …import_batch_selection.js` de `djangojs.po` no llevan número de línea
+    (escritas a mano); se regeneran con el próximo `makemessages`.
+- Corazón en Connectings (menores de revisión):
+  - `test_connecting_hunt.py` fija el coste de cada connecting en la lista a exactamente 2 consultas
+    (`+ 2`); bastaría con comprobar que no se consultan `WantedEdition` ni `editorials`.
+  - En connectings con muchas columnas, el disco de 32 px del corazón tapa buena parte de una celda
+    pequeña; escalarlo con la celda (`min(32px, 45%)`) u ocultarlo en celdas estrechas (la lista ya
+    ofrece el botón).
+  - El `aria-label` del corazón usa `short_name`, que no distingue impresión, año ni idioma: dos
+    piezas que solo difieren en eso tienen la misma etiqueta.
+  - `Edition.is_compilation` hace un `exists()` por cada edición sin issue: un connecting de
+    compilaciones sigue costando una consulta por pieza en el detalle.
+- Cacería en cuadrícula (menores de revisión): `test_the_cover_or_a_placeholder` solo cubre el
+  placeholder; añadir una edición con `thumbnail`/`image` y comprobar ambos `src`.
 - Cacería (menores de revisión):
   - El texto de ayuda "Up to 500 characters" de `WantedEditionNoteForm` lleva el límite escrito a
     mano; usar un msgid con marcador que lea `max_length` del modelo.
-  - `comics/views/hunt.py` repite `PAGE_SIZE = 25`; importarla de `manage_editions` como hacen
-    `collection_entries.py` y `manage_collectables.py`.
-  - `hunt_list.html` copia la fila de `edition_list.html` (miniatura, título, metadatos, chip "You
-    own") y el chip "Looking for it" está en tres plantillas; sacarlos a includes. La página de
-    Cacería no muestra el chip de compilación que sí tiene la lista.
+  - El chip "Looking for it" se repite en `edition_detail.html` e `includes/edition_row.html`, y el
+    marcador "You own it / You own N" en la tarjeta y el diálogo de `hunt_list.html`; sacarlos a
+    includes. La Cacería (ahora en cuadrícula de portadas) no indica si la edición es una compilación,
+    cosa que sí hace la lista de ediciones.
   - `my_comics.edition_detail` consulta `WantedEdition` con el ORM en la vista; añadir
     `WantedEditionQuerySet.is_wanted_by`. `owned_counts` es una consulta de dominio que vive en
     `views/my_comics.py` y ya la importa `hunt.py`; moverla al QuerySet de `Collection`.
   - La altura del `textarea` de la nota va en `attrs={"style": ...}` del formulario; pasarla a
     `.hunt-note-edit__form textarea` en `collections.css`.
-  - Falta un test de que la nota se renderiza escapada (hoy lo está, por autoescape).
   - Guardar vacía una nota que ya estaba vacía muestra "Note removed."; comparar con
     `form.has_changed()`.
   - Si una nota se rechaza se pierde lo escrito (solo ocurre con una petición manipulada: el
@@ -389,9 +436,6 @@ evaluar las reglas por fecha en la primera visita del día de cada usuario (reco
     `is_sold`.
   - La lista de Collectables de Gestión no tiene estos filtros (participante, estado, orden); el
     usuario los dejó fuera de esta tanda.
-- El listado de ediciones de Mis comics calcula `recent` (las últimas 10 ediciones, en
-  `edition_catalog_context`) aunque su plantilla no lo muestra: una consulta de más en la primera
-  página.
 - Bloqueo del borrado de compras vendidas (menores de revisión): `collectable_delete` pasa a
   `date_format` el resultado de `first_sale_date` sin comprobar `None` (hoy no ocurre, porque solo
   una venta protege un collectable; devolver el mensaje genérico si pasa); el texto "no se puede
