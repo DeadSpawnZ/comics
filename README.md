@@ -32,16 +32,28 @@ en español e inglés.
   importación o al vincular una portada, si no tenía otro) y empareja la serie antes que el título.
   Desde los mismos diálogos se crean el publishing, el título, la editorial y los
   artistas que falten. Las editoriales tienen alias para emparejar los nombres de cada fuente.
+- **Lotes de importación desde MyComicShop** (Gestión → Importaciones): en el modal de una serie se
+  marcan varias variantes y "Importar seleccionadas" crea un lote, guardado en la base, que se revisa
+  antes de crear nada: valores comunes para todas las variantes, cambios por variante, cada nombre
+  de artista sin coincidencia se resuelve una vez para todo el lote (asociar, crear o descartar) y
+  las posibles coincidencias se pueden vincular. Las casillas de las variantes se guardan solas en
+  cada cambio. "Crear seleccionadas" crea cada edición con su propia transacción y su versión en el
+  historial; las que fallan se quedan con su error.
 - **Colección personal** ("Mis comics"): compras y ventas de cada edición (con vendedor, precio y
   valoración), firmas de artistas, lo que se tiene y lo que falta de cada publishing. También
   **arcos de lectura** (issues en orden, de varias series), **connectings** (portadas que forman una
   imagen mayor) y **collectables** (figuras, prints, pines...: un catálogo de artículos
   compartido y las piezas que compra o vende cada coleccionista).
-- **Cacería:** cada coleccionista marca con "Lo busco" las ediciones que quiere conseguir, desde la
-  lista o el detalle de ediciones, y las ve juntas en Mis comics → Cacería. Se puede buscar una
-  edición que ya se tiene (otra copia o una en mejor estado) y anotar qué se busca. Al registrar la
-  compra de una edición buscada, sale de la cacería y el comprador recibe una notificación desde la
-  que puede seguir buscándola (con su nota) sin deshacer la compra.
+  En la lista de ediciones de Mis comics, lo que se tiene es un trofeo amarillo (con el número de
+  copias) y lo que se busca un corazón rojo, cada uno en su columna; las 5 últimas ediciones
+  agregadas salen primero en la primera página sin filtros (10 en Gestión).
+- **Cacería:** cada coleccionista marca con el corazón ("Lo busco") las ediciones que quiere
+  conseguir, desde la lista o el detalle de ediciones y desde las piezas que le faltan de un
+  connecting, y las ve juntas en Mis comics → Cacería: una cuadrícula de portadas, atenuadas mientras
+  no las tiene, cada una con un diálogo para su nota. Se puede buscar una edición que ya se tiene
+  (otra copia o una en mejor estado; sale entera, con su trofeo). Al registrar la compra de una
+  edición buscada, sale de la cacería y el comprador recibe una notificación desde la que puede
+  seguir buscándola (con su nota) sin deshacer la compra.
 - **Historial de versiones** de issues y ediciones: cada guardado es una versión (quién, cuándo,
   motivo), sea cual sea su origen. Cualquier versión se puede restaurar desde Gestión.
 - **Solicitudes de cambio:** los coleccionistas proponen correcciones o altas de issues y ediciones;
