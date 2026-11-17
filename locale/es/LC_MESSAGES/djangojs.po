@@ -219,6 +219,7 @@ msgid "A · Main cover"
 msgstr "A · Portada principal"
 
 #: comics/static/js/custom/catalog_import.js
+#: comics/static/js/custom/catalog_series_dialog.js
 #, python-format
 msgid "Open in %(source)s"
 msgstr "Abrir en %(source)s"
@@ -233,6 +234,7 @@ msgid "Enter the issue's ID in the catalogue."
 msgstr "Escribe el ID del issue en el catálogo."
 
 #: comics/static/js/custom/catalog_import.js
+#: comics/static/js/custom/catalog_series_dialog.js
 msgid "The catalogue could not be read. Try again."
 msgstr "No se pudo leer el catálogo. Inténtalo de nuevo."
 
@@ -386,44 +388,44 @@ msgstr "ID de MyComicShop"
 msgid "Enter the series ID (TID) or paste its MyComicShop URL."
 msgstr "Escribe el ID de la serie (TID) o pega su URL de MyComicShop."
 
-#: comics/static/js/custom/catalog_import.js
+#: comics/static/js/custom/catalog_series_dialog.js
 #, python-format
 msgid "Cover #%(label)s"
 msgstr "Portada #%(label)s"
 
-#: comics/static/js/custom/catalog_import.js
+#: comics/static/js/custom/catalog_series_dialog.js
 msgid "Already in Comi"
 msgstr "Ya está en Comi"
 
-#: comics/static/js/custom/catalog_import.js
+#: comics/static/js/custom/catalog_series_dialog.js
 #, python-format
 msgid "Limited to %(count)s"
 msgstr "Limitada a %(count)s"
 
-#: comics/static/js/custom/catalog_import.js
+#: comics/static/js/custom/catalog_series_dialog.js
 #, python-format
 msgid "Printing: %(printing)s"
 msgstr "Impresión: %(printing)s"
 
-#: comics/static/js/custom/catalog_import.js
+#: comics/static/js/custom/catalog_series_dialog.js
 #, python-format
 msgid "Store: %(name)s"
 msgstr "Tienda: %(name)s"
 
-#: comics/static/js/custom/catalog_import.js
+#: comics/static/js/custom/catalog_series_dialog.js
 #, python-format
 msgid "Event: %(name)s"
 msgstr "Evento: %(name)s"
 
-#: comics/static/js/custom/catalog_import.js
+#: comics/static/js/custom/catalog_series_dialog.js
 msgid "The catalogue lists no covers for this series."
 msgstr "El catálogo no tiene portadas de esta serie."
 
-#: comics/static/js/custom/catalog_import.js
+#: comics/static/js/custom/catalog_series_dialog.js
 msgid "Every cover of this series is already in Comi."
 msgstr "Todas las portadas de esta serie ya están en Comi."
 
-#: comics/static/js/custom/catalog_import.js
+#: comics/static/js/custom/catalog_series_dialog.js
 #, python-format
 msgid "%(count)s cover. Choose the one to import."
 msgid_plural "%(count)s covers. Choose the one to import."
@@ -450,43 +452,76 @@ msgstr "No se pudieron cargar las compras"
 msgid "New image: %(name)s (applied on save)"
 msgstr "Nueva imagen: %(name)s (se aplica al guardar)"
 
-#: comics/static/js/custom/catalog_import.js
+#: comics/static/js/custom/catalog_series_dialog.js
 msgid "Link"
 msgstr "Vincular"
 
-#: comics/static/js/custom/catalog_import.js
+#: comics/static/js/custom/catalog_series_dialog.js
 #, python-format
 msgid "Possibly in Comi: %(cover)s"
 msgstr "Posiblemente en Comi: %(cover)s"
 
-#: comics/static/js/custom/catalog_import.js
+#: comics/static/js/custom/catalog_series_dialog.js
 #, python-format
 msgid "Mark this MyComicShop cover as %(edition)s"
 msgstr "Marcar esta portada de MyComicShop como %(edition)s"
 
-#: comics/static/js/custom/catalog_import.js
+#: comics/static/js/custom/catalog_series_dialog.js
 #, python-format
 msgid "Mark the MyComicShop cover #%(label)s as %(edition)s? Its MyComicShop ID is saved on that edition."
 msgstr "¿Marcar la portada #%(label)s de MyComicShop como %(edition)s? Su ID de MyComicShop se guarda en esa edición."
 
-#: comics/static/js/custom/catalog_import.js
+#: comics/static/js/custom/catalog_series_dialog.js
 msgid "The cover could not be linked. Try again."
 msgstr "No se pudo vincular la portada. Inténtalo de nuevo."
 
-#: comics/static/js/custom/catalog_import.js
+#: comics/static/js/custom/catalog_series_dialog.js
 #, python-format
 msgid "Linked: %(edition)s is this cover now."
 msgstr "Vinculada: %(edition)s es ahora esta portada."
 
-#: comics/static/js/custom/catalog_import.js
+#: comics/static/js/custom/catalog_series_dialog.js
 msgid "The cover could not be linked. Check your connection and try again."
 msgstr "No se pudo vincular la portada. Revisa tu conexión e inténtalo de nuevo."
 
-#: comics/static/js/custom/catalog_import.js
+#: comics/static/js/custom/catalog_series_dialog.js
 #, python-format
 msgid "Publishing in Comi: %(name)s"
 msgstr "Publishing en Comi: %(name)s"
 
-#: comics/static/js/custom/catalog_import.js
+#: comics/static/js/custom/catalog_series_dialog.js
 msgid "No publishing in Comi matches this series, so the covers it already has without a MyComicShop ID are not detected."
 msgstr "Ningún publishing de Comi coincide con esta serie, así que no se detectan las portadas que ya tiene sin ID de MyComicShop."
+
+#: comics/static/js/custom/catalog_series_dialog.js
+#, python-format
+msgid "Import selected (%(count)s)"
+msgstr "Importar seleccionadas (%(count)s)"
+
+#: comics/static/js/custom/catalog_series_dialog.js
+#, python-format
+msgid "A batch can have at most %(count)s variants."
+msgstr "Un lote puede tener como máximo %(count)s variantes."
+
+#: comics/static/js/custom/catalog_series_dialog.js
+msgid "Add to the batch"
+msgstr "Añadir al lote"
+
+#: comics/static/js/custom/catalog_series_dialog.js
+msgid "Creating the import batch…"
+msgstr "Creando el lote de importación…"
+
+#: comics/static/js/custom/catalog_series_dialog.js
+msgid "The import batch could not be created. Try again."
+msgstr "No se pudo crear el lote de importación. Inténtalo de nuevo."
+
+#: comics/static/js/custom/catalog_series_dialog.js
+msgid "The import batch could not be created. Check your connection and try again."
+msgstr "No se pudo crear el lote de importación. Revisa tu conexión e inténtalo de nuevo."
+
+#: comics/static/js/custom/catalog_series_dialog.js
+#, python-format
+msgid "%(count)s cover. Select the ones to import."
+msgid_plural "%(count)s covers. Select the ones to import."
+msgstr[0] "%(count)s portada. Marca las que quieres importar."
+msgstr[1] "%(count)s portadas. Marca las que quieres importar."

@@ -37,6 +37,11 @@ en español e inglés.
   **arcos de lectura** (issues en orden, de varias series), **connectings** (portadas que forman una
   imagen mayor) y **collectables** (figuras, prints, pines...: un catálogo de artículos
   compartido y las piezas que compra o vende cada coleccionista).
+- **Cacería:** cada coleccionista marca con "Lo busco" las ediciones que quiere conseguir, desde la
+  lista o el detalle de ediciones, y las ve juntas en Mis comics → Cacería. Se puede buscar una
+  edición que ya se tiene (otra copia o una en mejor estado) y anotar qué se busca. Al registrar la
+  compra de una edición buscada, sale de la cacería y el comprador recibe una notificación desde la
+  que puede seguir buscándola (con su nota) sin deshacer la compra.
 - **Historial de versiones** de issues y ediciones: cada guardado es una versión (quién, cuándo,
   motivo), sea cual sea su origen. Cualquier versión se puede restaurar desde Gestión.
 - **Solicitudes de cambio:** los coleccionistas proponen correcciones o altas de issues y ediciones;
@@ -75,7 +80,7 @@ Los roles son grupos de Django; las vistas comprueban permisos, nunca nombres de
 
 | Ruta | Área |
 | --- | --- |
-| `/comics/` | Mis comics: colección, ediciones, arcos, connectings y solicitudes propias |
+| `/comics/` | Mis comics: colección, ediciones, cacería, arcos, connectings y solicitudes propias |
 | `/collectables/` | Collectables propios (las piezas que se conservan) y catálogo de artículos |
 | `/perfil/`, `/u/<usuario>/` | Perfil propio y perfiles de otros usuarios |
 | `/notificaciones/` | Notificaciones |
@@ -202,18 +207,22 @@ Cada caja es un módulo de `comics/models/`; una flecha indica que los modelos d
 ```mermaid
 flowchart LR
     catalog["<b>Catálogo</b><br/>Artist, CollectedIssue, Edition, EditionCoverArtist, Editorial, EditorialAlias, Issue, IssueCreator, Publishing, Title"]
-    collections["<b>Colecciones</b><br/>Article, Collectable, Collection, Connecting, ConnectingPiece, Dealer, ReadingArc, ReadingArcEntry, Signature"]
+    collections["<b>Colecciones</b><br/>Article, Collectable, Collection, Connecting, ConnectingPiece, Dealer, ReadingArc, ReadingArcEntry, Signature, WantedEdition"]
     change_requests["<b>Solicitudes de cambio</b><br/>ChangeRequest"]
+    imports["<b>Lotes de importación</b><br/>ImportBatch, ImportBatchNumber, ImportBatchRow"]
     achievements["<b>Logros</b><br/>Achievement, AchievementCategory, AchievementTier, UserAchievement"]
     notifications["<b>Notificaciones y anuncios</b><br/>Announcement, Notification"]
     profiles["<b>Perfiles y permisos</b><br/>AreaAccess, Profile"]
     auth["<b>django.contrib.auth</b><br/>User, Group"]
     achievements -->|1| auth
     change_requests -->|3| auth
-    collections -->|2| auth
-    collections -->|7| catalog
+    collections -->|3| auth
+    collections -->|8| catalog
+    imports -->|1| auth
+    imports -->|4| catalog
     notifications -->|1| achievements
     notifications -->|3| auth
+    notifications -->|1| catalog
     notifications -->|1| change_requests
     profiles -->|1| auth
 ```
@@ -391,6 +400,14 @@ erDiagram
         ForeignKey previous_trade FK "null"
         TextField notes
     }
+    WantedEdition {
+        BigAutoField id PK
+        ForeignKey collector FK
+        ForeignKey edition FK
+        DateTimeField created_at
+        TextField notes
+        DateTimeField completed_at "null"
+    }
     User ||--o{ Collection : "collector"
     Edition ||--o{ Collection : "edition"
     Dealer |o--o{ Collection : "participant"
@@ -405,6 +422,8 @@ erDiagram
     Article ||--o{ Collectable : "article"
     Dealer |o--o{ Collectable : "participant"
     Collectable |o--o{ Collectable : "previous_trade"
+    User ||--o{ WantedEdition : "collector"
+    Edition ||--o{ WantedEdition : "edition"
 ```
 
 ### Solicitudes de cambio
@@ -435,6 +454,60 @@ erDiagram
     User |o--o{ ChangeRequest : "author"
     User |o--o{ ChangeRequest : "validated_by"
     User |o--o{ ChangeRequest : "decided_by"
+```
+
+### Lotes de importación
+
+```mermaid
+erDiagram
+    ImportBatch {
+        BigAutoField id PK
+        ForeignKey created_by FK "null"
+        CharField source
+        PositiveIntegerField series_id
+        CharField series_title
+        PositiveSmallIntegerField series_year "null"
+        CharField series_publisher
+        ForeignKey publishing FK "null"
+        JSONField defaults
+        JSONField name_resolutions
+        JSONField warnings
+        CharField status
+        DateTimeField created_at
+        DateTimeField updated_at
+    }
+    ImportBatchNumber {
+        BigAutoField id PK
+        ForeignKey batch FK
+        CharField number
+        PositiveSmallIntegerField position
+        ForeignKey issue FK "null"
+        JSONField creators
+    }
+    ImportBatchRow {
+        BigAutoField id PK
+        ForeignKey batch FK
+        ForeignKey group FK
+        PositiveSmallIntegerField position
+        PositiveIntegerField ivid
+        CharField label
+        TextField source_text
+        JSONField proposal
+        JSONField overrides
+        CharField match
+        BooleanField selected
+        CharField status
+        JSONField errors
+        ForeignKey edition FK "null"
+    }
+    User |o--o{ ImportBatch : "created_by"
+    Publishing |o--o{ ImportBatch : "publishing"
+    ImportBatch ||--o{ ImportBatchNumber : "batch"
+    Issue |o--o{ ImportBatchNumber : "issue"
+    ImportBatch ||--o{ ImportBatchRow : "batch"
+    ImportBatchNumber ||--o{ ImportBatchRow : "group"
+    Edition |o--o{ ImportBatchRow : "edition"
+    ImportBatchRow }o--o{ Edition : "probable_editions"
 ```
 
 ### Logros
@@ -523,6 +596,7 @@ erDiagram
         ForeignKey achievement FK "null"
         ForeignKey announcement FK "null"
         ForeignKey change_request FK "null"
+        ForeignKey edition FK "null"
         PositiveSmallIntegerField level "null"
         PositiveIntegerField count "null"
         DateTimeField created_at
@@ -534,6 +608,7 @@ erDiagram
     Achievement |o--o{ Notification : "achievement"
     Announcement |o--o{ Notification : "announcement"
     ChangeRequest |o--o{ Notification : "change_request"
+    Edition |o--o{ Notification : "edition"
 ```
 
 ### Perfiles y permisos

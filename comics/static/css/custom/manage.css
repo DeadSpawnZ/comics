@@ -291,6 +291,21 @@
   min-width: 190px;
 }
 
+/* Filters on their own full-width row under the tabs (and the sort select), edge to edge and with no
+   row gap above, so the divider on top of them sits right under the tabs. */
+.manage-filters--row {
+  flex: 0 0 calc(100% + 2.5rem);
+  margin: -0.75rem -1.25rem 0;
+  padding: 0.75rem 1.25rem;
+  border-top: 1px solid var(--md-outline-variant);
+}
+
+/* Sort select at the end of the tabs row, kept off the divider below it. */
+.manage-sort {
+  min-width: 220px;
+  margin-bottom: 0.5rem;
+}
+
 .manage-rows {
   margin: 0;
   padding: 0;
@@ -1046,8 +1061,9 @@
   pointer-events: none;
 }
 
-/* Variants of a catalogue series to pick the one to import (includes/catalog_series_dialog.html,
-   js/custom/catalog_import.js): a grid of cover cards per issue number, one radio per card. */
+/* Variants of a catalogue series to pick the one to import or check the ones for an import batch
+   (includes/catalog_series_dialog.html, js/custom/catalog_series_dialog.js): a grid of cover cards
+   per issue number, each a radio on the edition form, and a checkbox below each new variant. */
 .catalog-series__link {
   margin-left: -0.75rem;
 }
@@ -1223,6 +1239,23 @@
   padding-inline: 0.5rem;
 }
 
+/* The checkbox that puts a variant in the import batch; a checked variant's card is outlined. */
+.catalog-series__pick {
+  margin: 0 0.5rem;
+  font-size: 0.8125rem;
+}
+
+.catalog-series__card.is-picked .catalog-series__choice {
+  border-color: var(--md-primary);
+}
+
+/* Shown when more variants are checked than a batch takes; pushes the buttons to the right. */
+.catalog-series__batch-hint {
+  margin-right: auto;
+  color: var(--md-error);
+  font-size: 0.875rem;
+}
+
 /* "Link this cover?" confirmation: the MyComicShop cover and the Comi edition side by side. */
 .catalog-link__covers {
   display: flex;
@@ -1245,4 +1278,203 @@
 
 .catalog-link__arrow {
   color: var(--md-on-surface-variant);
+}
+
+/* ---------- Import batches (Gestión → Imports) ---------- */
+/* "New batch" on the list: the series id and its button on one row. */
+.import-new {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.import-new .md-field {
+  min-width: 16rem;
+}
+
+.import-facts {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 0.375rem 1rem;
+  margin: 0;
+}
+
+.import-facts dt {
+  font-weight: 500;
+  color: var(--md-on-surface-variant);
+}
+
+.import-facts dd {
+  margin: 0;
+}
+
+.import-facts .material-symbols-outlined {
+  font-size: 1rem;
+  vertical-align: middle;
+}
+
+.import-names,
+.import-resolved,
+.import-rows,
+.import-probable,
+.import-credits,
+.import-summary {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.import-name {
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--md-outline-variant);
+}
+
+.import-name:first-child {
+  border-top: 0;
+}
+
+.import-name__head,
+.import-name__forms,
+.import-name__form,
+.import-resolved li,
+.import-probable li,
+.import-credits,
+.import-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.import-name__forms {
+  margin-top: 0.5rem;
+  gap: 1rem;
+}
+
+.import-name__form .md-field {
+  min-width: 14rem;
+}
+
+.import-credit--guessed {
+  border-style: dashed;
+}
+
+.import-credit--discarded {
+  opacity: 0.7;
+}
+
+.import-rows {
+  margin-top: 0.75rem;
+}
+
+.import-row {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 1rem;
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--md-outline-variant);
+}
+
+.import-row__thumb {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.import-row__thumb img {
+  max-width: 72px;
+  border-radius: 4px;
+}
+
+.import-row__main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.import-summary {
+  gap: 0.25rem 1rem;
+  font-size: 0.875rem;
+}
+
+.import-summary__label {
+  color: var(--md-on-surface-variant);
+}
+
+.import-summary__missing {
+  color: var(--md-error);
+}
+
+.import-publishing__form,
+.import-selection {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+}
+
+.import-publishing__form .md-field {
+  min-width: 18rem;
+}
+
+.import-selection {
+  justify-content: space-between;
+  margin: 0 0 1rem;
+}
+
+.import-publishing summary,
+.import-row__source summary {
+  font-size: 0.875rem;
+  color: var(--md-on-surface-variant);
+  cursor: pointer;
+}
+
+.import-edit summary {
+  font-size: 0.875rem;
+  color: var(--md-on-surface-variant);
+  cursor: pointer;
+}
+
+.import-edit__form {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.import-values {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: 0.75rem 1rem;
+  width: 100%;
+}
+
+.import-value {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.import-value__hint {
+  font-size: 0.8125rem;
+  color: var(--md-on-surface-variant);
+}
+
+.import-edit__artists {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.import-edit__drop {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
 }

@@ -783,10 +783,6 @@ msgstr "Todos"
 msgid "Search"
 msgstr "Buscar"
 
-#: comics/templates/manage/collection_list.html:43
-msgid "Search title or participant"
-msgstr "Buscar título o participante"
-
 #: comics/templates/manage/collection_list.html:46
 #: comics/templates/manage/edition_list.html:46
 #: comics/templates/manage/publishing_list.html:36
@@ -3794,3 +3790,714 @@ msgstr "Se vendió el %(date)s: elimina primero la venta."
 #, python-format
 msgid "It was sold on %(date)s and it has signatures registered."
 msgstr "Se vendió el %(date)s y tiene firmas registradas."
+
+#: comics/models/imports.py
+msgctxt "import batch"
+msgid "Open"
+msgstr "Abierto"
+
+#: comics/models/imports.py
+msgctxt "import batch"
+msgid "Closed"
+msgstr "Cerrado"
+
+#: comics/models/imports.py
+msgctxt "import row"
+msgid "No match"
+msgstr "Sin coincidencia"
+
+#: comics/models/imports.py
+msgctxt "import row"
+msgid "Possible match"
+msgstr "Posible coincidencia"
+
+#: comics/models/imports.py
+msgctxt "import row"
+msgid "Pending"
+msgstr "Pendiente"
+
+#: comics/models/imports.py
+msgctxt "import row"
+msgid "Created"
+msgstr "Creada"
+
+#: comics/models/imports.py
+msgctxt "import row"
+msgid "Linked"
+msgstr "Vinculada"
+
+#: comics/models/imports.py
+msgctxt "import row"
+msgid "Failed"
+msgstr "Con error"
+
+#: comics/models/imports.py
+msgid "The number belongs to another batch."
+msgstr "El número pertenece a otro lote."
+
+#: comics/catalog_sources/batches.py
+msgid "Select at least one variant."
+msgstr "Selecciona al menos una variante."
+
+#: comics/catalog_sources/batches.py
+#, python-format
+msgid "A batch can have at most %(count)s variants."
+msgstr "Un lote puede tener como máximo %(count)s variantes."
+
+#: comics/catalog_sources/batches.py
+msgid "Choose what to do with the name."
+msgstr "Elige qué hacer con el nombre."
+
+#: comics/catalog_sources/batches.py
+msgid "Choose an existing artist."
+msgstr "Elige un artista existente."
+
+#: comics/catalog_sources/batches.py
+msgid "An artist is only given to associate the name with it."
+msgstr "Solo se indica un artista para asociarle el nombre."
+
+#: comics/catalog_sources/batches.py
+#, python-format
+msgid "“%(name)s” is not a name of this batch."
+msgstr "“%(name)s” no es un nombre de este lote."
+
+#: comics/catalog_sources/batches.py
+msgid "The batch is closed."
+msgstr "El lote está cerrado."
+
+#: comics/catalog_sources/batches.py
+msgid "A new name is only given to create an artist."
+msgstr "Solo se indica un nombre nuevo para crear un artista."
+
+#: comics/editions.py
+msgid "The edition could not be saved: something it uses changed meanwhile. Try again."
+msgstr "No se pudo guardar la edición: algo que usa cambió mientras tanto. Inténtalo de nuevo."
+
+#: comics/catalog_sources/batch_creation.py
+msgid "Choose the publishing of the batch first."
+msgstr "Elige primero el publishing del lote."
+
+#: comics/catalog_sources/batch_creation.py
+#, python-format
+msgid "Imported from MyComicShop (batch #%(batch)s)."
+msgstr "Importada desde MyComicShop (lote #%(batch)s)."
+
+#: comics/catalog_sources/batch_creation.py
+#, python-format
+msgid "Resolve these names first: %(names)s."
+msgstr "Resuelve primero estos nombres: %(names)s."
+
+#: comics/catalog_sources/batch_creation.py
+msgid "The variant is not in this batch."
+msgstr "La variante no está en este lote."
+
+#: comics/catalog_sources/batch_creation.py
+msgid "The variant already has its edition."
+msgstr "La variante ya tiene su edición."
+
+#: comics/catalog_sources/batch_creation.py
+msgid "Choose one of the editions the variant may be."
+msgstr "Elige una de las ediciones que puede ser la variante."
+
+#: comics/catalog_sources/batch_creation.py
+msgid "Comi did not accept the catalogue's value: fill it in yourself."
+msgstr "Comi no aceptó el valor del catálogo: rellénalo tú."
+
+#: comics/views/manage_imports.py
+msgid "preselected"
+msgstr "preseleccionado"
+
+#: comics/views/manage_imports.py
+#, python-format
+msgid "Name resolved: %(name)s"
+msgstr "Nombre resuelto: %(name)s"
+
+#: comics/views/manage_imports.py
+#, python-format
+msgid "Resolution undone: %(name)s"
+msgstr "Resolución deshecha: %(name)s"
+
+#: comics/views/manage_imports.py
+msgid "There was nothing to create: no selected variant is pending."
+msgstr "No había nada que crear: ninguna variante seleccionada está pendiente."
+
+#: comics/views/manage_imports.py
+#, python-format
+msgid "%(variant)s linked to %(edition)s."
+msgstr "%(variant)s vinculada a %(edition)s."
+
+#: comics/views/manage_imports.py
+msgid "Batch closed."
+msgstr "Lote cerrado."
+
+#: comics/forms/catalog.py
+msgid "The name is missing."
+msgstr "Falta el nombre."
+
+#: comics/templates/manage/base_manage.html
+msgid "Imports"
+msgstr "Importaciones"
+
+#: comics/templates/manage/import_batch_list.html
+msgid "No import batches yet."
+msgstr "Todavía no hay lotes de importación."
+
+#: comics/templates/manage/import_batch_list.html
+msgid "No publishing"
+msgstr "Sin publishing"
+
+#: comics/templates/manage/import_batch_list.html
+#, python-format
+msgid "By %(user)s on %(date)s"
+msgstr "Por %(user)s el %(date)s"
+
+#: comics/templates/manage/import_batch_list.html
+#, python-format
+msgid "Open the batch of %(title)s"
+msgstr "Abrir el lote de %(title)s"
+
+#: comics/templates/manage/import_batch_list.html
+msgid "Open"
+msgstr "Abrir"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Back to imports"
+msgstr "Volver a importaciones"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Close batch"
+msgstr "Cerrar lote"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Create selected"
+msgstr "Crear seleccionadas"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "MyComicShop series"
+msgstr "Serie de MyComicShop"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Publisher"
+msgstr "Editorial"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "No publishing of Comi matched this series, so every number counts as a new issue. The variants cannot be created until the batch has a publishing."
+msgstr "Ningún publishing de Comi coincide con esta serie, así que todos los números cuentan como issues nuevos. Las variantes no se pueden crear hasta que el lote tenga un publishing."
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "The batch is closed: it is kept as a record of what was imported and can no longer change."
+msgstr "El lote está cerrado: se guarda como registro de lo importado y ya no puede cambiar."
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Credit names"
+msgstr "Nombres de los créditos"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Resolve each name once: it applies to every variant of the batch. A variant with names still to resolve is not created."
+msgstr "Resuelve cada nombre una vez: se aplica a todas las variantes del lote. Una variante con nombres sin resolver no se crea."
+
+#: comics/templates/manage/import_batch_detail.html
+#, python-format
+msgid "Guessed from the text: %(artist)s?"
+msgstr "Adivinado del texto: ¿%(artist)s?"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "No artist has this name"
+msgstr "Ningún artista tiene este nombre"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Existing artist"
+msgstr "Artista existente"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Associate"
+msgstr "Asociar"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "New artist"
+msgstr "Artista nuevo"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "No names to resolve."
+msgstr "No hay nombres que resolver."
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Resolved"
+msgstr "Resueltos"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Deleted artist"
+msgstr "Artista eliminado"
+
+#: comics/templates/manage/import_batch_detail.html
+#, python-format
+msgid "New artist: %(name)s"
+msgstr "Artista nuevo: %(name)s"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Discarded"
+msgstr "Descartado"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Undo"
+msgstr "Deshacer"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Existing issue:"
+msgstr "Issue existente:"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "New issue"
+msgstr "Issue nuevo"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "The batch does not change the story creators of an existing issue."
+msgstr "El lote no cambia los creadores de la historia de un issue existente."
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Story creators"
+msgstr "Creadores de la historia"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "None proposed."
+msgstr "Ninguno propuesto."
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Selected"
+msgstr "Seleccionada"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Not selected"
+msgstr "Sin seleccionar"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "to fill in"
+msgstr "por rellenar"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "None."
+msgstr "Ninguno."
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "It may be one of these editions"
+msgstr "Puede ser una de estas ediciones"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Those editions are no longer in Comi."
+msgstr "Esas ediciones ya no están en Comi."
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "MyComicShop text"
+msgstr "Texto de MyComicShop"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Close the batch?"
+msgstr "¿Cerrar el lote?"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "A closed batch can no longer change: its pending variants are not created. The editions already created stay as they are."
+msgstr "Un lote cerrado ya no puede cambiar: sus variantes pendientes no se crean. Las ediciones ya creadas se quedan como están."
+
+#: comics/templates/manage/includes/import_credit_chips.html
+msgid "Matched an artist"
+msgstr "Coincide con un artista"
+
+#: comics/templates/manage/includes/import_credit_chips.html
+msgid "Guessed from the text: confirm it"
+msgstr "Adivinado del texto: confírmalo"
+
+#: comics/templates/manage/includes/import_credit_chips.html
+msgid "No artist has this name: resolve it"
+msgstr "Ningún artista tiene este nombre: resuélvelo"
+
+#: comics/templates/manage/includes/import_credit_chips.html
+msgid "Resolved as an existing artist"
+msgstr "Resuelto como un artista existente"
+
+#: comics/templates/manage/includes/import_credit_chips.html
+msgid "New artist, created with the batch"
+msgstr "Artista nuevo, se crea con el lote"
+
+#: comics/views/manage_imports.py
+#, python-format
+msgid "%(count)d edition created."
+msgid_plural "%(count)d editions created."
+msgstr[0] "%(count)d edición creada."
+msgstr[1] "%(count)d ediciones creadas."
+
+#: comics/views/manage_imports.py
+#, python-format
+msgid "%(count)d artist created."
+msgid_plural "%(count)d artists created."
+msgstr[0] "%(count)d artista creado."
+msgstr[1] "%(count)d artistas creados."
+
+#: comics/views/manage_imports.py
+#, python-format
+msgid "%(count)d variant could not be created: see its errors."
+msgid_plural "%(count)d variants could not be created: see their errors."
+msgstr[0] "%(count)d variante no se pudo crear: mira sus errores."
+msgstr[1] "%(count)d variantes no se pudieron crear: mira sus errores."
+
+#: comics/templates/manage/import_batch_list.html
+#, python-format
+msgid "%(counter)s import batch"
+msgid_plural "%(counter)s import batches"
+msgstr[0] "%(counter)s lote de importación"
+msgstr[1] "%(counter)s lotes de importación"
+
+#: comics/templates/manage/import_batch_list.html
+#, python-format
+msgid "%(counter)s variant"
+msgid_plural "%(counter)s variants"
+msgstr[0] "%(counter)s variante"
+msgstr[1] "%(counter)s variantes"
+
+#: comics/templates/manage/import_batch_list.html
+#, python-format
+msgid "%(counter)s pending"
+msgid_plural "%(counter)s pending"
+msgstr[0] "%(counter)s pendiente"
+msgstr[1] "%(counter)s pendientes"
+
+#: comics/templates/manage/import_batch_list.html
+#, python-format
+msgid "%(counter)s created"
+msgid_plural "%(counter)s created"
+msgstr[0] "%(counter)s creada"
+msgstr[1] "%(counter)s creadas"
+
+#: comics/templates/manage/import_batch_list.html
+#, python-format
+msgid "%(counter)s linked"
+msgid_plural "%(counter)s linked"
+msgstr[0] "%(counter)s vinculada"
+msgstr[1] "%(counter)s vinculadas"
+
+#: comics/templates/manage/import_batch_list.html
+#, python-format
+msgid "%(counter)s failed"
+msgid_plural "%(counter)s failed"
+msgstr[0] "%(counter)s con error"
+msgstr[1] "%(counter)s con errores"
+
+#: comics/templates/manage/import_batch_detail.html
+#, python-format
+msgid "Story: %(counter)s number"
+msgid_plural "Story: %(counter)s numbers"
+msgstr[0] "Historia: %(counter)s número"
+msgstr[1] "Historia: %(counter)s números"
+
+#: comics/templates/manage/import_batch_detail.html
+#, python-format
+msgid "Cover: %(counter)s variant"
+msgid_plural "Cover: %(counter)s variants"
+msgstr[0] "Portada: %(counter)s variante"
+msgstr[1] "Portada: %(counter)s variantes"
+
+#: comics/catalog_sources/batches.py
+msgid "The publishing can no longer change: some variants of the batch already have their edition."
+msgstr "El publishing ya no puede cambiar: algunas variantes del lote ya tienen su edición."
+
+#: comics/forms/catalog.py
+msgid "Choose a publishing."
+msgstr "Elige un publishing."
+
+#: comics/forms/catalog.py
+msgid "Choose an existing publishing."
+msgstr "Elige un publishing existente."
+
+#: comics/forms/catalog.py
+msgid "The selection is not valid."
+msgstr "La selección no es válida."
+
+#: comics/views/manage_imports.py
+#, python-format
+msgid "The batch now goes to %(publishing)s."
+msgstr "El lote va ahora a %(publishing)s."
+
+#: comics/views/manage_imports.py
+#, python-format
+msgid "The batch already goes to %(publishing)s."
+msgstr "El lote ya va a %(publishing)s."
+
+#: comics/views/manage_imports.py
+msgid "Selection saved."
+msgstr "Selección guardada."
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Change publishing"
+msgstr "Cambiar publishing"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Use this publishing"
+msgstr "Usar este publishing"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Which numbers already have their issue and which variants Comi may already have are looked up again in it."
+msgstr "Se vuelve a buscar en él qué números ya tienen su issue y qué variantes puede tener ya Comi."
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Check the variants to create, then save the selection."
+msgstr "Marca las variantes que quieres crear y guarda la selección."
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Save selection"
+msgstr "Guardar selección"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Select all"
+msgstr "Seleccionar todas"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Select none"
+msgstr "No seleccionar ninguna"
+
+#: comics/views/manage_imports.py
+msgid "The batch changed meanwhile (closed or given another publishing): the other variants were not tried."
+msgstr "El lote cambió mientras tanto (se cerró o se le dio otro publishing): las demás variantes no se intentaron."
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Save the selection before creating."
+msgstr "Guarda la selección antes de crear."
+
+#: comics/forms/catalog.py
+msgid "Not set"
+msgstr "Sin fijar"
+
+#: comics/forms/catalog.py
+msgid "Inherit"
+msgstr "Heredar"
+
+#: comics/forms/catalog.py
+msgid "Remove from this variant"
+msgstr "Quitar de esta variante"
+
+#: comics/forms/catalog.py
+msgid "Add existing artists"
+msgstr "Añadir artistas existentes"
+
+#: comics/forms/catalog.py
+msgid "Leave blank"
+msgstr "Dejar en blanco"
+
+#: comics/catalog_sources/batch_values.py
+msgid "Choose existing artists."
+msgstr "Elige artistas existentes."
+
+#: comics/views/manage_imports.py
+msgid "left blank"
+msgstr "en blanco"
+
+#: comics/views/manage_imports.py
+msgid "Inherits nothing: Comi did not accept the catalogue's value."
+msgstr "No hereda nada: Comi no aceptó el valor del catálogo."
+
+#: comics/views/manage_imports.py
+msgid "Inherits nothing."
+msgstr "No hereda nada."
+
+#: comics/views/manage_imports.py
+msgid "Inherits the preselected value: %(value)s"
+msgstr "Hereda el valor preseleccionado: %(value)s"
+
+#: comics/views/manage_imports.py
+msgid "Inherits the batch value: %(value)s"
+msgstr "Hereda el valor del lote: %(value)s"
+
+#: comics/views/manage_imports.py
+msgid "Inherits the catalogue value: %(value)s"
+msgstr "Hereda el valor del catálogo: %(value)s"
+
+#: comics/views/manage_imports.py
+msgid "The batch is busy (it is creating editions): try again in a moment."
+msgstr "El lote está ocupado (está creando ediciones): vuelve a intentarlo en un momento."
+
+#: comics/views/manage_imports.py
+msgid "Values for every variant saved."
+msgstr "Valores para todas las variantes guardados."
+
+#: comics/views/manage_imports.py
+msgid "%(variant)s saved."
+msgstr "%(variant)s guardada."
+
+#: comics/views/manage_imports.py
+msgid "%(variant)s had no changes."
+msgstr "%(variant)s no tenía cambios."
+
+#: comics/views/manage_imports.py
+msgid "%(variant)s is back to the proposal."
+msgstr "%(variant)s vuelve a la propuesta."
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Values for every variant"
+msgstr "Valores para todas las variantes"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "None set: each variant keeps what the catalogue gives."
+msgstr "No hay ninguno: cada variante se queda con lo que da el catálogo."
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Change the values for every variant"
+msgstr "Cambiar los valores para todas las variantes"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "A value set here replaces the catalogue's in every variant that does not change it. Leave a field empty to keep the catalogue's."
+msgstr "Un valor fijado aquí sustituye al del catálogo en todas las variantes que no lo cambian. Deja un campo vacío para mantener el del catálogo."
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "A field left empty inherits the value below it. Check “Leave blank” to save the edition without that value."
+msgstr "Un campo vacío hereda el valor que aparece debajo. Marca “Dejar en blanco” para guardar la edición sin ese valor."
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Save changes"
+msgstr "Guardar cambios"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Reset to proposal"
+msgstr "Volver a la propuesta"
+
+#: comics/templates/manage/import_batch_detail.html
+msgctxt "import row"
+msgid "Changed"
+msgstr "Modificada"
+
+#: comics/templates/manage/includes/catalog_series_dialog.html
+msgid "Import selected"
+msgstr "Importar seleccionadas"
+
+#: comics/templates/manage/import_batch_list.html
+msgid "New batch"
+msgstr "Nuevo lote"
+
+#: comics/templates/manage/import_batch_list.html
+msgid "To start a batch, enter a MyComicShop series ID or paste its URL, then check the variants to import."
+msgstr "Para empezar un lote, escribe el ID de una serie de MyComicShop o pega su URL y marca las variantes que quieres importar."
+
+#: comics/forms/catalog.py
+msgid "The MyComicShop series is missing."
+msgstr "Falta la serie de MyComicShop."
+
+#: comics/templates/my_comics/base_comics.html
+#: comics/templates/my_comics/hunt_list.html
+msgid "Hunt"
+msgstr "Cacería"
+
+#: comics/templates/includes/hunt_button.html
+#: comics/templates/my_comics/edition_detail.html
+#: comics/templates/my_comics/edition_list.html
+msgid "Looking for it"
+msgstr "Lo busco"
+
+#: comics/templates/includes/hunt_button.html
+msgid "Stop looking for it"
+msgstr "Ya no lo busco"
+
+#: comics/templates/my_comics/hunt_list.html
+msgid "You're not looking for any edition yet. Mark the ones you want from the Editions list."
+msgstr "Todavía no buscas ninguna edición. Marca las que quieras desde la lista de Ediciones."
+
+#: comics/templates/my_comics/hunt_list.html
+msgid "Go to Editions"
+msgstr "Ir a Ediciones"
+
+#: comics/templates/my_comics/hunt_list.html
+msgid "Edit note"
+msgstr "Editar nota"
+
+#: comics/templates/my_comics/hunt_list.html
+msgid "Add a note"
+msgstr "Agregar una nota"
+
+#: comics/forms/collections.py
+msgid "Note"
+msgstr "Nota"
+
+#: comics/forms/collections.py
+msgid "Up to 500 characters. Leave it empty to remove the note."
+msgstr "Hasta 500 caracteres. Déjala vacía para quitar la nota."
+
+#: comics/views/hunt.py
+#, python-format
+msgid "%(edition)s is now in your hunt."
+msgstr "%(edition)s ya está en tu cacería."
+
+#: comics/views/hunt.py
+#, python-format
+msgid "%(edition)s is no longer in your hunt."
+msgstr "%(edition)s ya no está en tu cacería."
+
+#: comics/views/hunt.py
+msgid "Note saved."
+msgstr "Nota guardada."
+
+#: comics/views/hunt.py
+msgid "Note removed."
+msgstr "Nota eliminada."
+
+#: comics/views/hunt.py
+#, python-format
+msgid "The note was not saved: %(error)s"
+msgstr "No se guardó la nota: %(error)s"
+
+#: comics/models/notifications.py
+#, python-format
+msgid "You got %(edition)s: it left your hunt."
+msgstr "Conseguiste %(edition)s: salió de tu cacería."
+
+#: comics/templates/notifications/includes/item.html
+msgid "Keep looking for it"
+msgstr "Seguir buscándolo"
+
+#: comics/views/notifications.py
+#, python-format
+msgid "%(edition)s is back in your hunt."
+msgstr "%(edition)s volvió a tu cacería."
+
+#: comics/templates/manage/collection_list.html
+msgid "Sort by"
+msgstr "Ordenar por"
+
+#: comics/views/collection_entries.py
+msgid "Title A–Z"
+msgstr "Título A–Z"
+
+#: comics/views/collection_entries.py
+msgid "Trade date: newest first"
+msgstr "Fecha de operación: más recientes primero"
+
+#: comics/views/collection_entries.py
+msgid "Trade date: oldest first"
+msgstr "Fecha de operación: más antiguas primero"
+
+#: comics/views/collection_entries.py
+msgid "Amount: highest first"
+msgstr "Monto: mayor primero"
+
+#: comics/views/collection_entries.py
+msgid "Amount: lowest first"
+msgstr "Monto: menor primero"
+
+#: comics/templates/manage/collection_list.html
+msgid "All participants"
+msgstr "Todos los participantes"
+
+#: comics/templates/manage/collection_list.html
+msgid "No participant"
+msgstr "Sin participante"
+
+#: comics/templates/manage/collection_list.html
+msgid "All statuses"
+msgstr "Todos los estados"
+
+#: comics/models/collections.py
+msgid "In collection"
+msgstr "En la colección"
+
+#: comics/models/collections.py
+msgid "Sale without linked purchase"
+msgstr "Venta sin compra vinculada"
+
+#: comics/templates/manage/includes/collection_row.html
+msgid "No purchase linked"
+msgstr "Sin compra vinculada"

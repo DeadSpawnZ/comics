@@ -37,6 +37,14 @@
         </a>
       </li>
       <li>
+        <a class="md-side-nav__link {% if 'import_batch' in url_name %}is-active{% endif %}"
+           {% if 'import_batch' in url_name %}aria-current="page"{% endif %}
+           href="{% url 'manage_import_batches' %}">
+          <span class="material-symbols-outlined" aria-hidden="true">download</span>
+          {% translate "Imports" %}
+        </a>
+      </li>
+      <li>
         <a class="md-side-nav__link {% if 'publishing' in url_name %}is-active{% endif %}"
            {% if 'publishing' in url_name %}aria-current="page"{% endif %}
            href="{% url 'manage_publishings' %}">

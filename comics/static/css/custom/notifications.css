@@ -109,6 +109,19 @@
   font-size: 0.75rem;
 }
 
+/* The action of a notification (e.g. bringing a completed hunt back): a text button under the item,
+ * its label aligned with the item's text (the item's padding plus its 24px icon; the button's own
+ * padding stands in for the gap). It shares the item's unread tint. */
+.notif-item__actions {
+  --notif-item-padding-x: 1rem;
+  margin: 0;
+  padding: 0 0.5rem 0.5rem calc(var(--notif-item-padding-x) + 24px);
+}
+
+.notif-item__actions.is-unread {
+  background-color: rgba(var(--md-primary-rgb), 0.08);
+}
+
 .notif-item__dot {
   flex: none;
   width: 8px;
@@ -137,6 +150,11 @@
 
 .notif-page .notif-item.is-unread:hover {
   background-color: rgba(var(--md-primary-rgb), 0.12);
+}
+
+.notif-page .notif-item__actions {
+  --notif-item-padding-x: 1.25rem;
+  padding-bottom: 0.75rem;
 }
 
 .notif-page__list > li + li {

@@ -8,9 +8,73 @@ Cómo trabajar un punto: seguir `CLAUDE.md` (flujo backend con `backend-senior` 
 tests solo en MySQL, Ruff una vez por feature, migraciones ensayadas en `comic_refactor` antes de la
 base real). Quitar el punto de este archivo en el mismo commit que lo resuelve.
 
-Última actualización: 2026-10-31, en la rama `chore/adjustments`.
+Última actualización: 2026-11-16, en la rama `feat/mycomicshop-batch-import`.
 
 ## Primera tarea de la próxima sesión
+
+### Probar la Cacería en el navegador
+
+Feature nueva (2026-11-16), en `feat/mycomicshop-batch-import`. Tres tareas, todas APPROVED:
+1 modelo `WantedEdition` + `0123` (2 rondas de revisión); 2 página Mis comics → Cacería, botón "Lo
+busco" en lista y detalle de ediciones, nota editable en la página (1 ronda); 3 comprar una edición
+buscada completa la marca (`completed_at`, conserva la nota) y crea una notificación
+`hunt_completed` con la acción "Seguir buscándolo", que la reactiva sin tocar la compra (2 rondas).
+Commiteado en `1fdc3eb` (feature) y `a22e8d6` (Ruff), en `develop` con el PR #7. Suite en MySQL: 1221 tests OK. La
+migración `0123` (crea `comics_wantededition`, añade `notification.edition` y amplía la CHECK de
+notificaciones) ya está aplicada en la base real (2026-11-16, copia previa en
+`backups/comic-pre-0123-20261116_142810.sql`, ensayada antes en `comic_refactor`: aplicar, revertir
+con una notificación de cacería presente, aplicar) y la imagen reconstruida. Falta: **ver las
+páginas en el navegador** (nadie las ha visto: fila de la cacería, chips, desplegable de la nota,
+icono `travel_explore`, botones en lista y detalle, la acción de la notificación en la página y
+dentro del menú de la campana, el texto de la notificación en español).
+
+### Probar los filtros de Gestión → Colecciones en el navegador
+
+Feature nueva (2026-11-16), commit `c889bdc`, en `develop` con el PR #7. Una tarea, APPROVED
+en 1 ronda. La lista de piezas de Gestión (`collection_list` en `comics/views/collection_entries.py`)
+gana: selector de participante (`participant`: id de dealer o `none`), selector de estado (`status`:
+`owned` / `sold` / `unlinked`, en `TradeQuerySet.with_status`), selector de orden (`sort`, a la
+derecha de las pestañas) y los chips "Sold" y "No purchase linked" en cada fila. La búsqueda de texto
+pasa a ser solo por título. Sin migraciones. Suite en MySQL: 1246 tests OK; Ruff limpio. Falta: **ver
+la página en el navegador** (nadie la ha visto: las dos filas de la barra, cómo se envuelve en
+pantallas estrechas, que cambiar el orden conserve los filtros, "Clear", los chips y los textos en
+español), reconstruyendo antes la imagen porque los estáticos y las traducciones van dentro de ella.
+La maqueta aprobada por el usuario está en https://claude.ai/artifact/P8dB26MYBQ2RogrBmsarro.
+
+### Probar los lotes de importación desde MyComicShop (en `develop` con el PR #7)
+
+Rama `feat/mycomicshop-batch-import` (sale de `develop` tras el PR #6; fusionada con el PR #7). Spec en "Próximas
+features → Lotes de importación desde MyComicShop". Todas las tareas están APPROVED y en staged
+(2026-11-01/02): 1 modelos + `0122` (sin aplicar); 2 servicio del lote (`batches.py`); 3 alta de
+ediciones en `comics/editions.py`; 4 creación de filas (`batch_creation.py`, "preseleccionar, pero
+nunca inventar"); 5a página del lote (resolver nombres, crear, vincular, cerrar); 5b elegir/cambiar
+publishing con recálculo y selección de filas; 5c valores del lote y de cada fila
+(`comics/import_batch_values.py`); 6 casillas e "Importar seleccionadas" en el diálogo de series
+(`catalog_series_dialog.js`, separado de `catalog_import.js`) y "Nuevo lote" en Gestión →
+Importaciones. Suite MySQL: 1137 OK. No hay tests de JS: el diálogo no se ha probado en un navegador.
+
+Commiteado en `55dfcc1` (feature) y `c316d32` (Ruff). La migración `0122` ya está aplicada en la base
+real (2026-11-01, copia previa en `backups/comic-pre-0122-20261101_185727.sql`, ensayada antes en
+`comic_refactor`) y la imagen reconstruida. Falta: probar en el navegador (crear un lote desde el
+formulario de ediciones y desde Importaciones, resolver nombres, editar valores, crear, vincular);
+El push y el PR a `develop` ya están hechos (PR #7).
+
+MINOR que quedaron de las revisiones (para después):
+- En el formulario de ediciones, "Importar seleccionadas" navega a la página del lote y pierde lo que
+  no se haya guardado del formulario; avisarlo en el diálogo o pedir confirmación si hay cambios.
+- `manage_imports.py` importa `catalog_answer` y `series_dialog_data` de `manage_editions.py`;
+  moverlos a `comics/views/utils.py` o a un `comics/views/catalog_api.py`.
+- `series_dialog_data()` devuelve `dict[str, Any]`; usar un `TypedDict`.
+- `comics/diagrams.py` no tiene componente para los servicios de primer nivel
+  (`comics.import_batch_values`, `comics.editions`), así que el diagrama del README no los muestra.
+- `row.is_edited` solo mira `EDITED_KEYS`, pero "Reset to proposal" borra todas las claves (también
+  `cover_url`): revisarlo si algo empieza a escribir otras claves.
+- El candado del lote se mantiene durante la descarga de cada portada: una acción enviada durante una
+  creación espera (si pasa `innodb_lock_wait_timeout` se muestra "el lote está ocupado").
+- Carrera conocida: dos transacciones que crean a la vez el mismo issue nuevo pueden escribir los
+  créditos de historia de la segunda sobre el issue de la primera (app local, un usuario).
+- `djangojs.po` tiene dos entradas que ya no usa ningún JS ("Creators not found in Comi (not added)…"
+  y "Cover artists not found in Comi (not added)…").
 
 ### Terminar la tanda de integridad de datos (rama `chore/adjustments`)
 
@@ -58,9 +122,7 @@ desplegado en local. Falta:
     borrador del formulario (`js/custom/form_draft.js`);
   - las ayudas del importador: campos obligatorios marcados, recordar alias de editoriales y crear
     los artistas que faltan.
-- **Publicar:** PR `develop` → `master`. Antes, llevar a `develop` la rama `chore/adjustments`
-  (collectables con catálogo de artículos, coincidencias y "Vincular" de MyComicShop, TID en
-  `Publishing`; migraciones `0117`–`0120`, ya aplicadas en la base real).
+- **Publicar:** PR `develop` → `master` (`chore/adjustments` ya está en `develop` por el PR #6).
 - **Confirmar con el usuario** tres decisiones que tomó el implementador: nadie revisa sus propias
   solicitudes; los revisores no pueden rechazar una solicitud ya validada; el autor no ve los nombres
   de quienes la revisaron.
@@ -138,7 +200,7 @@ Implementado (ver README) y en `develop` con el PR #5. Falta:
   solicitudes de cambio. Importar varias variantes de golpe: ver "Lotes de importación desde
   MyComicShop".
 
-### Lotes de importación desde MyComicShop (diseño aprobado el 2026-10-31, sin empezar)
+### Lotes de importación desde MyComicShop (diseño aprobado el 2026-10-31, implementado: ver arriba)
 
 Crear varias ediciones de una serie de MyComicShop (TID) con un paso de revisión antes de guardar.
 Resuelve tres límites de hacerlo desde el formulario de una edición o en automático: cada edición
@@ -166,8 +228,8 @@ de historia son del issue (`Issue.creators`), los de portada de cada edición
 Flujo:
 1. Modal de variantes: una casilla por variante y "Importar seleccionadas" crea el lote y lleva a su
    página. Límite propuesto: 30 variantes por lote (las portadas se descargan en la misma petición).
-2. Página del lote (Gestión → Importaciones): valores del lote (publishing, formato, rareza, regla de
-   fecha de salida, notas) que heredan todas las filas; un grupo por número con su issue (existente o
+2. Página del lote (Gestión → Importaciones): valores del lote (publishing, formato, rareza, fecha de
+   salida, notas) que heredan todas las filas; un grupo por número con su issue (existente o
    nuevo) y sus artistas de historia, una vez; una fila por variante con letra, impresión, ratio,
    tirada, exclusivas, precio, miniatura, artistas de portada, el texto original de MyComicShop y el
    aviso "posible coincidencia" con su "Vincular". Cada campo de fila hereda del lote salvo que se
@@ -189,12 +251,21 @@ Tareas (una por `backend-senior`, en orden):
    tipo de coincidencia y ediciones probables, seleccionada, estado pendiente/creada/error,
    errores, edición creada con `SET_NULL`). Sin historial.
 2. Servicio `comics/catalog_sources/batches.py`: crear el lote desde un TID y una lista de IVIDs
-   (una `fetch_series`, `to_source_issue` + `build_proposal` por variante con un solo `ArtistMatcher`;
-   consultas fijas, no por variante), valores efectivos de una fila (lote + cambios), nombres
+   (una `fetch_series`; por variante `to_source_issue` + las piezas del mapper (`edition_values`), sin
+   `build_proposal`, que vuelve a buscar el publishing y el issue; un solo `ArtistMatcher`; consultas
+   fijas, no por variante), valores efectivos de una fila (lote + cambios), nombres
    pendientes y aplicar una resolución.
 3. Sacar el alta de ediciones de la vista (`_save_edition` y la lógica de issue de `edition_form` en
    `comics/views/manage_editions.py`) a un servicio reutilizable, sin cambiar el comportamiento.
-4. Crear las filas del lote con ese servicio (lo del paso 4 del flujo).
+4. Crear las filas del lote con ese servicio (lo del paso 4 del flujo):
+   `comics/catalog_sources/batch_creation.py` (`create_rows`, `link_row`). Los artistas nuevos se
+   crean con el nombre corregido de la resolución (`new_name`) y la resolución pasa a "artist".
+   "Preseleccionar, pero nunca inventar": si el catálogo no dice nada de impresión/formato/rareza,
+   la fila toma lo que preselecciona la página de Gestión (1st, single issue, common); si dio un
+   valor que Comi rechazó (7th+, tipo de serie sin formato; `proposal["rejected"]`), la fila falla
+   en ese campo hasta que lo den los valores del lote o la fila. Fecha de salida y precio nunca se
+   rellenan. La fila que crea el issue de un número lo deja como issue del número. Vincular no
+   guarda su error en la fila (se responde al momento).
 5. Vistas, URL y plantilla de la página del lote; lista de lotes en Gestión.
 6. Modal: casillas, "Importar seleccionadas" y JS (separar antes el diálogo de series de
    `catalog_import.js`, que pasa de 900 líneas).
@@ -274,6 +345,53 @@ evaluar las reglas por fecha en la primera visita del día de cada usuario (reco
   en `EditorialAliasForm`; `RepeatableTextInput.format_value` sin uso real.
 
 ### General
+- **`makemessages` daña el catálogo:** el comando documentado en el README (sección Traducciones),
+  corrido sobre este árbol, reescribe y reordena todo `django.po` (unas 7,000 líneas) y
+  `djangojs.po`, marca como obsoletas (`#~`) entradas que se siguen usando ("Community" y
+  "Seniority", que `test_translations.py` comprueba, además de "Treasures", "Sagas", "Details" y una
+  cadena de JS) y propone traducciones fuzzy equivocadas. Por eso las 14 cadenas de la Cacería se
+  añadieron a mano al final de `django.po`. Averiguar por qué no extrae esas cadenas y arreglar el
+  comando (o documentar el procedimiento manual) antes de volver a regenerar el catálogo.
+- Cacería (menores de revisión):
+  - El texto de ayuda "Up to 500 characters" de `WantedEditionNoteForm` lleva el límite escrito a
+    mano; usar un msgid con marcador que lea `max_length` del modelo.
+  - `comics/views/hunt.py` repite `PAGE_SIZE = 25`; importarla de `manage_editions` como hacen
+    `collection_entries.py` y `manage_collectables.py`.
+  - `hunt_list.html` copia la fila de `edition_list.html` (miniatura, título, metadatos, chip "You
+    own") y el chip "Looking for it" está en tres plantillas; sacarlos a includes. La página de
+    Cacería no muestra el chip de compilación que sí tiene la lista.
+  - `my_comics.edition_detail` consulta `WantedEdition` con el ORM en la vista; añadir
+    `WantedEditionQuerySet.is_wanted_by`. `owned_counts` es una consulta de dominio que vive en
+    `views/my_comics.py` y ya la importa `hunt.py`; moverla al QuerySet de `Collection`.
+  - La altura del `textarea` de la nota va en `attrs={"style": ...}` del formulario; pasarla a
+    `.hunt-note-edit__form textarea` en `collections.css`.
+  - Falta un test de que la nota se renderiza escapada (hoy lo está, por autoescape).
+  - Guardar vacía una nota que ya estaba vacía muestra "Note removed."; comparar con
+    `form.has_changed()`.
+  - Si una nota se rechaza se pierde lo escrito (solo ocurre con una petición manipulada: el
+    navegador limita a 500 caracteres y es igual o más estricto que el servidor).
+  - Las marcas completadas (`completed_at`) no se pueden borrar desde la interfaz: se acumulan hasta
+    que se borra la edición o el usuario. Inofensivo hoy; si molesta, borrarlas al dejar de buscar o
+    mostrarlas como historial de cacerías completadas.
+  - `set_wanted(True)` reactiva una marca completada con una actualización condicionada al estado
+    leído, sin test de concurrencia (se consideró desproporcionado).
+  - `NotificationAdmin` no tiene `change_request` en `raw_id_fields`: el formulario del admin carga
+    un select con todas las solicitudes (ya estaba así antes de la Cacería).
+- Filtros de Gestión → Colecciones (menores de revisión):
+  - `_sales_of_outer_row() -> QuerySet` (`comics/models/collections.py`) devuelve un `QuerySet` sin
+    parámetro; anotarlo como `QuerySet[Any]` (lo comparten `Collection` y `Collectable`).
+  - Falta un test del cambio deliberado de comportamiento: un `tipo` desconocido ahora lista todas
+    las piezas con la pestaña "All" activa (antes, lista vacía).
+  - `collection_row.html` compara con el literal `'selling'` (como el resto de la plantilla).
+  - El filtro `sold` exige que la venta sea del mismo coleccionista (como `with_sold_flag`) y el
+    chip "Sold" usa `sold_on` (`with_sale_date`), que no lo comprueba; solo pueden discrepar en filas
+    escritas sin pasar por el modelo. Si se quiere que coincidan por construcción, sacar el chip de
+    `is_sold`.
+  - La lista de Collectables de Gestión no tiene estos filtros (participante, estado, orden); el
+    usuario los dejó fuera de esta tanda.
+- El listado de ediciones de Mis comics calcula `recent` (las últimas 10 ediciones, en
+  `edition_catalog_context`) aunque su plantilla no lo muestra: una consulta de más en la primera
+  página.
 - Bloqueo del borrado de compras vendidas (menores de revisión): `collectable_delete` pasa a
   `date_format` el resultado de `first_sale_date` sin comprobar `None` (hoy no ocurre, porque solo
   una venta protege un collectable; devolver el mensaje genérico si pasa); el texto "no se puede
@@ -314,13 +432,13 @@ evaluar las reglas por fecha en la primera visita del día de cada usuario (reco
   `MaterialFieldsMixin`.
 - Dos archivos JS tienen las URLs `/ajax/...` escritas a mano en lugar de usar `{% url %}`:
   `comics/static/js/custom/collection_form_events.js`, `fill_release_date.js`.
-- `edition_form` y `_clean_content` en `comics/views/manage_editions.py`, `evaluate` en
-  `comics/achievements/engine.py` y `_edition_values` en `comics/catalog_sources/mapper.py` son
-  demasiado complejas (`# noqa: C901`); dividirlas ahora que hay tests.
+- `edition_form` en `comics/views/manage_editions.py`, `evaluate` en
+  `comics/achievements/engine.py`, `edition_values` en `comics/catalog_sources/mapper.py`,
+  `resolved_credits` en `comics/catalog_sources/batches.py` y `_create_new_artists_once` en
+  `comics/catalog_sources/batch_creation.py` son demasiado complejas (`# noqa: C901`); dividirlas
+  ahora que hay tests.
 - Las excepciones de `comics/catalog_sources/errors.py` y `InvalidTransition` no llevan el sufijo
   `Error` (`# noqa: N818`); renombrarlas si se toca esa zona.
-- La re-evaluación de logros tras cambiar el contenido de una edición está duplicada en
-  `manage_editions._schedule_owners_after_content_change` y `versions.schedule_edition_owners`.
 
 ## Limitaciones conocidas y seguridad
 

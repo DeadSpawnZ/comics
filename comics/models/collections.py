@@ -1,4 +1,5 @@
-"""What collectors own and follow: purchases and sales, signatures, reading arcs, connectings, collectables."""
+"""What collectors own and follow: purchases and sales, signatures, reading arcs, connectings, collectables,
+hunted editions."""
 
 from __future__ import annotations
 
@@ -17,6 +18,7 @@ from django.db.models import (
     CharField,
     Count,
     DateField,
+    DateTimeField,
     DecimalField,
     Exists,
     ForeignKey,
@@ -33,6 +35,7 @@ from django.db.models import (
     TextField,
     UniqueConstraint,
 )
+from django.utils import timezone
 from django.utils.functional import Promise
 from django.utils.translation import gettext, ngettext, pgettext_lazy
 from django.utils.translation import gettext_lazy as _
@@ -51,6 +54,14 @@ class Dealer(Model):
 
     def __str__(self) -> str:
         return self.name
+
+
+class TradeStatus(TextChoices):
+    """Where a piece stands, as the Gestión lists filter it (TradeQuerySet.with_status)."""
+
+    OWNED = "owned", _("In collection")
+    SOLD = "sold", _("Sold")
+    UNLINKED = "unlinked", _("Sale without linked purchase")
 
 
 class TradeQuerySet(QuerySet):
@@ -80,15 +91,33 @@ class TradeQuerySet(QuerySet):
             purchases = purchases.exclude(pk=current.pk)
         return purchases.order_by("trade_date", "id")
 
-    def with_sold_flag(self) -> Self:
-        """Annotate `is_sold`: whether a sale of the same collector points to the piece as its previous
-        trade. Only a purchase can be sold (validate_previous_trade), so a sale is never flagged."""
-        sales = self.model.objects.filter(
+    def _sales_of_outer_row(self) -> QuerySet:
+        """Sales of the same collector that point to the outer row as their previous trade, for an
+        Exists() over each row of this queryset."""
+        return self.model.objects.filter(
             previous_trade=OuterRef("pk"),
             collector=OuterRef("collector"),
             trade_type=self.model.TradeChoices.SELLING,
         )
-        return self.annotate(is_sold=Exists(sales))
+
+    def with_sold_flag(self) -> Self:
+        """Annotate `is_sold`: whether a sale of the same collector points to the piece as its previous
+        trade. Only a purchase can be sold (validate_previous_trade), so a sale is never flagged."""
+        return self.annotate(is_sold=Exists(self._sales_of_outer_row()))
+
+    def with_status(self, status: str) -> Self:
+        """Keep the pieces in a TradeStatus: purchases still owned, purchases sold (same rule as
+        with_sold_flag, checked per row, so it works across collectors) or sales that point to no
+        purchase. Any other value, empty included, leaves the queryset as it is."""
+        choices = self.model.TradeChoices
+        sold = Exists(self._sales_of_outer_row())
+        if status == TradeStatus.OWNED:
+            return self.filter(~sold, trade_type=choices.BUYING)
+        if status == TradeStatus.SOLD:
+            return self.filter(sold, trade_type=choices.BUYING)
+        if status == TradeStatus.UNLINKED:
+            return self.filter(trade_type=choices.SELLING, previous_trade__isnull=True)
+        return self
 
     def with_sale_date(self) -> Self:
         """Annotate `sold_on`: the date of the earliest trade that points to the piece as its previous
@@ -527,3 +556,96 @@ class Collectable(PreviousTradeRules, Model):
 
     def __str__(self) -> str:
         return str(self.article)
+
+
+class WantedEditionQuerySet(QuerySet):
+    """Hunt marks (WantedEdition). An *active* mark (no `completed_at`) is what "hunting an edition"
+    means everywhere; a completed one only keeps the note so the hunt can be brought back."""
+
+    def active(self) -> Self:
+        return self.filter(completed_at__isnull=True)
+
+    def completed(self) -> Self:
+        return self.filter(completed_at__isnull=False)
+
+    def for_collector(self, user: User) -> Self:
+        """The active marks of `user`, with everything Edition.__str__ reads loaded: each edition, its
+        publishing and the publishing's editorials (one extra query for the editorials of all rows)."""
+        return (
+            self.active()
+            .filter(collector=user)
+            .select_related("edition__publishing")
+            .prefetch_related("edition__publishing__editorials")
+        )
+
+    def edition_ids_wanted_by(self, user: User, edition_ids: Iterable[int]) -> set[int]:
+        """The ids among `edition_ids` that `user` is hunting (active marks), in one query."""
+        return set(
+            self.active().filter(collector=user, edition_id__in=list(edition_ids)).values_list("edition_id", flat=True)
+        )
+
+    def set_wanted(self, user: User, edition: Edition, wanted: bool) -> None:
+        """Make `user` hunt `edition` or stop hunting it. Idempotent: marking a marked edition keeps
+        its single mark (and its note), unmarking an unmarked one does nothing.
+
+        Marking reactivates a mark completed by a purchase, keeping its note and creation time (the
+        update only applies to the row as it was read, completed). get_or_create retries the read when
+        a concurrent request inserted the same mark first, so the unique constraint never surfaces as
+        an error. Unmarking deletes only an active mark: a completed one keeps the note a later
+        resume_hunt restores, so a repeated or forged unmark request cannot destroy it."""
+        if wanted:
+            mark, created = self.get_or_create(collector=user, edition=edition)
+            if not created and mark.completed_at is not None:
+                self.filter(pk=mark.pk, completed_at=mark.completed_at).update(completed_at=None)
+        else:
+            self.active().filter(collector=user, edition=edition).delete()
+
+    def resume_hunt(self, user: User, edition: Edition) -> bool:
+        """Bring back the hunt of `edition` that a purchase by `user` completed: their existing mark is
+        active again, with its note and creation time. Unlike marking, it never creates a mark: when
+        they have none any more (they stopped hunting the edition after bringing it back) there is
+        nothing to bring back and nothing changes. Returns whether `user` hunts `edition` afterwards;
+        repeating it changes nothing. A single UPDATE (MySQL reports the matched rows, so a mark that
+        is already active counts too), so a mark deleted meanwhile is never recreated without its note."""
+        return bool(self.filter(collector=user, edition=edition).update(completed_at=None))
+
+    def complete_hunt(self, collector_id: int, edition_id: int) -> bool:
+        """Complete the active mark of the collector for the edition (a purchase of it), keeping the
+        row and its note. Returns whether there was one. A single UPDATE: of two concurrent purchases
+        only one completes the mark."""
+        return bool(
+            self.active().filter(collector_id=collector_id, edition_id=edition_id).update(completed_at=timezone.now())
+        )
+
+
+class WantedEdition(Model):
+    """An edition a collector is hunting (looking for). Not a trade: owning the edition does not
+    prevent hunting it (a second or better copy). Registering a purchase of it completes the hunt
+    (see comics.signals.complete_hunt_on_purchase): the mark is kept with `completed_at` set, so the
+    collector can bring the hunt back, with its note, from the notification they get."""
+
+    collector = ForeignKey(User, on_delete=CASCADE, related_name="wanted_editions")
+    # CASCADE, unlike the PROTECT of the trades: a hunt mark must never block deleting an edition.
+    edition = ForeignKey(Edition, on_delete=CASCADE, related_name="wanted_by")
+    created_at = DateTimeField(auto_now_add=True)
+    # What the collector is after, e.g. the better condition sought when replacing an owned copy.
+    notes = TextField(max_length=500, blank=True)
+    # When a purchase completed the hunt; NULL while the collector is hunting the edition.
+    completed_at = DateTimeField(null=True, blank=True)
+
+    objects = WantedEditionQuerySet.as_manager()
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+        constraints = [
+            UniqueConstraint(fields=["collector", "edition"], name="unique_wanted_edition_per_collector"),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.collector} - {self.edition}"
+
+    def save_note(self) -> bool:
+        """Write only `notes`, and only while the mark is still active; returns whether it was. Saving
+        the whole row would also write `completed_at` as it was read, undoing a purchase that completed
+        the mark in the meantime."""
+        return bool(WantedEdition.objects.active().filter(pk=self.pk).update(notes=self.notes))

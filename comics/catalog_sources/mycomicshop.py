@@ -29,6 +29,8 @@ from bs4 import BeautifulSoup, Tag
 from django.core.cache import cache
 from django.utils.translation import gettext as _
 
+from comics.helper import MYCOMICSHOP_KEY
+
 from .errors import AuthFailed, CatalogError, InvalidLookup, NotFound, Unavailable, series_required_message
 from .http import post_html, throttle
 from .types import (
@@ -41,7 +43,7 @@ from .types import (
     parse_int,
 )
 
-KEY = "mycomicshop"
+KEY = MYCOMICSHOP_KEY
 NAME = "MyComicShop"
 SEARCH_URL = "https://www.mycomicshop.com/search"
 SERIES_CACHE_SECONDS = 60 * 60

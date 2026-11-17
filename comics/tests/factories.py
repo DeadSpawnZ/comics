@@ -20,6 +20,7 @@ from comics.models import (
     Edition,
     Editorial,
     Publishing,
+    WantedEdition,
 )
 
 _sequence = itertools.count(1)
@@ -72,6 +73,10 @@ def make_collection(*, collector: User, edition: Edition, **fields: Any) -> Coll
     fields.setdefault("amount", Decimal(next(_sequence)))
     fields.setdefault("trade_date", datetime.date(2020, 1, 1))
     return Collection.objects.create(collector=collector, edition=edition, **fields)
+
+
+def make_wanted_edition(*, collector: User, edition: Edition, notes: str = "") -> WantedEdition:
+    return WantedEdition.objects.create(collector=collector, edition=edition, notes=notes)
 
 
 def make_article(**fields: Any) -> Article:

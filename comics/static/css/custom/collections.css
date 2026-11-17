@@ -395,3 +395,34 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* ---------- Hunt (Comics module): the note of each hunted edition ---------- */
+.hunt-note {
+  margin: 0.25rem 0 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.hunt-note-edit summary {
+  font-size: 0.875rem;
+  color: var(--md-on-surface-variant);
+  cursor: pointer;
+}
+
+.hunt-note-edit__form {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  max-width: 32rem;
+}
+
+.hunt-note-edit__form .md-field {
+  width: 100%;
+}
+
+.hunt-note-edit__hint {
+  font-size: 0.8125rem;
+  color: var(--md-on-surface-variant);
+}

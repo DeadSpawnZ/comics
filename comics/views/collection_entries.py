@@ -3,6 +3,7 @@ the signed-in user. Both use CollectionEntryForm and the two small JSON endpoint
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Any
 from urllib.parse import urlencode
 
@@ -13,13 +14,15 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db import transaction
-from django.db.models import ProtectedError, Q
+from django.db.models import Exists, OuterRef, ProtectedError
 from django.forms.models import BaseInlineFormSet
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.formats import date_format
+from django.utils.functional import Promise
 from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy, pgettext_lazy
 from django.views.decorators.http import require_GET, require_POST
 
 from comics.decorators import management_required
@@ -32,8 +35,8 @@ from comics.forms import (
     purchase_label,
 )
 from comics.helper import parse_date_or_none, parse_id_or_none
-from comics.models import Collection, Edition, Signature
-from comics.views.manage_editions import PAGE_SIZE, RECENT_COUNT
+from comics.models import Collection, CollectionQuerySet, Dealer, Edition, Signature, TradeStatus
+from comics.views.manage_editions import PAGE_SIZE, RECENT_COUNT_LONG
 from comics.views.utils import (
     carry_over_query,
     first_sale_date,
@@ -46,6 +49,28 @@ from comics.views.utils import (
 # Values carried over by "Save and add another" (a batch bought the same day from the same person).
 CARRY_OVER = ("publishing", "trade_date", "trade_type", "participant", "collector")
 TYPE_TABS = [("", "all"), (Collection.TradeChoices.BUYING, "buying"), (Collection.TradeChoices.SELLING, "selling")]
+# The "participant" filter value for pieces with no participant (any other value is a Dealer id).
+NO_PARTICIPANT = "none"
+# Orderings of the Gestión collection list: "sort" value -> (label, order_by). The default ("") is A-Z by
+# title; each one ends in the pk so the pages stay stable when the other values tie.
+SORT_OPTIONS: dict[str, tuple[Promise, tuple[str, ...]]] = {
+    "": (
+        gettext_lazy("Title A–Z"),
+        (
+            "edition__publishing__publishing_title",
+            "edition__publishing__year",
+            "edition__number",
+            "edition__variant",
+            "trade_date",
+            "pk",
+        ),
+    ),
+    "date_desc": (gettext_lazy("Trade date: newest first"), ("-trade_date", "-pk")),
+    "date_asc": (gettext_lazy("Trade date: oldest first"), ("trade_date", "pk")),
+    "amount_desc": (gettext_lazy("Amount: highest first"), ("-amount", "-pk")),
+    "amount_asc": (gettext_lazy("Amount: lowest first"), ("amount", "pk")),
+    "recent": (pgettext_lazy("pieces", "Recently added"), ("-pk",)),
+}
 
 
 def _signature_formset(request: HttpRequest, form: CollectionEntryForm) -> BaseInlineFormSet:
@@ -157,19 +182,61 @@ def my_piece_new(request: HttpRequest) -> HttpResponse:
 # ---------- Gestión: pieces of every collector ----------
 
 
+@dataclass(frozen=True)
+class CollectionListFilters:
+    """The GET parameters of the Gestión collection list, normalized: a value the list does not know
+    (a collector that is not an id, an unknown status or sort...) becomes "" and is ignored."""
+
+    query: str = ""
+    collector: str = ""
+    participant: str = ""  # a Dealer id, or NO_PARTICIPANT
+    status: str = ""  # a TradeStatus value
+    trade_type: str = ""  # the "tipo" tab
+    sort: str = ""  # a SORT_OPTIONS key
+
+    @classmethod
+    def from_request(cls, request: HttpRequest) -> CollectionListFilters:
+        params = request.GET
+        participant = params.get("participant", "")
+        trade_type = params.get("tipo", "")
+        status = params.get("status", "")
+        sort = params.get("sort", "")
+        return cls(
+            query=params.get("q", "").strip(),
+            collector=_digits_or_empty(params.get("collector", "")),
+            participant=participant if participant == NO_PARTICIPANT else _digits_or_empty(participant),
+            status=status if status in TradeStatus.values else "",
+            trade_type=trade_type if trade_type in Collection.TradeChoices.values else "",
+            sort=sort if sort in SORT_OPTIONS else "",
+        )
+
+    @property
+    def narrowed(self) -> bool:
+        """Whether a filter of the filters row (not the tab, not the sort) is set: what Clear removes."""
+        return bool(self.query or self.collector or self.participant or self.status)
+
+    def apply(self, pieces: CollectionQuerySet) -> CollectionQuerySet:
+        """`pieces` narrowed by the search, collector, participant and status (the tab is left out:
+        the tab counters are computed from this)."""
+        if self.query:
+            pieces = pieces.filter(edition__publishing__publishing_title__icontains=self.query)
+        if self.collector:
+            pieces = pieces.filter(collector_id=self.collector)
+        if self.participant == NO_PARTICIPANT:
+            pieces = pieces.filter(participant__isnull=True)
+        elif self.participant:
+            pieces = pieces.filter(participant_id=self.participant)
+        return pieces.with_status(self.status)
+
+
+def _digits_or_empty(value: str) -> str:
+    return value if value.isdigit() else ""
+
+
 @management_required
 def collection_list(request: HttpRequest) -> HttpResponse:
-    query = request.GET.get("q", "").strip()
-    collector_filter = request.GET.get("collector", "")
-    type_filter = request.GET.get("tipo", "")
-
-    base = Collection.objects.all()
-    if query:
-        base = base.filter(
-            Q(edition__publishing__publishing_title__icontains=query) | Q(participant__name__icontains=query)
-        )
-    if collector_filter.isdigit():
-        base = base.filter(collector_id=collector_filter)
+    filters = CollectionListFilters.from_request(request)
+    base = filters.apply(Collection.objects.all())
     labels = {"all": _("All"), "buying": _("Purchases"), "selling": _("Sales")}
     tabs = [
         (value, labels[key], (base.filter(trade_type=value) if value else base).count()) for value, key in TYPE_TABS
@@ -177,25 +244,19 @@ def collection_list(request: HttpRequest) -> HttpResponse:
     related = ("collector", "participant", "edition__publishing")
     editorials = "edition__publishing__editorials"  # read by Edition.__str__ (the delete button's name)
     pieces = (
-        (base.filter(trade_type=type_filter) if type_filter else base)
+        (base.filter(trade_type=filters.trade_type) if filters.trade_type else base)
         .select_related(*related)
         .prefetch_related(editorials)
         .with_sale_date()
-        .order_by(
-            "edition__publishing__publishing_title",
-            "edition__publishing__year",
-            "edition__number",
-            "edition__variant",
-            "trade_date",
-        )
+        .order_by(*SORT_OPTIONS[filters.sort][1])
     )
 
     page_obj = Paginator(pieces, PAGE_SIZE).get_page(request.GET.get("page"))
-    # The latest additions go first (only on the unfiltered first page), then the A-Z list.
+    # The latest additions go first (only on the unfiltered first page in the default order), then the A-Z list.
     recent = []
-    if page_obj.number == 1 and not (query or collector_filter or type_filter):
+    if page_obj.number == 1 and filters == CollectionListFilters():
         rows = Collection.objects.select_related(*related).prefetch_related(editorials).with_sale_date()
-        recent = list(rows.order_by("-id")[:RECENT_COUNT])
+        recent = list(rows.order_by("-id")[:RECENT_COUNT_LONG])
     return render(
         request,
         "manage/collection_list.html",
@@ -204,10 +265,13 @@ def collection_list(request: HttpRequest) -> HttpResponse:
             "page_obj": page_obj,
             "elided_page_range": page_obj.paginator.get_elided_page_range(page_obj.number, on_each_side=1, on_ends=1),
             "tabs": tabs,
-            "query": query,
-            "type_filter": type_filter,
-            "collector_filter": collector_filter,
+            "filters": filters,
             "collectors": User.objects.order_by("username"),
+            # Only the dealers that take part in some comic trade, A-Z (Dealer.Meta.ordering).
+            "participants": Dealer.objects.filter(Exists(Collection.objects.filter(participant=OuterRef("pk")))),
+            "no_participant": NO_PARTICIPANT,
+            "statuses": TradeStatus.choices,
+            "sort_options": [(value, label) for value, (label, _order) in SORT_OPTIONS.items()],
         },
     )
 

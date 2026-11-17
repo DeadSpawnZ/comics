@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 from collections.abc import Callable, Iterable
 from typing import Any, cast
 from urllib.parse import urlencode
@@ -13,18 +12,19 @@ from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Exists, OuterRef, ProtectedError, Q, QuerySet
 from django.forms import Form
-from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonResponse, QueryDict
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, ngettext, pgettext_lazy
 from django.views.decorators.http import require_GET, require_POST
 
-from comics.achievements.engine import schedule_compilation_owners, schedule_for_owners
-from comics.achievements.registry import Event
+from comics.catalog_sources import mycomicshop
 from comics.catalog_sources import service as catalog
+from comics.catalog_sources.batches import MAX_BATCH_ROWS
 from comics.catalog_sources.errors import CatalogError
 from comics.decorators import management_required
+from comics.editions import CONTENT_COMPILATION, CONTENT_SINGLE, clean_content, save_edition
 from comics.forms import (
     ArtistCreateForm,
     CatalogLookupForm,
@@ -37,14 +37,13 @@ from comics.forms import (
     TitleDialogForm,
     publishing_choices,
 )
-from comics.models import CollectedIssue, Collection, Edition, Issue, Publishing
+from comics.models import CollectedIssue, Edition, Issue, Publishing
 from comics.views.manage import _number_sort_key
 from comics.views.utils import log_action, safe_next_url
 
 PAGE_SIZE = 25
 RECENT_COUNT = 5  # latest additions listed before the A-Z catalog
-CONTENT_SINGLE = "single"
-CONTENT_COMPILATION = "compilation"
+RECENT_COUNT_LONG = 10  # editions and collection pieces are added in bulk, so they list more
 TYPE_TABS = [
     ("", pgettext_lazy("editions", "All")),
     ("individual", gettext_lazy("Single")),
@@ -140,7 +139,9 @@ def edition_catalog_context(request: HttpRequest) -> dict[str, Any]:
     # The latest additions go first (only on the unfiltered first page), then the A-Z list.
     recent = []
     if page_obj.number == 1 and not (query or format_filter or rarity_filter or type_filter):
-        recent = list(Edition.objects.select_related("publishing", "issue__publishing").order_by("-id")[:RECENT_COUNT])
+        recent = list(
+            Edition.objects.select_related("publishing", "issue__publishing").order_by("-id")[:RECENT_COUNT_LONG]
+        )
         _add_row_details(recent)
 
     return {
@@ -199,12 +200,12 @@ def edition_form(request: HttpRequest, pk: int | None = None) -> HttpResponse:  
 
     if request.method == "POST":
         content = request.POST.get("content", CONTENT_SINGLE)
-        selected_issue_id, collected_ids, content_errors = _clean_content(request.POST, content)
+        selected_issue_id, collected_ids, content_errors = clean_content(request.POST, content)
         # A compilation has no issue of its own: the issue section is not used (nor validated).
         issue_valid = content == CONTENT_COMPILATION or issue_form.is_valid()
         if form.is_valid() and issue_valid and not content_errors:
             try:
-                saved = _save_edition(form, content, selected_issue_id, collected_ids, issue_form)
+                saved = save_edition(form, content, selected_issue_id, collected_ids, issue_form)
             except ValidationError as exc:
                 form.add_error(None, exc)
             else:
@@ -281,11 +282,10 @@ def edition_form(request: HttpRequest, pk: int | None = None) -> HttpResponse:  
             "title_dialog": TitleDialogForm(),
             "editorial_dialog": EditorialDialogForm(),
             "artist_dialog": ArtistCreateForm(),
+            "series_dialog": series_dialog_data(),
             "form_data": {
                 "issuesUrl": reverse("manage_publishing_issues"),
                 "catalogUrl": reverse("manage_catalog_lookup"),
-                "catalogSeriesUrl": reverse("manage_catalog_mycomicshop_series"),
-                "catalogLinkUrl": reverse("manage_catalog_mycomicshop_link"),
                 # The edition open in the form, if any: linking a MyComicShop cover to it from the
                 # series dialog also fills its MyComicShop ID field, so saving the form keeps the link.
                 "editionId": edition.pk if edition else None,
@@ -299,84 +299,6 @@ def edition_form(request: HttpRequest, pk: int | None = None) -> HttpResponse:  
             },
         },
     )
-
-
-# Complex (C901) but untested: kept as is until tests cover it, then split it.
-def _clean_content(data: QueryDict, content: str) -> tuple[int | None, list[int], list[str]]:  # noqa: C901
-    """Validate the content section: single issue (or automatic) or list of collected issues."""
-    errors = []
-    issue_id = None
-    collected_ids = []
-    if content == CONTENT_COMPILATION:
-        try:
-            collected_ids = [int(value) for value in json.loads(data.get("collected") or "[]")]
-        except (TypeError, ValueError):
-            errors.append(_("The list of collected issues is not valid."))
-            collected_ids = []
-        if not errors and not collected_ids:
-            errors.append(_("A compilation needs at least one collected issue."))
-        if len(collected_ids) != len(set(collected_ids)):
-            errors.append(_("An issue is repeated in the compilation."))
-        if collected_ids and Issue.objects.filter(pk__in=collected_ids).count() != len(set(collected_ids)):
-            errors.append(_("One of the collected issues no longer exists."))
-    elif content == CONTENT_SINGLE:
-        raw = data.get("issue") or ""
-        if raw:
-            try:
-                issue_id = int(raw)
-            except ValueError:
-                errors.append(_("The chosen issue is not valid."))
-            else:
-                if not Issue.objects.filter(pk=issue_id).exists():
-                    errors.append(_("The chosen issue no longer exists."))
-    else:
-        errors.append(_("Choose whether the edition is a single issue or a compilation."))
-    return issue_id, collected_ids, errors
-
-
-@transaction.atomic
-def _save_edition(
-    form: EditionManageForm,
-    content: str,
-    issue_id: int | None,
-    collected_ids: list[int],
-    issue_form: IssueSectionForm,
-) -> Edition:
-    """Save the edition, its content and, for a single-issue edition, the issue section on the
-    issue it ends up with. A ValidationError rolls everything back."""
-    edition = form.save(commit=False)
-    old_issue_id = (
-        Edition.objects.filter(pk=edition.pk).values_list("issue_id", flat=True).first() if edition.pk else None
-    )
-    if content == CONTENT_COMPILATION:
-        edition.save()
-        form.save_m2m()
-        edition.collected_entries.all().delete()
-        CollectedIssue.objects.bulk_create(
-            CollectedIssue(edition=edition, issue_id=issue, order=order)
-            for order, issue in enumerate(collected_ids, start=1)
-        )
-        edition.sync_compilation_state()
-    else:
-        # Remove the collected issues first: otherwise save() still treats it as a compilation.
-        if edition.pk:
-            edition.collected_entries.all().delete()
-        edition.issue_id = issue_id  # None = own issue (by publishing and number)
-        edition.save()
-        form.save_m2m()
-        if edition.issue_id:
-            issue_form.apply_to(edition.issue)
-    _schedule_owners_after_content_change(edition, content, old_issue_id)
-    return edition
-
-
-def _schedule_owners_after_content_change(edition: Edition, content: str, old_issue_id: int | None) -> None:
-    """What an edition contains counts for issue-based achievements (multiverse, reading arcs,
-    rebuys). The collected issues are bulk-inserted (no signals), so the owners are scheduled here."""
-    if content == CONTENT_COMPILATION:
-        schedule_compilation_owners(edition.pk)
-    if edition.issue_id != old_issue_id:
-        schedule_for_owners(Event.COLLECTION, Collection.objects.filter(edition=edition))
 
 
 @management_required
@@ -429,7 +351,7 @@ def catalog_lookup(request: HttpRequest) -> JsonResponse:
     """An issue from an external catalogue (?source=metron|comicvine|mycomicshop&id=...[&series=...],
     the series being required by MyComicShop) as a proposal for the edition form
     (comics.catalog_sources.mapper). Reads only: nothing is created or saved."""
-    return _catalog_answer(
+    return catalog_answer(
         CatalogLookupForm(request.GET),
         lambda data: {"proposal": catalog.load_proposal(data["source"], data["id"], data["series"]).as_dict()},
     )
@@ -440,7 +362,7 @@ def catalog_lookup(request: HttpRequest) -> JsonResponse:
 def catalog_mycomicshop_series(request: HttpRequest) -> JsonResponse:
     """A MyComicShop series (?id=<TID>) with all its variants, for the modal the user picks the
     variant to import from (comics.catalog_sources.service.mycomicshop_series). Reads only."""
-    return _catalog_answer(CatalogSeriesForm(request.GET), lambda data: catalog.mycomicshop_series(data["id"]))
+    return catalog_answer(CatalogSeriesForm(request.GET), lambda data: catalog.mycomicshop_series(data["id"]))
 
 
 @management_required
@@ -468,12 +390,26 @@ def catalog_mycomicshop_link(request: HttpRequest) -> JsonResponse:
                 )
         return {"existing": catalog.existing_edition(edition)}
 
-    return _catalog_answer(MyComicShopLinkForm(request.POST), link)
+    return catalog_answer(MyComicShopLinkForm(request.POST), link)
 
 
-def _catalog_answer(form: Form, read: Callable[[dict[str, Any]], dict[str, Any]]) -> JsonResponse:
-    """The catalogue APIs' answer: `read(cleaned_data)` as JSON, or {"error": message} with the
-    first form error (400) or the CatalogError's message and status."""
+def series_dialog_data() -> dict[str, Any]:
+    """What the MyComicShop series dialog (includes/catalog_series_dialog.html,
+    js/custom/catalog_series_dialog.js) needs from the page that includes it: its endpoints and how
+    many variants an import batch may have."""
+    return {
+        "seriesUrl": reverse("manage_catalog_mycomicshop_series"),
+        "linkUrl": reverse("manage_catalog_mycomicshop_link"),
+        "batchUrl": reverse("manage_import_batch_new"),
+        "maxBatchRows": MAX_BATCH_ROWS,
+        "sourceName": mycomicshop.NAME,
+    }
+
+
+def catalog_answer(form: Form, read: Callable[[dict[str, Any]], dict[str, Any]]) -> JsonResponse:
+    """The catalogue APIs' answer (also comics.views.manage_imports.batch_new's): `read(cleaned_data)`
+    as JSON, or {"error": message} with the first form error (400) or the CatalogError's message and
+    status."""
     if not form.is_valid():
         message = next(iter(form.errors.values()))[0]
         return JsonResponse({"error": message}, status=400)

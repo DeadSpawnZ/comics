@@ -4,7 +4,8 @@ Migrations and the rest of the project import from `comics.models` (e.g. the val
 comics.models.validate_phone, comics.models.validate_site_path and
 comics.models.Publishing.max_value_current_year), so every public name stays available here.
 Module dependencies run one way: base <- catalog <- collections and change_requests;
-base <- profiles and achievements; achievements and change_requests <- notifications."""
+base <- profiles and achievements; achievements, change_requests, catalog and collections <-
+notifications; catalog <- imports."""
 
 # isort: off
 # Same order as the models were defined in the former single module: Django registers models in
@@ -41,6 +42,9 @@ from .collections import (
     ReadingArcEntry,
     Signature,
     TradeQuerySet,
+    TradeStatus,
+    WantedEdition,
+    WantedEditionQuerySet,
 )
 from .profiles import PHONE_ALLOWED, AreaAccess, Profile, ProfileManager, validate_phone
 from .achievements import (
@@ -56,6 +60,7 @@ from .achievements import (
 )
 from .change_requests import ChangeRequest, ChangeRequestQuerySet
 from .notifications import Announcement, Notification, NotificationManager, NotificationQuerySet, validate_site_path
+from .imports import ImportBatch, ImportBatchNumber, ImportBatchRow
 # isort: on
 
 __all__ = [
@@ -94,6 +99,9 @@ __all__ = [
     "ReadingArcEntry",
     "Signature",
     "TradeQuerySet",
+    "TradeStatus",
+    "WantedEdition",
+    "WantedEditionQuerySet",
     # profiles
     "PHONE_ALLOWED",
     "AreaAccess",
@@ -119,4 +127,8 @@ __all__ = [
     "NotificationManager",
     "NotificationQuerySet",
     "validate_site_path",
+    # imports
+    "ImportBatch",
+    "ImportBatchNumber",
+    "ImportBatchRow",
 ]
