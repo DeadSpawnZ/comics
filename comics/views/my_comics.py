@@ -8,12 +8,13 @@ from typing import Any
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.db.models import prefetch_related_objects
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 
-from comics.models import Collection, Connecting, Edition, ReadingArc, WantedEdition
-from comics.views.manage_editions import edition_catalog_context, sibling_editions_of
+from comics.models import Collection, Connecting, ConnectingPiece, Edition, ReadingArc, WantedEdition
+from comics.views.manage_editions import RECENT_COUNT, edition_catalog_context, sibling_editions_of
 from comics.views.utils import safe_next_url
 
 COVER_STRIP_SIZE = 6
@@ -93,10 +94,25 @@ def connecting_list(request: HttpRequest) -> HttpResponse:
     return render(request, "my_comics/connecting_list.html", {"cards": cards})
 
 
+def _flag_hunted_pieces(pieces: list[ConnectingPiece], user: User) -> None:
+    """Flag each piece with `wanted` (whether `user` hunts its edition), in one query for all of them.
+    Only the detail page offers the hunt toggle, so the list page does not pay for this query."""
+    wanted_ids = WantedEdition.objects.edition_ids_wanted_by(user, [piece.edition_id for piece in pieces])
+    for piece in pieces:
+        piece.wanted = piece.edition_id in wanted_ids
+
+
 @login_required
 def connecting_detail(request: HttpRequest, pk: int) -> HttpResponse:
     summary = _connecting_summary(get_object_or_404(Connecting, pk=pk), request.user)
-    summary["missing_pieces"] = [piece for piece in summary["pieces"] if not piece.owned]
+    pieces = summary["pieces"]
+    # Edition.__str__ (cell titles, missing list) reads the publishing's editorials: load them for every
+    # piece at once. Done here and not in Connecting.grid() so the list page, which never prints an
+    # edition, does not get one extra query per connecting.
+    prefetch_related_objects([piece.edition for piece in pieces], "publishing__editorials")
+    _flag_hunted_pieces(pieces, request.user)
+    summary["missing_pieces"] = [piece for piece in pieces if not piece.owned]
+    summary["hunted"] = sum(1 for piece in summary["missing_pieces"] if piece.wanted)
     return render(request, "my_comics/connecting_detail.html", summary)
 
 
@@ -112,13 +128,14 @@ def owned_counts(user: User, edition_ids: Iterable[int]) -> dict[int, int]:
 
 @login_required
 def edition_list(request: HttpRequest) -> HttpResponse:
-    """Read-only edition catalog with the same filters as Gestión, flagged with what the user owns and hunts."""
-    context = edition_catalog_context(request)
-    page_obj = context["page_obj"]
-    edition_ids = [edition.id for edition in page_obj]
+    """Read-only edition catalog with the same filters as Gestión (the latest RECENT_COUNT additions
+    first on the unfiltered first page), flagged with what the user owns and hunts."""
+    context = edition_catalog_context(request, recent_count=RECENT_COUNT)
+    editions = [*context["recent"], *context["page_obj"]]
+    edition_ids = list({edition.id for edition in editions})
     counts = owned_counts(request.user, edition_ids)
     wanted_ids = WantedEdition.objects.edition_ids_wanted_by(request.user, edition_ids)
-    for edition in page_obj:
+    for edition in editions:
         edition.owned_count = counts.get(edition.id, 0)
         edition.wanted = edition.id in wanted_ids
     return render(request, "my_comics/edition_list.html", context)

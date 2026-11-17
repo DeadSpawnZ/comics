@@ -100,9 +100,9 @@ def _add_row_details(editions: Iterable[Edition]) -> None:
         edition.compiled_count = compiled_counts.get(edition.id, 0)
 
 
-def edition_catalog_context(request: HttpRequest) -> dict[str, Any]:
-    """Filtered, paginated edition catalog (type tabs, format, search). Shared by Gestión and
-    the read-only Comics module."""
+def edition_catalog_context(request: HttpRequest, recent_count: int = RECENT_COUNT_LONG) -> dict[str, Any]:
+    """Filtered, paginated edition catalog (type tabs, format, search), with the latest `recent_count`
+    additions on the unfiltered first page. Shared by Gestión and the read-only Comics module."""
     query = request.GET.get("q", "").strip()
     format_filter = request.GET.get("format", "")
     rarity_filter = request.GET.get("rarity", "")
@@ -139,9 +139,7 @@ def edition_catalog_context(request: HttpRequest) -> dict[str, Any]:
     # The latest additions go first (only on the unfiltered first page), then the A-Z list.
     recent = []
     if page_obj.number == 1 and not (query or format_filter or rarity_filter or type_filter):
-        recent = list(
-            Edition.objects.select_related("publishing", "issue__publishing").order_by("-id")[:RECENT_COUNT_LONG]
-        )
+        recent = list(Edition.objects.select_related("publishing", "issue__publishing").order_by("-id")[:recent_count])
         _add_row_details(recent)
 
     return {

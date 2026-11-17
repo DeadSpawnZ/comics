@@ -652,6 +652,11 @@ NEW_TRANSLATIONS = {
     "In collection": "En la colección",
     "Sale without linked purchase": "Venta sin compra vinculada",
     "No purchase linked": "Sin compra vinculada",
+    # The Hunt page as a cover grid: the card's note indicator and the detail dialog.
+    "With a note": "Con nota",
+    "View edition": "Ver edición",
+    # A connecting's page: how many of the missing pieces the collector is hunting.
+    "You are looking for %(hunted)s of %(missing)s": "Buscas %(hunted)s de %(missing)s",
 }
 
 

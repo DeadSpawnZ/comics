@@ -21,8 +21,8 @@
     <h1 class="md-headline-small mb-0">{{ edition.short_name }}</h1>
     {% include 'includes/rarity_badge.html' %}
     {% if is_wanted %}
-      <span class="md-assist-chip md-assist-chip--primary">
-        <span class="material-symbols-outlined" aria-hidden="true">bookmark</span>
+      <span class="md-assist-chip">
+        <span class="material-symbols-outlined hunt-heart" aria-hidden="true">favorite</span>
         {% translate "Looking for it" %}
       </span>
     {% endif %}

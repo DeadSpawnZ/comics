@@ -4501,3 +4501,16 @@ msgstr "Venta sin compra vinculada"
 #: comics/templates/manage/includes/collection_row.html
 msgid "No purchase linked"
 msgstr "Sin compra vinculada"
+
+#: comics/templates/my_comics/hunt_list.html
+msgid "With a note"
+msgstr "Con nota"
+
+#: comics/templates/my_comics/hunt_list.html
+msgid "View edition"
+msgstr "Ver edición"
+
+#: comics/templates/my_comics/connecting_detail.html
+#, python-format
+msgid "You are looking for %(hunted)s of %(missing)s"
+msgstr "Buscas %(hunted)s de %(missing)s"
