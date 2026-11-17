@@ -19,7 +19,7 @@ Feature nueva (2026-11-16), en `feat/mycomicshop-batch-import`. Tres tareas, tod
 busco" en lista y detalle de ediciones, nota editable en la página (1 ronda); 3 comprar una edición
 buscada completa la marca (`completed_at`, conserva la nota) y crea una notificación
 `hunt_completed` con la acción "Seguir buscándolo", que la reactiva sin tocar la compra (2 rondas).
-Commiteado en `1fdc3eb` (feature) y `a22e8d6` (Ruff), sin push. Suite en MySQL: 1221 tests OK. La
+Commiteado en `1fdc3eb` (feature) y `a22e8d6` (Ruff), en `develop` con el PR #7. Suite en MySQL: 1221 tests OK. La
 migración `0123` (crea `comics_wantededition`, añade `notification.edition` y amplía la CHECK de
 notificaciones) ya está aplicada en la base real (2026-11-16, copia previa en
 `backups/comic-pre-0123-20261116_142810.sql`, ensayada antes en `comic_refactor`: aplicar, revertir
@@ -28,9 +28,22 @@ páginas en el navegador** (nadie las ha visto: fila de la cacería, chips, desp
 icono `travel_explore`, botones en lista y detalle, la acción de la notificación en la página y
 dentro del menú de la campana, el texto de la notificación en español).
 
-### Probar los lotes de importación desde MyComicShop (commiteados, sin push)
+### Probar los filtros de Gestión → Colecciones en el navegador
 
-Rama `feat/mycomicshop-batch-import` (sale de `develop` tras el PR #6; sin push). Spec en "Próximas
+Feature nueva (2026-11-16), commit `c889bdc`, en `develop` con el PR #7. Una tarea, APPROVED
+en 1 ronda. La lista de piezas de Gestión (`collection_list` en `comics/views/collection_entries.py`)
+gana: selector de participante (`participant`: id de dealer o `none`), selector de estado (`status`:
+`owned` / `sold` / `unlinked`, en `TradeQuerySet.with_status`), selector de orden (`sort`, a la
+derecha de las pestañas) y los chips "Sold" y "No purchase linked" en cada fila. La búsqueda de texto
+pasa a ser solo por título. Sin migraciones. Suite en MySQL: 1246 tests OK; Ruff limpio. Falta: **ver
+la página en el navegador** (nadie la ha visto: las dos filas de la barra, cómo se envuelve en
+pantallas estrechas, que cambiar el orden conserve los filtros, "Clear", los chips y los textos en
+español), reconstruyendo antes la imagen porque los estáticos y las traducciones van dentro de ella.
+La maqueta aprobada por el usuario está en https://claude.ai/artifact/P8dB26MYBQ2RogrBmsarro.
+
+### Probar los lotes de importación desde MyComicShop (en `develop` con el PR #7)
+
+Rama `feat/mycomicshop-batch-import` (sale de `develop` tras el PR #6; fusionada con el PR #7). Spec en "Próximas
 features → Lotes de importación desde MyComicShop". Todas las tareas están APPROVED y en staged
 (2026-11-01/02): 1 modelos + `0122` (sin aplicar); 2 servicio del lote (`batches.py`); 3 alta de
 ediciones en `comics/editions.py`; 4 creación de filas (`batch_creation.py`, "preseleccionar, pero
@@ -44,7 +57,7 @@ Commiteado en `55dfcc1` (feature) y `c316d32` (Ruff). La migración `0122` ya es
 real (2026-11-01, copia previa en `backups/comic-pre-0122-20261101_185727.sql`, ensayada antes en
 `comic_refactor`) y la imagen reconstruida. Falta: probar en el navegador (crear un lote desde el
 formulario de ediciones y desde Importaciones, resolver nombres, editar valores, crear, vincular);
-push y PR a `develop`.
+El push y el PR a `develop` ya están hechos (PR #7).
 
 MINOR que quedaron de las revisiones (para después):
 - En el formulario de ediciones, "Importar seleccionadas" navega a la página del lote y pierde lo que
@@ -364,6 +377,18 @@ evaluar las reglas por fecha en la primera visita del día de cada usuario (reco
     leído, sin test de concurrencia (se consideró desproporcionado).
   - `NotificationAdmin` no tiene `change_request` en `raw_id_fields`: el formulario del admin carga
     un select con todas las solicitudes (ya estaba así antes de la Cacería).
+- Filtros de Gestión → Colecciones (menores de revisión):
+  - `_sales_of_outer_row() -> QuerySet` (`comics/models/collections.py`) devuelve un `QuerySet` sin
+    parámetro; anotarlo como `QuerySet[Any]` (lo comparten `Collection` y `Collectable`).
+  - Falta un test del cambio deliberado de comportamiento: un `tipo` desconocido ahora lista todas
+    las piezas con la pestaña "All" activa (antes, lista vacía).
+  - `collection_row.html` compara con el literal `'selling'` (como el resto de la plantilla).
+  - El filtro `sold` exige que la venta sea del mismo coleccionista (como `with_sold_flag`) y el
+    chip "Sold" usa `sold_on` (`with_sale_date`), que no lo comprueba; solo pueden discrepar en filas
+    escritas sin pasar por el modelo. Si se quiere que coincidan por construcción, sacar el chip de
+    `is_sold`.
+  - La lista de Collectables de Gestión no tiene estos filtros (participante, estado, orden); el
+    usuario los dejó fuera de esta tanda.
 - El listado de ediciones de Mis comics calcula `recent` (las últimas 10 ediciones, en
   `edition_catalog_context`) aunque su plantilla no lo muestra: una consulta de más en la primera
   página.
