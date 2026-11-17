@@ -2,7 +2,8 @@
 
 Trabajo pendiente, decisiones abiertas y limitaciones conocidas de Comi. Sirve para que una sesión de
 trabajo nueva (humana o de IA) tenga contexto suficiente para retomar cualquier punto sin la
-conversación que lo originó. Lo que ya está hecho se describe en el `README.md`, no aquí.
+conversación que lo originó. Lo que ya está hecho se describe en `PRODUCT.md` (funcionalidades y
+negocio) y en el `README.md` (técnico), no aquí.
 
 Cómo trabajar un punto: seguir `CLAUDE.md` (flujo backend con `backend-senior` → `code-reviewer`,
 tests solo en MySQL, Ruff una vez por feature, migraciones ensayadas en `comic_refactor` antes de la
@@ -183,7 +184,7 @@ desplegado en local. Falta:
 
 ### Importar desde MyComicShop (en `develop`)
 
-Implementado (ver README) y en `develop` con el PR #5. Falta:
+Implementado (ver `PRODUCT.md`) y en `develop` con el PR #5. Falta:
 
 - **Probar en el navegador** (la migración `0116` ya está aplicada en la base real) con los TID `57389539`
   (Batman Spawn) y `65211284` (Vampirella X Witchblade): modal, teclado, importar una RI, una
@@ -207,7 +208,7 @@ Implementado (ver README) y en `develop` con el PR #5. Falta:
   ID (la consulta no sabe qué edición está abierta); el panel "Identification numbers" no muestra el
   IVID; la caché de la serie y el `throttle` usan la `LocMemCache` por proceso (sin `CACHES`
   configurado), así que con varios workers la búsqueda tras el modal puede volver a pedir la página.
-- **Coincidencia probable + "Vincular"** (rama `chore/adjustments`, ver README): falta probarlo en el
+- **Coincidencia probable + "Vincular"** (rama `chore/adjustments`, ver `PRODUCT.md`): falta probarlo en el
   navegador con el TID `19609941` (Image United). Límites: no compara qué tienda o evento es (solo
   si es exclusiva o no) ni normaliza números ("01" ≠ "1"); sin publishing emparejado (o con varios)
   no hay candidatas; las exclusivas casi nunca tendrán candidata, porque el sufijo de MyComicShop
@@ -215,7 +216,7 @@ Implementado (ver README) y en `develop` con el PR #5. Falta:
   se inventan). `catalog_import.js` pasa de 900 líneas: separar el diálogo de series en su propio
   módulo.
 - **TID en `Publishing`** (rama `chore/adjustments`, migración `0120` ya aplicada en la base real,
-  ver README). Falta: guardar la edición importada desde MyComicShop en un publishing ya existente
+  ver `PRODUCT.md`). Falta: guardar la edición importada desde MyComicShop en un publishing ya existente
   (envío del formulario) no rellena el TID; habría que llevarlo en un campo oculto del formulario de
   ediciones. El enlace del panel de identificadores abre `search?TID=` por GET (sin probar si el
   reto de Imperva lo deja pasar en un navegador real).
@@ -313,7 +314,7 @@ Los logros por fecha (Veterano) solo se comprueban al iniciar sesión o con `awa
 usuario **no** quiere programadores del sistema (Programador de tareas de Windows / cron del host):
 cualquier tarea periódica debe vivir dentro de la app o del stack de Docker. Opciones comentadas:
 evaluar las reglas por fecha en la primera visita del día de cada usuario (recomendada) o un servicio
-`scheduler` en `docker-compose`. Al hacerlo, actualizar la sección "Logros" del README.
+`scheduler` en `docker-compose`. Al hacerlo, actualizar la sección "Logros" de `PRODUCT.md`.
 
 ## Deuda técnica
 
