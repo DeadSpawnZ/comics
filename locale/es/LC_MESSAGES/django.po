@@ -783,10 +783,6 @@ msgstr "Todos"
 msgid "Search"
 msgstr "Buscar"
 
-#: comics/templates/manage/collection_list.html:43
-msgid "Search title or participant"
-msgstr "Buscar título o participante"
-
 #: comics/templates/manage/collection_list.html:46
 #: comics/templates/manage/edition_list.html:46
 #: comics/templates/manage/publishing_list.html:36
@@ -4457,3 +4453,51 @@ msgstr "Seguir buscándolo"
 #, python-format
 msgid "%(edition)s is back in your hunt."
 msgstr "%(edition)s volvió a tu cacería."
+
+#: comics/templates/manage/collection_list.html
+msgid "Sort by"
+msgstr "Ordenar por"
+
+#: comics/views/collection_entries.py
+msgid "Title A–Z"
+msgstr "Título A–Z"
+
+#: comics/views/collection_entries.py
+msgid "Trade date: newest first"
+msgstr "Fecha de operación: más recientes primero"
+
+#: comics/views/collection_entries.py
+msgid "Trade date: oldest first"
+msgstr "Fecha de operación: más antiguas primero"
+
+#: comics/views/collection_entries.py
+msgid "Amount: highest first"
+msgstr "Monto: mayor primero"
+
+#: comics/views/collection_entries.py
+msgid "Amount: lowest first"
+msgstr "Monto: menor primero"
+
+#: comics/templates/manage/collection_list.html
+msgid "All participants"
+msgstr "Todos los participantes"
+
+#: comics/templates/manage/collection_list.html
+msgid "No participant"
+msgstr "Sin participante"
+
+#: comics/templates/manage/collection_list.html
+msgid "All statuses"
+msgstr "Todos los estados"
+
+#: comics/models/collections.py
+msgid "In collection"
+msgstr "En la colección"
+
+#: comics/models/collections.py
+msgid "Sale without linked purchase"
+msgstr "Venta sin compra vinculada"
+
+#: comics/templates/manage/includes/collection_row.html
+msgid "No purchase linked"
+msgstr "Sin compra vinculada"

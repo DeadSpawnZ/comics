@@ -56,6 +56,14 @@ class Dealer(Model):
         return self.name
 
 
+class TradeStatus(TextChoices):
+    """Where a piece stands, as the Gestión lists filter it (TradeQuerySet.with_status)."""
+
+    OWNED = "owned", _("In collection")
+    SOLD = "sold", _("Sold")
+    UNLINKED = "unlinked", _("Sale without linked purchase")
+
+
 class TradeQuerySet(QuerySet):
     """Purchases and sales of a collector (Collection for editions, Collectable for articles). The
     model needs a `TradeChoices` with BUYING/SELLING, a `collector` and a `previous_trade`."""
@@ -83,15 +91,33 @@ class TradeQuerySet(QuerySet):
             purchases = purchases.exclude(pk=current.pk)
         return purchases.order_by("trade_date", "id")
 
-    def with_sold_flag(self) -> Self:
-        """Annotate `is_sold`: whether a sale of the same collector points to the piece as its previous
-        trade. Only a purchase can be sold (validate_previous_trade), so a sale is never flagged."""
-        sales = self.model.objects.filter(
+    def _sales_of_outer_row(self) -> QuerySet:
+        """Sales of the same collector that point to the outer row as their previous trade, for an
+        Exists() over each row of this queryset."""
+        return self.model.objects.filter(
             previous_trade=OuterRef("pk"),
             collector=OuterRef("collector"),
             trade_type=self.model.TradeChoices.SELLING,
         )
-        return self.annotate(is_sold=Exists(sales))
+
+    def with_sold_flag(self) -> Self:
+        """Annotate `is_sold`: whether a sale of the same collector points to the piece as its previous
+        trade. Only a purchase can be sold (validate_previous_trade), so a sale is never flagged."""
+        return self.annotate(is_sold=Exists(self._sales_of_outer_row()))
+
+    def with_status(self, status: str) -> Self:
+        """Keep the pieces in a TradeStatus: purchases still owned, purchases sold (same rule as
+        with_sold_flag, checked per row, so it works across collectors) or sales that point to no
+        purchase. Any other value, empty included, leaves the queryset as it is."""
+        choices = self.model.TradeChoices
+        sold = Exists(self._sales_of_outer_row())
+        if status == TradeStatus.OWNED:
+            return self.filter(~sold, trade_type=choices.BUYING)
+        if status == TradeStatus.SOLD:
+            return self.filter(sold, trade_type=choices.BUYING)
+        if status == TradeStatus.UNLINKED:
+            return self.filter(trade_type=choices.SELLING, previous_trade__isnull=True)
+        return self
 
     def with_sale_date(self) -> Self:
         """Annotate `sold_on`: the date of the earliest trade that points to the piece as its previous

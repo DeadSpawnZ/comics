@@ -639,6 +639,19 @@ NEW_TRANSLATIONS = {
     "You got %(edition)s: it left your hunt.": "Conseguiste %(edition)s: salió de tu cacería.",
     "Keep looking for it": "Seguir buscándolo",
     "%(edition)s is back in your hunt.": "%(edition)s volvió a tu cacería.",
+    # Filters and sorting of the Gestión collection list.
+    "Sort by": "Ordenar por",
+    "Title A–Z": "Título A–Z",
+    "Trade date: newest first": "Fecha de operación: más recientes primero",
+    "Trade date: oldest first": "Fecha de operación: más antiguas primero",
+    "Amount: highest first": "Monto: mayor primero",
+    "Amount: lowest first": "Monto: menor primero",
+    "All participants": "Todos los participantes",
+    "No participant": "Sin participante",
+    "All statuses": "Todos los estados",
+    "In collection": "En la colección",
+    "Sale without linked purchase": "Venta sin compra vinculada",
+    "No purchase linked": "Sin compra vinculada",
 }
 
 

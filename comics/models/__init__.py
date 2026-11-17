@@ -42,6 +42,7 @@ from .collections import (
     ReadingArcEntry,
     Signature,
     TradeQuerySet,
+    TradeStatus,
     WantedEdition,
     WantedEditionQuerySet,
 )
@@ -98,6 +99,7 @@ __all__ = [
     "ReadingArcEntry",
     "Signature",
     "TradeQuerySet",
+    "TradeStatus",
     "WantedEdition",
     "WantedEditionQuerySet",
     # profiles
