@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="6.5 6.5 51 51" width="128" height="128">
+  <!-- Comi achievement category medallion: generic placeholder used until Gestion uploads an image. -->
+  <clipPath id="disc"><circle cx="32" cy="32" r="25.5"/></clipPath>
+  <circle cx="32" cy="32" r="25.5" fill="#5c6470"/>
+  <g clip-path="url(#disc)">
+  <circle cx="32" cy="32" r="18" fill="none" stroke="#e8e3d8" stroke-width="1.6" opacity=".55"/>
+  <polygon points="32.00,21.30 35.04,28.61 42.94,29.25 36.92,34.40 38.76,42.10 32.00,37.97 25.24,42.10 27.08,34.40 21.06,29.25 28.96,28.61" fill="#e8e3d8"/>
+  </g>
+</svg>

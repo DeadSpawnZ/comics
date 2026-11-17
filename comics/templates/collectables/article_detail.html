@@ -1,0 +1,97 @@
+{% extends 'collectables/base_collectables.html' %}
+{% load i18n %}
+
+{% block breadcrumb %}
+<a href="{% url 'collectables_articles' %}">{% translate "Articles" %}</a>
+<span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+<span class="is-current">{{ article.name }}</span>
+{% endblock %}
+
+{% block collectables_content %}
+<div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+  <div class="d-flex align-items-center gap-2">
+    <a class="md-icon-btn" href="{{ back_url }}" aria-label="{% translate 'Back' %}" title="{% translate 'Back' %}">
+      <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+    </a>
+    <h1 class="md-headline-small mb-0">{{ article.name }}</h1>
+    {% if owned_count %}
+      <span class="md-assist-chip md-assist-chip--primary">
+        <span class="material-symbols-outlined" aria-hidden="true">check</span>
+        {% if owned_count > 1 %}{% blocktranslate with count=owned_count %}You own {{ count }}{% endblocktranslate %}{% else %}{% translate "You own it" %}{% endif %}
+      </span>
+    {% endif %}
+  </div>
+  <a class="md-btn md-btn--filled" href="{% url 'collectables_piece_new' %}?article={{ article.pk }}">
+    <span class="material-symbols-outlined" aria-hidden="true">add</span>
+    {% translate "Add to my collection" %}
+  </a>
+</div>
+
+<div class="row g-3">
+  <div class="col-12 col-xl-8 d-flex flex-column gap-3">
+    <!-- Article data -->
+    <div class="md-surface-card">
+      <h2 class="md-title-medium mb-3">{% translate "Article data" %}</h2>
+      <dl class="md-list">
+        <dt>{% translate "Category" %}</dt><dd>{{ article.get_category_display }}</dd>
+        <dt>{% translate "Limited to" context "article" %}</dt><dd>{{ article.limited_to|default:"—" }}</dd>
+        <dt>{% translate "Description" %}</dt><dd>{{ article.description|default:"—"|linebreaksbr }}</dd>
+      </dl>
+    </div>
+
+    <!-- The user's purchases and sales -->
+    <div class="md-surface-card">
+      <h2 class="md-title-medium mb-3">{% translate "Your purchases and sales" %}</h2>
+      {% if trades %}
+        <div class="table-responsive">
+          <table class="table table-sm align-middle mb-0 md-body-medium">
+            <thead>
+              <tr>
+                <th scope="col">{% translate "Type" %}</th>
+                <th scope="col">{% translate "Date" %}</th>
+                <th scope="col">{% translate "Amount" %}</th>
+                <th scope="col">{% translate "Seller / buyer" %}</th>
+                <th scope="col">{% translate "Valuation" %}</th>
+                <th scope="col">{% translate "Notes" %}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for trade in trades %}
+                <tr>
+                  <td>
+                    {{ trade.get_trade_type_display }}
+                    {% if trade.is_sold %}<span class="md-assist-chip ms-1">{% translate "Sold" %}</span>{% endif %}
+                  </td>
+                  <td>{{ trade.trade_date }}</td>
+                  <td>${{ trade.amount }} MXN</td>
+                  <td>{{ trade.participant|default:"—" }}</td>
+                  <td>{{ trade.valuation }}</td>
+                  <td>{{ trade.notes|default:"—"|linebreaksbr }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="md-body-medium mb-0">{% translate "You have no purchases or sales of this article." %}</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Image -->
+  <div class="col-12 col-xl-4">
+    <div class="md-surface-card h-100">
+      <h2 class="md-title-medium mb-3">{% translate "Image" %}</h2>
+      {% if article.image %}
+        <img src="{{ article.image.url }}" alt="{{ article.name }}" class="img-fluid rounded-4 shadow-sm">
+      {% else %}
+        <div class="img-placeholder rounded-4 ratio ratio-3x2">
+          <span class="d-flex align-items-center justify-content-center">
+            <span class="material-symbols-outlined" aria-hidden="true">image</span>
+          </span>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

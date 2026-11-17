@@ -17,6 +17,7 @@
     </div>
   </div>
   <div class="manage-row__chips">
+    {% include 'includes/rarity_badge.html' %}
     <span class="md-assist-chip">{{ edition.get_format_display }}</span>
     {% if edition.compiled_count %}
       <span class="md-assist-chip md-assist-chip--primary">

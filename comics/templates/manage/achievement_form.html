@@ -1,0 +1,185 @@
+{% extends 'manage/base_manage.html' %}
+{% load i18n %}
+{% comment %}Edit an achievement (`achievement` set) or create one with a generic rule (`achievement`
+is None). `rule` is the rule it uses (or the one picked while creating).{% endcomment %}
+
+{% block breadcrumb %}
+<a href="{{ back_url }}">{% translate "Achievements" %}</a>
+<span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+<span class="is-current">{% if achievement %}{{ achievement.name }}{% else %}{% translate "New achievement" %}{% endif %}</span>
+{% endblock %}
+
+{% block manage_content %}
+<form method="post" enctype="multipart/form-data" novalidate>
+  {% csrf_token %}
+  <input type="hidden" name="next" value="{{ back_url }}">
+
+  <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <a class="md-icon-btn" href="{{ back_url }}" aria-label="{% translate 'Back to achievements' %}" title="{% translate 'Back to achievements' %}">
+        <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+      </a>
+      <div>
+        {% if achievement %}
+          <h1 class="md-headline-small mb-0">{{ achievement.name }}</h1>
+          <span class="md-body-medium"><code>{{ achievement.code }}</code>{% if rule %} · {% blocktranslate with measure=rule.measure %}Counts: {{ measure }}{% endblocktranslate %}{% endif %}</span>
+        {% else %}
+          <h1 class="md-headline-small mb-0">{% translate "New achievement" %}</h1>
+          <span class="md-body-medium">{% translate "Its code is made from the name and cannot be changed later." %}</span>
+        {% endif %}
+      </div>
+    </div>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      {% if achievement and not deletion_blocker %}
+        <button type="button" class="md-btn md-btn--danger-outlined" data-bs-toggle="modal" data-bs-target="#deleteDialog"
+                data-delete-url="{% url 'manage_achievement_delete' achievement.pk %}" data-delete-name="{{ achievement.name }}">
+          <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+          {% translate "Delete" %}
+        </button>
+      {% endif %}
+      <button type="submit" name="save_continue" class="md-btn md-btn--tonal">{% translate "Save and continue editing" %}</button>
+      <button type="submit" class="md-btn md-btn--filled">
+        <span class="material-symbols-outlined" aria-hidden="true">save</span>
+        {% translate "Save" %}
+      </button>
+    </div>
+  </div>
+
+  {% if not rule %}
+    <div class="editor-errors mb-3" role="alert">
+      <span class="material-symbols-outlined" aria-hidden="true">warning</span>
+      <ul><li>{% translate "There is no rule in code for this achievement: it is never awarded." %}</li></ul>
+    </div>
+  {% endif %}
+
+  {% if form.errors or tiers.non_form_errors %}
+    <div class="editor-errors mb-3" role="alert">
+      <span class="material-symbols-outlined" aria-hidden="true">error</span>
+      <ul>
+        {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+        {% for error in tiers.non_form_errors %}<li>{{ error }}</li>{% endfor %}
+        {% if form.errors and not form.non_field_errors %}<li>{% translate "Check the highlighted fields." %}</li>{% endif %}
+      </ul>
+    </div>
+  {% endif %}
+
+  <div class="d-flex flex-column gap-3">
+    {% if not achievement %}
+      <div class="md-surface-card">
+        <h2 class="md-title-medium mb-3">{% translate "Rule" %}</h2>
+        <div class="row g-3">
+          <div class="col-12 col-md-6">{% include 'manage/includes/field.html' with field=form.rule %}</div>
+          <div class="col-12 md-body-medium">{% translate "Only generic rules can be used here: they take their settings (such as the time window) from the achievement." %}</div>
+        </div>
+      </div>
+    {% endif %}
+
+    <div class="md-surface-card">
+      <h2 class="md-title-medium mb-3">{% translate "Texts" %}</h2>
+      <div class="row g-3">
+        <div class="col-12 col-md-6">{% include 'manage/includes/field.html' with field=form.name_en %}</div>
+        <div class="col-12 col-md-6">{% include 'manage/includes/field.html' with field=form.name_es %}</div>
+        <div class="col-12 col-md-6">{% include 'manage/includes/field.html' with field=form.description_en %}</div>
+        <div class="col-12 col-md-6">{% include 'manage/includes/field.html' with field=form.description_es %}</div>
+        <div class="col-12 col-md-6">{% include 'manage/includes/field.html' with field=form.hint_en %}</div>
+        <div class="col-12 col-md-6">{% include 'manage/includes/field.html' with field=form.hint_es %}</div>
+        <div class="col-12 md-body-medium">{% translate "Hints are shown instead of the description while a secret achievement is not earned. Leave them empty to show nothing but ???." %}</div>
+      </div>
+    </div>
+
+    <div class="md-surface-card">
+      <h2 class="md-title-medium mb-3">{% translate "Appearance" %}</h2>
+      <div class="row g-3 align-items-center">
+        <div class="col-12 col-md-6">{% include 'manage/includes/field.html' with field=form.category %}</div>
+        <div class="col-12 col-md-6">{% include 'manage/includes/field.html' with field=form.display_order %}</div>
+        <div class="col-12 col-md-8">
+          <label class="md-section-label d-block" for="{{ form.icon_image.id_for_label }}">{% translate "Icon image (PNG, JPEG or WebP, up to 2 MB; replaces the medal artwork)" %}</label>
+          {{ form.icon_image }}
+          {% for error in form.icon_image.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="col-12 col-md-4 d-flex flex-column gap-1">
+          <div class="form-check form-switch">{{ form.is_enabled }} <label class="form-check-label" for="{{ form.is_enabled.id_for_label }}">{{ form.is_enabled.label }}</label></div>
+          <div class="form-check form-switch">{{ form.is_secret }} <label class="form-check-label" for="{{ form.is_secret.id_for_label }}">{{ form.is_secret.label }}</label></div>
+        </div>
+        {% if medals %}
+          <div class="col-12">
+            <span class="md-section-label d-block mb-2">{% translate "Medal" %}</span>
+            <div class="d-flex align-items-end gap-3 flex-wrap">
+              {% for medal in medals %}
+                <div class="d-flex flex-column align-items-center gap-1">
+                  {% include 'includes/achievement_medal.html' with size='lg' %}
+                  {% if medals|length > 1 %}<span class="md-body-medium small">{% blocktranslate with level=medal.level %}Level {{ level }}{% endblocktranslate %}</span>{% endif %}
+                </div>
+              {% endfor %}
+            </div>
+            <p class="md-body-medium mt-2 mb-0" data-icon-source="{{ icon_source }}">
+              {% if icon_source == "upload" %}{% translate "The medal uses the uploaded image." %}
+              {% elif icon_source == "bundled" %}{% translate "The medal uses the artwork included with Comi; an uploaded image replaces it." %}
+              {% else %}{% translate "The medal uses the generic artwork until it has its own; an uploaded image replaces it." %}{% endif %}
+            </p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if form.has_windows %}
+      <div class="md-surface-card" id="windows">
+        <h2 class="md-title-medium mb-3">{% translate "Time window" %}</h2>
+        <p class="md-body-medium">{% blocktranslate trimmed %}
+          The achievement only counts inside its windows (both, when both are set), in the project's time zone.
+          A yearly window may wrap the end of the year (24/12 to 06/01) and a time window may wrap midnight (23:00 to 02:00; the end time is not included).
+        {% endblocktranslate %}</p>
+        <div class="row g-3">
+          <div class="col-12 col-md-6">{% include 'manage/includes/field.html' with field=form.calendar_window %}</div>
+          <div class="col-12"></div>
+          <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=form.window_start_day %}</div>
+          <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=form.window_start_month %}</div>
+          <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=form.window_end_day %}</div>
+          <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=form.window_end_month %}</div>
+          <div class="col-12 md-body-medium">{% translate "Every year: the start and end day and month. 29 February only exists in leap years: in other years a window starting on it starts on 1 March, and one ending on it ends on 28 February." %}</div>
+          <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=form.window_start_date %}</div>
+          <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=form.window_end_date %}</div>
+          <div class="col-12 md-body-medium">{% translate "Between two dates: a one-off event; both days are included." %}</div>
+          <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=form.window_start_time %}</div>
+          <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=form.window_end_time %}</div>
+          <div class="col-12 md-body-medium">{% translate "Time of day (optional): leave both empty for the whole day." %}</div>
+        </div>
+      </div>
+    {% endif %}
+
+    <div class="md-surface-card" id="tiers">
+      <h2 class="md-title-medium mb-3">{% translate "Levels" %}</h2>
+      {{ tiers.management_form }}
+      {% if tiers.counted %}
+        <p class="md-body-medium">{% translate "Each level is reached when the count gets to its threshold. To add a level, fill in the empty row." %}</p>
+        <div class="d-flex flex-column gap-2">
+          {% for tier_form in tiers %}
+            <div class="row g-2 align-items-center">
+              {% for hidden in tier_form.hidden_fields %}{{ hidden }}{% endfor %}
+              <div class="col-6 col-md-2">{% include 'manage/includes/field.html' with field=tier_form.level %}</div>
+              <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=tier_form.threshold %}</div>
+              <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=tier_form.label_en %}</div>
+              <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=tier_form.label_es %}</div>
+              <div class="col-12 col-md-1">
+                {% if tier_form.instance.pk %}
+                  <label class="form-check m-0 d-flex align-items-center gap-2">{{ tier_form.DELETE }} <span class="form-check-label">{% translate "Delete" %}</span></label>
+                {% endif %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="md-body-medium mb-0">{% translate "This achievement is earned or not: it has a single level." %}</p>
+      {% endif %}
+    </div>
+
+    {% if achievement and deletion_blocker %}
+      <p class="md-body-medium mb-0" data-deletion-blocker>{{ deletion_blocker }}</p>
+    {% endif %}
+  </div>
+</form>
+{% if achievement and not deletion_blocker %}
+  {% translate "Delete achievement?" as delete_title %}
+  {% include 'manage/includes/delete_dialog.html' with delete_next=back_url delete_title=delete_title %}
+{% endif %}
+{% endblock %}

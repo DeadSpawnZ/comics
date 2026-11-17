@@ -1,0 +1,26 @@
+{% load i18n %}
+{% comment %}
+  Marks `edition` as hunted (Cacería) or unmarks it, then comes back to this page. Needs `edition` and
+  `wanted` (whether the user hunts it now). The form states the new state instead of toggling, so a
+  double submit is harmless. `compact` shows an icon button (list rows) instead of a labelled one.
+{% endcomment %}
+<form method="post" action="{% url 'comics_hunt_mark' edition.pk %}" class="d-inline">
+  {% csrf_token %}
+  <input type="hidden" name="wanted" value="{% if wanted %}0{% else %}1{% endif %}">
+  <input type="hidden" name="next" value="{{ request.get_full_path }}">
+  {% if wanted %}
+    {% translate "Stop looking for it" as label %}
+  {% else %}
+    {% translate "Looking for it" as label %}
+  {% endif %}
+  {% if compact %}
+    <button type="submit" class="md-icon-btn" aria-label="{{ label }}: {{ edition.short_name }}" title="{{ label }}">
+      <span class="material-symbols-outlined" aria-hidden="true">{% if wanted %}bookmark_remove{% else %}bookmark_add{% endif %}</span>
+    </button>
+  {% else %}
+    <button type="submit" class="md-btn {% if wanted %}md-btn--text{% else %}md-btn--tonal{% endif %}">
+      <span class="material-symbols-outlined" aria-hidden="true">{% if wanted %}bookmark_remove{% else %}bookmark_add{% endif %}</span>
+      {{ label }}
+    </button>
+  {% endif %}
+</form>

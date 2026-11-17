@@ -33,7 +33,8 @@ ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "*").split(",")
 # Application definition
 
 INSTALLED_APPS = [
-    "django.contrib.admin",
+    # django.contrib.admin, with the superuser-only site (comics/admin_site.py).
+    "comics.apps.ComiAdminConfig",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
@@ -42,6 +43,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "comics.apps.ComicsConfig",
     "django.contrib.humanize",
+    "simple_history",
 ]
 
 MIDDLEWARE = [
@@ -53,6 +55,10 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    # After auth: the signed-in user writes the versions of what a request changes (comics.history).
+    "comics.history.HistoryMiddleware",
+    # After auth and messages: turns newly earned achievements into messages.
+    "comics.middleware.AchievementNoticeMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
@@ -72,6 +78,8 @@ TEMPLATES = [
                 "django.template.context_processors.i18n",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                # The navbar bell's unread count (lazy: only pages that show it query it).
+                "comics.context_processors.notifications",
             ],
         },
     },
@@ -161,6 +169,17 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 LOGIN_URL = "/login/"
-LOGOUT_REDIRECT_URL = "/publishings/"
+# After logging out (from the app menu or the admin): every app page needs a session, so the
+# login page is where a signed-out user can do something.
+LOGOUT_REDIRECT_URL = LOGIN_URL
 SESSION_COOKIE_AGE = 86400
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+
+# External catalogues the Gestión edition form imports from (comics/catalog_sources). The values
+# come from the environment (docker compose loads the git-ignored .env into the web service); an
+# empty value disables that source, and the import box says so instead of failing.
+METRON_USERNAME = os.getenv("METRON_USERNAME", "")
+METRON_PASSWORD = os.getenv("METRON_PASSWORD", "")
+COMICVINE_API_KEY = os.getenv("COMICVINE_API_KEY", "")
+# Both catalogues ask clients to identify themselves.
+CATALOG_USER_AGENT = os.getenv("CATALOG_USER_AGENT", "Comi/1.0 (personal comic collection catalogue)")

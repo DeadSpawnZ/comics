@@ -1,5 +1,13 @@
-<div class="form-floating md-field">
+{% comment %}
+  A floating-label field. A field with a `required_hint` (forms.RequiredHintsMixin, the Gestión
+  dialogs) gets an asterisk on its label and its hint, shown while it is empty (the "needs a value"
+  state, kept in sync by js/custom/publishing_dialogs.js).
+{% endcomment %}
+{% with hint=field.field.required_hint %}
+<div class="form-floating md-field{% if hint and not field.value %} needs-value{% endif %}"{% if hint %} data-required-field{% endif %}>
   {{ field }}
-  <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+  <label for="{{ field.id_for_label }}">{{ field.label }}{% if hint %}<span class="required-mark" aria-hidden="true"> *</span>{% endif %}</label>
+  {% if hint %}<div class="required-hint" id="{{ field.auto_id }}-hint" data-required-hint{% if field.value %} hidden{% endif %}><span class="material-symbols-outlined" aria-hidden="true">info</span>{{ hint }}</div>{% endif %}
   {% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
 </div>
+{% endwith %}

@@ -1,0 +1,114 @@
+{% extends 'manage/base_manage.html' %}
+{% load i18n %}
+
+{% block breadcrumb %}
+<a href="{{ back_url }}">{% translate "Announcements" %}</a>
+<span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+<span class="is-current">{% if announcement %}{{ announcement.title }}{% else %}{% translate "New announcement" %}{% endif %}</span>
+{% endblock %}
+
+{% block manage_content %}
+<form method="post" novalidate>
+  {% csrf_token %}
+  <input type="hidden" name="next" value="{{ back_url }}">
+
+  <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <a class="md-icon-btn" href="{{ back_url }}" aria-label="{% translate 'Back to announcements' %}" title="{% translate 'Back to announcements' %}">
+        <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+      </a>
+      <div>
+        {% if announcement %}
+          <h1 class="md-headline-small mb-0">{{ announcement.title }}</h1>
+          <span class="md-body-medium">
+            {{ announcement.created_at|date:"DATETIME_FORMAT" }}{% if announcement.created_by %} · {{ announcement.created_by.username }}{% endif %}
+          </span>
+        {% else %}
+          <h1 class="md-headline-small mb-0">{% translate "New announcement" %}</h1>
+          <span class="md-body-medium">{% translate "It is sent when you save it: one notification for each active user in its audience." %}</span>
+        {% endif %}
+      </div>
+    </div>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      {% if announcement %}
+        <button type="button" class="md-btn md-btn--danger-outlined" data-bs-toggle="modal" data-bs-target="#deleteDialog"
+                data-delete-url="{% url 'manage_announcement_delete' announcement.pk %}" data-delete-name="{{ announcement.title }}">
+          <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+          {% translate "Delete" %}
+        </button>
+        <button type="submit" name="save_continue" class="md-btn md-btn--tonal">{% translate "Save and continue editing" %}</button>
+        <button type="submit" class="md-btn md-btn--filled">
+          <span class="material-symbols-outlined" aria-hidden="true">save</span>
+          {% translate "Save" %}
+        </button>
+      {% else %}
+        <button type="submit" class="md-btn md-btn--filled">
+          <span class="material-symbols-outlined" aria-hidden="true">send</span>
+          {% translate "Send" %}
+        </button>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if form.errors %}
+    <div class="editor-errors mb-3" role="alert">
+      <span class="material-symbols-outlined" aria-hidden="true">error</span>
+      <ul>
+        {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+        {% if not form.non_field_errors %}<li>{% translate "Check the highlighted fields." %}</li>{% endif %}
+      </ul>
+    </div>
+  {% endif %}
+
+  <div class="d-flex flex-column gap-3">
+    <div class="md-surface-card">
+      <h2 class="md-title-medium mb-3">{% translate "Texts" %}</h2>
+      <div class="row g-3">
+        <div class="col-12 col-md-6">{% include 'manage/includes/field.html' with field=form.title_en %}</div>
+        <div class="col-12 col-md-6">{% include 'manage/includes/field.html' with field=form.title_es %}</div>
+        <div class="col-12 col-md-6">{% include 'manage/includes/field.html' with field=form.body_en %}</div>
+        <div class="col-12 col-md-6">{% include 'manage/includes/field.html' with field=form.body_es %}</div>
+        <div class="col-12">
+          {% include 'manage/includes/field.html' with field=form.link %}
+          <div class="form-text">{{ form.link.help_text }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="md-surface-card">
+      <h2 class="md-title-medium mb-3">{% translate "Audience" %}</h2>
+      {% if announcement %}
+        <p class="md-body-medium mb-1">{{ audience_label }}</p>
+        <p class="md-body-medium mb-0">
+          {% blocktranslate count counter=announcement.recipient_count with read=announcement.read_count %}Read by {{ read }} of {{ counter }} recipient{% plural %}Read by {{ read }} of {{ counter }} recipients{% endblocktranslate %}
+        </p>
+      {% else %}
+        <fieldset class="mb-3">
+          <legend class="md-section-label">{{ form.audience.label }}</legend>
+          {% for radio in form.audience %}
+            <div class="form-check">
+              {{ radio.tag }}
+              <label class="form-check-label" for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
+            </div>
+          {% endfor %}
+        </fieldset>
+        <fieldset>
+          <legend class="md-section-label">{{ form.roles.label }}</legend>
+          {% for checkbox in form.roles %}
+            <div class="form-check">
+              {{ checkbox.tag }}
+              <label class="form-check-label" for="{{ checkbox.id_for_label }}">{{ checkbox.choice_label }}</label>
+            </div>
+          {% endfor %}
+          {% for error in form.roles.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+          <div class="form-text">{% translate "Only used when sending to some roles. Users in several roles get it once." %}</div>
+        </fieldset>
+      {% endif %}
+    </div>
+  </div>
+</form>
+{% if announcement %}
+  {% translate "Delete announcement?" as delete_title %}
+  {% include 'manage/includes/delete_dialog.html' with delete_next=back_url delete_title=delete_title %}
+{% endif %}
+{% endblock %}

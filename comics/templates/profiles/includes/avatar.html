@@ -1,0 +1,9 @@
+{% comment %}A user's picture, or a placeholder. Expects `profile` (may be missing) and an optional
+`avatar_class` (md-avatar--sm / md-avatar--lg).{% endcomment %}
+{% if profile.avatar %}
+  <img class="md-avatar {{ avatar_class }}" src="{{ profile.avatar.url }}" alt="">
+{% else %}
+  <span class="md-avatar md-avatar--placeholder {{ avatar_class }}" aria-hidden="true">
+    <span class="material-symbols-outlined">person</span>
+  </span>
+{% endif %}

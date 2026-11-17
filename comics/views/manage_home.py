@@ -7,9 +7,9 @@ import datetime
 from collections.abc import Iterable
 
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION, LogEntry
-from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.models import User
 from django.core.paginator import Paginator
+from django.db.models import Exists, OuterRef
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.urls import NoReverseMatch, reverse
@@ -17,7 +17,19 @@ from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
-from comics.models import Collection, Connecting, Edition, Publishing, ReadingArc
+from comics.decorators import management_required
+from comics.models import (
+    Achievement,
+    AchievementCategory,
+    Announcement,
+    Article,
+    Collectable,
+    Collection,
+    Connecting,
+    Edition,
+    Publishing,
+    ReadingArc,
+)
 
 HISTORY_PAGE_SIZE = 40
 
@@ -28,6 +40,11 @@ MANAGE_PAGES = {
     "publishing": (Publishing, "manage_publishing_edit"),
     "readingarc": (ReadingArc, "manage_arc_edit"),
     "connecting": (Connecting, "manage_connecting_edit"),
+    "achievement": (Achievement, "manage_achievement_edit"),
+    "achievementcategory": (AchievementCategory, "manage_achievement_category_edit"),
+    "announcement": (Announcement, "manage_announcement_edit"),
+    "article": (Article, "manage_article_edit"),
+    "collectable": (Collectable, "manage_collectable_edit"),
 }
 
 TYPE_FILTERS = [
@@ -37,6 +54,11 @@ TYPE_FILTERS = [
     ("publishing", "Publishings"),
     ("readingarc", gettext_lazy("Reading arcs")),
     ("connecting", "Connectings"),
+    ("achievement", gettext_lazy("Achievements")),
+    ("achievementcategory", gettext_lazy("Achievement categories")),
+    ("announcement", gettext_lazy("Announcements")),
+    ("article", gettext_lazy("Articles")),
+    ("collectable", "Collectables"),
     ("other", gettext_lazy("Other")),
 ]
 
@@ -46,6 +68,11 @@ TYPE_LABELS = {
     "publishing": "Publishing",
     "readingarc": gettext_lazy("Reading arc"),
     "connecting": "Connecting",
+    "achievement": gettext_lazy("Achievement"),
+    "achievementcategory": gettext_lazy("Achievement category"),
+    "announcement": gettext_lazy("Announcement"),
+    "article": gettext_lazy("Article"),
+    "collectable": "Collectable",
     "issue": "Issue",
     "title": gettext_lazy("Title"),
     "dealer": gettext_lazy("Participant"),
@@ -97,7 +124,7 @@ def _day_label(day: datetime.date, today: datetime.date) -> str | None:
     return None  # the template formats the date
 
 
-@staff_member_required
+@management_required
 def manage_home(request: HttpRequest) -> HttpResponse:
     type_filter = request.GET.get("tipo", "")
     user_filter = request.GET.get("usuario", "")
@@ -129,6 +156,8 @@ def manage_home(request: HttpRequest) -> HttpResponse:
         (_("Editions"), Edition.objects.count(), "manage_editions", "menu_book"),
         (_("Reading arcs"), ReadingArc.objects.count(), "manage_arcs", "format_list_numbered"),
         ("Connectings", Connecting.objects.count(), "manage_connectings", "grid_view"),
+        (_("Articles"), Article.objects.count(), "manage_articles", "category"),
+        ("Collectables", Collectable.objects.count(), "manage_collectables", "inventory"),
     ]
     return render(
         request,
@@ -140,7 +169,9 @@ def manage_home(request: HttpRequest) -> HttpResponse:
             "type_filters": TYPE_FILTERS,
             "type_filter": type_filter,
             "user_filter": user_filter,
-            "users": User.objects.filter(is_staff=True).order_by("username"),
+            # Everyone with history entries (not a role: Mis comics actions are logged too, and
+            # entries stay filterable after their author loses access).
+            "users": User.objects.filter(Exists(LogEntry.objects.filter(user=OuterRef("pk")))).order_by("username"),
             "stats": stats,
         },
     )

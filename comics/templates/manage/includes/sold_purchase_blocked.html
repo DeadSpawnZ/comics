@@ -1,0 +1,4 @@
+{% load i18n %}{% comment %}
+  The data-delete-blocked attribute of a delete button (see delete_dialog.html) when `piece` was sold. Included
+  inside the button tag; needs `piece` annotated with sold_on (TradeQuerySet.with_sale_date).
+{% endcomment %}{% if piece.sold_on %} data-delete-blocked="{% blocktranslate with date=piece.sold_on %}It was sold on {{ date }}: delete the sale first.{% endblocktranslate %}"{% endif %}

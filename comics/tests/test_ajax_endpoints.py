@@ -1,19 +1,21 @@
-"""Admin AJAX endpoints (point 3): previous trades without participant, comics by publishing."""
+"""Admin AJAX endpoints (point 3): previous trades without participant, comics by publishing.
+They follow the Django admin's access rule (superusers only)."""
 
 import datetime
 
 from django.urls import reverse
 
 from comics.models import Collection
+from comics.roles import ADMINISTRATORS
 
 from .base import ComiTestCase
-from .factories import make_collection, make_dealer, make_edition, make_publishing, make_user
+from .factories import make_collection, make_dealer, make_edition, make_publishing, make_superuser, make_user
 
 
 class PreviousTradesTests(ComiTestCase):
     def setUp(self) -> None:
-        self.staff = make_user(staff=True)
-        self.client.force_login(self.staff)
+        self.superuser = make_superuser()
+        self.client.force_login(self.superuser)
         self.edition = make_edition()
         self.url = reverse("get_previous_trades", args=[self.edition.pk])
 
@@ -23,9 +25,9 @@ class PreviousTradesTests(ComiTestCase):
         return [item["text"] for item in response.json()["results"]]
 
     def test_purchase_without_participant_is_listed_as_unknown(self) -> None:
-        make_collection(collector=self.staff, edition=self.edition, trade_date=datetime.date(2020, 1, 1))
+        make_collection(collector=self.superuser, edition=self.edition, trade_date=datetime.date(2020, 1, 1))
         make_collection(
-            collector=self.staff,
+            collector=self.superuser,
             edition=self.edition,
             trade_date=datetime.date(2020, 2, 1),
             participant=make_dealer(name="Comic Shop"),
@@ -36,30 +38,32 @@ class PreviousTradesTests(ComiTestCase):
         self.assertTrue(texts[1].endswith("|| 2020-02-01 || Comic Shop"), texts[1])
 
     def test_sold_purchases_and_later_purchases_are_excluded(self) -> None:
-        sold = make_collection(collector=self.staff, edition=self.edition, trade_date=datetime.date(2020, 1, 1))
+        sold = make_collection(collector=self.superuser, edition=self.edition, trade_date=datetime.date(2020, 1, 1))
         make_collection(
-            collector=self.staff,
+            collector=self.superuser,
             edition=self.edition,
             trade_type=Collection.TradeChoices.SELLING,
             trade_date=datetime.date(2020, 3, 1),
             previous_trade=sold,
         )
-        make_collection(collector=self.staff, edition=self.edition, trade_date=datetime.date(2021, 1, 1))
+        make_collection(collector=self.superuser, edition=self.edition, trade_date=datetime.date(2021, 1, 1))
         self.assertEqual(self.texts(before="2020-12-31"), [])
         self.assertEqual(len(self.texts()), 1)
 
     def test_impossible_before_date_is_ignored(self) -> None:
-        make_collection(collector=self.staff, edition=self.edition)
+        make_collection(collector=self.superuser, edition=self.edition)
         self.assertEqual(len(self.texts(before="2024-02-30")), 1)
 
-    def test_requires_staff(self) -> None:
-        self.client.force_login(make_user())
-        self.assertEqual(self.client.get(self.url).status_code, 302)
+    def test_requires_superuser(self) -> None:
+        for user in [make_user(), make_user(role=ADMINISTRATORS)]:
+            with self.subTest(groups=list(user.groups.values_list("name", flat=True))):
+                self.client.force_login(user)
+                self.assertEqual(self.client.get(self.url).status_code, 302)
 
 
 class ComicsByPublishingTests(ComiTestCase):
     def setUp(self) -> None:
-        self.client.force_login(make_user(staff=True))
+        self.client.force_login(make_superuser())
 
     def test_lists_the_editions_of_the_publishing(self) -> None:
         publishing = make_publishing(publishing_title="Spawn")

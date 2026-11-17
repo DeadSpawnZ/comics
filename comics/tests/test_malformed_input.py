@@ -6,6 +6,7 @@ from django.urls import reverse
 
 from comics.forms import CollectionEntryForm
 from comics.models import Collection, Connecting, Issue, ReadingArc
+from comics.roles import ADMINISTRATORS
 
 from .base import ComiTestCase
 from .factories import make_collection, make_edition, make_user
@@ -15,12 +16,12 @@ MALFORMED_DATES = ["2024-02-30", "not-a-date", "2024-13-01"]
 
 class CollectionEntryFormMalformedTests(ComiTestCase):
     def setUp(self) -> None:
-        self.staff = make_user(staff=True)
+        self.manager = make_user(role=ADMINISTRATORS)
         self.edition = make_edition()
 
     def valid_data(self, **overrides: str) -> dict[str, str]:
         data = {
-            "collector": str(self.staff.pk),
+            "collector": str(self.manager.pk),
             "publishing": str(self.edition.publishing_id),
             "edition": str(self.edition.pk),
             "trade_type": Collection.TradeChoices.BUYING,
@@ -56,7 +57,7 @@ class CollectionEntryFormMalformedTests(ComiTestCase):
         self.assertEqual(form.fields["edition"].widget.choices[0][0], "")
 
     def test_manage_view_redisplays_the_form_on_malformed_post(self) -> None:
-        self.client.force_login(self.staff)
+        self.client.force_login(self.manager)
         response = self.client.post(
             reverse("manage_collection_new"),
             self.valid_data(publishing="abc", edition="xyz", trade_date="2024-02-30"),
@@ -65,8 +66,8 @@ class CollectionEntryFormMalformedTests(ComiTestCase):
         self.assertFalse(Collection.objects.exists())
 
     def test_purchases_api_ignores_an_impossible_date(self) -> None:
-        make_collection(collector=self.staff, edition=self.edition)
-        self.client.force_login(self.staff)
+        make_collection(collector=self.manager, edition=self.edition)
+        self.client.force_login(self.manager)
         response = self.client.get(
             reverse("comics_api_purchases"), {"edition": self.edition.pk, "before": "2024-02-30"}
         )
@@ -76,7 +77,7 @@ class CollectionEntryFormMalformedTests(ComiTestCase):
 
 class ConnectingEditorMalformedTests(ComiTestCase):
     def setUp(self) -> None:
-        self.client.force_login(make_user(staff=True))
+        self.client.force_login(make_user(role=ADMINISTRATORS))
         self.url = reverse("manage_connecting_new")
 
     def post_json(self, body: str) -> dict:
@@ -107,7 +108,7 @@ class ConnectingEditorMalformedTests(ComiTestCase):
 
 class ArcFormMalformedTests(ComiTestCase):
     def setUp(self) -> None:
-        self.client.force_login(make_user(staff=True))
+        self.client.force_login(make_user(role=ADMINISTRATORS))
         self.issue = make_edition().issue
 
     def test_unhashable_issue_ids_redisplay_the_form(self) -> None:

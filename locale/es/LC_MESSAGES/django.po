@@ -203,14 +203,6 @@ msgstr ""
 msgid "Choose a publishing first"
 msgstr "Elige primero un publishing"
 
-#: comics/forms.py:476
-msgid ""
-"Choose a purchase of this edition by the same collector, made on or before "
-"the sale date and not sold yet."
-msgstr ""
-"Elige una compra de esta edición del mismo coleccionista, hecha en o antes "
-"de la fecha de venta y que no se haya vendido."
-
 #: comics/forms.py:498 comics/views/manage_home.py:46
 msgid "Artist"
 msgstr "Artista"
@@ -790,10 +782,6 @@ msgstr "Todos"
 #: comics/templates/my_comics/edition_list.html:41
 msgid "Search"
 msgstr "Buscar"
-
-#: comics/templates/manage/collection_list.html:43
-msgid "Search title or participant"
-msgstr "Buscar título o participante"
 
 #: comics/templates/manage/collection_list.html:46
 #: comics/templates/manage/edition_list.html:46
@@ -1551,14 +1539,2965 @@ msgstr ""
 msgid "Publishing deleted: %(publishing)s"
 msgstr "Publishing eliminado: %(publishing)s"
 
-#: comics/templates/login.html:9
+#: comics/forms.py
 msgid "Your username and password didn't match."
 msgstr "El usuario y la contraseña no coinciden."
 
-#: comics/templates/login.html:11
+#: comics/templates/accounts/login.html:6
 msgid "Log in to continue."
 msgstr "Inicia sesión para continuar."
 
 #: comics/views/collection.py:176
 msgid "Unknown"
 msgstr "Desconocido"
+
+#: comics/forms.py
+msgid "Email"
+msgstr "Correo electrónico"
+
+#: comics/forms.py
+msgid "Confirm password"
+msgstr "Confirmar contraseña"
+
+#: comics/forms.py
+msgid "A user with that email already exists."
+msgstr "Ya existe un usuario con ese correo electrónico."
+
+#: comics/templates/accounts/login.html:23
+msgid "Don't have an account?"
+msgstr "¿No tienes cuenta?"
+
+#: comics/templates/accounts/login.html:24 comics/templates/accounts/register.html:5
+msgid "Create account"
+msgstr "Crear cuenta"
+
+#: comics/templates/accounts/register.html:6
+msgid "Register to keep track of your collection."
+msgstr "Regístrate para llevar el control de tu colección."
+
+#: comics/templates/accounts/register.html:27
+msgid "Already have an account?"
+msgstr "¿Ya tienes cuenta?"
+
+#: comics/templates/error_page.html:12
+msgid "Go to my comics"
+msgstr "Ir a mis comics"
+
+#: comics/templates/403.html:4
+msgid "Access denied"
+msgstr "Acceso denegado"
+
+#: comics/templates/403.html:5
+msgid "You don't have permission to open this page."
+msgstr "No tienes permiso para abrir esta página."
+
+#: comics/templates/404.html:4
+msgid "Page not found"
+msgstr "Página no encontrada"
+
+#: comics/templates/404.html:5
+msgid "This page doesn't exist or was moved."
+msgstr "Esta página no existe o se movió."
+
+#: comics/models.py
+msgid "Enter a valid phone number."
+msgstr "Introduce un número de teléfono válido."
+
+#: comics/forms.py
+msgid "Phone"
+msgstr "Teléfono"
+
+#: comics/forms.py
+msgid "First name"
+msgstr "Nombre"
+
+#: comics/forms.py
+msgid "Last name"
+msgstr "Apellidos"
+
+#: comics/forms.py
+#, python-format
+msgid "The picture is too large (maximum %(size)s MB)."
+msgstr "La imagen es demasiado grande (máximo %(size)s MB)."
+
+#: comics/forms.py
+msgid "Upload a JPEG, PNG, WebP or GIF picture."
+msgstr "Sube una imagen JPEG, PNG, WebP o GIF."
+
+#: comics/forms.py
+msgid "The picture has too many pixels."
+msgstr "La imagen tiene demasiados píxeles."
+
+#: comics/forms.py comics/templates/profiles/own.html
+msgid "Profile picture"
+msgstr "Foto de perfil"
+
+#: comics/forms.py comics/templates/profiles/own.html
+msgid "Public profile"
+msgstr "Perfil público"
+
+#: comics/forms.py
+msgid "Current password"
+msgstr "Contraseña actual"
+
+#: comics/forms.py
+msgid "New password"
+msgstr "Nueva contraseña"
+
+#: comics/forms.py
+msgid "Confirm new password"
+msgstr "Confirmar nueva contraseña"
+
+#: comics/views/profiles.py
+msgid "Personal information saved."
+msgstr "Información personal guardada."
+
+#: comics/views/profiles.py
+msgid "Profile picture updated."
+msgstr "Foto de perfil actualizada."
+
+#: comics/views/profiles.py
+msgid "Privacy settings saved."
+msgstr "Privacidad guardada."
+
+#: comics/views/profiles.py
+msgid "Password changed."
+msgstr "Contraseña cambiada."
+
+#: comics/views/profiles.py
+msgid "Profile picture removed."
+msgstr "Foto de perfil eliminada."
+
+#: comics/templates/base.html
+msgid "Profile"
+msgstr "Perfil"
+
+#: comics/templates/profiles/own.html comics/templates/profiles/public.html
+#, python-format
+msgid "Member since %(date)s"
+msgstr "Miembro desde %(date)s"
+
+#: comics/templates/profiles/own.html
+msgid "Private profile"
+msgstr "Perfil privado"
+
+#: comics/templates/profiles/own.html
+msgid "View my profile"
+msgstr "Ver mi perfil"
+
+#: comics/templates/profiles/own.html
+msgid "Personal information"
+msgstr "Información personal"
+
+#: comics/templates/profiles/own.html
+msgid "Your email and phone are only visible to you."
+msgstr "Tu correo y tu teléfono solo los ves tú."
+
+#: comics/templates/profiles/own.html
+msgid "Privacy"
+msgstr "Privacidad"
+
+#: comics/templates/profiles/own.html
+msgid "A public profile can be seen by other signed-in users; a private one only shows your username."
+msgstr "Un perfil público lo pueden ver los demás usuarios con sesión iniciada; uno privado solo muestra tu nombre de usuario."
+
+#: comics/templates/profiles/own.html
+msgid "Upload a new picture (JPEG, PNG, WebP or GIF, up to 5 MB)"
+msgstr "Sube una imagen nueva (JPEG, PNG, WebP o GIF, hasta 5 MB)"
+
+#: comics/templates/profiles/own.html
+msgid "Upload"
+msgstr "Subir"
+
+#: comics/templates/profiles/own.html
+msgid "Remove picture"
+msgstr "Quitar foto"
+
+#: comics/templates/profiles/own.html
+msgid "Change profile picture"
+msgstr "Cambiar foto de perfil"
+
+#: comics/templates/profiles/own.html
+msgid "Change password"
+msgstr "Cambiar contraseña"
+
+#: comics/templates/profiles/includes/achievements.html
+msgid "Achievements"
+msgstr "Logros"
+
+#: comics/templates/profiles/includes/achievements.html
+msgid "No achievements yet."
+msgstr "Todavía no hay logros."
+
+#: comics/templates/profiles/public.html
+msgid "Edit profile"
+msgstr "Editar perfil"
+
+#: comics/templates/profiles/public.html
+msgid "Your profile is private: other users only see your username."
+msgstr "Tu perfil es privado: los demás usuarios solo ven tu nombre de usuario."
+
+#: comics/templates/profiles/private.html
+msgid "This profile is private."
+msgstr "Este perfil es privado."
+
+#: comics/models.py
+msgid "Community"
+msgstr "Comunidad"
+
+#: comics/models.py
+msgid "Seniority"
+msgstr "Antigüedad"
+
+#: comics/achievements/rules.py
+msgid "has registered a piece"
+msgstr "ha registrado una pieza"
+
+#: comics/achievements/rules.py
+msgid "comics in the collection"
+msgstr "cómics en la colección"
+
+#: comics/achievements/rules.py
+msgid "full years as a member"
+msgstr "años completos como miembro"
+
+#: comics/achievements/rules.py
+msgid "has made the profile private"
+msgstr "ha hecho privado su perfil"
+
+#: comics/achievements/engine.py
+#, python-format
+msgid "Achievement unlocked: %(name)s (level %(level)s)"
+msgstr "Logro desbloqueado: %(name)s (nivel %(level)s)"
+
+#: comics/achievements/engine.py
+#, python-format
+msgid "Achievement unlocked: %(name)s"
+msgstr "Logro desbloqueado: %(name)s"
+
+#: comics/forms.py
+msgid "Upload a JPEG, PNG or WebP picture."
+msgstr "Sube una imagen JPEG, PNG o WebP."
+
+#: comics/forms.py
+msgid "Icon image"
+msgstr "Imagen del ícono"
+
+#: comics/forms.py
+msgid "Name (English)"
+msgstr "Nombre (inglés)"
+
+#: comics/forms.py
+msgid "Name (Spanish)"
+msgstr "Nombre (español)"
+
+#: comics/forms.py
+msgid "Description (English)"
+msgstr "Descripción (inglés)"
+
+#: comics/forms.py
+msgid "Description (Spanish)"
+msgstr "Descripción (español)"
+
+#: comics/forms.py
+msgid "Hint (English)"
+msgstr "Pista (inglés)"
+
+#: comics/forms.py
+msgid "Hint (Spanish)"
+msgstr "Pista (español)"
+
+#: comics/forms.py
+msgid "Category"
+msgstr "Categoría"
+
+#: comics/forms.py
+msgid "Order"
+msgstr "Orden"
+
+#: comics/forms.py comics/templates/manage/achievement_list.html
+msgid "Secret"
+msgstr "Secreto"
+
+#: comics/forms.py
+msgid "Enabled"
+msgstr "Activo"
+
+#: comics/forms.py
+msgid "Level"
+msgstr "Nivel"
+
+#: comics/forms.py
+msgid "Threshold"
+msgstr "Umbral"
+
+#: comics/forms.py
+msgid "Label (English)"
+msgstr "Etiqueta (inglés)"
+
+#: comics/forms.py
+msgid "Label (Spanish)"
+msgstr "Etiqueta (español)"
+
+#: comics/forms.py
+msgid "This achievement is earned or not: it has no levels."
+msgstr "Este logro se gana o no: no tiene niveles."
+
+#: comics/forms.py
+msgid "Add at least one level."
+msgstr "Agrega al menos un nivel."
+
+#: comics/forms.py
+msgid "Levels must be numbered 1, 2, 3… with no gaps or repeats."
+msgstr "Los niveles deben ir numerados 1, 2, 3… sin huecos ni repeticiones."
+
+#: comics/forms.py
+msgid "Each level needs a higher threshold than the previous one."
+msgstr "Cada nivel necesita un umbral mayor que el anterior."
+
+#: comics/views/manage_achievements.py
+#, python-format
+msgid "Achievement saved: %(name)s"
+msgstr "Logro guardado: %(name)s"
+
+#: comics/views/manage_home.py
+msgid "Achievement"
+msgstr "Logro"
+
+#: comics/templates/profiles/includes/achievements.html
+#, python-format
+msgid "Level %(level)s"
+msgstr "Nivel %(level)s"
+
+#: comics/templates/profiles/includes/achievements.html
+msgid "Secret achievement."
+msgstr "Logro secreto."
+
+#: comics/templates/profiles/includes/achievements.html
+#, python-format
+msgid "Earned on %(date)s"
+msgstr "Obtenido el %(date)s"
+
+#: comics/templates/manage/achievement_list.html
+msgid "Names, texts, icons and levels are edited here; how each one is earned is defined in code."
+msgstr "Aquí se editan nombres, textos, íconos y niveles; cómo se gana cada uno está definido en el código."
+
+#: comics/templates/manage/achievement_list.html
+msgid "Rules in code without an achievement (they award nothing):"
+msgstr "Reglas en el código sin logro (no otorgan nada):"
+
+#: comics/templates/manage/achievement_list.html
+msgid "Disabled"
+msgstr "Desactivado"
+
+#: comics/templates/manage/achievement_list.html
+msgid "No rule in code"
+msgstr "Sin regla en el código"
+
+#: comics/templates/manage/achievement_list.html
+msgid "No levels"
+msgstr "Sin niveles"
+
+#: comics/templates/manage/achievement_list.html
+msgid "There are no achievements yet."
+msgstr "Todavía no hay logros."
+
+#: comics/templates/manage/achievement_form.html
+msgid "Back to achievements"
+msgstr "Volver a logros"
+
+#: comics/templates/manage/achievement_form.html
+#, python-format
+msgid "Counts: %(measure)s"
+msgstr "Cuenta: %(measure)s"
+
+#: comics/templates/manage/achievement_form.html
+msgid "There is no rule in code for this achievement: it is never awarded."
+msgstr "No hay una regla en el código para este logro: nunca se otorga."
+
+#: comics/templates/manage/achievement_form.html
+msgid "Texts"
+msgstr "Textos"
+
+#: comics/templates/manage/achievement_form.html
+msgid "Hints are shown instead of the description while a secret achievement is not earned. Leave them empty to show nothing but ???."
+msgstr "Las pistas se muestran en lugar de la descripción mientras un logro secreto no se ha ganado. Déjalas vacías para mostrar solo ???."
+
+#: comics/templates/manage/achievement_form.html
+msgid "Appearance"
+msgstr "Apariencia"
+
+#: comics/templates/manage/achievement_form.html
+msgid "Levels"
+msgstr "Niveles"
+
+#: comics/templates/manage/achievement_form.html
+msgid "Each level is reached when the count gets to its threshold. To add a level, fill in the empty row."
+msgstr "Cada nivel se alcanza cuando la cuenta llega a su umbral. Para agregar un nivel, llena la fila vacía."
+
+#: comics/templates/manage/achievement_form.html
+msgid "This achievement is earned or not: it has a single level."
+msgstr "Este logro se gana o no: tiene un solo nivel."
+
+#: comics/achievements/engine.py
+#, python-format
+msgid "You unlocked %(count)d achievement: see it on your profile."
+msgid_plural "You unlocked %(count)d achievements: see them on your profile."
+msgstr[0] "Desbloqueaste %(count)d logro: míralo en tu perfil."
+msgstr[1] "Desbloqueaste %(count)d logros: míralos en tu perfil."
+
+#: comics/templates/manage/achievement_list.html
+#, python-format
+msgid "%(counter)s user"
+msgid_plural "%(counter)s users"
+msgstr[0] "%(counter)s usuario"
+msgstr[1] "%(counter)s usuarios"
+
+#: comics/models.py
+msgid "Common"
+msgstr "Común"
+
+#: comics/models.py
+msgid "Rare"
+msgstr "Rara"
+
+#: comics/models.py
+msgid "Very rare"
+msgstr "Muy rara"
+
+#: comics/models.py
+msgid "Legendary"
+msgstr "Legendaria"
+
+#: comics/models.py
+msgid "Treasures"
+msgstr "Tesoros"
+
+#: comics/models.py
+msgid "Sagas"
+msgstr "Sagas"
+
+#: comics/forms.py comics/templates/manage/edition_list.html
+msgid "Rarity"
+msgstr "Rareza"
+
+#: comics/achievements/rules.py
+msgid "very rare or legendary editions owned"
+msgstr "ediciones muy raras o legendarias en la colección"
+
+#: comics/achievements/rules.py
+msgid "signed pieces owned"
+msgstr "piezas firmadas en la colección"
+
+#: comics/achievements/rules.py
+msgid "most editions owned of one issue"
+msgstr "máximo de ediciones de un mismo número"
+
+#: comics/achievements/rules.py
+msgid "most purchases on a single day"
+msgstr "máximo de compras en un solo día"
+
+#: comics/achievements/rules.py
+msgid "has bought again an issue they sold"
+msgstr "ha vuelto a comprar un número que vendió"
+
+#: comics/achievements/rules.py
+msgid "connectings completed"
+msgstr "connectings completos"
+
+#: comics/achievements/rules.py
+msgid "reading arcs completed"
+msgstr "arcos de lectura completos"
+
+#: comics/achievements/rules.py
+msgid "has signed in on October 31"
+msgstr "ha iniciado sesión un 31 de octubre"
+
+#: comics/templates/manage/edition_list.html
+msgctxt "rarities"
+msgid "All"
+msgstr "Todas"
+
+#: comics/templates/profiles/includes/achievement_button.html
+#, python-format
+msgid "Progress: %(progress)s / %(goal)s"
+msgstr "Progreso: %(progress)s / %(goal)s"
+
+#: comics/achievements/medals.py
+msgid "Base"
+msgstr "Base"
+
+#: comics/achievements/medals.py
+msgid "Silver"
+msgstr "Plata"
+
+#: comics/achievements/medals.py
+msgid "Gold"
+msgstr "Oro"
+
+#: comics/templates/manage/achievement_form.html
+msgid "Medal"
+msgstr "Medalla"
+
+#: comics/templates/manage/achievement_form.html
+msgid "The medal uses the uploaded image."
+msgstr "La medalla usa la imagen subida."
+
+#: comics/templates/manage/achievement_form.html
+msgid "The medal uses the artwork included with Comi; an uploaded image replaces it."
+msgstr "La medalla usa la ilustración incluida en Comi; una imagen subida la reemplaza."
+
+#: comics/achievements/windows.py
+msgid "No date window"
+msgstr "Sin ventana de fechas"
+
+#: comics/achievements/windows.py
+msgid "Every year, between two days"
+msgstr "Cada año, entre dos días"
+
+#: comics/achievements/windows.py
+msgid "Between two dates"
+msgstr "Entre dos fechas"
+
+#: comics/achievements/windows.py
+msgid "Enter the day and the month."
+msgstr "Indica el día y el mes."
+
+#: comics/achievements/windows.py
+msgid "That day does not exist in that month."
+msgstr "Ese día no existe en ese mes."
+
+#: comics/achievements/windows.py
+msgid "Enter the start date."
+msgstr "Indica la fecha de inicio."
+
+#: comics/achievements/windows.py
+msgid "Enter the end date."
+msgstr "Indica la fecha de fin."
+
+#: comics/achievements/windows.py
+msgid "The end date cannot be before the start date."
+msgstr "La fecha de fin no puede ser anterior a la de inicio."
+
+#: comics/achievements/windows.py
+msgid "Enter both times, or neither."
+msgstr "Indica ambas horas, o ninguna."
+
+#: comics/achievements/windows.py
+msgid "The end time must be different from the start time."
+msgstr "La hora de fin debe ser distinta de la de inicio."
+
+#: comics/achievements/rules.py
+msgid "has signed in inside the achievement's time window"
+msgstr "ha iniciado sesión dentro de la ventana de tiempo del logro"
+
+#: comics/forms.py
+msgid "Medallion image"
+msgstr "Imagen del medallón"
+
+#: comics/forms.py
+msgid "Start month"
+msgstr "Mes de inicio"
+
+#: comics/forms.py
+msgid "End month"
+msgstr "Mes de fin"
+
+#: comics/forms.py
+msgid "Start day"
+msgstr "Día de inicio"
+
+#: comics/forms.py
+msgid "End day"
+msgstr "Día de fin"
+
+#: comics/forms.py
+msgid "End date"
+msgstr "Fecha de fin"
+
+#: comics/forms.py
+msgid "Date window"
+msgstr "Ventana de fechas"
+
+#: comics/forms.py
+msgid "From (time)"
+msgstr "Desde (hora)"
+
+#: comics/forms.py
+msgid "Until (time)"
+msgstr "Hasta (hora)"
+
+#: comics/forms.py
+msgid "Rule"
+msgstr "Regla"
+
+#: comics/forms.py
+msgid "This rule only counts inside a time window: set a date window, a time window or both."
+msgstr "Esta regla solo cuenta dentro de una ventana de tiempo: indica una ventana de fechas, de horas o ambas."
+
+#: comics/achievements/gestion.py
+msgid "Built-in achievements cannot be deleted: disable it instead."
+msgstr "Los logros incluidos no se pueden eliminar: desactívalo en su lugar."
+
+#: comics/achievements/gestion.py
+msgid "Someone has already earned it, so it cannot be deleted: disable it instead."
+msgstr "Alguien ya lo consiguió, así que no se puede eliminar: desactívalo en su lugar."
+
+#: comics/achievements/gestion.py
+msgid "It has achievements: move them to another category first."
+msgstr "Tiene logros: muévelos antes a otra categoría."
+
+#: comics/views/manage_achievements.py
+#, python-format
+msgid "Achievement created: %(name)s"
+msgstr "Logro creado: %(name)s"
+
+#: comics/views/manage_achievements.py
+#, python-format
+msgid "Achievement deleted: %(name)s"
+msgstr "Logro eliminado: %(name)s"
+
+#: comics/views/manage_achievements.py
+#, python-format
+msgid "“%(name)s” cannot be deleted. %(reason)s"
+msgstr "“%(name)s” no se puede eliminar. %(reason)s"
+
+#: comics/views/manage_achievement_categories.py
+#, python-format
+msgid "Category created: %(name)s"
+msgstr "Categoría creada: %(name)s"
+
+#: comics/views/manage_achievement_categories.py
+#, python-format
+msgid "Category saved: %(name)s"
+msgstr "Categoría guardada: %(name)s"
+
+#: comics/views/manage_achievement_categories.py
+#, python-format
+msgid "Category deleted: %(name)s"
+msgstr "Categoría eliminada: %(name)s"
+
+#: comics/views/manage_home.py
+msgid "Achievement categories"
+msgstr "Categorías de logros"
+
+#: comics/views/manage_home.py
+msgid "Achievement category"
+msgstr "Categoría de logros"
+
+#: comics/templates/manage/achievement_list.html
+msgid "Categories"
+msgstr "Categorías"
+
+#: comics/templates/manage/achievement_list.html
+msgid "New achievement"
+msgstr "Nuevo logro"
+
+#: comics/templates/manage/achievement_list.html
+msgid "rule"
+msgstr "regla"
+
+#: comics/templates/manage/achievement_list.html
+msgid "Created in Gestión"
+msgstr "Creado en Gestión"
+
+#: comics/templates/manage/achievement_list.html
+msgid "No time window"
+msgstr "Sin ventana de tiempo"
+
+#: comics/templates/manage/achievement_form.html
+msgid "Its code is made from the name and cannot be changed later."
+msgstr "Su código se genera a partir del nombre y no se puede cambiar después."
+
+#: comics/templates/manage/achievement_form.html
+msgid "Only generic rules can be used here: they take their settings (such as the time window) from the achievement."
+msgstr "Aquí solo se pueden usar reglas genéricas: toman su configuración (como la ventana de tiempo) del logro."
+
+#: comics/templates/manage/achievement_form.html
+msgid "Time window"
+msgstr "Ventana de tiempo"
+
+#: comics/templates/manage/achievement_form.html
+msgid "The achievement only counts inside its windows (both, when both are set), in the project's time zone. A yearly window may wrap the end of the year (24/12 to 06/01) and a time window may wrap midnight (23:00 to 02:00; the end time is not included)."
+msgstr "El logro solo cuenta dentro de sus ventanas (ambas, si se indican las dos), en la zona horaria del proyecto. Una ventana anual puede cruzar el fin de año (24/12 a 06/01) y una de horas puede cruzar la medianoche (23:00 a 02:00; la hora de fin no se incluye)."
+
+#: comics/templates/manage/achievement_form.html
+msgid "Every year: the start and end day and month. 29 February only exists in leap years: in other years a window starting on it starts on 1 March, and one ending on it ends on 28 February."
+msgstr "Cada año: el día y mes de inicio y de fin. El 29 de febrero solo existe en años bisiestos: los demás años una ventana que empieza ese día empieza el 1 de marzo, y una que termina ese día termina el 28 de febrero."
+
+#: comics/templates/manage/achievement_form.html
+msgid "Between two dates: a one-off event; both days are included."
+msgstr "Entre dos fechas: un evento único; ambos días se incluyen."
+
+#: comics/templates/manage/achievement_form.html
+msgid "Time of day (optional): leave both empty for the whole day."
+msgstr "Horas del día (opcional): deja ambas vacías para todo el día."
+
+#: comics/templates/manage/achievement_form.html
+msgid "Delete achievement?"
+msgstr "¿Eliminar logro?"
+
+#: comics/templates/manage/achievement_category_list.html
+msgid "Categories group achievements on profiles. A category can only be deleted when it has no achievements."
+msgstr "Las categorías agrupan los logros en los perfiles. Una categoría solo se puede eliminar si no tiene logros."
+
+#: comics/templates/manage/achievement_category_list.html
+msgid "New category"
+msgstr "Nueva categoría"
+
+#: comics/templates/manage/achievement_category_list.html
+msgid "There are no categories yet."
+msgstr "Todavía no hay categorías."
+
+#: comics/templates/manage/achievement_category_form.html
+msgid "Back to categories"
+msgstr "Volver a categorías"
+
+#: comics/templates/manage/achievement_category_form.html
+msgid "Medallion image (PNG, JPEG or WebP, up to 2 MB; replaces the generic medallion)"
+msgstr "Imagen del medallón (PNG, JPEG o WebP, hasta 2 MB; reemplaza al medallón genérico)"
+
+#: comics/templates/manage/achievement_category_form.html
+msgid "A disabled category hides all its achievements from profiles and stops awarding them."
+msgstr "Una categoría desactivada oculta todos sus logros de los perfiles y deja de otorgarlos."
+
+#: comics/templates/manage/achievement_category_form.html
+msgid "Delete category?"
+msgstr "¿Eliminar categoría?"
+
+#: comics/templates/manage/achievement_category_list.html
+#, python-format
+msgid "%(counter)s achievement"
+msgid_plural "%(counter)s achievements"
+msgstr[0] "%(counter)s logro"
+msgstr[1] "%(counter)s logros"
+
+#: comics/achievements/windows.py
+msgid "a yearly date window"
+msgstr "una ventana anual de fechas"
+
+#: comics/achievements/windows.py
+msgid "a window between two dates"
+msgstr "una ventana entre dos fechas"
+
+#: comics/achievements/windows.py
+msgid "a time-of-day window"
+msgstr "una ventana de horas del día"
+
+#: comics/achievements/rules.py
+msgid "has registered"
+msgstr "se ha registrado"
+
+#: comics/achievements/rules.py
+msgid "has filled in first name, last name, email, phone and profile picture"
+msgstr "ha llenado nombre, apellidos, correo, teléfono y foto de perfil"
+
+#: comics/achievements/rules.py
+msgid "has a profile picture"
+msgstr "tiene foto de perfil"
+
+#: comics/achievements/rules.py
+msgid "has purchases in every month of the achievement's yearly window, in the same year"
+msgstr "tiene compras en cada mes de la ventana anual del logro, en el mismo año"
+
+#: comics/forms.py
+#, python-format
+msgid "This rule does not use %(kind)s."
+msgstr "Esta regla no usa %(kind)s."
+
+#: comics/forms.py
+#, python-format
+msgid "This rule needs %(kinds)s."
+msgstr "Esta regla necesita %(kinds)s."
+
+#: comics/templates/manage/achievement_form.html
+msgid "Icon image (PNG, JPEG or WebP, up to 2 MB; replaces the medal artwork)"
+msgstr "Imagen del ícono (PNG, JPEG o WebP, hasta 2 MB; reemplaza la ilustración de la medalla)"
+
+#: comics/templates/manage/achievement_form.html
+msgid "The medal uses the generic artwork until it has its own; an uploaded image replaces it."
+msgstr "La medalla usa la ilustración genérica hasta tener la suya; una imagen subida la reemplaza."
+
+#: comics/achievements/registry.py
+#, python-format
+msgid "%(measure)s: %(count)s"
+msgstr "%(measure)s: %(count)s"
+
+#: comics/templates/profiles/includes/achievements.html
+msgid "Nothing earned in this category yet."
+msgstr "Todavía no hay nada conseguido en esta categoría."
+
+#: comics/templates/profiles/includes/achievement_reto.html
+msgctxt "challenge"
+msgid "Earned"
+msgstr "Conseguido"
+
+#: comics/templates/profiles/includes/achievement_reto.html
+msgctxt "challenge"
+msgid "Not earned yet"
+msgstr "Aún no conseguido"
+
+#: comics/templates/profiles/includes/achievements.html
+#, python-format
+msgid "%(earned)s of %(counter)s challenge"
+msgid_plural "%(earned)s of %(counter)s challenges"
+msgstr[0] "%(earned)s de %(counter)s reto"
+msgstr[1] "%(earned)s de %(counter)s retos"
+
+#: comics/achievements/rules.py
+#, python-format
+msgid "Have at least %(count)s comic in your collection"
+msgid_plural "Have at least %(count)s comics in your collection"
+msgstr[0] "Ten al menos %(count)s cómic en tu colección"
+msgstr[1] "Ten al menos %(count)s cómics en tu colección"
+
+#: comics/achievements/rules.py
+#, python-format
+msgid "Be a member for at least %(count)s full year"
+msgid_plural "Be a member for at least %(count)s full years"
+msgstr[0] "Sé miembro durante al menos %(count)s año completo"
+msgstr[1] "Sé miembro durante al menos %(count)s años completos"
+
+#: comics/achievements/rules.py
+#, python-format
+msgid "Own at least %(count)s very rare or legendary edition"
+msgid_plural "Own at least %(count)s very rare or legendary editions"
+msgstr[0] "Ten al menos %(count)s edición muy rara o legendaria"
+msgstr[1] "Ten al menos %(count)s ediciones muy raras o legendarias"
+
+#: comics/achievements/rules.py
+#, python-format
+msgid "Own at least %(count)s signed piece"
+msgid_plural "Own at least %(count)s signed pieces"
+msgstr[0] "Ten al menos %(count)s pieza firmada"
+msgstr[1] "Ten al menos %(count)s piezas firmadas"
+
+#: comics/achievements/rules.py
+#, python-format
+msgid "Own %(count)s different edition of the same issue"
+msgid_plural "Own %(count)s different editions of the same issue"
+msgstr[0] "Ten %(count)s edición distinta del mismo número"
+msgstr[1] "Ten %(count)s ediciones distintas del mismo número"
+
+#: comics/achievements/rules.py
+#, python-format
+msgid "Buy %(count)s comic on the same day"
+msgid_plural "Buy %(count)s comics on the same day"
+msgstr[0] "Compra %(count)s cómic el mismo día"
+msgstr[1] "Compra %(count)s cómics el mismo día"
+
+#: comics/achievements/rules.py
+#, python-format
+msgid "Complete %(count)s connecting"
+msgid_plural "Complete %(count)s connectings"
+msgstr[0] "Completa %(count)s connecting"
+msgstr[1] "Completa %(count)s connectings"
+
+#: comics/achievements/rules.py
+#, python-format
+msgid "Complete %(count)s reading arc"
+msgid_plural "Complete %(count)s reading arcs"
+msgstr[0] "Completa %(count)s arco de lectura"
+msgstr[1] "Completa %(count)s arcos de lectura"
+
+#: comics/models.py
+msgid "Enter a path on this site that starts with “/”, e.g. /comics/."
+msgstr "Introduce una ruta de este sitio que empiece por “/”, p. ej. /comics/."
+
+#: comics/models.py
+msgid "Everyone"
+msgstr "Todos"
+
+#: comics/models.py
+msgid "Some roles"
+msgstr "Algunos roles"
+
+#: comics/models.py
+msgid "An achievement you unlocked is no longer available."
+msgstr "Un logro que desbloqueaste ya no está disponible."
+
+#: comics/roles.py
+msgid "Collectors"
+msgstr "Coleccionistas"
+
+#: comics/roles.py
+msgid "Reviewers"
+msgstr "Revisores"
+
+#: comics/roles.py
+msgid "Administrators"
+msgstr "Administradores"
+
+#: comics/forms.py
+msgid "Title (English)"
+msgstr "Título (inglés)"
+
+#: comics/forms.py
+msgid "Title (Spanish)"
+msgstr "Título (español)"
+
+#: comics/forms.py
+msgid "Message (English)"
+msgstr "Mensaje (inglés)"
+
+#: comics/forms.py
+msgid "Message (Spanish)"
+msgstr "Mensaje (español)"
+
+#: comics/forms.py
+msgid "Link (optional)"
+msgstr "Enlace (opcional)"
+
+#: comics/forms.py
+msgid "A page of this site, e.g. /comics/. Opening the notification goes there."
+msgstr "Una página de este sitio, p. ej. /comics/. Al abrir la notificación se va ahí."
+
+#: comics/forms.py
+msgid "Roles"
+msgstr "Roles"
+
+#: comics/forms.py
+msgid "Send to"
+msgstr "Enviar a"
+
+#: comics/forms.py
+msgid "Choose at least one role."
+msgstr "Elige al menos un rol."
+
+#: comics/views/manage_announcements.py
+#, python-format
+msgid "Announcement saved: %(title)s"
+msgstr "Aviso guardado: %(title)s"
+
+#: comics/views/manage_announcements.py
+#, python-format
+msgid "Announcement deleted: %(title)s"
+msgstr "Aviso eliminado: %(title)s"
+
+#: comics/views/manage_home.py
+msgid "Announcements"
+msgstr "Avisos"
+
+#: comics/views/manage_home.py
+msgid "Announcement"
+msgstr "Aviso"
+
+#: comics/templates/base.html
+#, python-format
+msgid "Notifications (%(badge)s unread)"
+msgstr "Notificaciones (%(badge)s sin leer)"
+
+#: comics/templates/base.html
+msgid "Notifications"
+msgstr "Notificaciones"
+
+#: comics/templates/base.html
+msgid "The notifications could not be loaded."
+msgstr "No se pudieron cargar las notificaciones."
+
+#: comics/templates/base.html
+msgid "Loading…"
+msgstr "Cargando…"
+
+#: comics/templates/base.html
+msgid "See all"
+msgstr "Ver todas"
+
+#: comics/templates/notifications/includes/item.html
+msgid "Unread"
+msgstr "Sin leer"
+
+#: comics/templates/notifications/includes/menu.html
+msgid "Mark all as read"
+msgstr "Marcar todas como leídas"
+
+#: comics/templates/notifications/includes/menu.html
+msgid "You have no notifications."
+msgstr "No tienes notificaciones."
+
+#: comics/templates/manage/announcement_list.html
+msgid "Announcements reach their recipients as notifications. Edits to the texts show up in the notifications already sent. Deleting one also removes its notifications."
+msgstr "Los avisos llegan a sus destinatarios como notificaciones. Los cambios en los textos se ven en las notificaciones ya enviadas. Al eliminar uno también se eliminan sus notificaciones."
+
+#: comics/templates/manage/announcement_list.html
+msgid "New announcement"
+msgstr "Nuevo aviso"
+
+#: comics/templates/manage/announcement_list.html
+msgid "There are no announcements yet."
+msgstr "Todavía no hay avisos."
+
+#: comics/templates/manage/announcement_list.html
+msgid "Delete announcement?"
+msgstr "¿Eliminar aviso?"
+
+#: comics/templates/manage/announcement_form.html
+msgid "Back to announcements"
+msgstr "Volver a avisos"
+
+#: comics/templates/manage/announcement_form.html
+msgid "It is sent when you save it: one notification for each active user in its audience."
+msgstr "Se envía al guardarlo: una notificación para cada usuario activo de su audiencia."
+
+#: comics/templates/manage/announcement_form.html
+msgid "Send"
+msgstr "Enviar"
+
+#: comics/templates/manage/announcement_form.html
+msgid "Audience"
+msgstr "Audiencia"
+
+#: comics/templates/manage/announcement_form.html
+msgid "Only used when sending to some roles. Users in several roles get it once."
+msgstr "Solo se usa al enviar a algunos roles. Quien tenga varios roles lo recibe una vez."
+
+#: comics/models.py
+#, python-format
+msgid "You have %(count)d achievement: see it on your profile."
+msgid_plural "You have %(count)d achievements: see them on your profile."
+msgstr[0] "Tienes %(count)d logro: míralo en tu perfil."
+msgstr[1] "Tienes %(count)d logros: míralos en tu perfil."
+
+#: comics/views/manage_announcements.py
+#, python-format
+msgid "Announcement sent to %(count)d user."
+msgid_plural "Announcement sent to %(count)d users."
+msgstr[0] "Aviso enviado a %(count)d usuario."
+msgstr[1] "Aviso enviado a %(count)d usuarios."
+
+#: comics/templates/manage/announcement_list.html
+#, python-format
+msgid "Read by %(read)s of %(counter)s recipient"
+msgid_plural "Read by %(read)s of %(counter)s recipients"
+msgstr[0] "Leído por %(read)s de %(counter)s destinatario"
+msgstr[1] "Leído por %(read)s de %(counter)s destinatarios"
+
+#: comics/templates/manage/edition_form.html
+#: comics/templates/manage/version_history.html
+msgid "History"
+msgstr "Historial"
+
+#: comics/templates/manage/edition_form.html
+msgid "Issue history"
+msgstr "Historial del issue"
+
+#: comics/templates/manage/version_history.html
+msgid "Back"
+msgstr "Volver"
+
+#: comics/templates/manage/version_history.html
+#, python-format
+msgid "History of the edition %(name)s"
+msgstr "Historial de la edición %(name)s"
+
+#: comics/templates/manage/version_history.html
+#, python-format
+msgid "History of the issue %(name)s"
+msgstr "Historial del issue %(name)s"
+
+#: comics/templates/manage/version_history.html
+msgid "Versions"
+msgstr "Versiones"
+
+#: comics/templates/manage/version_history.html
+msgid "Reason:"
+msgstr "Motivo:"
+
+#: comics/templates/manage/version_history.html
+msgid "added"
+msgstr "añadidos"
+
+#: comics/templates/manage/version_history.html
+msgid "removed"
+msgstr "quitados"
+
+#: comics/templates/manage/version_history.html
+msgid "order changed"
+msgstr "orden cambiado"
+
+#: comics/templates/manage/version_history.html
+msgid "Revert to this version"
+msgstr "Volver a esta versión"
+
+#: comics/templates/manage/includes/revert_dialog.html
+msgid "Revert to this version?"
+msgstr "¿Volver a esta versión?"
+
+#: comics/templates/manage/includes/revert_dialog.html
+msgid ""
+"Everything goes back to how it was on <strong id=\"revertDialogDate\"></"
+"strong>. The current state stays in the history, so this can be undone too."
+msgstr ""
+"Todo vuelve a como estaba el <strong id=\"revertDialogDate\"></strong>. El "
+"estado actual se queda en el historial, así que esto también se puede "
+"deshacer."
+
+#: comics/templates/manage/includes/revert_dialog.html
+msgid "Revert"
+msgstr "Volver a esta versión"
+
+#: comics/forms.py
+msgid "Reason (optional)"
+msgstr "Motivo (opcional)"
+
+#: comics/views/manage_history.py
+#, python-format
+msgid "Restored the version of %(date)s."
+msgstr "Se restauró la versión del %(date)s."
+
+#: comics/versions.py
+#, python-format
+msgid "This version cannot be restored: %(reason)s"
+msgstr "Esta versión no se puede restaurar: %(reason)s"
+
+#: comics/versions.py
+#, python-format
+msgid "its %(field)s (#%(id)s) no longer exists."
+msgstr "su %(field)s (#%(id)s) ya no existe."
+
+#: comics/versions.py
+#, python-format
+msgid ""
+"it changes the series or number, and %(count)d edition that shares them "
+"would no longer match its issue. Correct them from the edition."
+msgid_plural ""
+"it changes the series or number, and %(count)d editions that share them "
+"would no longer match their issue. Correct them from the editions."
+msgstr[0] ""
+"cambia la serie o el número, y %(count)d edición que los comparte dejaría "
+"de coincidir con su issue. Corrígelos desde la edición."
+msgstr[1] ""
+"cambia la serie o el número, y %(count)d ediciones que los comparten "
+"dejarían de coincidir con su issue. Corrígelos desde las ediciones."
+
+#: comics/versions.py
+msgid "A deleted state cannot be restored: choose an earlier version."
+msgstr "No se puede restaurar un estado eliminado: elige una versión anterior."
+
+#: comics/versions.py
+#, python-format
+msgid "#%(id)s (deleted)"
+msgstr "#%(id)s (eliminado)"
+
+#: comics/versions.py
+msgid "System"
+msgstr "Sistema"
+
+#: comics/versions.py
+msgid "Reverted"
+msgstr "Restaurada"
+
+#: comics/versions.py
+#, python-format
+msgid "Reverted to the version of %(date)s"
+msgstr "Restaurada la versión del %(date)s"
+
+#: comics/versions.py
+msgid "Initial version"
+msgstr "Versión inicial"
+
+#: comics/versions.py
+msgid "Created"
+msgstr "Creado"
+
+#: comics/versions.py
+msgid "Thumbnail"
+msgstr "Miniatura"
+
+#: comics/versions.py
+msgid "Collected issues"
+msgstr "Issues recopilados"
+
+#: comics/versions.py
+msgid "Synopsis"
+msgstr "Sinopsis"
+
+#: comics/versions.py
+msgid "Creators"
+msgstr "Creadores"
+
+#: comics/models.py
+msgctxt "change request"
+msgid "New"
+msgstr "Nueva"
+
+#: comics/models.py
+msgid "Issue"
+msgstr "Issue"
+
+#: comics/models.py
+msgid "Correction"
+msgstr "Corrección"
+
+#: comics/models.py
+msgid "Pending"
+msgstr "Pendiente"
+
+#: comics/models.py
+msgid "Validated"
+msgstr "Validada"
+
+#: comics/models.py
+msgid "Approved"
+msgstr "Aprobada"
+
+#: comics/models.py
+msgid "Rejected"
+msgstr "Rechazada"
+
+#: comics/models.py
+msgid "Withdrawn"
+msgstr "Retirada"
+
+#: comics/models.py
+#, python-format
+msgid "Correction to the edition %(name)s"
+msgstr "Corrección de la edición %(name)s"
+
+#: comics/models.py
+#, python-format
+msgid "Correction to the issue %(name)s"
+msgstr "Corrección del issue %(name)s"
+
+#: comics/models.py
+#, python-format
+msgid "New edition %(name)s"
+msgstr "Nueva edición %(name)s"
+
+#: comics/models.py
+#, python-format
+msgid "New issue %(name)s"
+msgstr "Nuevo issue %(name)s"
+
+#: comics/models.py
+#, python-format
+msgid "Your request was validated: %(title)s"
+msgstr "Tu solicitud fue validada: %(title)s"
+
+#: comics/models.py
+#, python-format
+msgid "Your request was approved: %(title)s"
+msgstr "Tu solicitud fue aprobada: %(title)s"
+
+#: comics/models.py
+#, python-format
+msgid "Your request was rejected: %(title)s"
+msgstr "Tu solicitud fue rechazada: %(title)s"
+
+#: comics/change_requests.py
+#, python-format
+msgid "This request cannot be changed that way: it is %(status)s."
+msgstr "Esta solicitud no se puede cambiar así: está %(status)s."
+
+#: comics/change_requests.py
+#, python-format
+msgid "The %(kind)s this request changes no longer exists: it can only be rejected."
+msgstr "El elemento (%(kind)s) que cambia esta solicitud ya no existe: solo se puede rechazar."
+
+#: comics/change_requests.py
+#, python-format
+msgid "Change request #%(id)s: %(reason)s"
+msgstr "Solicitud de cambio #%(id)s: %(reason)s"
+
+#: comics/change_requests.py
+#, python-format
+msgid "%(field)s: #%(id)s no longer exists."
+msgstr "%(field)s: #%(id)s ya no existe."
+
+#: comics/achievements/rules.py
+msgid "has had a change request approved"
+msgstr "le han aprobado una solicitud de cambio"
+
+#: comics/forms.py
+msgid "Why this change?"
+msgstr "¿Por qué este cambio?"
+
+#: comics/forms.py
+msgid "Tell the reviewers what is wrong or missing, and where you checked it."
+msgstr "Cuéntales a los revisores qué está mal o qué falta, y dónde lo comprobaste."
+
+#: comics/forms.py
+msgid "Evidence link (optional)"
+msgstr "Enlace de evidencia (opcional)"
+
+#: comics/forms.py
+msgid "A page that confirms the data, e.g. the publisher's catalogue."
+msgstr "Una página que confirme los datos, p. ej. el catálogo de la editorial."
+
+#: comics/forms.py
+msgid "Change at least one value: this is the current data."
+msgstr "Cambia al menos un valor: estos son los datos actuales."
+
+#: comics/forms.py
+msgid "An issue with that publishing and number already exists."
+msgstr "Ya existe un issue con ese publishing y número."
+
+#: comics/forms.py
+msgid "Note for the author (optional)"
+msgstr "Nota para el autor (opcional)"
+
+#: comics/views/change_requests.py
+msgid "Request sent: a reviewer will look at it soon."
+msgstr "Solicitud enviada: un revisor la verá pronto."
+
+#: comics/views/change_requests.py
+msgid "Request withdrawn."
+msgstr "Solicitud retirada."
+
+#: comics/views/reviews.py
+msgid "To review"
+msgstr "Por revisar"
+
+#: comics/views/reviews.py
+msgctxt "requests"
+msgid "All"
+msgstr "Todas"
+
+#: comics/views/reviews.py
+msgid "Request validated."
+msgstr "Solicitud validada."
+
+#: comics/views/reviews.py
+msgid "Request approved: the change is applied."
+msgstr "Solicitud aprobada: el cambio ya está aplicado."
+
+#: comics/views/reviews.py
+msgid "Request rejected."
+msgstr "Solicitud rechazada."
+
+#: comics/templates/change_requests/includes/field_table.html
+msgid "Field"
+msgstr "Campo"
+
+#: comics/templates/change_requests/includes/field_table.html
+msgid "When requested"
+msgstr "Al solicitarla"
+
+#: comics/templates/change_requests/includes/field_table.html
+msgid "Now"
+msgstr "Ahora"
+
+#: comics/templates/change_requests/includes/field_table.html
+msgid "Proposed"
+msgstr "Propuesto"
+
+#: comics/templates/change_requests/includes/field_table.html
+msgid "This field changed after the request was submitted."
+msgstr "Este campo cambió después de enviarse la solicitud."
+
+#: comics/templates/change_requests/includes/field_table.html
+msgid "Conflict"
+msgstr "Conflicto"
+
+#: comics/templates/change_requests/includes/field_table.html
+msgid "Already the current value."
+msgstr "Ya es el valor actual."
+
+#: comics/templates/change_requests/includes/steps.html
+msgid "Submitted"
+msgstr "Enviada"
+
+#: comics/templates/change_requests/includes/steps.html
+msgid "deleted user"
+msgstr "usuario eliminado"
+
+#: comics/templates/change_requests/includes/steps.html
+msgid "Evidence:"
+msgstr "Evidencia:"
+
+#: comics/templates/change_requests/proposal_form.html
+msgid "My requests"
+msgstr "Mis solicitudes"
+
+#: comics/templates/change_requests/proposal_form.html
+msgid "Suggest a correction"
+msgstr "Sugerir una corrección"
+
+#: comics/templates/change_requests/proposal_form.html
+msgid "New request"
+msgstr "Nueva solicitud"
+
+#: comics/templates/change_requests/proposal_form.html
+#, python-format
+msgid "Suggest a correction to the edition %(name)s"
+msgstr "Sugerir una corrección de la edición %(name)s"
+
+#: comics/templates/change_requests/proposal_form.html
+#, python-format
+msgid "Suggest a correction to the issue %(name)s"
+msgstr "Sugerir una corrección del issue %(name)s"
+
+#: comics/templates/change_requests/proposal_form.html
+msgid "Propose a new edition"
+msgstr "Proponer una edición nueva"
+
+#: comics/templates/change_requests/proposal_form.html
+msgid "Propose a new issue"
+msgstr "Proponer un issue nuevo"
+
+#: comics/templates/change_requests/proposal_form.html
+msgid "Send request"
+msgstr "Enviar solicitud"
+
+#: comics/templates/change_requests/proposal_form.html
+msgid "Change the values that are wrong: only what you change is sent. A reviewer checks the request and an administrator applies it."
+msgstr "Cambia los valores que están mal: solo se envía lo que cambies. Un revisor comprueba la solicitud y un administrador la aplica."
+
+#: comics/templates/change_requests/proposal_form.html
+msgid "Fill in the data you know. A reviewer checks the request and an administrator adds it to the catalogue."
+msgstr "Llena los datos que conozcas. Un revisor comprueba la solicitud y un administrador lo agrega al catálogo."
+
+#: comics/templates/change_requests/proposal_form.html
+msgid "Issue data"
+msgstr "Datos del issue"
+
+#: comics/templates/change_requests/proposal_form.html
+msgid "Your request"
+msgstr "Tu solicitud"
+
+#: comics/templates/change_requests/my_requests.html
+msgid "Corrections and new issues or editions you proposed for the catalogue."
+msgstr "Correcciones e issues o ediciones nuevas que propusiste para el catálogo."
+
+#: comics/templates/change_requests/my_requests.html
+msgid "You have not sent any request yet. Use “Suggest a correction” on an edition, or propose a new one."
+msgstr "Todavía no has enviado ninguna solicitud. Usa “Sugerir una corrección” en una edición, o propón una nueva."
+
+#: comics/templates/change_requests/detail.html
+msgid "Back to my requests"
+msgstr "Volver a mis solicitudes"
+
+#: comics/templates/change_requests/detail.html
+msgid "Withdraw request"
+msgstr "Retirar solicitud"
+
+#: comics/templates/change_requests/detail.html
+msgid "Proposed changes"
+msgstr "Cambios propuestos"
+
+#: comics/templates/reviews/queue.html
+msgid "Change requests"
+msgstr "Solicitudes de cambio"
+
+#: comics/templates/reviews/queue.html
+msgid "Corrections and new issues or editions proposed by collectors."
+msgstr "Correcciones e issues o ediciones nuevas propuestas por los coleccionistas."
+
+#: comics/templates/reviews/queue.html
+msgid "Status"
+msgstr "Estado"
+
+#: comics/templates/reviews/queue.html
+msgid "No requests here."
+msgstr "No hay solicitudes aquí."
+
+#: comics/templates/reviews/detail.html
+msgid "Back to the requests"
+msgstr "Volver a las solicitudes"
+
+#: comics/templates/reviews/detail.html
+msgid "What this request changes no longer exists: it cannot be approved, only rejected."
+msgstr "Lo que cambia esta solicitud ya no existe: no se puede aprobar, solo rechazar."
+
+#: comics/templates/reviews/detail.html
+msgid "Some requested fields changed after the request was submitted (highlighted). Approving overwrites them with the proposed values."
+msgstr "Algunos campos solicitados cambiaron después de enviarse la solicitud (resaltados). Aprobarla los sobrescribe con los valores propuestos."
+
+#: comics/templates/reviews/detail.html
+msgid "Decision"
+msgstr "Decisión"
+
+#: comics/templates/reviews/detail.html
+msgid "Approve and apply"
+msgstr "Aprobar y aplicar"
+
+#: comics/templates/reviews/detail.html
+msgid "Validate"
+msgstr "Validar"
+
+#: comics/templates/reviews/detail.html
+msgid "Reject"
+msgstr "Rechazar"
+
+#: comics/templates/base.html
+msgid "Reviews"
+msgstr "Revisiones"
+
+#: comics/templates/my_comics/edition_detail.html
+msgid "Suggest a correction to the issue"
+msgstr "Sugerir una corrección del issue"
+
+#: comics/change_requests.py
+#, python-format
+msgid "Another %(kind)s with these values was just saved: review the request again."
+msgstr "Acaba de guardarse otro elemento (%(kind)s) con estos valores: revisa la solicitud de nuevo."
+
+#: comics/catalog_sources/http.py
+#, python-format
+msgid "%(source)s rejected the credentials. Check them in the .env file."
+msgstr "%(source)s rechazó las credenciales. Revísalas en el archivo .env."
+
+#: comics/catalog_sources/http.py
+#, python-format
+msgid "%(source)s is receiving too many requests from Comi. Wait a minute and try again."
+msgstr "%(source)s está recibiendo demasiadas peticiones de Comi. Espera un minuto y vuelve a intentarlo."
+
+#: comics/catalog_sources/http.py
+#, python-format
+msgid "%(source)s is not working right now (error %(status)s). Try again later."
+msgstr "%(source)s no está funcionando en este momento (error %(status)s). Inténtalo más tarde."
+
+#: comics/catalog_sources/http.py
+#, python-format
+msgid "%(source)s sent an answer Comi cannot read."
+msgstr "%(source)s envió una respuesta que Comi no puede leer."
+
+#: comics/catalog_sources/http.py
+#, python-format
+msgid "%(source)s did not answer in time. Try again in a moment."
+msgstr "%(source)s no respondió a tiempo. Inténtalo de nuevo en un momento."
+
+#: comics/catalog_sources/http.py
+#, python-format
+msgid "%(source)s could not be reached. Try again later."
+msgstr "No se pudo conectar con %(source)s. Inténtalo más tarde."
+
+#: comics/catalog_sources/http.py
+#: comics/forms.py
+msgid "Covers can only be downloaded from the catalogues Comi imports from."
+msgstr "Las portadas solo se pueden descargar de los catálogos de los que importa Comi."
+
+#: comics/catalog_sources/http.py
+msgid "The cover could not be downloaded. Try again, or upload it yourself."
+msgstr "No se pudo descargar la portada. Inténtalo de nuevo o súbela tú."
+
+#: comics/catalog_sources/http.py
+#, python-format
+msgid "The cover is too large (maximum %(size)s MB)."
+msgstr "La portada es demasiado grande (máximo %(size)s MB)."
+
+#: comics/catalog_sources/service.py
+#, python-format
+msgid "%(source)s is not configured."
+msgstr "%(source)s no está configurado."
+
+#: comics/catalog_sources/metron.py
+#: comics/catalog_sources/comicvine.py
+#, python-format
+msgid "%(source)s has no issue with the id %(id)s."
+msgstr "%(source)s no tiene ningún issue con el id %(id)s."
+
+#: comics/catalog_sources/mycomicshop.py
+#, python-format
+msgid "%(source)s has no series with the id %(id)s."
+msgstr "%(source)s no tiene ninguna serie con el id %(id)s."
+
+#: comics/catalog_sources/mycomicshop.py
+#, python-format
+msgid "%(source)s is refusing automated requests right now. Try again later."
+msgstr "%(source)s está rechazando las peticiones automáticas en este momento. Inténtalo más tarde."
+
+#: comics/catalog_sources/mycomicshop.py
+#, python-format
+msgid "%(source)s has no issue with the id %(id)s in the series %(series)s."
+msgstr "%(source)s no tiene ningún issue con el id %(id)s en la serie %(series)s."
+
+#: comics/catalog_sources/errors.py
+#, python-format
+msgid "%(source)s also needs the series id."
+msgstr "%(source)s también necesita el id de la serie."
+
+#: comics/catalog_sources/mapper.py
+#, python-format
+msgid "Check the artist name “%(name)s”: %(source)s's text does not make clear where it ends."
+msgstr "Revisa el nombre del artista “%(name)s”: el texto de %(source)s no deja claro dónde acaba."
+
+#: comics/catalog_sources/mapper.py
+#, python-format
+msgid "%(field)s: Comi does not accept “%(value)s” from %(source)s, so it was left out. Fill it in yourself."
+msgstr "%(field)s: Comi no acepta “%(value)s” de %(source)s, así que se ha dejado fuera. Rellénalo tú."
+
+#: comics/catalog_sources/mapper.py
+#, python-format
+msgid "%(issue)s already has one of these ids: saving them on another issue will fail."
+msgstr "%(issue)s ya tiene uno de estos ids: guardarlos en otro issue fallará."
+
+#: comics/catalog_sources/mapper.py
+#, python-format
+msgid "%(source)s lists the artists of all the covers together: check the cover artists of the cover you save."
+msgstr "%(source)s lista juntos a los artistas de todas las portadas: revisa los artistas de la portada que guardes."
+
+#: comics/catalog_sources/mapper.py
+msgid "The cover is on a server Comi does not download from: upload it yourself."
+msgstr "La portada está en un servidor del que Comi no descarga: súbela tú."
+
+#: comics/catalog_sources/mapper.py
+#, python-format
+msgid "The number “%(number)s” is longer than Comi allows."
+msgstr "El número “%(number)s” es más largo de lo que Comi permite."
+
+#: comics/catalog_sources/mapper.py
+msgid "Only the cover date is known: the release date is usually a few months earlier."
+msgstr "Solo se conoce la fecha de portada: la fecha de salida suele ser unos meses antes."
+
+#: comics/catalog_sources/mapper.py
+#, python-format
+msgid "The cover price is in %(currency)s."
+msgstr "El precio de portada está en %(currency)s."
+
+#: comics/catalog_sources/mapper.py
+#, python-format
+msgid "The series type “%(type)s” has no matching format: choose it yourself."
+msgstr "El tipo de serie “%(type)s” no corresponde a ningún formato: elígelo tú."
+
+#: comics/forms.py
+msgid "Another issue already has this Metron ID."
+msgstr "Otro issue ya tiene este ID de Metron."
+
+#: comics/forms.py
+msgid "Another issue already has this Comic Vine ID."
+msgstr "Otro issue ya tiene este ID de Comic Vine."
+
+#: comics/forms.py
+msgid "Another issue already has one of these ids."
+msgstr "Otro issue ya tiene uno de estos ids."
+
+#: comics/forms.py
+msgid "Enter the issue's number in the catalogue, e.g. 15439."
+msgstr "Escribe el número del issue en el catálogo, p. ej. 15439."
+
+#: comics/forms.py
+msgid "Enter the series' number in the catalogue, e.g. 58451662."
+msgstr "Escribe el número de la serie en el catálogo, p. ej. 58451662."
+
+#: comics/forms.py
+msgid "Another edition already has this MyComicShop ID."
+msgstr "Otra edición ya tiene este ID de MyComicShop."
+
+#: comics/forms.py
+msgid "Metron ID (optional)"
+msgstr "ID de Metron (opcional)"
+
+#: comics/forms.py
+msgid "Comic Vine ID (optional)"
+msgstr "ID de Comic Vine (opcional)"
+
+#: comics/forms.py
+msgid "GCD ID (optional)"
+msgstr "ID de GCD (opcional)"
+
+#: comics/templates/manage/edition_form.html
+msgid "Import from a catalogue"
+msgstr "Importar de un catálogo"
+
+#: comics/templates/manage/edition_form.html
+msgid "not configured"
+msgstr "sin configurar"
+
+#: comics/templates/manage/edition_form.html
+msgid "Source"
+msgstr "Fuente"
+
+#: comics/templates/manage/edition_form.html
+msgid "Issue ID in the catalogue"
+msgstr "ID del issue en el catálogo"
+
+#: comics/templates/manage/edition_form.html
+msgid "Load"
+msgstr "Cargar"
+
+#: comics/templates/manage/edition_form.html
+msgid "Cover to fill in"
+msgstr "Portada que se rellena"
+
+#: comics/templates/manage/edition_form.html
+msgid "Do not use the imported cover"
+msgstr "No usar la portada importada"
+
+#: comics/templates/manage/edition_form.html
+msgid "Saved on the issue above (the edition's own issue unless you chose another one). Only the values you change are written."
+msgstr "Se guarda en el issue de arriba (el issue propio de la edición, salvo que hayas elegido otro). Solo se escriben los valores que cambies."
+
+#: comics/templates/manage/edition_form.html
+msgid "No creators yet."
+msgstr "Todavía no hay creadores."
+
+#: comics/templates/includes/identification_numbers.html
+msgid "Identification numbers"
+msgstr "Números de identificación"
+
+#: comics/templates/includes/identification_numbers.html
+msgid "(opens in a new tab)"
+msgstr "(se abre en una pestaña nueva)"
+
+#: comics/templates/includes/identification_numbers.html
+#, python-format
+msgid "Copy the %(source)s number"
+msgstr "Copiar el número de %(source)s"
+
+#: comics/catalog_sources/mapper.py
+#, python-format
+msgid "%(source)s writes the title as “%(title)s”: check it against the cover (Comi keeps the title as printed)."
+msgstr "%(source)s escribe el título como “%(title)s”: compáralo con la portada (Comi guarda el título tal como está impreso)."
+
+#: comics/catalog_sources/mapper.py
+#, python-format
+msgid "Matched “%(series)s” as “%(title)s”: check that it is the same series."
+msgstr "Se ha emparejado “%(series)s” con “%(title)s”: comprueba que sea la misma serie."
+
+#: comics/catalog_sources/mapper.py
+msgid "Only the first issue's cover date is known: check the start date."
+msgstr "Solo se conoce la fecha de portada del primer issue: revisa la fecha de inicio."
+
+#: comics/catalog_sources/mapper.py
+#, python-format
+msgid "The first issue's date is unknown: the start date is January 1, %(year)s. Check it."
+msgstr "No se conoce la fecha del primer issue: la fecha de inicio es el 1 de enero de %(year)s. Revísala."
+
+#: comics/catalog_sources/mapper.py
+msgid "The start date of the series is unknown: enter it."
+msgstr "No se conoce la fecha de inicio de la serie: escríbela."
+
+#: comics/catalog_sources/mapper.py
+#, python-format
+msgid "The language “%(language)s” is not one of Comi's: choose it yourself."
+msgstr "El idioma “%(language)s” no es uno de los de Comi: elígelo tú."
+
+#: comics/catalog_sources/mapper.py
+#, python-format
+msgid "%(source)s does not say the language of the series: check it."
+msgstr "%(source)s no indica el idioma de la serie: revísalo."
+
+#: comics/catalog_sources/mapper.py
+#, python-format
+msgid "The publisher's name “%(name)s” is longer than Comi allows."
+msgstr "El nombre de la editorial “%(name)s” es más largo de lo que Comi permite."
+
+#: comics/catalog_sources/mapper.py
+#, python-format
+msgid "The publisher's country “%(country)s” is not one of Comi's: choose it yourself."
+msgstr "El país de la editorial “%(country)s” no es uno de los de Comi: elígelo tú."
+
+#: comics/forms.py
+msgid "Metron series ID"
+msgstr "ID de serie en Metron"
+
+#: comics/forms.py
+msgid "Comic Vine volume ID"
+msgstr "ID de volumen en Comic Vine"
+
+#: comics/forms.py
+msgid "GCD series ID"
+msgstr "ID de serie en GCD"
+
+#: comics/forms/catalog.py
+msgid "MyComicShop series ID"
+msgstr "ID de serie en MyComicShop"
+
+#: comics/forms.py
+msgid "Another publishing already has this Metron series ID."
+msgstr "Otro publishing ya tiene este ID de serie de Metron."
+
+#: comics/forms.py
+msgid "Another publishing already has this Comic Vine volume ID."
+msgstr "Otro publishing ya tiene este ID de volumen de Comic Vine."
+
+#: comics/forms/catalog.py
+msgid "Another publishing already has this MyComicShop series ID."
+msgstr "Otro publishing ya tiene este ID de serie de MyComicShop."
+
+#: comics/forms.py
+#: comics/views/manage_publishings.py
+msgid "A title with that name already exists."
+msgstr "Ya existe un título con ese nombre."
+
+#: comics/forms.py
+#: comics/views/manage_publishings.py
+msgid "An editorial with that name already exists."
+msgstr "Ya existe una editorial con ese nombre."
+
+#: comics/forms.py
+msgid "Country"
+msgstr "País"
+
+#: comics/views/manage_publishings.py
+msgid "A publishing with these values already exists."
+msgstr "Ya existe un publishing con estos valores."
+
+#: comics/templates/manage/publishing_form.html
+#: comics/templates/manage/includes/publishing_dialogs.html
+msgid "Series in external catalogues"
+msgstr "Serie en catálogos externos"
+
+#: comics/templates/manage/edition_form.html
+#: comics/templates/manage/includes/publishing_dialogs.html
+msgid "Create publishing"
+msgstr "Crear publishing"
+
+#: comics/templates/manage/includes/publishing_dialogs.html
+msgid "Check before creating"
+msgstr "Revisa antes de crear"
+
+#: comics/templates/manage/includes/publishing_dialogs.html
+msgid "Create title"
+msgstr "Crear título"
+
+#: comics/templates/manage/includes/publishing_dialogs.html
+msgid "Create editorial"
+msgstr "Crear editorial"
+
+#: comics/templates/manage/includes/publishing_dialogs.html
+msgid "The title groups publishings under a letter: choose it, or create it with +."
+msgstr "El título agrupa publishings bajo una letra: elígelo, o créalo con +."
+
+#: comics/templates/manage/includes/publishing_dialogs.html
+msgid "Create"
+msgstr "Crear"
+
+#: comics/templates/manage/includes/publishing_dialogs.html
+msgid "Groups publishings under a letter."
+msgstr "Agrupa publishings bajo una letra."
+
+#: comics/templates/manage/edition_form.html
+msgid "This page has unsaved changes from before it was reloaded."
+msgstr "Esta página tiene cambios sin guardar de antes de recargarla."
+
+#: comics/templates/manage/edition_form.html
+msgid "Restore them"
+msgstr "Recuperarlos"
+
+#: comics/templates/manage/edition_form.html
+msgid "Discard"
+msgstr "Descartar"
+
+#: comics/forms.py
+msgid "Choose a language"
+msgstr "Elige un idioma"
+
+#: comics/catalog_sources/mapper.py
+#, python-format
+msgid "The Metron series is %(metron)s, but its Comic Vine volume is %(comicvine)s: the first one is used. Check whether they are the same publishing."
+msgstr "La serie de Metron es %(metron)s, pero su volumen de Comic Vine es %(comicvine)s: se usa la primera. Comprueba si son el mismo publishing."
+
+#: comics/forms.py
+msgid "Required: choose a title or create one with +."
+msgstr "Obligatorio: elige un título o créalo con +."
+
+#: comics/forms.py
+msgid "Required: choose an editorial or create one with +."
+msgstr "Obligatorio: elige una editorial o créala con +."
+
+#: comics/forms.py
+msgid "Required: choose the language."
+msgstr "Obligatorio: elige el idioma."
+
+#: comics/forms.py
+msgid "Required: enter the start date."
+msgstr "Obligatorio: escribe la fecha de inicio."
+
+#: comics/forms.py
+msgid "Required: choose an option."
+msgstr "Obligatorio: elige una opción."
+
+#: comics/forms.py
+msgid "Required: fill in this field."
+msgstr "Obligatorio: rellena este campo."
+
+#: comics/forms.py
+msgid "Editorial"
+msgstr "Editorial"
+
+#: comics/forms.py
+#: comics/models.py
+msgid "Alias"
+msgstr "Alias"
+
+#: comics/forms.py
+msgid "Enter a name."
+msgstr "Escribe un nombre."
+
+#: comics/forms.py
+#, python-format
+msgid "“%(name)s” is longer than %(limit)d characters."
+msgstr "“%(name)s” tiene más de %(limit)d caracteres."
+
+#: comics/forms.py
+#, python-format
+msgid "Send at most %(limit)d names at a time."
+msgstr "Envía como máximo %(limit)d nombres a la vez."
+
+#: comics/models.py
+#, python-format
+msgid "“%(name)s” is an alias of %(editorial)s: delete the alias first."
+msgstr "“%(name)s” es un alias de %(editorial)s: borra primero el alias."
+
+#: comics/models.py
+#, python-format
+msgid "“%(name)s” is already an alias of %(editorial)s."
+msgstr "“%(name)s” ya es un alias de %(editorial)s."
+
+#: comics/models.py
+#, python-format
+msgid "“%(name)s” is the name of an editorial: it needs no alias."
+msgstr "“%(name)s” es el nombre de una editorial: no necesita alias."
+
+#: comics/models.py
+msgid "editorial alias"
+msgstr "alias de editorial"
+
+#: comics/models.py
+msgid "editorial aliases"
+msgstr "alias de editoriales"
+
+#: comics/views/manage_publishings.py
+msgid "That alias already exists."
+msgstr "Ese alias ya existe."
+
+#: comics/views/manage_publishings.py
+msgid "The artists could not be created. Try again."
+msgstr "No se pudieron crear los artistas. Inténtalo de nuevo."
+
+#: comics/templates/manage/includes/publishing_dialogs.html
+#: comics/templates/manage/includes/artist_picker.html
+msgid "Create artist"
+msgstr "Crear artista"
+
+#: comics/templates/manage/includes/publishing_dialogs.html
+msgid "It is added to the list you opened this from. If an artist already has that name, that one is added instead."
+msgstr "Se añade a la lista desde la que lo abriste. Si un artista ya tiene ese nombre, se añade ese."
+
+#: comics/templates/manage/edition_form.html
+msgid "Update and continue editing"
+msgstr "Actualizar y seguir editando"
+
+#: comics/templates/manage/edition_form.html
+msgctxt "save button"
+msgid "Update"
+msgstr "Actualizar"
+
+#: comics/templates/manage/includes/publishing_dialogs.html
+msgid "Edit title"
+msgstr "Editar título"
+
+#: comics/templates/manage/edition_form.html
+msgid "Fill in the form with an issue from a catalogue. With MyComicShop, enter the series ID and pick the cover among its variants. Check the values: nothing is saved until you save the form."
+msgstr "Rellena el formulario con un issue de un catálogo. Con MyComicShop, escribe el ID de la serie y elige la portada entre sus variantes. Revisa los valores: no se guarda nada hasta que guardes el formulario."
+
+#: comics/templates/manage/edition_form.html
+msgid "MyComicShop series ID (TID)"
+msgstr "ID de la serie en MyComicShop (TID)"
+
+#: comics/templates/manage/includes/catalog_series_dialog.html
+msgid "Choose the cover to import"
+msgstr "Elige la portada que quieres importar"
+
+#: comics/templates/manage/includes/catalog_series_dialog.html
+msgid "Import"
+msgstr "Importar"
+
+#: comics/catalog_sources/mapper.py
+#, python-format
+msgid "%(edition)s already has this MyComicShop ID: saving it on another edition will fail."
+msgstr "%(edition)s ya tiene este ID de MyComicShop: guardarlo en otra edición fallará."
+
+#: comics/models/collections.py
+msgid "Figure"
+msgstr "Figura"
+
+#: comics/models/collections.py
+msgid "Print"
+msgstr "Print"
+
+#: comics/models/collections.py
+msgid "Pin"
+msgstr "Pin"
+
+#: comics/models/collections.py
+msgid "Card"
+msgstr "Tarjeta"
+
+#: comics/models/collections.py
+msgid "Poster"
+msgstr "Póster"
+
+#: comics/models/collections.py
+msgid "Video"
+msgstr "Video"
+
+#: comics/models/collections.py
+msgctxt "article category"
+msgid "Other"
+msgstr "Otro"
+
+#: comics/models/collections.py
+msgid "A piece can't be its own previous trade."
+msgstr "Una pieza no puede ser su propia operación anterior."
+
+#: comics/models/collections.py
+msgid "The previous trade must be a purchase of the same article by the same collector."
+msgstr "La operación anterior debe ser una compra del mismo artículo por el mismo coleccionista."
+
+#: comics/models/collections.py
+msgid "The previous trade must be a purchase of the same edition by the same collector."
+msgstr "La operación anterior debe ser una compra de la misma edición por el mismo coleccionista."
+
+#: comics/models/collections.py
+msgid "Print run, when the article is limited."
+msgstr "Tirada, cuando el artículo es limitado."
+
+#: comics/models/collections.py
+msgid "Only a sale can have a previous trade."
+msgstr "Solo una venta puede tener una operación anterior."
+
+#: comics/models/collections.py
+msgid "This purchase has already been sold."
+msgstr "Esta compra ya se vendió."
+
+#: comics/templates/collectables/base_collectables.html
+msgid "Collectables sections"
+msgstr "Secciones de collectables"
+
+#: comics/templates/collectables/base_collectables.html
+msgid "Articles"
+msgstr "Artículos"
+
+#: comics/templates/collectables/collectables.html
+msgid "Search name or description"
+msgstr "Buscar nombre o descripción"
+
+#: comics/templates/collectables/collectables.html
+msgctxt "categories"
+msgid "All"
+msgstr "Todas"
+
+#: comics/templates/collectables/collectables.html
+#, python-format
+msgid "Limited to %(count)s"
+msgstr "Limitado a %(count)s"
+
+#: comics/templates/collectables/collectables.html
+msgid "Seller"
+msgstr "Vendedor"
+
+#: comics/templates/collectables/collectables.html
+msgid "View article"
+msgstr "Ver artículo"
+
+#: comics/templates/collectables/article_list.html
+msgid "No articles match these filters."
+msgstr "Ningún artículo coincide con estos filtros."
+
+#: comics/templates/collectables/article_list.html
+#, python-format
+msgid "View %(name)s"
+msgstr "Ver %(name)s"
+
+#: comics/templates/collectables/article_detail.html
+msgid "Article data"
+msgstr "Datos del artículo"
+
+#: comics/templates/collectables/article_detail.html
+msgid "Your purchases and sales"
+msgstr "Tus compras y ventas"
+
+#: comics/templates/collectables/article_detail.html
+msgid "Seller / buyer"
+msgstr "Vendedor / comprador"
+
+#: comics/templates/collectables/article_detail.html
+msgid "Sold"
+msgstr "Vendido"
+
+#: comics/templates/collectables/article_detail.html
+msgid "You have no purchases or sales of this article."
+msgstr "No tienes compras ni ventas de este artículo."
+
+#: comics/templates/collectables/article_detail.html
+msgid "Image"
+msgstr "Imagen"
+
+#: comics/templates/collectables/article_list.html
+#, python-format
+msgid "%(counter)s article"
+msgid_plural "%(counter)s articles"
+msgstr[0] "%(counter)s artículo"
+msgstr[1] "%(counter)s artículos"
+
+#: comics/forms/collectables.py
+msgid "Article"
+msgstr "Artículo"
+
+#: comics/forms/collectables.py
+msgid "That piece is already registered (same article, date, amount, type and participant)."
+msgstr "Esa pieza ya está registrada (mismo artículo, fecha, monto, tipo y participante)."
+
+#: comics/forms/collectables.py
+msgid "Choose a purchase made on or before the sale date."
+msgstr "Elige una compra hecha en o antes de la fecha de venta."
+
+#: comics/templates/collectables/article_detail.html
+msgid "Add to my collection"
+msgstr "Agregar a mi colección"
+
+#: comics/templates/collectables/article_detail.html
+msgctxt "article"
+msgid "Limited to"
+msgstr "Limitado a"
+
+#: comics/templates/collectables/includes/piece_fields.html
+msgid "The piece you are selling. Once linked, it no longer counts as yours. Only pieces of this article bought on or before the sale date are listed."
+msgstr "La pieza que vendes. Al vincularla deja de contar como tuya. Solo se listan las piezas de este artículo compradas en o antes de la fecha de venta."
+
+#: comics/templates/collectables/includes/piece_fields.html
+msgid "Choose an article"
+msgstr "Elige un artículo"
+
+#: comics/templates/manage/article_list.html
+#: comics/templates/manage/article_form.html
+msgid "New article"
+msgstr "Nuevo artículo"
+
+#: comics/templates/manage/article_list.html
+#: comics/templates/manage/article_form.html
+msgid "Delete article?"
+msgstr "¿Eliminar artículo?"
+
+#: comics/templates/manage/includes/article_row.html
+msgid "See its pieces"
+msgstr "Ver sus piezas"
+
+#: comics/templates/manage/includes/article_row.html
+#, python-format
+msgid "Edit %(name)s"
+msgstr "Editar %(name)s"
+
+#: comics/templates/manage/article_form.html
+msgid "Back to articles"
+msgstr "Volver a artículos"
+
+#: comics/templates/manage/article_form.html
+msgid "Edit article"
+msgstr "Editar artículo"
+
+#: comics/templates/manage/article_form.html
+#, python-format
+msgid "%(counter)s piece registered"
+msgid_plural "%(counter)s pieces registered"
+msgstr[0] "%(counter)s pieza registrada"
+msgstr[1] "%(counter)s piezas registradas"
+
+#: comics/templates/manage/article_form.html
+msgid "Replace image"
+msgstr "Reemplazar imagen"
+
+#: comics/templates/manage/article_form.html
+msgid "Upload image"
+msgstr "Subir imagen"
+
+#: comics/templates/manage/article_form.html
+msgid "Current image"
+msgstr "Imagen actual"
+
+#: comics/templates/manage/article_form.html
+msgid "JPEG, PNG or WebP. It is converted to JPEG on save."
+msgstr "JPEG, PNG o WebP. Se convierte a JPEG al guardar."
+
+#: comics/templates/manage/collectable_list.html
+msgid "Collectable pieces"
+msgstr "Piezas de collectables"
+
+#: comics/templates/manage/collectable_list.html
+msgctxt "articles"
+msgid "All"
+msgstr "Todos"
+
+#: comics/templates/manage/collectable_list.html
+msgid "Search article or participant"
+msgstr "Buscar artículo o participante"
+
+#: comics/templates/manage/collectable_form.html
+msgid "Back to pieces"
+msgstr "Volver a piezas"
+
+#: comics/views/manage_collectables.py
+#, python-format
+msgid "Article created: %(article)s"
+msgstr "Artículo creado: %(article)s"
+
+#: comics/views/manage_collectables.py
+#, python-format
+msgid "Article saved: %(article)s"
+msgstr "Artículo guardado: %(article)s"
+
+#: comics/views/manage_collectables.py
+#, python-format
+msgid "Article deleted: %(article)s"
+msgstr "Artículo eliminado: %(article)s"
+
+#: comics/views/manage_collectables.py
+#, python-format
+msgid "“%(name)s” cannot be deleted: %(count)d piece of it is registered."
+msgid_plural "“%(name)s” cannot be deleted: %(count)d pieces of it are registered."
+msgstr[0] "“%(name)s” no se puede eliminar: tiene %(count)d pieza registrada."
+msgstr[1] "“%(name)s” no se puede eliminar: tiene %(count)d piezas registradas."
+
+#: comics/forms/catalog.py
+msgid "Choose the edition to link."
+msgstr "Elige la edición que quieres vincular."
+
+#: comics/forms/catalog.py
+msgid "The MyComicShop cover is missing."
+msgstr "Falta la portada de MyComicShop."
+
+#: comics/catalog_sources/service.py
+msgid "The edition does not exist: it may have been deleted."
+msgstr "La edición no existe: puede que la hayan eliminado."
+
+#: comics/catalog_sources/service.py
+#, python-format
+msgid "%(edition)s is already linked to another MyComicShop cover (%(id)s)."
+msgstr "%(edition)s ya está vinculada a otra portada de MyComicShop (%(id)s)."
+
+#: comics/catalog_sources/service.py
+#, python-format
+msgid "%(edition)s already has this MyComicShop ID."
+msgstr "%(edition)s ya tiene este ID de MyComicShop."
+
+#: comics/catalog_sources/service.py
+#, python-format
+msgid "Linked to the MyComicShop cover %(id)s."
+msgstr "Vinculada a la portada %(id)s de MyComicShop."
+
+#: comics/templates/manage/includes/catalog_series_dialog.html
+msgid "Link this cover?"
+msgstr "¿Vincular esta portada?"
+
+#: comics/templates/manage/includes/catalog_series_dialog.html
+msgid "Link"
+msgstr "Vincular"
+
+#: comics/templates/manage/includes/delete_dialog.html
+msgid "<strong id=\"deleteDialogBlockedName\"></strong> cannot be deleted."
+msgstr "<strong id=\"deleteDialogBlockedName\"></strong> no se puede eliminar."
+
+#: comics/templates/manage/includes/sold_purchase_blocked.html
+#: comics/views/collection_entries.py comics/views/manage_collectables.py
+#, python-format
+msgid "It was sold on %(date)s: delete the sale first."
+msgstr "Se vendió el %(date)s: elimina primero la venta."
+
+#: comics/views/collection_entries.py
+#, python-format
+msgid "It was sold on %(date)s and it has signatures registered."
+msgstr "Se vendió el %(date)s y tiene firmas registradas."
+
+#: comics/models/imports.py
+msgctxt "import batch"
+msgid "Open"
+msgstr "Abierto"
+
+#: comics/models/imports.py
+msgctxt "import batch"
+msgid "Closed"
+msgstr "Cerrado"
+
+#: comics/models/imports.py
+msgctxt "import row"
+msgid "No match"
+msgstr "Sin coincidencia"
+
+#: comics/models/imports.py
+msgctxt "import row"
+msgid "Possible match"
+msgstr "Posible coincidencia"
+
+#: comics/models/imports.py
+msgctxt "import row"
+msgid "Pending"
+msgstr "Pendiente"
+
+#: comics/models/imports.py
+msgctxt "import row"
+msgid "Created"
+msgstr "Creada"
+
+#: comics/models/imports.py
+msgctxt "import row"
+msgid "Linked"
+msgstr "Vinculada"
+
+#: comics/models/imports.py
+msgctxt "import row"
+msgid "Failed"
+msgstr "Con error"
+
+#: comics/models/imports.py
+msgid "The number belongs to another batch."
+msgstr "El número pertenece a otro lote."
+
+#: comics/catalog_sources/batches.py
+msgid "Select at least one variant."
+msgstr "Selecciona al menos una variante."
+
+#: comics/catalog_sources/batches.py
+#, python-format
+msgid "A batch can have at most %(count)s variants."
+msgstr "Un lote puede tener como máximo %(count)s variantes."
+
+#: comics/catalog_sources/batches.py
+msgid "Choose what to do with the name."
+msgstr "Elige qué hacer con el nombre."
+
+#: comics/catalog_sources/batches.py
+msgid "Choose an existing artist."
+msgstr "Elige un artista existente."
+
+#: comics/catalog_sources/batches.py
+msgid "An artist is only given to associate the name with it."
+msgstr "Solo se indica un artista para asociarle el nombre."
+
+#: comics/catalog_sources/batches.py
+#, python-format
+msgid "“%(name)s” is not a name of this batch."
+msgstr "“%(name)s” no es un nombre de este lote."
+
+#: comics/catalog_sources/batches.py
+msgid "The batch is closed."
+msgstr "El lote está cerrado."
+
+#: comics/catalog_sources/batches.py
+msgid "A new name is only given to create an artist."
+msgstr "Solo se indica un nombre nuevo para crear un artista."
+
+#: comics/editions.py
+msgid "The edition could not be saved: something it uses changed meanwhile. Try again."
+msgstr "No se pudo guardar la edición: algo que usa cambió mientras tanto. Inténtalo de nuevo."
+
+#: comics/catalog_sources/batch_creation.py
+msgid "Choose the publishing of the batch first."
+msgstr "Elige primero el publishing del lote."
+
+#: comics/catalog_sources/batch_creation.py
+#, python-format
+msgid "Imported from MyComicShop (batch #%(batch)s)."
+msgstr "Importada desde MyComicShop (lote #%(batch)s)."
+
+#: comics/catalog_sources/batch_creation.py
+#, python-format
+msgid "Resolve these names first: %(names)s."
+msgstr "Resuelve primero estos nombres: %(names)s."
+
+#: comics/catalog_sources/batch_creation.py
+msgid "The variant is not in this batch."
+msgstr "La variante no está en este lote."
+
+#: comics/catalog_sources/batch_creation.py
+msgid "The variant already has its edition."
+msgstr "La variante ya tiene su edición."
+
+#: comics/catalog_sources/batch_creation.py
+msgid "Choose one of the editions the variant may be."
+msgstr "Elige una de las ediciones que puede ser la variante."
+
+#: comics/catalog_sources/batch_creation.py
+msgid "Comi did not accept the catalogue's value: fill it in yourself."
+msgstr "Comi no aceptó el valor del catálogo: rellénalo tú."
+
+#: comics/views/manage_imports.py
+msgid "preselected"
+msgstr "preseleccionado"
+
+#: comics/views/manage_imports.py
+#, python-format
+msgid "Name resolved: %(name)s"
+msgstr "Nombre resuelto: %(name)s"
+
+#: comics/views/manage_imports.py
+#, python-format
+msgid "Resolution undone: %(name)s"
+msgstr "Resolución deshecha: %(name)s"
+
+#: comics/views/manage_imports.py
+msgid "There was nothing to create: no selected variant is pending."
+msgstr "No había nada que crear: ninguna variante seleccionada está pendiente."
+
+#: comics/views/manage_imports.py
+#, python-format
+msgid "%(variant)s linked to %(edition)s."
+msgstr "%(variant)s vinculada a %(edition)s."
+
+#: comics/views/manage_imports.py
+msgid "Batch closed."
+msgstr "Lote cerrado."
+
+#: comics/forms/catalog.py
+msgid "The name is missing."
+msgstr "Falta el nombre."
+
+#: comics/templates/manage/base_manage.html
+msgid "Imports"
+msgstr "Importaciones"
+
+#: comics/templates/manage/import_batch_list.html
+msgid "No import batches yet."
+msgstr "Todavía no hay lotes de importación."
+
+#: comics/templates/manage/import_batch_list.html
+msgid "No publishing"
+msgstr "Sin publishing"
+
+#: comics/templates/manage/import_batch_list.html
+#, python-format
+msgid "By %(user)s on %(date)s"
+msgstr "Por %(user)s el %(date)s"
+
+#: comics/templates/manage/import_batch_list.html
+#, python-format
+msgid "Open the batch of %(title)s"
+msgstr "Abrir el lote de %(title)s"
+
+#: comics/templates/manage/import_batch_list.html
+msgid "Open"
+msgstr "Abrir"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Back to imports"
+msgstr "Volver a importaciones"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Close batch"
+msgstr "Cerrar lote"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Create selected"
+msgstr "Crear seleccionadas"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "MyComicShop series"
+msgstr "Serie de MyComicShop"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Publisher"
+msgstr "Editorial"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "No publishing of Comi matched this series, so every number counts as a new issue. The variants cannot be created until the batch has a publishing."
+msgstr "Ningún publishing de Comi coincide con esta serie, así que todos los números cuentan como issues nuevos. Las variantes no se pueden crear hasta que el lote tenga un publishing."
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "The batch is closed: it is kept as a record of what was imported and can no longer change."
+msgstr "El lote está cerrado: se guarda como registro de lo importado y ya no puede cambiar."
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Credit names"
+msgstr "Nombres de los créditos"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Resolve each name once: it applies to every variant of the batch. A variant with names still to resolve is not created."
+msgstr "Resuelve cada nombre una vez: se aplica a todas las variantes del lote. Una variante con nombres sin resolver no se crea."
+
+#: comics/templates/manage/import_batch_detail.html
+#, python-format
+msgid "Guessed from the text: %(artist)s?"
+msgstr "Adivinado del texto: ¿%(artist)s?"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "No artist has this name"
+msgstr "Ningún artista tiene este nombre"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Existing artist"
+msgstr "Artista existente"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Associate"
+msgstr "Asociar"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "New artist"
+msgstr "Artista nuevo"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "No names to resolve."
+msgstr "No hay nombres que resolver."
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Resolved"
+msgstr "Resueltos"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Deleted artist"
+msgstr "Artista eliminado"
+
+#: comics/templates/manage/import_batch_detail.html
+#, python-format
+msgid "New artist: %(name)s"
+msgstr "Artista nuevo: %(name)s"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Discarded"
+msgstr "Descartado"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Undo"
+msgstr "Deshacer"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Existing issue:"
+msgstr "Issue existente:"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "New issue"
+msgstr "Issue nuevo"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "The batch does not change the story creators of an existing issue."
+msgstr "El lote no cambia los creadores de la historia de un issue existente."
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Story creators"
+msgstr "Creadores de la historia"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "None proposed."
+msgstr "Ninguno propuesto."
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Selected"
+msgstr "Seleccionada"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Not selected"
+msgstr "Sin seleccionar"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "to fill in"
+msgstr "por rellenar"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "None."
+msgstr "Ninguno."
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "It may be one of these editions"
+msgstr "Puede ser una de estas ediciones"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Those editions are no longer in Comi."
+msgstr "Esas ediciones ya no están en Comi."
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "MyComicShop text"
+msgstr "Texto de MyComicShop"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Close the batch?"
+msgstr "¿Cerrar el lote?"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "A closed batch can no longer change: its pending variants are not created. The editions already created stay as they are."
+msgstr "Un lote cerrado ya no puede cambiar: sus variantes pendientes no se crean. Las ediciones ya creadas se quedan como están."
+
+#: comics/templates/manage/includes/import_credit_chips.html
+msgid "Matched an artist"
+msgstr "Coincide con un artista"
+
+#: comics/templates/manage/includes/import_credit_chips.html
+msgid "Guessed from the text: confirm it"
+msgstr "Adivinado del texto: confírmalo"
+
+#: comics/templates/manage/includes/import_credit_chips.html
+msgid "No artist has this name: resolve it"
+msgstr "Ningún artista tiene este nombre: resuélvelo"
+
+#: comics/templates/manage/includes/import_credit_chips.html
+msgid "Resolved as an existing artist"
+msgstr "Resuelto como un artista existente"
+
+#: comics/templates/manage/includes/import_credit_chips.html
+msgid "New artist, created with the batch"
+msgstr "Artista nuevo, se crea con el lote"
+
+#: comics/views/manage_imports.py
+#, python-format
+msgid "%(count)d edition created."
+msgid_plural "%(count)d editions created."
+msgstr[0] "%(count)d edición creada."
+msgstr[1] "%(count)d ediciones creadas."
+
+#: comics/views/manage_imports.py
+#, python-format
+msgid "%(count)d artist created."
+msgid_plural "%(count)d artists created."
+msgstr[0] "%(count)d artista creado."
+msgstr[1] "%(count)d artistas creados."
+
+#: comics/views/manage_imports.py
+#, python-format
+msgid "%(count)d variant could not be created: see its errors."
+msgid_plural "%(count)d variants could not be created: see their errors."
+msgstr[0] "%(count)d variante no se pudo crear: mira sus errores."
+msgstr[1] "%(count)d variantes no se pudieron crear: mira sus errores."
+
+#: comics/templates/manage/import_batch_list.html
+#, python-format
+msgid "%(counter)s import batch"
+msgid_plural "%(counter)s import batches"
+msgstr[0] "%(counter)s lote de importación"
+msgstr[1] "%(counter)s lotes de importación"
+
+#: comics/templates/manage/import_batch_list.html
+#, python-format
+msgid "%(counter)s variant"
+msgid_plural "%(counter)s variants"
+msgstr[0] "%(counter)s variante"
+msgstr[1] "%(counter)s variantes"
+
+#: comics/templates/manage/import_batch_list.html
+#, python-format
+msgid "%(counter)s pending"
+msgid_plural "%(counter)s pending"
+msgstr[0] "%(counter)s pendiente"
+msgstr[1] "%(counter)s pendientes"
+
+#: comics/templates/manage/import_batch_list.html
+#, python-format
+msgid "%(counter)s created"
+msgid_plural "%(counter)s created"
+msgstr[0] "%(counter)s creada"
+msgstr[1] "%(counter)s creadas"
+
+#: comics/templates/manage/import_batch_list.html
+#, python-format
+msgid "%(counter)s linked"
+msgid_plural "%(counter)s linked"
+msgstr[0] "%(counter)s vinculada"
+msgstr[1] "%(counter)s vinculadas"
+
+#: comics/templates/manage/import_batch_list.html
+#, python-format
+msgid "%(counter)s failed"
+msgid_plural "%(counter)s failed"
+msgstr[0] "%(counter)s con error"
+msgstr[1] "%(counter)s con errores"
+
+#: comics/templates/manage/import_batch_detail.html
+#, python-format
+msgid "Story: %(counter)s number"
+msgid_plural "Story: %(counter)s numbers"
+msgstr[0] "Historia: %(counter)s número"
+msgstr[1] "Historia: %(counter)s números"
+
+#: comics/templates/manage/import_batch_detail.html
+#, python-format
+msgid "Cover: %(counter)s variant"
+msgid_plural "Cover: %(counter)s variants"
+msgstr[0] "Portada: %(counter)s variante"
+msgstr[1] "Portada: %(counter)s variantes"
+
+#: comics/catalog_sources/batches.py
+msgid "The publishing can no longer change: some variants of the batch already have their edition."
+msgstr "El publishing ya no puede cambiar: algunas variantes del lote ya tienen su edición."
+
+#: comics/forms/catalog.py
+msgid "Choose a publishing."
+msgstr "Elige un publishing."
+
+#: comics/forms/catalog.py
+msgid "Choose an existing publishing."
+msgstr "Elige un publishing existente."
+
+#: comics/forms/catalog.py
+msgid "The selection is not valid."
+msgstr "La selección no es válida."
+
+#: comics/views/manage_imports.py
+#, python-format
+msgid "The batch now goes to %(publishing)s."
+msgstr "El lote va ahora a %(publishing)s."
+
+#: comics/views/manage_imports.py
+#, python-format
+msgid "The batch already goes to %(publishing)s."
+msgstr "El lote ya va a %(publishing)s."
+
+#: comics/views/manage_imports.py
+msgid "Selection saved."
+msgstr "Selección guardada."
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Change publishing"
+msgstr "Cambiar publishing"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Use this publishing"
+msgstr "Usar este publishing"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Which numbers already have their issue and which variants Comi may already have are looked up again in it."
+msgstr "Se vuelve a buscar en él qué números ya tienen su issue y qué variantes puede tener ya Comi."
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Check the variants to create, then save the selection."
+msgstr "Marca las variantes que quieres crear y guarda la selección."
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Save selection"
+msgstr "Guardar selección"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Select all"
+msgstr "Seleccionar todas"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Select none"
+msgstr "No seleccionar ninguna"
+
+#: comics/views/manage_imports.py
+msgid "The batch changed meanwhile (closed or given another publishing): the other variants were not tried."
+msgstr "El lote cambió mientras tanto (se cerró o se le dio otro publishing): las demás variantes no se intentaron."
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Save the selection before creating."
+msgstr "Guarda la selección antes de crear."
+
+#: comics/forms/catalog.py
+msgid "Not set"
+msgstr "Sin fijar"
+
+#: comics/forms/catalog.py
+msgid "Inherit"
+msgstr "Heredar"
+
+#: comics/forms/catalog.py
+msgid "Remove from this variant"
+msgstr "Quitar de esta variante"
+
+#: comics/forms/catalog.py
+msgid "Add existing artists"
+msgstr "Añadir artistas existentes"
+
+#: comics/forms/catalog.py
+msgid "Leave blank"
+msgstr "Dejar en blanco"
+
+#: comics/catalog_sources/batch_values.py
+msgid "Choose existing artists."
+msgstr "Elige artistas existentes."
+
+#: comics/views/manage_imports.py
+msgid "left blank"
+msgstr "en blanco"
+
+#: comics/views/manage_imports.py
+msgid "Inherits nothing: Comi did not accept the catalogue's value."
+msgstr "No hereda nada: Comi no aceptó el valor del catálogo."
+
+#: comics/views/manage_imports.py
+msgid "Inherits nothing."
+msgstr "No hereda nada."
+
+#: comics/views/manage_imports.py
+msgid "Inherits the preselected value: %(value)s"
+msgstr "Hereda el valor preseleccionado: %(value)s"
+
+#: comics/views/manage_imports.py
+msgid "Inherits the batch value: %(value)s"
+msgstr "Hereda el valor del lote: %(value)s"
+
+#: comics/views/manage_imports.py
+msgid "Inherits the catalogue value: %(value)s"
+msgstr "Hereda el valor del catálogo: %(value)s"
+
+#: comics/views/manage_imports.py
+msgid "The batch is busy (it is creating editions): try again in a moment."
+msgstr "El lote está ocupado (está creando ediciones): vuelve a intentarlo en un momento."
+
+#: comics/views/manage_imports.py
+msgid "Values for every variant saved."
+msgstr "Valores para todas las variantes guardados."
+
+#: comics/views/manage_imports.py
+msgid "%(variant)s saved."
+msgstr "%(variant)s guardada."
+
+#: comics/views/manage_imports.py
+msgid "%(variant)s had no changes."
+msgstr "%(variant)s no tenía cambios."
+
+#: comics/views/manage_imports.py
+msgid "%(variant)s is back to the proposal."
+msgstr "%(variant)s vuelve a la propuesta."
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Values for every variant"
+msgstr "Valores para todas las variantes"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "None set: each variant keeps what the catalogue gives."
+msgstr "No hay ninguno: cada variante se queda con lo que da el catálogo."
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Change the values for every variant"
+msgstr "Cambiar los valores para todas las variantes"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "A value set here replaces the catalogue's in every variant that does not change it. Leave a field empty to keep the catalogue's."
+msgstr "Un valor fijado aquí sustituye al del catálogo en todas las variantes que no lo cambian. Deja un campo vacío para mantener el del catálogo."
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "A field left empty inherits the value below it. Check “Leave blank” to save the edition without that value."
+msgstr "Un campo vacío hereda el valor que aparece debajo. Marca “Dejar en blanco” para guardar la edición sin ese valor."
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Save changes"
+msgstr "Guardar cambios"
+
+#: comics/templates/manage/import_batch_detail.html
+msgid "Reset to proposal"
+msgstr "Volver a la propuesta"
+
+#: comics/templates/manage/import_batch_detail.html
+msgctxt "import row"
+msgid "Changed"
+msgstr "Modificada"
+
+#: comics/templates/manage/includes/catalog_series_dialog.html
+msgid "Import selected"
+msgstr "Importar seleccionadas"
+
+#: comics/templates/manage/import_batch_list.html
+msgid "New batch"
+msgstr "Nuevo lote"
+
+#: comics/templates/manage/import_batch_list.html
+msgid "To start a batch, enter a MyComicShop series ID or paste its URL, then check the variants to import."
+msgstr "Para empezar un lote, escribe el ID de una serie de MyComicShop o pega su URL y marca las variantes que quieres importar."
+
+#: comics/forms/catalog.py
+msgid "The MyComicShop series is missing."
+msgstr "Falta la serie de MyComicShop."
+
+#: comics/templates/my_comics/base_comics.html
+#: comics/templates/my_comics/hunt_list.html
+msgid "Hunt"
+msgstr "Cacería"
+
+#: comics/templates/includes/hunt_button.html
+#: comics/templates/my_comics/edition_detail.html
+#: comics/templates/my_comics/edition_list.html
+msgid "Looking for it"
+msgstr "Lo busco"
+
+#: comics/templates/includes/hunt_button.html
+msgid "Stop looking for it"
+msgstr "Ya no lo busco"
+
+#: comics/templates/my_comics/hunt_list.html
+msgid "You're not looking for any edition yet. Mark the ones you want from the Editions list."
+msgstr "Todavía no buscas ninguna edición. Marca las que quieras desde la lista de Ediciones."
+
+#: comics/templates/my_comics/hunt_list.html
+msgid "Go to Editions"
+msgstr "Ir a Ediciones"
+
+#: comics/templates/my_comics/hunt_list.html
+msgid "Edit note"
+msgstr "Editar nota"
+
+#: comics/templates/my_comics/hunt_list.html
+msgid "Add a note"
+msgstr "Agregar una nota"
+
+#: comics/forms/collections.py
+msgid "Note"
+msgstr "Nota"
+
+#: comics/forms/collections.py
+msgid "Up to 500 characters. Leave it empty to remove the note."
+msgstr "Hasta 500 caracteres. Déjala vacía para quitar la nota."
+
+#: comics/views/hunt.py
+#, python-format
+msgid "%(edition)s is now in your hunt."
+msgstr "%(edition)s ya está en tu cacería."
+
+#: comics/views/hunt.py
+#, python-format
+msgid "%(edition)s is no longer in your hunt."
+msgstr "%(edition)s ya no está en tu cacería."
+
+#: comics/views/hunt.py
+msgid "Note saved."
+msgstr "Nota guardada."
+
+#: comics/views/hunt.py
+msgid "Note removed."
+msgstr "Nota eliminada."
+
+#: comics/views/hunt.py
+#, python-format
+msgid "The note was not saved: %(error)s"
+msgstr "No se guardó la nota: %(error)s"
+
+#: comics/models/notifications.py
+#, python-format
+msgid "You got %(edition)s: it left your hunt."
+msgstr "Conseguiste %(edition)s: salió de tu cacería."
+
+#: comics/templates/notifications/includes/item.html
+msgid "Keep looking for it"
+msgstr "Seguir buscándolo"
+
+#: comics/views/notifications.py
+#, python-format
+msgid "%(edition)s is back in your hunt."
+msgstr "%(edition)s volvió a tu cacería."
+
+#: comics/templates/manage/collection_list.html
+msgid "Sort by"
+msgstr "Ordenar por"
+
+#: comics/views/collection_entries.py
+msgid "Title A–Z"
+msgstr "Título A–Z"
+
+#: comics/views/collection_entries.py
+msgid "Trade date: newest first"
+msgstr "Fecha de operación: más recientes primero"
+
+#: comics/views/collection_entries.py
+msgid "Trade date: oldest first"
+msgstr "Fecha de operación: más antiguas primero"
+
+#: comics/views/collection_entries.py
+msgid "Amount: highest first"
+msgstr "Monto: mayor primero"
+
+#: comics/views/collection_entries.py
+msgid "Amount: lowest first"
+msgstr "Monto: menor primero"
+
+#: comics/templates/manage/collection_list.html
+msgid "All participants"
+msgstr "Todos los participantes"
+
+#: comics/templates/manage/collection_list.html
+msgid "No participant"
+msgstr "Sin participante"
+
+#: comics/templates/manage/collection_list.html
+msgid "All statuses"
+msgstr "Todos los estados"
+
+#: comics/models/collections.py
+msgid "In collection"
+msgstr "En la colección"
+
+#: comics/models/collections.py
+msgid "Sale without linked purchase"
+msgstr "Venta sin compra vinculada"
+
+#: comics/templates/manage/includes/collection_row.html
+msgid "No purchase linked"
+msgstr "Sin compra vinculada"

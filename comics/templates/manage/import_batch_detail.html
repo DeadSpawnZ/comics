@@ -1,0 +1,540 @@
+{% extends 'manage/base_manage.html' %}
+{% load i18n %}
+
+{% block breadcrumb %}
+<a href="{% url 'manage_import_batches' %}">{% translate "Imports" %}</a>
+<span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+<span class="is-current">{{ batch.series_title }}</span>
+{% endblock %}
+
+{% block manage_content %}
+<div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+  <div class="d-flex align-items-center gap-2 flex-wrap">
+    <a class="md-icon-btn" href="{% url 'manage_import_batches' %}" aria-label="{% translate 'Back to imports' %}" title="{% translate 'Back to imports' %}">
+      <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+    </a>
+    <h1 class="md-headline-small mb-0">{{ batch.series_title }}{% if batch.series_year %} ({{ batch.series_year }}){% endif %}</h1>
+    <span class="md-assist-chip{% if is_open %} md-assist-chip--primary{% endif %}">{{ batch.get_status_display }}</span>
+  </div>
+  {% if is_open %}
+  <div class="d-flex align-items-center gap-2 flex-wrap">
+    <button type="button" class="md-btn md-btn--outlined" data-bs-toggle="modal" data-bs-target="#import-close-dialog">
+      <span class="material-symbols-outlined" aria-hidden="true">lock</span>
+      {% translate "Close batch" %}
+    </button>
+    {% if can_select %}
+      {# "Create selected" posts the saved selection, not the checkboxes as they are now. #}
+      <span class="md-body-medium">{% translate "Save the selection before creating." %}</span>
+    {% endif %}
+    <form method="post" action="{% url 'manage_import_batch_create' batch.pk %}">
+      {% csrf_token %}
+      <button type="submit" class="md-btn md-btn--filled" {% if not can_create %}disabled{% endif %}>
+        <span class="material-symbols-outlined" aria-hidden="true">library_add</span>
+        {% translate "Create selected" %} ({{ to_create }})
+      </button>
+    </form>
+  </div>
+  {% endif %}
+</div>
+
+{# ---------- The batch ---------- #}
+<div class="md-surface-card mb-3">
+  <dl class="import-facts">
+    <dt>{% translate "MyComicShop series" %}</dt>
+    <dd>
+      <a href="{{ series_url }}" target="_blank" rel="noopener noreferrer">
+        {{ batch.series_title }}{% if batch.series_year %} ({{ batch.series_year }}){% endif %} · TID {{ batch.series_id }}
+        <span class="material-symbols-outlined" aria-hidden="true">open_in_new</span>
+      </a>
+    </dd>
+    {% if batch.series_publisher %}
+      <dt>{% translate "Publisher" %}</dt>
+      <dd>{{ batch.series_publisher }}</dd>
+    {% endif %}
+    <dt>Publishing</dt>
+    <dd>
+      {% if batch.publishing %}
+        <a href="{% url 'manage_publishing_edit' batch.publishing.pk %}">{{ batch.publishing.select_label }}</a>
+      {% else %}
+        <span class="md-assist-chip md-assist-chip--error">{% translate "No publishing" %}</span>
+      {% endif %}
+      {% if can_change_publishing %}
+        {# Without a publishing the chooser is shown at once; with one, it opens from "Change publishing" (no script). #}
+        {% if batch.publishing %}<details class="import-publishing"><summary>{% translate "Change publishing" %}</summary>{% endif %}
+        <form method="post" action="{% url 'manage_import_batch_publishing' batch.pk %}" class="import-publishing__form">
+          {% csrf_token %}
+          <div class="form-floating md-field">
+            <select class="form-select" id="import-publishing" name="publishing" data-combobox>
+              <option value="">{% translate "Choose a publishing…" %}</option>
+              {% for value, label in publishing_options %}
+                <option value="{{ value }}"{% if value == batch.publishing_id %} selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+            <label for="import-publishing">Publishing</label>
+          </div>
+          <button type="submit" class="md-btn md-btn--tonal">
+            <span class="material-symbols-outlined" aria-hidden="true">check</span>
+            {% translate "Use this publishing" %}
+          </button>
+        </form>
+        <p class="md-body-medium mb-0">{% translate "Which numbers already have their issue and which variants Comi may already have are looked up again in it." %}</p>
+        {% if batch.publishing %}</details>{% endif %}
+      {% endif %}
+    </dd>
+    <dt>{% translate "Created" %}</dt>
+    <dd>{% blocktranslate with user=batch.created_by.username|default:"—" date=batch.created_at|date:"SHORT_DATETIME_FORMAT" %}By {{ user }} on {{ date }}{% endblocktranslate %}</dd>
+  </dl>
+  {% if not batch.publishing %}
+    <div class="editor-errors mt-3" role="alert">
+      <span class="material-symbols-outlined" aria-hidden="true">error</span>
+      <div>{% translate "No publishing of Comi matched this series, so every number counts as a new issue. The variants cannot be created until the batch has a publishing." %}</div>
+    </div>
+  {% endif %}
+  {% if batch.warnings %}
+    <ul class="catalog-import__summary mt-3 mb-0">
+      {% for warning in batch.warnings %}
+        <li class="catalog-import__item catalog-import__item--warning">
+          <span class="material-symbols-outlined" aria-hidden="true">warning</span>{{ warning }}
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+  {% if not is_open %}
+    <p class="md-body-medium mt-3 mb-0">{% translate "The batch is closed: it is kept as a record of what was imported and can no longer change." %}</p>
+  {% endif %}
+</div>
+
+{# ---------- Values for every variant ---------- #}
+<section class="md-surface-card mb-3" id="import-defaults" aria-labelledby="import-defaults-title">
+  <h2 class="md-title-medium mb-2" id="import-defaults-title">{% translate "Values for every variant" %}</h2>
+  {% if defaults %}
+    <ul class="import-summary mb-2">
+      {% for item in defaults %}
+        <li><span class="import-summary__label">{{ item.label }}:</span> {{ item.value }}</li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="md-body-medium">{% translate "None set: each variant keeps what the catalogue gives." %}</p>
+  {% endif %}
+  {% if defaults_form %}
+    <details class="import-edit">
+      <summary>{% translate "Change the values for every variant" %}</summary>
+      <p class="md-body-medium">{% translate "A value set here replaces the catalogue's in every variant that does not change it. Leave a field empty to keep the catalogue's." %}</p>
+      <form method="post" action="{% url 'manage_import_batch_defaults' batch.pk %}" class="import-edit__form">
+        {% csrf_token %}
+        <div class="import-values">
+          {% for field in defaults_form %}
+            {% include 'manage/includes/field.html' %}
+          {% endfor %}
+        </div>
+        <button type="submit" class="md-btn md-btn--tonal">
+          <span class="material-symbols-outlined" aria-hidden="true">save</span>
+          {% translate "Save" %}
+        </button>
+      </form>
+    </details>
+  {% endif %}
+</section>
+
+{# ---------- Credit names ---------- #}
+<section class="md-surface-card mb-3" id="import-names" aria-labelledby="import-names-title">
+  <h2 class="md-title-medium mb-2" id="import-names-title">{% translate "Credit names" %}</h2>
+  {% if pending %}
+    <p class="md-body-medium">{% translate "Resolve each name once: it applies to every variant of the batch. A variant with names still to resolve is not created." %}</p>
+    <ul class="import-names">
+      {% for name in pending %}
+      <li class="import-name">
+        <div class="import-name__head">
+          <strong>{{ name.name }}</strong>
+          {% if name.artist_id %}
+            <span class="md-assist-chip import-credit--guessed">
+              <span class="material-symbols-outlined" aria-hidden="true">help</span>
+              {% blocktranslate with artist=name.artist %}Guessed from the text: {{ artist }}?{% endblocktranslate %}
+            </span>
+          {% else %}
+            <span class="md-assist-chip md-assist-chip--error">
+              <span class="material-symbols-outlined" aria-hidden="true">person_off</span>
+              {% translate "No artist has this name" %}
+            </span>
+          {% endif %}
+          <span class="md-body-medium">
+            {% if name.numbers %}{% blocktranslate count counter=name.numbers %}Story: {{ counter }} number{% plural %}Story: {{ counter }} numbers{% endblocktranslate %}{% endif %}{% if name.numbers and name.rows %} · {% endif %}{% if name.rows %}{% blocktranslate count counter=name.rows %}Cover: {{ counter }} variant{% plural %}Cover: {{ counter }} variants{% endblocktranslate %}{% endif %}
+          </span>
+        </div>
+        {% if is_open %}
+        <div class="import-name__forms">
+          <form method="post" action="{% url 'manage_import_batch_resolve_name' batch.pk %}" class="import-name__form">
+            {% csrf_token %}
+            <input type="hidden" name="name" value="{{ name.name }}">
+            <input type="hidden" name="action" value="artist">
+            <div class="form-floating md-field">
+              {# Its options come from the page's artist list (import-artists, below), filled in once by the page script. #}
+              <select class="form-select" id="import-name-{{ forloop.counter }}-artist" name="artist" data-combobox
+                      data-import-artists data-selected="{{ name.artist_id|default_if_none:'' }}">
+                <option value="">{% translate "Choose an artist…" %}</option>
+              </select>
+              <label for="import-name-{{ forloop.counter }}-artist">{% translate "Existing artist" %}</label>
+            </div>
+            <button type="submit" class="md-btn md-btn--tonal">
+              <span class="material-symbols-outlined" aria-hidden="true">link</span>
+              {% translate "Associate" %}
+            </button>
+          </form>
+          <form method="post" action="{% url 'manage_import_batch_resolve_name' batch.pk %}" class="import-name__form">
+            {% csrf_token %}
+            <input type="hidden" name="name" value="{{ name.name }}">
+            <input type="hidden" name="action" value="new">
+            <div class="form-floating md-field">
+              <input type="text" class="form-control" id="import-name-{{ forloop.counter }}-new" name="new_name" value="{{ name.name }}" placeholder="{% translate 'Name' %}">
+              <label for="import-name-{{ forloop.counter }}-new">{% translate "New artist" %}</label>
+            </div>
+            <button type="submit" class="md-btn md-btn--tonal">
+              <span class="material-symbols-outlined" aria-hidden="true">person_add</span>
+              {% translate "Create artist" %}
+            </button>
+          </form>
+          <form method="post" action="{% url 'manage_import_batch_resolve_name' batch.pk %}" class="import-name__form">
+            {% csrf_token %}
+            <input type="hidden" name="name" value="{{ name.name }}">
+            <input type="hidden" name="action" value="discard">
+            <button type="submit" class="md-btn md-btn--text">
+              <span class="material-symbols-outlined" aria-hidden="true">block</span>
+              {% translate "Discard" %}
+            </button>
+          </form>
+        </div>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="md-body-medium">{% translate "No names to resolve." %}</p>
+  {% endif %}
+
+  {% if resolved %}
+    <div class="md-section-label mt-3">{% translate "Resolved" %}</div>
+    <ul class="import-resolved">
+      {% for resolution in resolved %}
+      <li>
+        <span>{{ resolution.name }}</span>
+        <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+        {% if resolution.action == 'artist' %}
+          <span class="md-assist-chip md-assist-chip--primary"><span class="material-symbols-outlined" aria-hidden="true">task_alt</span>{{ resolution.target|default:_("Deleted artist") }}</span>
+        {% elif resolution.action == 'new' %}
+          <span class="md-assist-chip md-assist-chip--primary"><span class="material-symbols-outlined" aria-hidden="true">person_add</span>{% blocktranslate with name=resolution.target %}New artist: {{ name }}{% endblocktranslate %}</span>
+        {% else %}
+          <span class="md-assist-chip import-credit--discarded"><span class="material-symbols-outlined" aria-hidden="true">block</span>{% translate "Discarded" %}</span>
+        {% endif %}
+        {% if is_open %}
+          <form method="post" action="{% url 'manage_import_batch_clear_name' batch.pk %}" class="d-inline">
+            {% csrf_token %}
+            <input type="hidden" name="name" value="{{ resolution.name }}">
+            <button type="submit" class="md-btn md-btn--text">
+              <span class="material-symbols-outlined" aria-hidden="true">undo</span>
+              {% translate "Undo" %}
+            </button>
+          </form>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+</section>
+
+{# ---------- Selection ---------- #}
+{# The rows' checkboxes belong to this form through their form attribute: the rows hold forms of their own (Link), which cannot be nested. #}
+{% if can_select %}
+<form method="post" action="{% url 'manage_import_batch_select' batch.pk %}" id="import-selection" class="md-surface-card mb-3 import-selection">
+  {% csrf_token %}
+  <span class="md-body-medium">{% translate "Check the variants to create, then save the selection." %}</span>
+  <div class="d-flex align-items-center gap-2 flex-wrap">
+    <button type="submit" class="md-btn md-btn--tonal">
+      <span class="material-symbols-outlined" aria-hidden="true">save</span>
+      {% translate "Save selection" %}
+    </button>
+    <button type="submit" name="select" value="all" class="md-btn md-btn--text">
+      <span class="material-symbols-outlined" aria-hidden="true">select_all</span>
+      {% translate "Select all" %}
+    </button>
+    <button type="submit" name="select" value="none" class="md-btn md-btn--text">
+      <span class="material-symbols-outlined" aria-hidden="true">deselect</span>
+      {% translate "Select none" %}
+    </button>
+  </div>
+</form>
+{% endif %}
+
+{# ---------- One block per number ---------- #}
+{% for number in numbers %}
+<section class="md-surface-card mb-3" aria-labelledby="import-number-{{ number.pk }}">
+  <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
+    <h2 class="md-title-medium mb-0" id="import-number-{{ number.pk }}">#{{ number.number }}</h2>
+    {% if number.issue %}
+      <span class="md-body-medium">
+        {% translate "Existing issue:" %}
+        <a href="{% url 'manage_issue_history' number.issue.pk %}">{{ number.issue }}</a>
+      </span>
+    {% else %}
+      <span class="md-assist-chip">{% translate "New issue" %}</span>
+    {% endif %}
+  </div>
+  {% if number.issue %}
+    <p class="md-body-medium">{% translate "The batch does not change the story creators of an existing issue." %}</p>
+  {% else %}
+    <div class="md-section-label">{% translate "Story creators" %}</div>
+    {% translate "None proposed." as no_creators %}
+    {% include 'manage/includes/import_credit_chips.html' with chips=number.chips empty_text=no_creators %}
+  {% endif %}
+
+  <ul class="import-rows">
+    {% for row in number.row_list %}
+    <li class="import-row" id="import-row-{{ row.pk }}">
+      <div class="import-row__thumb">
+        {% if row.cover_url %}
+          <img src="{{ row.cover_url }}" alt="" loading="lazy" referrerpolicy="no-referrer">
+        {% else %}
+          <span class="material-symbols-outlined" aria-hidden="true">image</span>
+        {% endif %}
+      </div>
+      <div class="import-row__main">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+          {% if row.can_select %}
+            <input type="checkbox" class="form-check-input" id="import-select-{{ row.pk }}" name="rows" value="{{ row.pk }}" form="import-selection"{% if row.selected %} checked{% endif %}>
+            <label for="import-select-{{ row.pk }}"><strong>{{ row.label }}</strong></label>
+          {% else %}
+            <strong>{{ row.label }}</strong>
+          {% endif %}
+          <span class="md-assist-chip{% if row.status == 'created' or row.status == 'linked' %} md-assist-chip--primary{% elif row.status == 'failed' %} md-assist-chip--error{% endif %}">{{ row.get_status_display }}</span>
+          {# A row that can change shows its checkbox instead (above). #}
+          {% if not row.can_select %}
+            {% if row.selected %}
+              <span class="md-assist-chip"><span class="material-symbols-outlined" aria-hidden="true">check_box</span>{% translate "Selected" %}</span>
+            {% else %}
+              <span class="md-assist-chip"><span class="material-symbols-outlined" aria-hidden="true">check_box_outline_blank</span>{% translate "Not selected" %}</span>
+            {% endif %}
+          {% endif %}
+          {% if row.match == 'probable' %}
+            <span class="md-assist-chip">{{ row.get_match_display }}</span>
+          {% endif %}
+          {% if row.is_edited %}
+            <span class="md-assist-chip"><span class="material-symbols-outlined" aria-hidden="true">edit</span>{% translate "Changed" context "import row" %}</span>
+          {% endif %}
+          {% if row.edition %}
+            <a class="md-btn md-btn--text" href="{% url 'manage_edition_edit' row.edition.pk %}">
+              <span class="material-symbols-outlined" aria-hidden="true">menu_book</span>{{ row.edition.short_name }}
+            </a>
+          {% endif %}
+        </div>
+
+        <ul class="import-summary">
+          {% for item in row.summary %}
+            <li{% if item.missing %} class="import-summary__missing"{% endif %}>
+              <span class="import-summary__label">{{ item.label }}:</span>
+              {% if item.missing %}{% translate "to fill in" %}{% else %}{{ item.value }}{% if item.note %} <span class="md-body-medium">({{ item.note }})</span>{% endif %}{% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+
+        <div class="md-section-label">{% translate "Cover artists" %}</div>
+        {% translate "None." as no_cover_artists %}
+        {% include 'manage/includes/import_credit_chips.html' with chips=row.chips empty_text=no_cover_artists %}
+
+        {% if row.warnings_list %}
+          <ul class="catalog-import__summary mt-2 mb-0">
+            {% for warning in row.warnings_list %}
+              <li class="catalog-import__item catalog-import__item--warning">
+                <span class="material-symbols-outlined" aria-hidden="true">warning</span>{{ warning }}
+              </li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+
+        {% if row.error_list %}
+          <div class="editor-errors mt-2" role="alert">
+            <span class="material-symbols-outlined" aria-hidden="true">error</span>
+            <ul>
+              {% for label, field_errors in row.error_list %}
+                {% for error in field_errors %}<li>{% if label %}{{ label }}: {% endif %}{{ error }}</li>{% endfor %}
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
+
+        {% if row.match == 'probable' and not row.edition %}
+          <div class="md-section-label mt-2">{% translate "It may be one of these editions" %}</div>
+          <ul class="import-probable">
+            {% for edition in row.probable_editions.all %}
+            <li>
+              <a href="{% url 'manage_edition_edit' edition.pk %}">{{ edition.short_name }}</a>
+              <span class="md-body-medium">{% blocktranslate with printing=edition.printing %}{{ printing }} printing{% endblocktranslate %}</span>
+              {% if row.can_link %}
+                <form method="post" action="{% url 'manage_import_batch_link' batch.pk row.pk %}" class="d-inline">
+                  {% csrf_token %}
+                  <input type="hidden" name="edition" value="{{ edition.pk }}">
+                  <button type="submit" class="md-btn md-btn--tonal">
+                    <span class="material-symbols-outlined" aria-hidden="true">link</span>
+                    {% translate "Link" %}
+                  </button>
+                </form>
+              {% endif %}
+            </li>
+            {% empty %}
+            <li class="md-body-medium">{% translate "Those editions are no longer in Comi." %}</li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+
+        {% if row.source_text %}
+          <details class="import-row__source">
+            <summary>{% translate "MyComicShop text" %}</summary>
+            <p class="md-body-medium mb-0">{{ row.source_text|linebreaksbr }}</p>
+          </details>
+        {% endif %}
+
+        {% if row.edit_form %}
+          {# Its own forms, next to (never inside) the row's other forms (Link, the selection's checkbox). #}
+          {% with form=row.edit_form %}
+          <details class="import-edit">
+            <summary>{% translate "Edit" %}</summary>
+            <p class="md-body-medium">{% translate "A field left empty inherits the value below it. Check “Leave blank” to save the edition without that value." %}</p>
+            <form method="post" action="{% url 'manage_import_batch_edit_row' batch.pk row.pk %}" class="import-edit__form">
+              {% csrf_token %}
+              <div class="import-values">
+                {% for field, blank in form.value_fields %}
+                  <div class="import-value">
+                    <div class="form-floating md-field">
+                      {{ field }}
+                      <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    </div>
+                    <div class="import-value__hint" id="{{ field.auto_id }}_helptext">{{ field.help_text }}</div>
+                    {% if blank %}
+                      <div class="form-check">
+                        {{ blank }}
+                        <label class="form-check-label" for="{{ blank.id_for_label }}">{{ blank.label }}<span class="visually-hidden"> ({{ field.label }})</span></label>
+                      </div>
+                    {% endif %}
+                  </div>
+                {% endfor %}
+              </div>
+              <fieldset class="import-edit__artists">
+                <legend class="md-section-label">{% translate "Cover artists" %}</legend>
+                {% if form.drop_artists.field.choices %}
+                  <div class="md-body-medium">{{ form.drop_artists.label }}:</div>
+                  <div class="import-edit__drop">
+                    {% for choice in form.drop_artists %}
+                      <div class="form-check">
+                        {{ choice.tag }}
+                        <label class="form-check-label" for="{{ choice.id_for_label }}">{{ choice.choice_label }}</label>
+                      </div>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+                <label class="md-body-medium" for="{{ form.add_artists.id_for_label }}">{{ form.add_artists.label }}</label>
+                {# Its options come from the page's artist list (import-artists), filled in when this section opens. #}
+                {{ form.add_artists }}
+              </fieldset>
+              <button type="submit" class="md-btn md-btn--tonal">
+                <span class="material-symbols-outlined" aria-hidden="true">save</span>
+                {% translate "Save changes" %}
+              </button>
+            </form>
+            {% if row.is_edited %}
+              <form method="post" action="{% url 'manage_import_batch_reset_row' batch.pk row.pk %}" class="mt-2">
+                {% csrf_token %}
+                <button type="submit" class="md-btn md-btn--text">
+                  <span class="material-symbols-outlined" aria-hidden="true">undo</span>
+                  {% translate "Reset to proposal" %}
+                </button>
+              </form>
+            {% endif %}
+          </details>
+          {% endwith %}
+        {% endif %}
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endfor %}
+
+{% if is_open %}
+{# Closing cannot be undone, so it asks first (a Bootstrap dialog, no script of its own). #}
+<div class="modal fade md-dialog" id="import-close-dialog" tabindex="-1" aria-labelledby="import-close-title" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="post" action="{% url 'manage_import_batch_close' batch.pk %}">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h2 class="modal-title md-headline-small" id="import-close-title">{% translate "Close the batch?" %}</h2>
+        </div>
+        <div class="modal-body">
+          {% translate "A closed batch can no longer change: its pending variants are not created. The editions already created stay as they are." %}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="md-btn md-btn--text" data-bs-dismiss="modal">{% translate "Cancel" %}</button>
+          <button type="submit" class="md-btn md-btn--filled">{% translate "Close batch" %}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% if can_select %}
+{# While a variant's "Leave blank" box is checked, the value it blanks is disabled (the box wins over it anyway). #}
+<script>
+  (function () {
+    "use strict";
+    document.querySelectorAll("input[data-leave-blank]").forEach(function (box) {
+      const value = box.closest(".import-value").querySelector(".md-field input, .md-field select, .md-field textarea");
+      if (!value) return;
+      const sync = function () {
+        value.disabled = box.checked;
+      };
+      box.addEventListener("change", sync);
+      sync();
+    });
+  })();
+</script>
+{% endif %}
+{% if artist_options %}
+{# Every artist once, as [id, name] pairs: the select of each name to resolve, and the cover artists select of each variant's edit form, are filled from it, so the page does not repeat the list. combobox.js and multiselect.js pick up the new options. #}
+{{ artist_options|json_script:"import-artists" }}
+<script>
+  (function () {
+    "use strict";
+    const artists = JSON.parse(document.getElementById("import-artists").textContent);
+
+    function fill(select) {
+      if (select.dataset.importArtistsFilled) return;
+      select.dataset.importArtistsFilled = "1";
+      const options = document.createDocumentFragment();
+      artists.forEach(function (artist) {
+        options.append(new Option(artist[1], String(artist[0])));
+      });
+      select.append(options);
+      // A guessed artist deleted since the batch was built has no option: the placeholder stays selected.
+      const selected = select.dataset.selected;
+      if (selected && artists.some(function (artist) { return String(artist[0]) === selected; })) {
+        select.value = selected;
+      }
+    }
+
+    document.querySelectorAll("select[data-import-artists]").forEach(function (select) {
+      // A variant's cover artists select is filled when its edit section first opens: a batch has
+      // up to 30 variants, and the artist list can be long.
+      const section = select.multiple ? select.closest("details") : null;
+      if (!section) {
+        fill(select);
+        return;
+      }
+      section.addEventListener("toggle", function () {
+        if (section.open) fill(select);
+      });
+    });
+  })();
+</script>
+{% endif %}
+{% endblock %}

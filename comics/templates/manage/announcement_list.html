@@ -1,0 +1,57 @@
+{% extends 'manage/base_manage.html' %}
+{% load i18n %}
+
+{% block breadcrumb %}<span class="is-current">{% translate "Announcements" %}</span>{% endblock %}
+
+{% block manage_content %}
+<div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+  <div>
+    <h1 class="md-headline-small mb-0">{% translate "Announcements" %}</h1>
+    <span class="md-body-medium">{% translate "Announcements reach their recipients as notifications. Edits to the texts show up in the notifications already sent. Deleting one also removes its notifications." %}</span>
+  </div>
+  <a class="md-btn md-btn--filled" href="{% url 'manage_announcement_new' %}?next={{ request.get_full_path|urlencode }}">
+    <span class="material-symbols-outlined" aria-hidden="true">add</span>
+    {% translate "New announcement" %}
+  </a>
+</div>
+
+<div class="md-surface-card manage-table">
+  <ul class="manage-rows">
+    {% for announcement in page_obj %}
+      <li class="manage-row manage-row--no-thumb">
+        <div class="manage-row__main">
+          <a class="manage-row__title" href="{% url 'manage_announcement_edit' announcement.pk %}?next={{ request.get_full_path|urlencode }}">{{ announcement.title }}</a>
+          <div class="md-body-medium">
+            {{ announcement.created_at|date:"DATETIME_FORMAT" }}{% if announcement.created_by %} · {{ announcement.created_by.username }}{% endif %}
+          </div>
+        </div>
+        <div class="manage-row__chips">
+          <span class="md-assist-chip">
+            <span class="material-symbols-outlined" aria-hidden="true">group</span>{{ announcement.audience_label }}
+          </span>
+          <span class="md-assist-chip">{% blocktranslate count counter=announcement.recipient_count with read=announcement.read_count %}Read by {{ read }} of {{ counter }} recipient{% plural %}Read by {{ read }} of {{ counter }} recipients{% endblocktranslate %}</span>
+        </div>
+        <div class="manage-row__actions">
+          <a class="md-icon-btn" href="{% url 'manage_announcement_edit' announcement.pk %}?next={{ request.get_full_path|urlencode }}"
+             aria-label="{% translate 'Edit' %}" title="{% translate 'Edit' %}">
+            <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+          </a>
+          <button type="button" class="md-icon-btn" data-bs-toggle="modal" data-bs-target="#deleteDialog"
+                  data-delete-url="{% url 'manage_announcement_delete' announcement.pk %}" data-delete-name="{{ announcement.title }}"
+                  aria-label="{% translate 'Delete' %}" title="{% translate 'Delete' %}">
+            <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+          </button>
+        </div>
+      </li>
+    {% empty %}
+      <li class="text-center py-5 list-unstyled">
+        <span class="material-symbols-outlined d-block mb-2 empty-state-icon" aria-hidden="true">campaign</span>
+        <p class="md-body-medium mb-0">{% translate "There are no announcements yet." %}</p>
+      </li>
+    {% endfor %}
+  </ul>
+</div>
+{% include 'includes/paginator.html' %}
+{% translate "Delete announcement?" as delete_title %}
+{% include 'manage/includes/delete_dialog.html' with delete_title=delete_title %}
+{% endblock %}

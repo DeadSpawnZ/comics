@@ -121,6 +121,7 @@
                   </h2>
                   <div class="md-body-medium">
                     #{{ collection.edition.number }} {{ collection.edition.variant_label }} · {{ collection.edition.get_format_display }}
+                    {% include 'includes/rarity_badge.html' with edition=collection.edition %}
                   </div>
                 </div>
               </div>

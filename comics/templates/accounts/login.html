@@ -1,0 +1,24 @@
+{% extends 'accounts/base_accounts.html' %}
+{% load i18n %}
+
+{% block accounts_icon %}lock{% endblock %}
+{% block accounts_title %}{% translate "Log in" %}{% endblock %}
+{% block accounts_subtitle %}{% translate "Log in to continue." %}{% endblock %}
+
+{% block accounts_form %}
+<form method="post" action="{% url 'login' %}" id="loginForm" class="d-flex flex-column gap-3" novalidate>
+  {% csrf_token %}
+  {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}
+  {% include 'manage/includes/field.html' with field=form.username %}
+  {% include 'manage/includes/field.html' with field=form.password %}
+  <button type="submit" class="md-btn md-btn--filled justify-content-center">
+    <span class="material-symbols-outlined" aria-hidden="true">login</span>
+    {% translate "Sign in" %}
+  </button>
+</form>
+{% endblock %}
+
+{% block accounts_switch %}
+{% translate "Don't have an account?" %}
+<a href="{% url 'register' %}{% if next_url %}?next={{ next_url|urlencode }}{% endif %}">{% translate "Create account" %}</a>
+{% endblock %}

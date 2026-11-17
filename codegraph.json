@@ -1,0 +1,11 @@
+{
+  "exclude": [
+    ".venv/",
+    "**/migrations/**",
+    "staticfiles/",
+    "media/",
+    "backups/",
+    "mysql_volume/",
+    "locale/"
+  ]
+}

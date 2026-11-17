@@ -1,5 +1,5 @@
 {% load i18n %}
-{# One row of the Gestión collection list. Needs `piece`. #}
+{# One row of the Gestión collection list. Needs `piece`, annotated with sold_on (TradeQuerySet.with_sale_date). #}
 <li class="manage-row">
   <div class="manage-row__thumb">
     {% if piece.edition.thumbnail %}
@@ -17,6 +17,17 @@
     </div>
   </div>
   <div class="manage-row__chips">
+    {% if piece.sold_on %}
+      <span class="md-assist-chip">
+        <span class="material-symbols-outlined" aria-hidden="true">check</span>
+        {% translate "Sold" %}
+      </span>
+    {% elif piece.trade_type == 'selling' and not piece.previous_trade_id %}
+      <span class="md-assist-chip">
+        <span class="material-symbols-outlined" aria-hidden="true">link_off</span>
+        {% translate "No purchase linked" %}
+      </span>
+    {% endif %}
     {% if piece.trade_type == 'selling' %}
       <span class="md-assist-chip md-assist-chip--error">
         <span class="material-symbols-outlined" aria-hidden="true">sell</span>
@@ -35,7 +46,7 @@
       <span class="material-symbols-outlined" aria-hidden="true">edit</span>
     </a>
     <button type="button" class="md-btn md-btn--danger-outlined" data-bs-toggle="modal" data-bs-target="#deleteDialog"
-            data-delete-url="{% url 'manage_collection_delete' piece.pk %}" data-delete-name="{{ piece.edition }}">
+            data-delete-url="{% url 'manage_collection_delete' piece.pk %}" data-delete-name="{{ piece.edition }}"{% include 'manage/includes/sold_purchase_blocked.html' %}>
       <span class="material-symbols-outlined" aria-hidden="true">delete</span>
       {% translate "Delete" %}
     </button>

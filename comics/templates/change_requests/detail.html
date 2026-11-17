@@ -1,0 +1,48 @@
+{% extends 'my_comics/base_comics.html' %}
+{% load static i18n %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/custom/manage.css' %}">
+{% endblock %}
+
+{% block breadcrumb %}
+<a href="{% url 'comics_requests' %}">{% translate "My requests" %}</a>
+<span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+<span class="is-current">#{{ change_request.pk }}</span>
+{% endblock %}
+
+{% block comics_content %}
+<div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+  <div class="d-flex align-items-center gap-2">
+    <a class="md-icon-btn" href="{% url 'comics_requests' %}" aria-label="{% translate 'Back to my requests' %}" title="{% translate 'Back to my requests' %}">
+      <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+    </a>
+    <h1 class="md-headline-small mb-0">{{ change_request.title }}</h1>
+    {% include 'change_requests/includes/status_chip.html' %}
+  </div>
+  {% if can_withdraw %}
+    <form method="post" action="{% url 'comics_request_withdraw' change_request.pk %}">
+      {% csrf_token %}
+      <button type="submit" class="md-btn md-btn--danger-outlined">
+        <span class="material-symbols-outlined" aria-hidden="true">undo</span>
+        {% translate "Withdraw request" %}
+      </button>
+    </form>
+  {% endif %}
+</div>
+
+<div class="row g-3">
+  <div class="col-12 col-xl-8">
+    <div class="md-surface-card">
+      <h2 class="md-title-medium mb-3">{% translate "Proposed changes" %}</h2>
+      {% include 'change_requests/includes/field_table.html' %}
+    </div>
+  </div>
+  <div class="col-12 col-xl-4">
+    <div class="md-surface-card">
+      <h2 class="md-title-medium mb-3">{% translate "Progress" %}</h2>
+      {% include 'change_requests/includes/steps.html' with show_author=False %}
+    </div>
+  </div>
+</div>
+{% endblock %}

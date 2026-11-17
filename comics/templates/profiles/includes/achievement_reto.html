@@ -1,0 +1,24 @@
+{% load i18n %}
+{% comment %}One challenge (`reto`: display.Reto): a level of an achievement. A level of a secret
+achievement not earned yet shows nothing but "???" and the hint.{% endcomment %}
+<li class="reto{% if reto.earned %} is-earned{% else %} is-locked{% endif %}">
+  {% include 'includes/achievement_medal.html' with medal=reto.medal size='sm' %}
+  <div class="reto__body">
+    {% if reto.concealed %}
+      <div class="reto__name">???</div>
+      <div class="reto__requirement">{% if reto.achievement.hint %}{{ reto.achievement.hint }}{% else %}{% translate "Secret achievement." %}{% endif %}</div>
+    {% else %}
+      <div class="reto__name">{{ reto.achievement.name }}{% if reto.tiered %} <span class="reto__level">{{ reto.level_name }}</span>{% endif %}</div>
+      {% if reto.requirement %}<div class="reto__requirement">{{ reto.requirement }}</div>{% endif %}
+    {% endif %}
+  </div>
+  <div class="reto__status">
+    {% if reto.earned %}
+      {% if reto.earned_on %}{% blocktranslate with date=reto.earned_on|date:"DATE_FORMAT" %}Earned on {{ date }}{% endblocktranslate %}{% else %}{% translate "Earned" context "challenge" %}{% endif %}
+    {% elif reto.goal %}
+      {% blocktranslate with progress=reto.progress goal=reto.goal %}Progress: {{ progress }} / {{ goal }}{% endblocktranslate %}
+    {% else %}
+      {% translate "Not earned yet" context "challenge" %}
+    {% endif %}
+  </div>
+</li>

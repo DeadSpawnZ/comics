@@ -16,44 +16,135 @@ from django.urls import URLPattern, path
 from django.utils.html import format_html
 from django.utils.safestring import SafeString
 
-from .forms import CollectionForm, EditionForm
+from .forms import CollectionForm, EditionForm, save_formset_reinserting
 from .models import (
+    Achievement,
+    AchievementCategory,
+    AchievementTier,
+    Announcement,
+    Article,
     Artist,
+    ChangeRequest,
+    Collectable,
     CollectedIssue,
     Collection,
     Connecting,
     ConnectingPiece,
     Dealer,
     Edition,
+    EditionCoverArtist,
     Editorial,
-    GeekCollectable,
+    EditorialAlias,
     Issue,
+    IssueCreator,
+    Notification,
+    Profile,
     Publishing,
     ReadingArc,
     ReadingArcEntry,
     Signature,
     Title,
+    UserAchievement,
+    WantedEdition,
 )
 
-
-def save_formset_reinserting(formset: BaseModelFormSet) -> None:
-    """Save an inline whose rows have UniqueConstraints (position, order, etc.).
-    Swapping values between rows violates the constraints if rows are updated one by
-    one (MySQL checks every UPDATE and does not support deferred constraints), so the
-    changed rows are deleted and inserted again with their final values. The formset
-    already validated that the final state has no duplicates."""
-    instances = formset.save(commit=False)
-    for obj in formset.deleted_objects:
-        obj.delete()
-    formset.model.objects.filter(pk__in=[obj.pk for obj in instances if obj.pk]).delete()
-    for obj in instances:
-        obj.pk = None
-        obj._state.adding = True
-        obj.save()
-    formset.save_m2m()
-
-
 admin.site.register(Signature)
+
+
+class AchievementTierInline(admin.TabularInline):
+    model = AchievementTier
+    extra = 0
+
+
+@admin.register(Achievement)
+class AchievementAdmin(admin.ModelAdmin):
+    # Day-to-day editing happens in Gestión; the admin is the superusers' fallback.
+    list_display = ("code", "rule", "name_en", "name_es", "category", "is_secret", "is_enabled")
+    list_filter = ("category", "rule", "is_secret", "is_enabled")
+    inlines = [AchievementTierInline]
+
+    def save_formset(self, request: HttpRequest, form: ModelForm, formset: BaseModelFormSet, change: bool) -> None:
+        save_formset_reinserting(formset)
+
+
+@admin.register(AchievementCategory)
+class AchievementCategoryAdmin(admin.ModelAdmin):
+    list_display = ("code", "name_en", "name_es", "display_order", "is_enabled")
+
+
+@admin.register(UserAchievement)
+class UserAchievementAdmin(admin.ModelAdmin):
+    list_display = ("user", "achievement", "level", "awarded_at", "notified")
+    list_filter = ("achievement",)
+    list_select_related = ("user", "achievement")
+    search_fields = ("user__username",)
+    raw_id_fields = ("user",)
+
+
+@admin.register(Announcement)
+class AnnouncementAdmin(admin.ModelAdmin):
+    # Created in Gestión only: creating one there is what sends its notifications.
+    list_display = ("title_en", "title_es", "audience", "created_by", "created_at")
+    list_select_related = ("created_by",)
+    # The audience is fixed once the notifications were sent.
+    readonly_fields = ("audience", "roles", "created_by", "created_at")
+
+    def has_add_permission(self, request: HttpRequest) -> bool:
+        return False
+
+
+@admin.register(Notification)
+class NotificationAdmin(admin.ModelAdmin):
+    list_display = (
+        "recipient",
+        "kind",
+        "achievement",
+        "announcement",
+        "edition",
+        "level",
+        "count",
+        "created_at",
+        "read_at",
+    )
+    list_filter = ("kind",)
+    list_select_related = ("recipient", "achievement", "announcement", "edition__publishing")
+    search_fields = ("recipient__username",)
+    raw_id_fields = ("recipient", "achievement", "announcement", "edition")
+
+    def get_queryset(self, request: HttpRequest) -> QuerySet[Notification]:
+        # Edition.__str__ reads the publishing's editorials.
+        return super().get_queryset(request).prefetch_related("edition__publishing__editorials")
+
+    def has_add_permission(self, request: HttpRequest) -> bool:
+        # Notifications are only created by the app (achievements, announcements, change requests,
+        # completed hunts).
+        return False
+
+
+@admin.register(ChangeRequest)
+class ChangeRequestAdmin(admin.ModelAdmin):
+    """Read-only: requests move only through their steps (the review area), which notify the
+    author and apply approved changes through the history."""
+
+    list_display = ("id", "kind", "action", "target_label", "status", "author", "created_at", "decided_at")
+    list_filter = ("status", "kind", "action")
+    list_select_related = ("author",)
+    search_fields = ("target_label", "author__username", "reason")
+
+    def has_add_permission(self, request: HttpRequest) -> bool:
+        return False
+
+    def has_change_permission(self, request: HttpRequest, obj: ChangeRequest | None = None) -> bool:
+        return False
+
+
+@admin.register(Profile)
+class ProfileAdmin(admin.ModelAdmin):
+    list_display = ("user", "is_public", "phone")
+    list_filter = ("is_public",)
+    list_select_related = ("user",)
+    search_fields = ("user__username", "user__email")
+    raw_id_fields = ("user",)
 
 
 @admin.register(Dealer)
@@ -69,10 +160,20 @@ class TitleAdmin(admin.ModelAdmin):
     search_fields = ["name"]
 
 
+class EditorialAliasInline(admin.TabularInline):
+    """Other names of the editorial in the external catalogues (see EditorialAlias)."""
+
+    model = EditorialAlias
+    fields = ["name"]
+    extra = 0
+
+
 @admin.register(Editorial)
 class EditorialAdmin(admin.ModelAdmin):
     list_display = ["name", "country"]
     ordering = ["name"]
+    search_fields = ["name", "aliases__name"]
+    inlines = [EditorialAliasInline]
 
 
 @admin.register(Publishing)
@@ -109,6 +210,19 @@ class EditionInline(admin.TabularInline):
         return False
 
 
+class IssueCreatorInline(admin.TabularInline):
+    # The admin cannot show a many-to-many field with its own through model as a widget: the
+    # creators are edited as rows instead.
+    model = IssueCreator
+    extra = 0
+    autocomplete_fields = ["artist"]
+    verbose_name = "creador"
+    verbose_name_plural = "creadores"
+
+    def get_queryset(self, request: HttpRequest) -> QuerySet[IssueCreator]:
+        return super().get_queryset(request).select_related("artist")
+
+
 @admin.register(Issue)
 class IssueAdmin(admin.ModelAdmin):
     list_display = ["__str__", "publishing", "number", "edition_count", "first_release"]
@@ -116,9 +230,8 @@ class IssueAdmin(admin.ModelAdmin):
     ordering = ["publishing__publishing_title", "number"]
     search_fields = ["publishing__publishing_title", "number"]
     autocomplete_fields = ["publishing"]
-    filter_horizontal = ["creators"]
-    fields = ["publishing", "number", "synopsis", "creators"]
-    inlines = [EditionInline]
+    fields = ["publishing", "number", "synopsis"]
+    inlines = [IssueCreatorInline, EditionInline]
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[Issue]:
         return super().get_queryset(request).with_first_release().annotate(edition_count=Count("editions"))
@@ -143,6 +256,18 @@ class CollectedIssueInline(admin.TabularInline):
     def get_queryset(self, request: HttpRequest) -> QuerySet[CollectedIssue]:
         # Each row shows its issue (and its publishing) in the autocomplete and in __str__.
         return super().get_queryset(request).select_related("issue__publishing")
+
+
+class EditionCoverArtistInline(admin.TabularInline):
+    # Same as IssueCreatorInline: the cover artists are edited as rows.
+    model = EditionCoverArtist
+    extra = 0
+    autocomplete_fields = ["artist"]
+    verbose_name = "artista de portada"
+    verbose_name_plural = "artistas de portada"
+
+    def get_queryset(self, request: HttpRequest) -> QuerySet[EditionCoverArtist]:
+        return super().get_queryset(request).select_related("artist")
 
 
 @admin.register(Edition)
@@ -170,15 +295,16 @@ class EditionAdmin(admin.ModelAdmin):
                     "event_exclusive",
                     "cover_price",
                     "format",
+                    "rarity",
                     "release_date",
                 )
             },
         ),
         ("Issue", {"fields": ("issue",)}),
         ("Images", {"fields": ("image", "thumbnail_preview", "thumbnail")}),
-        ("Extras", {"fields": ("notes", "cover_artists"), "classes": ("collapse",)}),
+        ("Extras", {"fields": ("notes", "mycomicshop_id"), "classes": ("collapse",)}),
     )
-    inlines = [CollectedIssueInline]
+    inlines = [EditionCoverArtistInline, CollectedIssueInline]
     autocomplete_fields = ["issue"]
 
     list_display = [
@@ -186,6 +312,7 @@ class EditionAdmin(admin.ModelAdmin):
         "number",
         "variant",
         "format",
+        "rarity",
         "get_serie",
         "printing",
         "get_release_date",
@@ -194,7 +321,6 @@ class EditionAdmin(admin.ModelAdmin):
     ]
     ordering = ["publishing__publishing_title", "number", "variant"]
     search_fields = ["publishing__publishing_title"]
-    filter_horizontal = ("cover_artists",)
     readonly_fields = ["country", "thumbnail_preview"]
     list_select_related = ("publishing",)  # Optimize queries by selecting related publishing
 
@@ -368,12 +494,42 @@ class CollectionAdmin(admin.ModelAdmin):
         return TemplateResponse(request, "admin/collection_stats.html", context)
 
 
-@admin.register(GeekCollectable)
-class GeekCollectableAdmin(admin.ModelAdmin):
-    list_display = ["name", "amount", "trade_date", "participant"]
+@admin.register(Article)
+class ArticleAdmin(admin.ModelAdmin):
+    list_display = ["name", "category", "limited_to", "piece_count"]
     ordering = ["name"]
-    search_fields = ["name", "participant__name"]
-    list_filter = ["trade_date", "participant"]
+    search_fields = ["name", "description"]
+    list_filter = ["category"]
+
+    def get_queryset(self, request: HttpRequest) -> QuerySet[Article]:
+        return super().get_queryset(request).annotate(piece_count=Count("pieces"))
+
+    @admin.display(description="Pieces", ordering="piece_count")
+    def piece_count(self, obj: Article) -> int:
+        return obj.piece_count
+
+
+@admin.register(Collectable)
+class CollectableAdmin(admin.ModelAdmin):
+    list_display = ["article", "collector", "amount", "trade_date", "trade_type", "participant"]
+    list_select_related = ["article", "collector", "participant"]
+    ordering = ["article__name", "trade_date"]
+    search_fields = ["article__name", "collector__username", "participant__name"]
+    list_filter = ["trade_type", "article__category", "trade_date", "participant"]
+    autocomplete_fields = ["article", "participant", "previous_trade"]
+
+
+@admin.register(WantedEdition)
+class WantedEditionAdmin(admin.ModelAdmin):
+    list_display = ["edition", "collector", "created_at", "completed_at"]
+    list_filter = [("completed_at", admin.EmptyFieldListFilter)]
+    list_select_related = ["edition__publishing", "collector"]
+    search_fields = ["edition__publishing__publishing_title", "collector__username"]
+    autocomplete_fields = ["edition"]
+
+    def get_queryset(self, request: HttpRequest) -> QuerySet[WantedEdition]:
+        # Edition.__str__ reads the publishing's editorials.
+        return super().get_queryset(request).prefetch_related("edition__publishing__editorials")
 
 
 class ConnectingPieceInline(admin.TabularInline):

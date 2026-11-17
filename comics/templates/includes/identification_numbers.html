@@ -1,0 +1,33 @@
+{% load i18n %}
+{# The numbers of an issue or a publishing (its series) in external catalogues, only those that are set. Copy buttons: js/custom/copy_value.js. Parameter: item (anything with identification_numbers()). #}
+{% with identifiers=item.identification_numbers %}
+  {% if identifiers %}
+    <section class="md-surface-card identifiers" aria-labelledby="identifiers-title" data-copy-group>
+      <h2 class="md-title-medium mb-3" id="identifiers-title">{% translate "Identification numbers" %}</h2>
+      <dl class="identifiers__list mb-0">
+        {% for identifier in identifiers %}
+          <div class="identifiers__row">
+            <dt class="identifiers__source">{{ identifier.source }}</dt>
+            <dd class="identifiers__value">
+              {% if identifier.url %}
+                <a href="{{ identifier.url }}" target="_blank" rel="noopener noreferrer" class="identifiers__link">
+                  {{ identifier.value }}
+                  <span class="material-symbols-outlined" aria-hidden="true">open_in_new</span>
+                  <span class="visually-hidden">{% translate "(opens in a new tab)" %}</span>
+                </a>
+              {% else %}
+                <span>{{ identifier.value }}</span>
+              {% endif %}
+              <button type="button" class="md-icon-btn identifiers__copy" data-copy-value="{{ identifier.value }}"
+                      aria-label="{% blocktranslate with source=identifier.source %}Copy the {{ source }} number{% endblocktranslate %}"
+                      title="{% blocktranslate with source=identifier.source %}Copy the {{ source }} number{% endblocktranslate %}">
+                <span class="material-symbols-outlined" aria-hidden="true">content_copy</span>
+              </button>
+            </dd>
+          </div>
+        {% endfor %}
+      </dl>
+      <span class="visually-hidden" aria-live="polite" data-copy-status></span>
+    </section>
+  {% endif %}
+{% endwith %}

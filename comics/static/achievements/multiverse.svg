@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="6.5 6.5 51 51" width="128" height="128">
+  <!-- Comi achievement medal "multiverse": disc and pictogram only; the app draws the level ring. -->
+  <clipPath id="disc"><circle cx="32" cy="32" r="25.5"/></clipPath>
+  <circle cx="32" cy="32" r="25.5" fill="#101b36"/>
+  <g clip-path="url(#disc)">
+  <defs>
+  <clipPath id="e1"><circle cx="22.5" cy="32" r="9.5"/></clipPath>
+  <clipPath id="e2"><circle cx="41.5" cy="32" r="9.5"/></clipPath>
+  </defs>
+  <g fill="#ffffff" opacity=".7">
+  <circle cx="32" cy="17" r=".9"/><circle cx="18" cy="19" r=".7"/><circle cx="46" cy="18.5" r=".8"/>
+  <circle cx="31" cy="47" r=".8"/><circle cx="47" cy="46" r=".7"/><circle cx="16" cy="45" r=".6"/>
+  </g>
+  <circle cx="22.5" cy="32" r="9.5" fill="#2f7fd6"/>
+  <g clip-path="url(#e1)" fill="#4cb36a">
+  <path d="M14.5 27 C16.5 24 20.5 24 21.5 27 C22.5 29 19.5 30 20.5 33 C21.5 36 18.5 38 16 36 C13.5 34 13 30 14.5 27 Z"/>
+  <path d="M24.5 35 C26.5 33 30.5 34 30.5 37 C29.5 40 26.5 41 25 39 Z"/>
+  <path d="M24 25 C26 24 28 25 27.5 26.5 C26 27.5 24.5 27 24 25 Z"/>
+  </g>
+  <circle cx="22.5" cy="32" r="9.5" fill="none" stroke="#9fd8ff" stroke-width="1.2" opacity=".85"/>
+  <circle cx="41.5" cy="32" r="9.5" fill="#2f7fd6"/>
+  <g clip-path="url(#e2)" fill="#4cb36a">
+  <path d="M35.5 29 C37.5 26 41.5 26 42.5 29 C43.5 31 40.5 33 38.5 32 C36.5 31 35 31 35.5 29 Z"/>
+  <path d="M43 34 C45 33 48 34 48 37 C47 39.5 44 40 43 38 C42 37 42 35 43 34 Z"/>
+  <path d="M37 37 C38.5 36 40 37 39.5 38.5 C38.5 39.5 37 39 37 37 Z"/>
+  </g>
+  <circle cx="41.5" cy="32" r="9.5" fill="none" stroke="#9fd8ff" stroke-width="1.2" opacity=".85"/>
+  </g>
+</svg>

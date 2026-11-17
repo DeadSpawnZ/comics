@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block content %}
+<div class="my-4 notif-page">
+  <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+    <h1 class="md-headline-small mb-0">{% translate "Notifications" %}</h1>
+    {% if notification_badge.unread %}
+      <form method="post" action="{% url 'notifications_mark_all_read' %}">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+        <button type="submit" class="md-btn md-btn--tonal">
+          <span class="material-symbols-outlined" aria-hidden="true">done_all</span>
+          {% translate "Mark all as read" %}
+        </button>
+      </form>
+    {% endif %}
+  </div>
+
+  <div class="md-surface-card notif-page__card">
+    {% if page_obj.paginator.count %}
+      <ul class="notif-page__list list-unstyled mb-0">
+        {% for notification in page_obj %}
+          <li>{% include 'notifications/includes/item.html' with show_detail=True %}</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="text-center py-5">
+        <span class="material-symbols-outlined d-block mb-2 empty-state-icon" aria-hidden="true">notifications</span>
+        <p class="md-body-medium mb-0">{% translate "You have no notifications." %}</p>
+      </div>
+    {% endif %}
+  </div>
+  {% include 'includes/paginator.html' %}
+</div>
+{% endblock %}

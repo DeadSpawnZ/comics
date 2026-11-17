@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="6.5 6.5 51 51" width="128" height="128">
+  <!-- Comi achievement medal "halloween": disc and pictogram only; the app draws the level ring. -->
+  <clipPath id="disc"><circle cx="32" cy="32" r="25.5"/></clipPath>
+  <circle cx="32" cy="32" r="25.5" fill="#1a1f3d"/>
+  <g clip-path="url(#disc)">
+  <circle cx="35" cy="29" r="13" fill="#ffcf5c"/>
+  <circle cx="40.5" cy="24.5" r="11" fill="#1a1f3d"/>
+  <path transform="translate(29 36) scale(1.05)" fill="#0d0f1c"
+  d="M0 -2.5 L-1.2 -5 L-2.2 -2.6 C-4 -4.3 -8 -4.6 -12 -2 C-10.3 -1 -9.4 0.8 -9.4 3 C-7.6 1.4 -5.6 1.3 -4.3 3 C-3.2 1.4 -1.6 1.2 0 3 C1.6 1.2 3.2 1.4 4.3 3 C5.6 1.3 7.6 1.4 9.4 3 C9.4 0.8 10.3 -1 12 -2 C8 -4.6 4 -4.3 2.2 -2.6 L1.2 -5 Z"/>
+  </g>
+</svg>

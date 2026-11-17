@@ -19,31 +19,60 @@
   <div class="manage-toolbar">
     <div class="manage-tabs" role="tablist" aria-label="{% translate 'Type' %}">
       {% for value, label, count in tabs %}
-        <a class="manage-tab {% if value == type_filter %}is-active{% endif %}" role="tab"
-           aria-selected="{% if value == type_filter %}true{% else %}false{% endif %}"
+        <a class="manage-tab {% if value == filters.trade_type %}is-active{% endif %}" role="tab"
+           aria-selected="{% if value == filters.trade_type %}true{% else %}false{% endif %}"
            href="{% querystring tipo=value page=None %}">
           {{ label }} <span class="manage-tab__count">{{ count }}</span>
         </a>
       {% endfor %}
     </div>
 
-    <form method="get" class="manage-filters" role="search">
-      <input type="hidden" name="tipo" value="{{ type_filter }}">
+    {# Outside the filters form, but submitted with it (form attribute) so every filter is kept. #}
+    <div class="form-floating md-field manage-sort">
+      <select class="form-select" id="filter-sort" name="sort" form="collection-filters" onchange="this.form.submit()">
+        {% for value, label in sort_options %}
+          <option value="{{ value }}" {% if value == filters.sort %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      <label for="filter-sort">{% translate "Sort by" %}</label>
+    </div>
+
+    <form method="get" id="collection-filters" class="manage-filters manage-filters--row" role="search">
+      <input type="hidden" name="tipo" value="{{ filters.trade_type }}">
       <div class="form-floating md-field">
         <select class="form-select" id="filter-collector" name="collector" onchange="this.form.submit()">
           <option value="">{% translate "All" context "collectors" %}</option>
           {% for collector in collectors %}
-            <option value="{{ collector.pk }}" {% if collector.pk|stringformat:"s" == collector_filter %}selected{% endif %}>{{ collector.username }}</option>
+            <option value="{{ collector.pk }}" {% if collector.pk|stringformat:"s" == filters.collector %}selected{% endif %}>{{ collector.username }}</option>
           {% endfor %}
         </select>
         <label for="filter-collector">{% translate "Collector" %}</label>
       </div>
       <div class="form-floating md-field">
-        <input type="search" class="form-control" id="filter-q" name="q" value="{{ query }}" placeholder="{% translate 'Search' %}">
-        <label for="filter-q">{% translate "Search title or participant" %}</label>
+        <select class="form-select" id="filter-participant" name="participant" onchange="this.form.submit()">
+          <option value="">{% translate "All participants" %}</option>
+          <option value="{{ no_participant }}" {% if filters.participant == no_participant %}selected{% endif %}>{% translate "No participant" %}</option>
+          {% for dealer in participants %}
+            <option value="{{ dealer.pk }}" {% if dealer.pk|stringformat:"s" == filters.participant %}selected{% endif %}>{{ dealer.name }}</option>
+          {% endfor %}
+        </select>
+        <label for="filter-participant">{% translate "Participant" %}</label>
       </div>
-      {% if query or collector_filter %}
-        <a class="md-btn md-btn--text" href="{% querystring q=None collector=None page=None %}">{% translate "Clear" %}</a>
+      <div class="form-floating md-field">
+        <select class="form-select" id="filter-status" name="status" onchange="this.form.submit()">
+          <option value="">{% translate "All statuses" %}</option>
+          {% for value, label in statuses %}
+            <option value="{{ value }}" {% if value == filters.status %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+        <label for="filter-status">{% translate "Status" %}</label>
+      </div>
+      <div class="form-floating md-field">
+        <input type="search" class="form-control" id="filter-q" name="q" value="{{ filters.query }}" placeholder="{% translate 'Search' %}">
+        <label for="filter-q">{% translate "Search title" %}</label>
+      </div>
+      {% if filters.narrowed %}
+        <a class="md-btn md-btn--text" href="{% querystring q=None collector=None participant=None status=None page=None %}">{% translate "Clear" %}</a>
       {% endif %}
     </form>
   </div>

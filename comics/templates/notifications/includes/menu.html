@@ -1,0 +1,22 @@
+{% load i18n %}
+{% comment %}The bell's menu content (fetched by notifications.js when the menu opens): the latest
+notifications and "Mark all as read", which returns to `next_url`.{% endcomment %}
+{% if notifications %}
+  {% if notification_badge.unread %}
+    <form method="post" action="{% url 'notifications_mark_all_read' %}" class="notif-menu__actions">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next_url }}">
+      <button type="submit" class="md-btn md-btn--text">
+        <span class="material-symbols-outlined" aria-hidden="true">done_all</span>
+        {% translate "Mark all as read" %}
+      </button>
+    </form>
+  {% endif %}
+  <ul class="notif-menu__list list-unstyled mb-0">
+    {% for notification in notifications %}
+      <li>{% include 'notifications/includes/item.html' with show_detail=False %}</li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p class="notif-menu__status">{% translate "You have no notifications." %}</p>
+{% endif %}

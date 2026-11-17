@@ -1,4 +1,9 @@
 {% load i18n %}
+{% comment %}
+  Shared delete confirmation. Opened by a button with `data-delete-url` and `data-delete-name`. An optional
+  `data-delete-blocked="<reason>"` turns it into a notice: it says why the item cannot be deleted and hides
+  the Delete button (see manage/includes/sold_purchase_blocked.html).
+{% endcomment %}
 <div class="modal fade md-dialog" id="deleteDialog" tabindex="-1" aria-labelledby="deleteDialogTitle" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
@@ -9,11 +14,17 @@
           <h2 class="modal-title md-headline-small" id="deleteDialogTitle">{% if delete_title %}{{ delete_title }}{% else %}{% translate "Delete edition?" %}{% endif %}</h2>
         </div>
         <div class="modal-body">
-          {% blocktranslate trimmed %}<strong id="deleteDialogName"></strong> will be deleted. This action cannot be undone.{% endblocktranslate %}
+          <div id="deleteDialogWarning">
+            {% blocktranslate trimmed %}<strong id="deleteDialogName"></strong> will be deleted. This action cannot be undone.{% endblocktranslate %}
+          </div>
+          <div id="deleteDialogBlocked" hidden>
+            {% blocktranslate trimmed %}<strong id="deleteDialogBlockedName"></strong> cannot be deleted.{% endblocktranslate %}
+            <span id="deleteDialogBlockedReason"></span>
+          </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="md-btn md-btn--text" data-bs-dismiss="modal">{% translate "Cancel" %}</button>
-          <button type="submit" class="md-btn md-btn--danger">{% translate "Delete" %}</button>
+          <button type="submit" class="md-btn md-btn--danger" id="deleteDialogSubmit">{% translate "Delete" %}</button>
         </div>
       </form>
     </div>
@@ -22,7 +33,21 @@
 <script>
   document.getElementById("deleteDialog").addEventListener("show.bs.modal", function (event) {
     var trigger = event.relatedTarget;
+    var blocked = trigger.dataset.deleteBlocked || "";
+    var submit = document.getElementById("deleteDialogSubmit");
     document.getElementById("deleteDialogForm").action = trigger.dataset.deleteUrl;
     document.getElementById("deleteDialogName").textContent = trigger.dataset.deleteName;
+    document.getElementById("deleteDialogBlockedName").textContent = trigger.dataset.deleteName;
+    document.getElementById("deleteDialogBlockedReason").textContent = blocked;
+    document.getElementById("deleteDialogWarning").hidden = Boolean(blocked);
+    document.getElementById("deleteDialogBlocked").hidden = !blocked;
+    submit.hidden = Boolean(blocked);
+    submit.disabled = Boolean(blocked);
+  });
+  // A blocked dialog never posts, even if the form is submitted some other way.
+  document.getElementById("deleteDialogForm").addEventListener("submit", function (event) {
+    if (document.getElementById("deleteDialogSubmit").disabled) {
+      event.preventDefault();
+    }
   });
 </script>

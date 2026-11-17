@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% load static i18n %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/custom/manage.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="my-4">
+  <nav class="md-breadcrumb" aria-label="{% translate 'Breadcrumb' %}">
+    <a href="{% url 'review_queue' %}">{% translate "Change requests" %}</a>
+    <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+    <span class="is-current">#{{ change_request.pk }}</span>
+  </nav>
+
+  <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <a class="md-icon-btn" href="{% url 'review_queue' %}" aria-label="{% translate 'Back to the requests' %}" title="{% translate 'Back to the requests' %}">
+        <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+      </a>
+      <h1 class="md-headline-small mb-0">#{{ change_request.pk }} · {{ change_request.title }}</h1>
+      {% include 'change_requests/includes/status_chip.html' %}
+    </div>
+    {% if history_url %}
+      <a class="md-btn md-btn--text" href="{{ history_url }}?next={{ request.get_full_path|urlencode }}">
+        <span class="material-symbols-outlined" aria-hidden="true">history</span>
+        {% translate "History" %}
+      </a>
+    {% endif %}
+  </div>
+
+  {% if target_deleted %}
+    <div class="editor-errors mb-3" role="alert">
+      <span class="material-symbols-outlined" aria-hidden="true">error</span>
+      <ul><li>{% translate "What this request changes no longer exists: it cannot be approved, only rejected." %}</li></ul>
+    </div>
+  {% elif has_conflicts and change_request.is_open %}
+    <div class="editor-errors mb-3" role="alert">
+      <span class="material-symbols-outlined" aria-hidden="true">warning</span>
+      <ul><li>{% translate "Some requested fields changed after the request was submitted (highlighted). Approving overwrites them with the proposed values." %}</li></ul>
+    </div>
+  {% endif %}
+
+  <div class="row g-3">
+    <div class="col-12 col-xl-8 d-flex flex-column gap-3">
+      <div class="md-surface-card">
+        <h2 class="md-title-medium mb-3">{% translate "Proposed changes" %}</h2>
+        {% include 'change_requests/includes/field_table.html' %}
+      </div>
+
+      {% if actions %}
+        <div class="md-surface-card">
+          <h2 class="md-title-medium mb-3">{% translate "Decision" %}</h2>
+          <form method="post">
+            {% csrf_token %}
+            <div class="form-floating md-field mb-3">
+              <textarea name="{{ note_form.note.html_name }}" id="review-note" class="form-control" maxlength="{{ note_form.fields.note.max_length }}" placeholder=" " style="height: 90px"></textarea>
+              <label for="review-note">{{ note_form.note.label }}</label>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+              {% if "approve" in actions and not target_deleted %}
+                <button type="submit" class="md-btn md-btn--filled" formaction="{% url 'review_approve' change_request.pk %}">
+                  <span class="material-symbols-outlined" aria-hidden="true">task_alt</span>
+                  {% translate "Approve and apply" %}
+                </button>
+              {% endif %}
+              {% if "validate" in actions %}
+                <button type="submit" class="md-btn md-btn--tonal" formaction="{% url 'review_validate' change_request.pk %}">
+                  <span class="material-symbols-outlined" aria-hidden="true">fact_check</span>
+                  {% translate "Validate" %}
+                </button>
+              {% endif %}
+              {% if "reject" in actions %}
+                <button type="submit" class="md-btn md-btn--danger-outlined" formaction="{% url 'review_reject' change_request.pk %}">
+                  <span class="material-symbols-outlined" aria-hidden="true">cancel</span>
+                  {% translate "Reject" %}
+                </button>
+              {% endif %}
+            </div>
+          </form>
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="col-12 col-xl-4">
+      <div class="md-surface-card">
+        <h2 class="md-title-medium mb-3">{% translate "Progress" %}</h2>
+        {% include 'change_requests/includes/steps.html' with show_author=True %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="6.5 6.5 51 51" width="128" height="128">
+  <!-- Comi achievement medal "assemble": disc and pictogram only; the app draws the level ring. -->
+  <clipPath id="disc"><circle cx="32" cy="32" r="25.5"/></clipPath>
+  <circle cx="32" cy="32" r="25.5" fill="#1b4f9c"/>
+  <g clip-path="url(#disc)">
+  <g fill="#ffffff">
+  <rect x="19" y="19" width="11.5" height="11.5" rx="2"/>
+  <rect x="33.5" y="19" width="11.5" height="11.5" rx="2"/>
+  <rect x="19" y="33.5" width="11.5" height="11.5" rx="2"/>
+  </g>
+  <rect x="35.5" y="35.5" width="11.5" height="11.5" rx="2" fill="#e23b3b"/>
+  <path d="M36 50.5 l-3 -3 M41 51 l-1.5 -2.5" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" opacity=".7"/>
+  </g>
+</svg>

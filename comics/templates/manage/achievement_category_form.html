@@ -1,0 +1,99 @@
+{% extends 'manage/base_manage.html' %}
+{% load i18n %}
+
+{% block breadcrumb %}
+<a href="{% url 'manage_achievements' %}">{% translate "Achievements" %}</a>
+<span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+<a href="{{ back_url }}">{% translate "Categories" %}</a>
+<span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+<span class="is-current">{% if category %}{{ category.name }}{% else %}{% translate "New category" %}{% endif %}</span>
+{% endblock %}
+
+{% block manage_content %}
+<form method="post" enctype="multipart/form-data" novalidate>
+  {% csrf_token %}
+  <input type="hidden" name="next" value="{{ back_url }}">
+
+  <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <a class="md-icon-btn" href="{{ back_url }}" aria-label="{% translate 'Back to categories' %}" title="{% translate 'Back to categories' %}">
+        <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+      </a>
+      <div>
+        {% if category %}
+          <h1 class="md-headline-small mb-0">{{ category.name }}</h1>
+          <span class="md-body-medium"><code>{{ category.code }}</code></span>
+        {% else %}
+          <h1 class="md-headline-small mb-0">{% translate "New category" %}</h1>
+          <span class="md-body-medium">{% translate "Its code is made from the name and cannot be changed later." %}</span>
+        {% endif %}
+      </div>
+    </div>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      {% if category and not deletion_blocker %}
+        <button type="button" class="md-btn md-btn--danger-outlined" data-bs-toggle="modal" data-bs-target="#deleteDialog"
+                data-delete-url="{% url 'manage_achievement_category_delete' category.pk %}" data-delete-name="{{ category.name }}">
+          <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+          {% translate "Delete" %}
+        </button>
+      {% endif %}
+      <button type="submit" name="save_continue" class="md-btn md-btn--tonal">{% translate "Save and continue editing" %}</button>
+      <button type="submit" class="md-btn md-btn--filled">
+        <span class="material-symbols-outlined" aria-hidden="true">save</span>
+        {% translate "Save" %}
+      </button>
+    </div>
+  </div>
+
+  {% if form.errors %}
+    <div class="editor-errors mb-3" role="alert">
+      <span class="material-symbols-outlined" aria-hidden="true">error</span>
+      <ul>
+        {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+        {% if not form.non_field_errors %}<li>{% translate "Check the highlighted fields." %}</li>{% endif %}
+      </ul>
+    </div>
+  {% endif %}
+
+  <div class="d-flex flex-column gap-3">
+    <div class="md-surface-card">
+      <h2 class="md-title-medium mb-3">{% translate "Texts" %}</h2>
+      <div class="row g-3">
+        <div class="col-12 col-md-6">{% include 'manage/includes/field.html' with field=form.name_en %}</div>
+        <div class="col-12 col-md-6">{% include 'manage/includes/field.html' with field=form.name_es %}</div>
+        <div class="col-12 col-md-6">{% include 'manage/includes/field.html' with field=form.description_en %}</div>
+        <div class="col-12 col-md-6">{% include 'manage/includes/field.html' with field=form.description_es %}</div>
+      </div>
+    </div>
+
+    <div class="md-surface-card">
+      <h2 class="md-title-medium mb-3">{% translate "Appearance" %}</h2>
+      <div class="row g-3 align-items-center">
+        <div class="col-6 col-md-4">{% include 'manage/includes/field.html' with field=form.display_order %}</div>
+        <div class="col-6 col-md-4">
+          <div class="form-check form-switch">{{ form.is_enabled }} <label class="form-check-label" for="{{ form.is_enabled.id_for_label }}">{{ form.is_enabled.label }}</label></div>
+        </div>
+        <div class="col-12 col-md-8">
+          <label class="md-section-label d-block" for="{{ form.image.id_for_label }}">{% translate "Medallion image (PNG, JPEG or WebP, up to 2 MB; replaces the generic medallion)" %}</label>
+          {{ form.image }}
+          {% for error in form.image.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+        </div>
+        {% if medallion_url %}
+          <div class="col-12 col-md-4">
+            <span class="medal medal--base medal--lg" aria-hidden="true"><span class="medal__disc"><img src="{{ medallion_url }}" alt="" loading="lazy" decoding="async"></span></span>
+          </div>
+        {% endif %}
+        <div class="col-12 md-body-medium">{% translate "A disabled category hides all its achievements from profiles and stops awarding them." %}</div>
+      </div>
+    </div>
+
+    {% if category and deletion_blocker %}
+      <p class="md-body-medium mb-0" data-deletion-blocker>{{ deletion_blocker }}</p>
+    {% endif %}
+  </div>
+</form>
+{% if category and not deletion_blocker %}
+  {% translate "Delete category?" as delete_title %}
+  {% include 'manage/includes/delete_dialog.html' with delete_next=back_url delete_title=delete_title %}
+{% endif %}
+{% endblock %}

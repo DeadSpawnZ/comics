@@ -37,6 +37,14 @@
         </a>
       </li>
       <li>
+        <a class="md-side-nav__link {% if 'import_batch' in url_name %}is-active{% endif %}"
+           {% if 'import_batch' in url_name %}aria-current="page"{% endif %}
+           href="{% url 'manage_import_batches' %}">
+          <span class="material-symbols-outlined" aria-hidden="true">download</span>
+          {% translate "Imports" %}
+        </a>
+      </li>
+      <li>
         <a class="md-side-nav__link {% if 'publishing' in url_name %}is-active{% endif %}"
            {% if 'publishing' in url_name %}aria-current="page"{% endif %}
            href="{% url 'manage_publishings' %}">
@@ -60,6 +68,56 @@
           Connectings
         </a>
       </li>
+      {% if review_badge.visible %}
+      <li>
+        <a class="md-side-nav__link" href="{% url 'review_queue' %}">
+          <span class="material-symbols-outlined" aria-hidden="true">rate_review</span>
+          {% translate "Change requests" %}
+          {% if review_badge.open_count %}<span class="manage-tab__count">{{ review_badge.open_count }}</span>{% endif %}
+        </a>
+      </li>
+      {% endif %}
+      <li>
+        <a class="md-side-nav__link {% if 'achievement' in url_name %}is-active{% endif %}"
+           {% if 'achievement' in url_name %}aria-current="page"{% endif %}
+           href="{% url 'manage_achievements' %}">
+          <span class="material-symbols-outlined" aria-hidden="true">emoji_events</span>
+          {% translate "Achievements" %}
+        </a>
+      </li>
+      <li>
+        <a class="md-side-nav__link {% if 'announcement' in url_name %}is-active{% endif %}"
+           {% if 'announcement' in url_name %}aria-current="page"{% endif %}
+           href="{% url 'manage_announcements' %}">
+          <span class="material-symbols-outlined" aria-hidden="true">campaign</span>
+          {% translate "Announcements" %}
+        </a>
+      </li>
+      {# Submenu: the article catalogue and the collectors' pieces of the Collectables module. #}
+      <li class="md-side-nav__group {% if 'manage_article' in url_name or 'manage_collectable' in url_name %}has-active{% endif %}">
+        <span class="md-side-nav__group-title" id="manage-nav-collectables">
+          <span class="material-symbols-outlined" aria-hidden="true">toys</span>
+          Collectables
+        </span>
+        <ul class="md-side-nav__sublist" aria-labelledby="manage-nav-collectables">
+          <li>
+            <a class="md-side-nav__link {% if 'manage_article' in url_name %}is-active{% endif %}"
+               {% if 'manage_article' in url_name %}aria-current="page"{% endif %}
+               href="{% url 'manage_articles' %}">
+              <span class="material-symbols-outlined" aria-hidden="true">category</span>
+              {% translate "Articles" %}
+            </a>
+          </li>
+          <li>
+            <a class="md-side-nav__link {% if 'manage_collectable' in url_name %}is-active{% endif %}"
+               {% if 'manage_collectable' in url_name %}aria-current="page"{% endif %}
+               href="{% url 'manage_collectables' %}">
+              <span class="material-symbols-outlined" aria-hidden="true">inventory</span>
+              {% translate "Pieces" %}
+            </a>
+          </li>
+        </ul>
+      </li>
     </ul>
   </nav>
   </aside>
@@ -75,5 +133,4 @@
 </div>
 {% endwith %}
 
-{% include 'includes/snackbar.html' %}
 {% endblock %}

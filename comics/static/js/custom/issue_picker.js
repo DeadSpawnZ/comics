@@ -25,6 +25,7 @@ window.ComiIssuePicker = (function () {
 
   // Ordered list of issues kept in sync with a hidden input (JSON array of ids).
   // `renderLabel(item)` may return a custom node for each row (default: the label text).
+  // Returns {items(), setItems(items)} to read or replace the list ([{id, label}]).
   function orderedIssueList({ issuesUrl, publishingSelect, issueSelect, addButton, list, empty, hidden, initial, renderLabel }) {
     let items = initial.slice();
 
@@ -92,6 +93,15 @@ window.ComiIssuePicker = (function () {
     });
 
     render();
+    return {
+      items: () => items.map((item) => ({ id: item.id, label: item.label })),
+      setItems(next) {
+        items = next
+          .filter((item) => item && Number.isInteger(Number(item.id)) && typeof item.label === "string")
+          .map((item) => ({ id: Number(item.id), label: item.label }));
+        render();
+      },
+    };
   }
 
   return { fetchIssues, orderedIssueList };

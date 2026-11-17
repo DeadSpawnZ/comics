@@ -1,0 +1,49 @@
+{% load i18n %}
+{% comment %}What happened to a change request: submitted (reason and evidence), validated and
+decided, each with who, when and the note. Expects `change_request` and `show_author`. Every text
+is autoescaped; the evidence link only ever holds an http(s) URL (validated on submission).{% endcomment %}
+<ol class="request-steps list-unstyled mb-0">
+  <li class="request-step">
+    <span class="material-symbols-outlined request-step__icon" aria-hidden="true">send</span>
+    <div>
+      <div class="request-step__title">
+        {% translate "Submitted" %}
+        {% if show_author %}· {{ change_request.author.username|default:_("deleted user") }}{% endif %}
+        · <span title="{{ change_request.created_at|date:'DATETIME_FORMAT' }}">{{ change_request.created_at|date:"SHORT_DATETIME_FORMAT" }}</span>
+      </div>
+      <div class="md-body-medium"><strong>{% translate "Reason:" %}</strong> {{ change_request.reason|linebreaksbr }}</div>
+      {% if change_request.evidence_url %}
+        <div class="md-body-medium">
+          <strong>{% translate "Evidence:" %}</strong>
+          <a href="{{ change_request.evidence_url }}" target="_blank" rel="noopener noreferrer nofollow">{{ change_request.evidence_url|truncatechars:80 }}</a>
+        </div>
+      {% endif %}
+    </div>
+  </li>
+  {% if change_request.validated_at %}
+    <li class="request-step">
+      <span class="material-symbols-outlined request-step__icon" aria-hidden="true">fact_check</span>
+      <div>
+        <div class="request-step__title">
+          {% translate "Validated" %}
+          {% if show_author %}· {{ change_request.validated_by.username|default:"—" }}{% endif %}
+          · <span title="{{ change_request.validated_at|date:'DATETIME_FORMAT' }}">{{ change_request.validated_at|date:"SHORT_DATETIME_FORMAT" }}</span>
+        </div>
+        {% if change_request.validation_note %}<div class="md-body-medium">{{ change_request.validation_note|linebreaksbr }}</div>{% endif %}
+      </div>
+    </li>
+  {% endif %}
+  {% if change_request.decided_at %}
+    <li class="request-step">
+      <span class="material-symbols-outlined request-step__icon" aria-hidden="true">{% if change_request.status == "approved" %}task_alt{% elif change_request.status == "rejected" %}cancel{% else %}undo{% endif %}</span>
+      <div>
+        <div class="request-step__title">
+          {{ change_request.get_status_display }}
+          {% if show_author and change_request.status != "withdrawn" %}· {{ change_request.decided_by.username|default:"—" }}{% endif %}
+          · <span title="{{ change_request.decided_at|date:'DATETIME_FORMAT' }}">{{ change_request.decided_at|date:"SHORT_DATETIME_FORMAT" }}</span>
+        </div>
+        {% if change_request.decision_note %}<div class="md-body-medium">{{ change_request.decision_note|linebreaksbr }}</div>{% endif %}
+      </div>
+    </li>
+  {% endif %}
+</ol>
