@@ -734,6 +734,12 @@ NEW_JS_TRANSLATIONS = {
     "Creating the import batch…": "Creando el lote de importación…",
     "The import batch could not be created. Try again.": "No se pudo crear el lote de importación. Inténtalo de nuevo.",
     "The import batch could not be created. Check your connection and try again.": "No se pudo crear el lote de importación. Revisa tu conexión e inténtalo de nuevo.",
+    # The selection of an import batch, saved at each change (import_batch_selection.js).
+    "Check the variants to create: each change is saved at once.": "Marca las variantes que quieres crear: cada cambio se guarda al momento.",
+    "Selection saved.": "Selección guardada.",
+    "Selection not saved: %(error)s": "Selección no guardada: %(error)s",
+    "Selection not saved. Check your connection and try again.": "Selección no guardada. Revisa tu conexión e inténtalo de nuevo.",
+    "Selection not saved. Check your session and try again.": "Selección no guardada. Revisa tu sesión e inténtalo de nuevo.",
 }
 
 

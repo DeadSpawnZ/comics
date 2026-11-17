@@ -810,6 +810,82 @@ class SelectionTests(ManageImportsTestCase):
                 self.assertEqual(self.last_message(self.select(data)), message)
         self.assertEqual(self.selected(), [True, False, True])
 
+    def test_the_page_loads_the_script_that_saves_each_change(self) -> None:
+        page = self.get(self.page_url())
+        self.assertContains(page, "js/custom/import_batch_selection.js")
+        self.assertContains(page, 'id="import-selection-status" role="status" aria-live="polite"')
+        self.assertContains(page, '(<span id="import-create-count">1</span>)')
+        # Without the script the page works as before: its button saves the selection.
+        self.assertContains(page, 'id="import-selection-save"')
+
+    def test_a_closed_batch_does_not_load_the_script(self) -> None:
+        close_batch(self.batch)
+        self.assertNotContains(self.get(self.page_url()), "import_batch_selection.js")
+
+
+class SelectionJsonTests(ManageImportsTestCase):
+    """The page script saves the selection at each change of a checkbox, asking for JSON."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        group = make_number(self.batch)
+        self.pending = self.row(group, 101, 0, "A")
+        self.failed = self.row(group, 102, 1, "B", status=ImportBatchRow.Status.FAILED, selected=False)
+        self.created = self.row(group, 103, 2, "C", status=ImportBatchRow.Status.CREATED)
+
+    def select(self, data: dict[str, Any]) -> HttpResponse:
+        return self.client.post(
+            reverse("manage_import_batch_select", args=[self.batch.pk]), data, headers={"Accept": "application/json"}
+        )
+
+    def selected(self) -> list[bool]:
+        return [row.selected for row in self.batch.rows.order_by("position")]
+
+    def test_the_selection_is_saved_and_the_count_answered(self) -> None:
+        response = self.select({"rows": [self.failed.pk]})
+        self.assertEqual(response.status_code, 200)
+        # The created row stays selected but is not counted: only pending and failed rows are created.
+        self.assertEqual(response.json(), {"to_create": 1, "can_create": True})
+        self.assertEqual(self.selected(), [False, True, True])
+        self.assertEqual(self.messages(response), [])  # the script shows its own status
+
+    def test_each_save_sends_the_whole_selection(self) -> None:
+        self.select({"rows": [self.pending.pk, self.failed.pk]})
+        response = self.select({"rows": [self.pending.pk]})
+        self.assertEqual(response.json(), {"to_create": 1, "can_create": True})
+        self.assertEqual(self.selected(), [True, False, True])
+
+    def test_an_empty_selection_cannot_create(self) -> None:
+        response = self.select({})
+        self.assertEqual(response.json(), {"to_create": 0, "can_create": False})
+        self.assertEqual(self.selected(), [False, False, True])
+
+    def test_a_batch_without_publishing_cannot_create(self) -> None:
+        ImportBatch.objects.filter(pk=self.batch.pk).update(publishing=None)
+        response = self.select({"rows": [self.pending.pk]})
+        self.assertEqual(response.json(), {"to_create": 1, "can_create": False})
+
+    def test_an_invalid_selection_is_a_json_error(self) -> None:
+        response = self.select({"rows": ["abc"]})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), {"error": "The selection is not valid."})
+        self.assertEqual(self.messages(response), [])
+        self.assertEqual(self.selected(), [True, False, True])
+
+    def test_a_closed_batch_is_a_json_error(self) -> None:
+        close_batch(self.batch)
+        response = self.select({"rows": [self.failed.pk]})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), {"error": "The batch is closed."})
+        self.assertEqual(self.messages(response), [])
+        self.assertEqual(self.selected(), [True, False, True])
+
+    def test_without_json_the_answer_is_still_the_page(self) -> None:
+        response = self.client.post(reverse("manage_import_batch_select", args=[self.batch.pk]), {"select": "all"})
+        self.assertRedirects(response, self.page_url(), fetch_redirect_response=False)
+        self.assertEqual(self.messages(response), ["Selection saved."])
+        self.assertEqual(self.selected(), [True, True, True])
+
 
 class LinkTests(ManageImportsTestCase):
     def setUp(self) -> None:
@@ -1100,6 +1176,19 @@ class BusyBatchTests(ManageImportsTestCase):
                 self.assertEqual(
                     self.last_message(response), "The batch is busy (it is creating editions): try again in a moment."
                 )
+
+    def test_a_lock_wait_timeout_is_a_json_error_for_the_page_script(self) -> None:
+        with mock.patch("comics.views.manage_imports.set_selection", side_effect=self.LOCK_WAIT):
+            response = self.client.post(
+                reverse("manage_import_batch_select", args=[self.batch.pk]),
+                {"rows": []},
+                headers={"Accept": "application/json"},
+            )
+        self.assertEqual(response.status_code, 409)
+        self.assertEqual(
+            response.json(), {"error": "The batch is busy (it is creating editions): try again in a moment."}
+        )
+        self.assertEqual(self.messages(response), [])
 
     def test_other_database_errors_are_not_swallowed(self) -> None:
         for error in (OperationalError(2006, "MySQL server has gone away"), OperationalError("no code")):

@@ -252,12 +252,18 @@ def batch_detail(request: HttpRequest, pk: int) -> HttpResponse:
             if is_open and (pending or can_edit_rows)
             else [],
             "to_create": to_create,
-            "can_create": is_open and batch.publishing_id is not None and to_create > 0,
+            "can_create": _can_create(batch, to_create),
             "can_change_publishing": can_change_publishing,
             "publishing_options": publishing_choices() if can_change_publishing else [],
             "can_select": can_edit_rows,
         },
     )
+
+
+def _can_create(batch: ImportBatch, to_create: int) -> bool:
+    """Whether "Create selected" can run: the batch is open, has a publishing and `to_create`
+    selected variants still to create."""
+    return batch.status == ImportBatch.Status.OPEN and batch.publishing_id is not None and to_create > 0
 
 
 def _artist_names(
@@ -411,23 +417,37 @@ def is_lock_wait_timeout(exc: OperationalError) -> bool:
     return bool(exc.args) and exc.args[0] == MYSQL_LOCK_WAIT_TIMEOUT
 
 
+def wants_json(request: HttpRequest) -> bool:
+    """Whether the page's script sent the action (fetch with `Accept: application/json`) and reads
+    the answer as JSON instead of following a redirect and showing a flash message."""
+    return "application/json" in request.headers.get("Accept", "")
+
+
+def _json_error(message: str, status: int = 400) -> JsonResponse:
+    return JsonResponse({"error": message}, status=status)
+
+
 def answers_busy_batch(
-    view: Callable[Concatenate[HttpRequest, int, P], HttpResponseRedirect],
-) -> Callable[Concatenate[HttpRequest, int, P], HttpResponseRedirect]:
+    view: Callable[Concatenate[HttpRequest, int, P], HttpResponse],
+) -> Callable[Concatenate[HttpRequest, int, P], HttpResponse]:
     """A batch action that answers "the batch is busy" when it waited for the batch's lock longer
     than MySQL allows (a creation holds it while each row's cover is downloaded): the transaction
     that waited is rolled back, so the action can be sent again. A creation run stopped so keeps
     the rows it created before (each row has its own transaction). Any other database error is
-    raised as it is."""
+    raised as it is. A request asking for JSON (wants_json) gets {"error": message} with 409
+    instead of the redirect and its flash message."""
 
     @wraps(view)
-    def wrapper(request: HttpRequest, pk: int, *args: P.args, **kwargs: P.kwargs) -> HttpResponseRedirect:
+    def wrapper(request: HttpRequest, pk: int, *args: P.args, **kwargs: P.kwargs) -> HttpResponse:
         try:
             return view(request, pk, *args, **kwargs)
         except OperationalError as exc:
             if not is_lock_wait_timeout(exc):
                 raise
-            messages.error(request, _("The batch is busy (it is creating editions): try again in a moment."))
+            message = _("The batch is busy (it is creating editions): try again in a moment.")
+            if wants_json(request):
+                return _json_error(message, status=409)
+            messages.error(request, message)
             return redirect(reverse("manage_import_batch", args=[pk]))
 
     return wrapper
@@ -612,20 +632,31 @@ def batch_set_publishing(request: HttpRequest, pk: int) -> HttpResponseRedirect:
 @management_required
 @require_POST
 @answers_busy_batch
-def batch_select_rows(request: HttpRequest, pk: int) -> HttpResponseRedirect:
+def batch_select_rows(request: HttpRequest, pk: int) -> HttpResponse:
     """Save which variants of the batch are selected to be created (batches.set_selection): the
-    checked ones, or all or none of them."""
+    checked ones, or all or none of them. The page's script saves each change of a checkbox at once
+    (wants_json): it gets {"to_create": the selected variants still to create, "can_create"} or
+    {"error": message} with 400, and no flash message; without the script (the form's buttons) the
+    answer is the page again with a message."""
     batch = get_object_or_404(ImportBatch, pk=pk)
+    as_json = wants_json(request)
     form = BatchSelectionForm(request.POST)
     if not form.is_valid():
+        if as_json:
+            return _json_error(_first_form_error(form))
         messages.error(request, _first_form_error(form))
         return redirect(_batch_url(batch))
     try:
         set_selection(batch, form.selection())
     except ValidationError as exc:
+        if as_json:
+            return _json_error(_error_message(exc))
         messages.error(request, _error_message(exc))
-    else:
-        messages.success(request, _("Selection saved."))
+        return redirect(_batch_url(batch))
+    if as_json:
+        to_create = batch.rows.filter(selected=True, status__in=RETRIED).count()
+        return JsonResponse({"to_create": to_create, "can_create": _can_create(batch, to_create)})
+    messages.success(request, _("Selection saved."))
     return redirect(_batch_url(batch))
 
 
