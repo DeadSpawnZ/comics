@@ -765,8 +765,11 @@ Los textos de la interfaz se escriben en **inglés** en el código (`{% translat
 
 ## Desarrollo
 
-- **Ramas:** `master` es lo desplegado, `develop` la integración; las features salen de `develop` en
-  ramas `feat/...` o `fix/...`.
+- **Ramas:** el flujo es `develop` → `master`. `master` es lo desplegado y `develop` la integración.
+  Las features y correcciones salen de `develop` en ramas `feat/...`, `fix/...` o `docs/...`, y su
+  PR va contra `develop`. A `master` solo llegan PR de release desde `develop` ("release: merge
+  develop into master"). Los PR se mergean con merge commit, y después de cada merge a `master`,
+  `develop` se adelanta hasta `master` (fast-forward) para que ambas queden iguales.
 - **Tests:** contra MySQL, dentro de Docker. Desde Git Bash, el árbol de trabajo se monta con
   `MSYS_NO_PATHCONV=1` y una ruta de Windows; con un `-v "$(pwd):/code"` normal no se monta nada y
   los tests corren con el código que tiene la imagen:
