@@ -178,7 +178,8 @@ class EditorialAdmin(admin.ModelAdmin):
 
 @admin.register(Publishing)
 class PublishingAdmin(admin.ModelAdmin):
-    list_display = ("publishing_title", "title", "get_editorials", "serie", "year", "language")
+    list_display = ("publishing_title", "title", "get_editorials", "serie", "year", "language", "series_type")
+    list_filter = ("series_type", "language")
     ordering = ["publishing_title"]
     search_fields = ["publishing_title"]
     filter_horizontal = ("editorials",)

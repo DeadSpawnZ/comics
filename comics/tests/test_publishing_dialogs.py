@@ -189,6 +189,7 @@ class SeriesProposalTests(CatalogTestCase):
             "publishing_title": "Marvel 2-in-1 Annual",  # renamed by hand: the title does not match
             "serie": "1st",
             "language": "en",
+            "series_type": "ongoing",
             "date": proposed["date"],
             "editorials": [make_editorial(name="Marvel").pk],
             "comicvine_volume_id": proposed["comicvine_volume_id"],
@@ -309,6 +310,7 @@ class CreateEndpointTests(ComiTestCase):
             "publishing_title": "Batman",
             "serie": "3rd",
             "language": "en",
+            "series_type": "ongoing",
             "date": "2016-06-15",
             "year": "",
             "editorials": [self.dc.pk],
@@ -440,7 +442,7 @@ class CreateEndpointTests(ComiTestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
             response.json()["non_field_errors"],
-            ["A publishing with that title, year, series and language already exists."],
+            ["A publishing with that title, year, series and language already exists for this kind of series."],
         )
         self.assertEqual(Publishing.objects.count(), 1)
 
@@ -540,6 +542,7 @@ class PublishingSeriesIdsTests(ComiTestCase):
             "publishing_title": "Saga",
             "serie": "1st",
             "language": "en",
+            "series_type": "ongoing",
             "date": "2012-03-14",
             "year": "2012",
             "editorials": [make_editorial().pk],

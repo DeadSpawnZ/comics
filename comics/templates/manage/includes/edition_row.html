@@ -13,7 +13,7 @@
       {{ edition.short_name }}
     </a>
     <div class="md-body-medium">
-      {% blocktranslate with printing=edition.printing %}{{ printing }} printing{% endblocktranslate %} · {% blocktranslate with serie=edition.publishing.serie %}Series {{ serie }}{% endblocktranslate %}{% if edition.publishing.year %} · {{ edition.publishing.year }}{% endif %} · {{ edition.publishing.language|upper }}
+      {% blocktranslate with printing=edition.printing %}{{ printing }} printing{% endblocktranslate %} · {% blocktranslate with serie=edition.publishing.serie %}Series {{ serie }}{% endblocktranslate %}{% if edition.publishing.year %} · {{ edition.publishing.year }}{% endif %} · {{ edition.publishing.language|upper }}{{ edition.publishing.series_type_suffix }}
     </div>
   </div>
   <div class="manage-row__chips">

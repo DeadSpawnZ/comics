@@ -54,7 +54,7 @@
     <div class="md-surface-card">
       <h2 class="md-title-medium mb-3">{% translate "Edition data" %}</h2>
       <dl class="md-list">
-        <dt>Publishing</dt><dd>{{ edition.publishing.publishing_title }}{% if edition.publishing.year %} ({{ edition.publishing.year }}){% endif %} {{ edition.publishing.serie }} · {{ edition.publishing.language|upper }}</dd>
+        <dt>Publishing</dt><dd>{{ edition.publishing.publishing_title }}{% if edition.publishing.year %} ({{ edition.publishing.year }}){% endif %} {{ edition.publishing.serie }} · {{ edition.publishing.language|upper }}{{ edition.publishing.series_type_suffix }}</dd>
         <dt>{% translate "Number" %}</dt><dd>#{{ edition.number }}</dd>
         <dt>{% translate "Variant" %}</dt><dd>{{ edition.variant|default:"—" }}</dd>
         <dt>{% translate "Printing" %}</dt><dd>{{ edition.get_printing_display }}</dd>

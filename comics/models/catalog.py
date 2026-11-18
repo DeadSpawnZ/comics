@@ -16,9 +16,11 @@ from django.core.validators import MaxValueValidator, MinValueValidator, RegexVa
 from django.db.models import (
     CASCADE,
     PROTECT,
+    Case,
     CharField,
     DateField,
     DecimalField,
+    ExpressionWrapper,
     F,
     ForeignKey,
     ImageField,
@@ -34,7 +36,11 @@ from django.db.models import (
     TextChoices,
     TextField,
     UniqueConstraint,
+    Value,
+    When,
 )
+from django.db.models.functions import Coalesce
+from django.db.models.lookups import In
 from django.utils.functional import Promise
 from django.utils.translation import gettext_lazy as _
 from PIL import Image
@@ -197,6 +203,41 @@ def current_year() -> int:
     return datetime.now().year
 
 
+class SeriesTypeChoices(TextChoices):
+    """What kind of line a publishing is (modelled on Metron's series type), as
+    Publishing.SeriesTypeChoices. Periodical types are single issues; collected types reprint them,
+    so a collected line may share title, year, series and language with the periodical one (e.g. a
+    TPB line of a 1996 crossover)."""
+
+    # Periodical.
+    ONGOING = "ongoing", _("Ongoing series")
+    LIMITED = "limited", _("Limited series")
+    ONE_SHOT = "one_shot", _("One-shot")
+    ANNUAL = "annual", _("Annual")
+    MAGAZINE = "magazine", _("Magazine")
+    # Collected.
+    TRADE_PAPERBACK = "trade_paperback", _("Trade paperback")
+    HARDCOVER = "hardcover", _("Hardcover")
+    OMNIBUS = "omnibus", _("Omnibus")
+    GRAPHIC_NOVEL = "graphic_novel", _("Graphic novel")
+
+
+# Every periodical type is one line: an ongoing and a limited series of the same title, year, series
+# and language are duplicates. Each collected type is a line of its own.
+PERIODICAL_SERIES_TYPES = (
+    SeriesTypeChoices.ONGOING,
+    SeriesTypeChoices.LIMITED,
+    SeriesTypeChoices.ONE_SHOT,
+    SeriesTypeChoices.ANNUAL,
+    SeriesTypeChoices.MAGAZINE,
+)
+SERIES_TYPE_COLUMN = ExpressionWrapper(F("series_type"), output_field=CharField())
+DUPLICATE_PUBLISHING_CODE = "duplicate_publishing_line"
+DUPLICATE_PUBLISHING_MESSAGE = _(
+    "A publishing with that title, year, series and language already exists for this kind of series."
+)
+
+
 class Publishing(Model):
     # Validator of `year`. It must be a plain function defined in the class body before that field,
     # and keep its name and signature: migrations reference it as
@@ -210,10 +251,14 @@ class Publishing(Model):
         ES = "es", _("Spanish")
         DE = "de", _("German")
 
+    # Defined at module level because Meta (its constraint) cannot see this class body.
+    SeriesTypeChoices = SeriesTypeChoices
+
     title = ForeignKey(Title, on_delete=PROTECT, null=True)  # noqa: DJ012
     publishing_title = CharField(max_length=100)
     serie = CharField(max_length=20, default="1st")
     language = CharField(max_length=5, choices=LangAbbr.choices, default=LangAbbr.EN)
+    series_type = CharField(max_length=20, choices=SeriesTypeChoices, default=SeriesTypeChoices.ONGOING)
     editorials = ManyToManyField(Editorial)
     date = DateField(default=datetime.now)
     year = IntegerField(
@@ -231,29 +276,35 @@ class Publishing(Model):
 
     IDENTIFIER_FIELDS = ("metron_series_id", "comicvine_volume_id", "gcd_series_id", "mycomicshop_series_id")
 
+    PERIODICAL_TYPES = PERIODICAL_SERIES_TYPES
+
     class Meta:  # noqa: DJ012
         constraints = [
+            # One publishing per line (see PERIODICAL_SERIES_TYPES): every periodical type maps to
+            # "periodical", each collected type to itself. A missing year counts as 0, so it repeats
+            # like any other (MySQL treats NULLs in a unique index as distinct). Model forms report
+            # it through validate_constraints; save() checks it too (validate_duplicates).
             UniqueConstraint(
-                fields=["publishing_title", "year", "serie", "language"],
-                name="unique_publishing_title_year_serie_language",
+                F("publishing_title"),
+                Coalesce(F("year"), Value(0)),
+                F("serie"),
+                F("language"),
+                Case(
+                    # A lookup needs a typed left-hand side: the wrapper gives the column its type.
+                    When(In(SERIES_TYPE_COLUMN, list(PERIODICAL_SERIES_TYPES)), then=Value("periodical")),
+                    default=F("series_type"),
+                ),
+                name="unique_publishing_line",
+                violation_error_code=DUPLICATE_PUBLISHING_CODE,
+                violation_error_message=DUPLICATE_PUBLISHING_MESSAGE,
             ),
         ]
 
     def __str__(self) -> str:  # noqa: DJ012
         editorials = Editorial.objects.filter(publishing=self)
         editorials = [editorial.name for editorial in editorials]
-        return (
-            str(self.publishing_title)
-            + " ("
-            + str(self.year)
-            + ") "
-            + self.serie
-            + " Series "
-            + " "
-            + "["
-            + "/".join(editorials)
-            + "]"
-        )
+        names = "/".join(editorials)
+        return f"{self.publishing_title} ({self.year}) {self.serie} Series{self.series_type_suffix}  [{names}]"
 
     @property
     def select_label(self) -> str:
@@ -262,8 +313,15 @@ class Publishing(Model):
         publishing."""
         year = f" ({self.year})" if self.year else ""
         editorials = "/".join(editorial.name for editorial in self.editorials.all())
-        label = f"{self.publishing_title}{year} {self.serie} · {self.language.upper()}"
+        label = f"{self.publishing_title}{year} {self.serie} · {self.language.upper()}{self.series_type_suffix}"
         return f"{label} · {editorials}" if editorials else label
+
+    @property
+    def series_type_suffix(self) -> str:
+        """The " · <series type>" ending of labels, empty for the usual type (ongoing)."""
+        if self.series_type == self.SeriesTypeChoices.ONGOING:
+            return ""
+        return f" · {self.get_series_type_display()}"
 
     def identification_numbers(self) -> list[ExternalIdentifier]:
         """The series ids that are set, in a fixed order (Metron, Comic Vine, GCD, MyComicShop), with
@@ -298,18 +356,19 @@ class Publishing(Model):
     def process_publishing_title(self) -> None:
         self.publishing_title = self.publishing_title.strip()
 
-    def validate_duplicates(self) -> None:
-        coincidences = (
-            Publishing.objects.filter(publishing_title=self.publishing_title)
-            .filter(year=self.year)
-            .filter(serie=self.serie)
-            .filter(language=self.language)
-        )
+    def clean(self) -> None:
+        # The values save() derives, before full_clean checks the line (validate_constraints), so a
+        # model form without a year (e.g. the admin) checks the year that will be saved.
+        self.process_year()
+        self.process_publishing_title()
 
-        if hasattr(self, "id"):
-            coincidences = coincidences.exclude(id=self.id)
-        if coincidences.exists():
-            raise ValidationError("Duplicated publishing")
+    def validate_duplicates(self) -> None:
+        """Last guard for saves that skipped full_clean: the line constraint's own check (the only
+        one in Meta.constraints), raised with the message the forms show."""
+        try:
+            self.validate_constraints()
+        except ValidationError as exc:
+            raise ValidationError(DUPLICATE_PUBLISHING_MESSAGE, code=DUPLICATE_PUBLISHING_CODE) from exc
 
 
 class ArtistQuerySet(QuerySet["Artist"]):
@@ -653,24 +712,20 @@ class Edition(Model):
             record_change(Edition, self.pk)
 
     def validate_duplicate(self) -> None:
-        coincidences = (
-            Edition.objects.filter(publishing__publishing_title__exact=self.publishing.publishing_title)
-            .filter(number=self.number)
-            .filter(variant=self.variant)
-            .filter(retailer_exclusive=self.retailer_exclusive)
-            .filter(event_exclusive=self.event_exclusive)
-            .filter(publishing__serie__exact=self.publishing.serie)
-            .filter(printing=self.printing)
-            .filter(publishing__year__exact=self.publishing.year)
+        """Refuse another edition in the same slot of the same publishing: the fields of the unique
+        constraint, so a TPB line and the single issues of the same title never collide."""
+        coincidences = Edition.objects.filter(
+            publishing_id=self.publishing_id,
+            number=self.number,
+            variant=self.variant,
+            printing=self.printing,
+            retailer_exclusive=self.retailer_exclusive,
+            event_exclusive=self.event_exclusive,
         )
-
-        if hasattr(self, "id"):
-            coincidences = coincidences.exclude(id=self.id)
-
-        current_publishing_str = str(self.publishing).strip()
-        for edition in coincidences:
-            if str(edition.publishing).strip() == current_publishing_str:
-                raise ValidationError("Duplicated comic")
+        if self.pk:
+            coincidences = coincidences.exclude(pk=self.pk)
+        if coincidences.exists():
+            raise ValidationError("Duplicated comic")
 
     def validate(self) -> None:
         self.validate_duplicate()

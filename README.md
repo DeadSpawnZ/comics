@@ -183,6 +183,7 @@ erDiagram
         CharField publishing_title
         CharField serie
         CharField language
+        CharField series_type
         DateField date
         IntegerField year "null"
         PositiveIntegerField metron_series_id UK "null"

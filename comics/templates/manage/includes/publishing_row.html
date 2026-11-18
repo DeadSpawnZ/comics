@@ -6,7 +6,7 @@
       {{ publishing.publishing_title }}{% if publishing.year %} ({{ publishing.year }}){% endif %}
     </a>
     <div class="md-body-medium">
-      {% blocktranslate with serie=publishing.serie %}Series {{ serie }}{% endblocktranslate %} · {{ publishing.language|upper }} · {% for editorial in publishing.editorials.all %}{{ editorial.name }}{% if not forloop.last %} / {% endif %}{% empty %}—{% endfor %}
+      {% blocktranslate with serie=publishing.serie %}Series {{ serie }}{% endblocktranslate %} · {{ publishing.language|upper }}{{ publishing.series_type_suffix }} · {% for editorial in publishing.editorials.all %}{{ editorial.name }}{% if not forloop.last %} / {% endif %}{% empty %}—{% endfor %}
     </div>
   </div>
   <div class="manage-row__chips">
