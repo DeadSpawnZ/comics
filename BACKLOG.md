@@ -179,6 +179,12 @@ desplegado en local. Falta:
   formulario de edición, así que si el formulario vuelve con errores (p. ej. de la sección del issue)
   la portada se descarga otra vez en cada envío. Valorar guardarla temporalmente (o en caché) la
   primera vez, o descargarla solo cuando todo el formulario es válido.
+- **Tipo de serie al importar:** el importador crea los publishings como `ongoing`. Rellenar
+  `Publishing.series_type` desde el tipo de serie de Metron (ya se lee para el formato de la
+  edición, `FORMAT_BY_SERIES_TYPE`) y desde MyComicShop, cuyos títulos de serie llevan el formato
+  como sufijo (" TPB", " HC"): quitarlo del título propuesto y usarlo como tipo. Valorar también que
+  el emparejamiento de publishing por título tenga en cuenta el tipo y que una edición nueva tome
+  el formato por defecto del tipo de su publishing.
 - Con Metron y Comic Vine, impresión, ratio (salvo cuando el nombre de la variante lo dice, p. ej.
   "1:25"), exclusivas de tienda/evento y país siguen siendo manuales (MyComicShop sí los propone).
 
@@ -356,7 +362,14 @@ evaluar las reglas por fecha en la primera visita del día de cada usuario (reco
 - El borrador guarda el campo oculto `next` (añadirle `data-draft-skip`) y el texto del aviso de
   recuperación ("antes de recargar") no es exacto cuando se vuelve otro día a la misma página.
 - Al apilar diálogos, el de abajo sigue en el árbol de accesibilidad: marcarlo `inert`.
-- "Duplicated publishing" de `Publishing.validate_duplicates` sin traducir (solo en carreras).
+- Tipo de serie (menores de revisión): `Publishing.validate_duplicates` convierte cualquier fallo
+  de `validate_constraints()` en el mensaje de línea duplicada (correcto mientras solo haya una
+  restricción; dejar que el error se propague o filtrar por `DUPLICATE_PUBLISHING_CODE`); el alias
+  `Publishing.PERIODICAL_TYPES` solo lo usa un test (importar `PERIODICAL_SERIES_TYPES`).
+  `Edition.__str__` no muestra el tipo de serie, así que una edición TPB y la del número suelto se
+  leen igual en autocompletados y entradas de colección. `Publishing.__str__` consulta las
+  editoriales con `Editorial.objects.filter(...)` e ignora el prefetch (N+1 en listas); la etiqueta
+  `<dt>Publishing</dt>` de `my_comics/edition_detail.html` no está traducida.
 - Admin: dos alias nuevos en el mismo guardado que se normalizan igual (o que la intercalación de
   MySQL considera iguales) dan un `IntegrityError` (500); añadir un `clean()` al formset del inline
   que rechace `name_key` repetidos. Renombrar una editorial a uno de sus alias, borrando ese alias en
@@ -496,6 +509,11 @@ evaluar las reglas por fecha en la primera visita del día de cada usuario (reco
 - **Configuración de producción:** `DJANGO_DEBUG` vale `True` por defecto y `DJANGO_ALLOWED_HOSTS`
   vale `*` si no se definen las variables de entorno (`comic/settings.py`); un despliegue real debe
   definir ambas, además de `DJANGO_SECRET_KEY`.
+- **Unicidad de publishings en MySQL:** la regla de línea (título, año, serie, idioma y tipo, con
+  los tipos periódicos como una sola línea) es una restricción única funcional
+  (`unique_publishing_line`), que necesita MySQL 8.0.13 o posterior. En MariaDB Django la omite
+  con solo un aviso del system check y la regla quedaría solo en Python. Deshacer la migración
+  `0124` falla mientras haya dos publishings que solo se distingan por el tipo.
 - Las re-evaluaciones de logros que lanza Gestión se ejecutan dentro de la propia petición
   (`schedule_for_everyone`); vale para unos cientos de usuarios, más allá habría que pasarlas a una
   tarea en segundo plano.
