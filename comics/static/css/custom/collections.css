@@ -32,6 +32,13 @@
   }
 }
 
+/* A card grid's detail dialogs sit inside its .row (Collection, Hunt): undo the gutter that
+   Bootstrap's `.row > *` gives every child, which pushed the fixed dialog down and inwards. */
+.row > .modal {
+  margin-top: 0;
+  padding-inline: 0;
+}
+
 /* Comic cards */
 .card-img-container {
   position: relative;
@@ -321,6 +328,38 @@
   height: 22px;
 }
 
+/* Hunt toggle of a missing piece: top-right corner, clear of the "Missing" badge, on a light disc
+   so the heart reads over any cover. Its colours come from .hunt-toggle. */
+.connecting-view__hunt {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 1;
+  display: flex;
+}
+
+.connecting-view__hunt .md-icon-btn {
+  width: 32px;
+  height: 32px;
+  background-color: color-mix(in srgb, var(--md-surface) 85%, transparent);
+}
+
+.connecting-view__hunt .material-symbols-outlined {
+  font-size: 20px;
+}
+
+/* "Missing pieces" list: the hunt toggle, then the piece. */
+.connecting-missing {
+  padding: 0;
+  list-style: none;
+}
+
+.connecting-missing__row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 /* ---------- Other editions of the same issue (detail dialog) ---------- */
 .sibling-editions {
   display: grid;
@@ -396,7 +435,176 @@
   overflow: hidden;
 }
 
-/* ---------- Hunt (Comics module): the note of each hunted edition ---------- */
+/* ---------- Owned (yellow trophy) and hunted (red heart) marks ---------- */
+/* A yellow trophy alone is too light on light surfaces (about 2:1), so the light theme gives it a
+   thin dark edge (--comi-trophy-edge) that carries the 3:1 contrast; the dark theme needs none. */
+:root,
+:root[data-bs-theme="light"] {
+  --comi-heart: #d32f2f;
+  --comi-trophy: #f2b200;
+  /* A solid 1px outline: four unblurred shadows, each one also shifting the previous ones. */
+  --comi-trophy-edge: drop-shadow(1px 0 0 #5c3d00) drop-shadow(-1px 0 0 #5c3d00) drop-shadow(0 1px 0 #5c3d00)
+    drop-shadow(0 -1px 0 #5c3d00);
+}
+
+:root[data-bs-theme="dark"] {
+  --comi-heart: #ff6b6b;
+  --comi-trophy: #ffc83d;
+  --comi-trophy-edge: none;
+}
+
+/* The hunt toggle (includes/hunt_button.html): an outlined grey heart, filled red once hunted. */
+.hunt-toggle .material-symbols-outlined {
+  color: var(--md-on-surface-variant);
+}
+
+.hunt-toggle.is-wanted .material-symbols-outlined,
+.hunt-heart {
+  color: var(--comi-heart);
+  font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24;
+}
+
+.hunt-toggle:not(.is-wanted):hover .material-symbols-outlined {
+  color: var(--comi-heart);
+}
+
+.owned-trophy {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  /* The "×N" count is text: it keeps the readable surface colour; only the icon is yellow. */
+  color: var(--md-on-surface-variant);
+  font-weight: 600;
+  font-size: 0.8125rem;
+}
+
+.owned-trophy .material-symbols-outlined {
+  font-size: 1.25rem;
+}
+
+.owned-trophy .material-symbols-outlined,
+.trophy-icon {
+  color: var(--comi-trophy);
+  filter: var(--comi-trophy-edge);
+  font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24;
+}
+
+/* ---------- Hunt (Comics module): cover grid of the hunted editions ---------- */
+/* The card is a real <button> (keyboard opens the dialog): reset its native look. */
+.hunt-card {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+}
+
+.hunt-card .card-img-container {
+  display: block;
+  /* A light backdrop, so a faded cover reads as "not yours yet" instead of just darker. */
+  background-color: var(--md-surface-container-highest);
+}
+
+/* Not owned yet: a touch of transparency, back to full on hover or keyboard focus. */
+.hunt-card .comic-img {
+  opacity: 0.5;
+  transition: opacity 0.25s ease;
+}
+
+.hunt-card.is-owned .comic-img,
+.hunt-card:hover .comic-img,
+.hunt-card:focus-visible .comic-img {
+  opacity: 1;
+}
+
+.hunt-card .overlay-info > span {
+  display: block;
+  white-space: normal;
+  overflow: hidden;
+  font-size: clamp(0.6rem, 1vw, 0.8rem);
+}
+
+.hunt-card:focus-visible .overlay-info {
+  opacity: 1;
+}
+
+.hunt-card:focus-visible .country-flag {
+  opacity: 0;
+}
+
+/* Hunted mark and note indicator, top-left corner. */
+.hunt-card__badges {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 2;
+}
+
+.hunt-card__badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background-color: var(--md-primary);
+  color: var(--md-on-primary);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+.hunt-card__badge .material-symbols-outlined {
+  font-size: 1rem;
+  font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 20;
+}
+
+.hunt-card__badge--hunt {
+  background-color: var(--md-surface);
+  color: var(--comi-heart);
+}
+
+.hunt-card__badge--note {
+  background-color: var(--md-secondary-container);
+  color: var(--md-on-secondary-container);
+}
+
+/* A replacement hunt: the copies the user already owns, bottom-left (the hover overlay hides it). */
+.hunt-card__owned {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  max-width: calc(100% - 12px);
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 8px 2px 4px;
+  border-radius: 8px;
+  background-color: var(--md-primary-container);
+  color: var(--md-on-primary-container);
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  z-index: 2;
+  transition: opacity 0.25s ease;
+}
+
+.hunt-card__owned .material-symbols-outlined {
+  font-size: 1rem;
+}
+
+.hunt-card:hover .hunt-card__owned,
+.hunt-card:focus-visible .hunt-card__owned {
+  opacity: 0;
+}
+
+/* Detail dialog: the note of the mark and its editor. */
 .hunt-note {
   margin: 0.25rem 0 0;
   white-space: normal;

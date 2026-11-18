@@ -91,6 +91,7 @@ msgstr ""
 "de guardar."
 
 #: comics/static/js/custom/connecting_editor.js:395
+#: comics/static/js/custom/import_batch_selection.js
 msgid "Saving…"
 msgstr "Guardando…"
 
@@ -525,3 +526,24 @@ msgid "%(count)s cover. Select the ones to import."
 msgid_plural "%(count)s covers. Select the ones to import."
 msgstr[0] "%(count)s portada. Marca las que quieres importar."
 msgstr[1] "%(count)s portadas. Marca las que quieres importar."
+
+#: comics/static/js/custom/import_batch_selection.js
+msgid "Check the variants to create: each change is saved at once."
+msgstr "Marca las variantes que quieres crear: cada cambio se guarda al momento."
+
+#: comics/static/js/custom/import_batch_selection.js
+msgid "Selection saved."
+msgstr "Selección guardada."
+
+#: comics/static/js/custom/import_batch_selection.js
+#, python-format
+msgid "Selection not saved: %(error)s"
+msgstr "Selección no guardada: %(error)s"
+
+#: comics/static/js/custom/import_batch_selection.js
+msgid "Selection not saved. Check your connection and try again."
+msgstr "Selección no guardada. Revisa tu conexión e inténtalo de nuevo."
+
+#: comics/static/js/custom/import_batch_selection.js
+msgid "Selection not saved. Check your session and try again."
+msgstr "Selección no guardada. Revisa tu sesión e inténtalo de nuevo."

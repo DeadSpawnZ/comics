@@ -15,21 +15,21 @@ from django.views.decorators.http import require_POST
 
 from comics.forms import HuntMarkForm, WantedEditionNoteForm
 from comics.models import Edition, WantedEdition
+from comics.views.manage_editions import PAGE_SIZE
 from comics.views.my_comics import owned_counts
 from comics.views.utils import safe_next_url
 
-PAGE_SIZE = 25  # same as the edition list
-
 
 def note_form_prefix(mark: WantedEdition) -> str:
-    """Prefix of a mark's note form: every row of the page has its own form, with its own field ids."""
+    """Prefix of a mark's note form: every card of the page has its own form, with its own field ids."""
     return f"note-{mark.pk}"
 
 
 @login_required
 def hunt_list(request: HttpRequest) -> HttpResponse:
-    """The user's hunt marks, newest first, flagged with the copies they own (a hunt for an owned
-    edition is a replacement, not a first copy), each with its note form."""
+    """The user's hunt marks as a cover grid, newest first, flagged with the copies they own (a hunt
+    for an owned edition is a replacement, not a first copy), each with its note form for its detail
+    dialog. The editorials (the card's flag) come prefetched by `for_collector`."""
     marks = WantedEdition.objects.for_collector(request.user)
     page_obj = Paginator(marks, PAGE_SIZE).get_page(request.GET.get("page"))
     counts = owned_counts(request.user, [mark.edition_id for mark in page_obj])

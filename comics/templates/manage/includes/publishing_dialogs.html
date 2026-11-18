@@ -44,10 +44,11 @@
                 </div>
               </div>
             </div>
-            <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=publishing_dialog.serie %}</div>
-            <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=publishing_dialog.language %}</div>
-            <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=publishing_dialog.date %}</div>
-            <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=publishing_dialog.year %}</div>
+            <div class="col-6 col-md-4">{% include 'manage/includes/field.html' with field=publishing_dialog.serie %}</div>
+            <div class="col-6 col-md-4">{% include 'manage/includes/field.html' with field=publishing_dialog.language %}</div>
+            <div class="col-12 col-md-4">{% include 'manage/includes/field.html' with field=publishing_dialog.series_type %}</div>
+            <div class="col-6 col-md-6">{% include 'manage/includes/field.html' with field=publishing_dialog.date %}</div>
+            <div class="col-6 col-md-6">{% include 'manage/includes/field.html' with field=publishing_dialog.year %}</div>
             <div class="col-12 md-body-medium">{% translate "The title groups publishings under a letter: choose it, or create it with +." %} {{ publishing_dialog.year.help_text }}</div>
             {% with editorials=publishing_dialog.editorials %}
             <div class="col-12{% if not editorials.value %} needs-value{% endif %}" data-required-field>

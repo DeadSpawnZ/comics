@@ -59,10 +59,11 @@
           {% for name in title_options %}<option value="{{ name }}">{% endfor %}
         </datalist>
       </div>
-      <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=form.serie %}</div>
-      <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=form.language %}</div>
-      <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=form.date %}</div>
-      <div class="col-6 col-md-3">{% include 'manage/includes/field.html' with field=form.year %}</div>
+      <div class="col-6 col-md-4 col-xl-2">{% include 'manage/includes/field.html' with field=form.serie %}</div>
+      <div class="col-6 col-md-4 col-xl-3">{% include 'manage/includes/field.html' with field=form.language %}</div>
+      <div class="col-12 col-md-4 col-xl-3">{% include 'manage/includes/field.html' with field=form.series_type %}</div>
+      <div class="col-6 col-md-6 col-xl-2">{% include 'manage/includes/field.html' with field=form.date %}</div>
+      <div class="col-6 col-md-6 col-xl-2">{% include 'manage/includes/field.html' with field=form.year %}</div>
       <div class="col-12 md-body-medium">
         {{ form.title_name.help_text }} {{ form.year.help_text }}
       </div>

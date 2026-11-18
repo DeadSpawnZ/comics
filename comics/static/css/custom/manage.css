@@ -374,9 +374,39 @@
   gap: 0.375rem;
 }
 
+/* Comics module edition rows: the owned trophy, the hunt heart and "View" each have a fixed column at
+   the right edge, so they line up from row to row (an empty cell keeps its place). */
+.manage-row.edition-row {
+  grid-template-columns: 44px minmax(0, 1fr) auto 3.25rem 40px 40px;
+  gap: 0.75rem;
+}
+
+.edition-row__owned,
+.edition-row__hunt,
+.edition-row__view {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 @media (max-width: 767.98px) {
   .manage-row {
     grid-template-columns: 44px minmax(0, 1fr);
+  }
+
+  /* The icons stay on the title's line; the chips go below it. */
+  .manage-row.edition-row {
+    grid-template-columns: 44px minmax(0, 1fr) 3.25rem 40px 40px;
+    gap: 0.5rem;
+  }
+
+  .edition-row .manage-row__chips {
+    grid-row: 2;
+    grid-column: 2 / -1;
+  }
+
+  .edition-row .manage-row__thumb {
+    grid-row: 1 / span 2;
   }
 
   .manage-row__chips,

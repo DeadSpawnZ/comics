@@ -141,8 +141,8 @@ msgid "Empty: taken from the start date."
 msgstr "Vacío: se toma de la fecha de inicio."
 
 #: comics/forms.py:295
-msgid "A publishing with that title, year, series and language already exists."
-msgstr "Ya existe un publishing con ese título, año, serie e idioma."
+msgid "A publishing with that title, year, series and language already exists for this kind of series."
+msgstr "Ya existe un publishing con ese título, año, serie e idioma para este tipo de serie."
 
 #: comics/forms.py:305
 msgid "Search an editorial…"
@@ -261,7 +261,7 @@ msgstr ""
 
 #: comics/models.py:209
 msgid "Magazine"
-msgstr ""
+msgstr "Revista"
 
 #: comics/models.py:212
 msgid "1st"
@@ -4501,3 +4501,52 @@ msgstr "Venta sin compra vinculada"
 #: comics/templates/manage/includes/collection_row.html
 msgid "No purchase linked"
 msgstr "Sin compra vinculada"
+
+#: comics/templates/my_comics/hunt_list.html
+msgid "With a note"
+msgstr "Con nota"
+
+#: comics/templates/my_comics/hunt_list.html
+msgid "View edition"
+msgstr "Ver edición"
+
+#: comics/templates/my_comics/connecting_detail.html
+#, python-format
+msgid "You are looking for %(hunted)s of %(missing)s"
+msgstr "Buscas %(hunted)s de %(missing)s"
+
+#: comics/models/catalog.py
+msgid "Ongoing series"
+msgstr "Serie regular"
+
+#: comics/models/catalog.py
+msgid "Limited series"
+msgstr "Serie limitada"
+
+#: comics/models/catalog.py
+msgid "One-shot"
+msgstr "Número único"
+
+#: comics/models/catalog.py
+msgid "Annual"
+msgstr "Anual"
+
+#: comics/models/catalog.py
+msgid "Trade paperback"
+msgstr "Tomo en rústica"
+
+#: comics/models/catalog.py
+msgid "Hardcover"
+msgstr "Tapa dura"
+
+#: comics/models/catalog.py
+msgid "Omnibus"
+msgstr "Ómnibus"
+
+#: comics/models/catalog.py
+msgid "Graphic novel"
+msgstr "Novela gráfica"
+
+#: comics/forms/catalog.py
+msgid "Series type"
+msgstr "Tipo de serie"

@@ -625,6 +625,7 @@ class PublishingManageForm(forms.ModelForm):
             "publishing_title",
             "serie",
             "language",
+            "series_type",
             "date",
             "year",
             "editorials",
@@ -637,6 +638,7 @@ class PublishingManageForm(forms.ModelForm):
             "publishing_title": _("Publishing title"),
             "serie": _("Series"),
             "language": _("Language"),
+            "series_type": _("Series type"),
             "date": _("Start date"),
             "year": _("Year"),
             "editorials": _("Editorials"),
@@ -650,10 +652,8 @@ class PublishingManageForm(forms.ModelForm):
             "date": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
             "editorials": forms.SelectMultiple(attrs={"data-multiselect": ""}),
         }
+        # A repeated line is reported by the model's constraint (DUPLICATE_PUBLISHING_MESSAGE).
         error_messages = {
-            NON_FIELD_ERRORS: {
-                "unique_together": _("A publishing with that title, year, series and language already exists."),
-            },
             "metron_series_id": {"unique": _("Another publishing already has this Metron series ID.")},
             "comicvine_volume_id": {"unique": _("Another publishing already has this Comic Vine volume ID.")},
             "mycomicshop_series_id": {"unique": _("Another publishing already has this MyComicShop series ID.")},

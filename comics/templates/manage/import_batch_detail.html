@@ -1,5 +1,5 @@
 {% extends 'manage/base_manage.html' %}
-{% load i18n %}
+{% load i18n static %}
 
 {% block breadcrumb %}
 <a href="{% url 'manage_import_batches' %}">{% translate "Imports" %}</a>
@@ -23,14 +23,14 @@
       {% translate "Close batch" %}
     </button>
     {% if can_select %}
-      {# "Create selected" posts the saved selection, not the checkboxes as they are now. #}
-      <span class="md-body-medium">{% translate "Save the selection before creating." %}</span>
+      {# "Create selected" posts the saved selection, not the checkboxes as they are now. The page script saves each checkbox at once, and hides this hint. #}
+      <span class="md-body-medium" id="import-selection-hint">{% translate "Save the selection before creating." %}</span>
     {% endif %}
     <form method="post" action="{% url 'manage_import_batch_create' batch.pk %}">
       {% csrf_token %}
-      <button type="submit" class="md-btn md-btn--filled" {% if not can_create %}disabled{% endif %}>
+      <button type="submit" id="import-create" class="md-btn md-btn--filled" {% if not can_create %}disabled{% endif %}>
         <span class="material-symbols-outlined" aria-hidden="true">library_add</span>
-        {% translate "Create selected" %} ({{ to_create }})
+        {% translate "Create selected" %} (<span id="import-create-count">{{ to_create }}</span>)
       </button>
     </form>
   </div>
@@ -243,12 +243,14 @@
 
 {# ---------- Selection ---------- #}
 {# The rows' checkboxes belong to this form through their form attribute: the rows hold forms of their own (Link), which cannot be nested. #}
+{# import_batch_selection.js saves the selection whenever a checkbox changes (the status says how it went); without it, "Save selection" does. #}
 {% if can_select %}
 <form method="post" action="{% url 'manage_import_batch_select' batch.pk %}" id="import-selection" class="md-surface-card mb-3 import-selection">
   {% csrf_token %}
-  <span class="md-body-medium">{% translate "Check the variants to create, then save the selection." %}</span>
+  <span class="md-body-medium" id="import-selection-intro">{% translate "Check the variants to create, then save the selection." %}</span>
+  <span class="catalog-import__status" id="import-selection-status" role="status" aria-live="polite"></span>
   <div class="d-flex align-items-center gap-2 flex-wrap">
-    <button type="submit" class="md-btn md-btn--tonal">
+    <button type="submit" class="md-btn md-btn--tonal" id="import-selection-save">
       <span class="material-symbols-outlined" aria-hidden="true">save</span>
       {% translate "Save selection" %}
     </button>
@@ -483,6 +485,7 @@
 
 {% block extra_js %}
 {% if can_select %}
+<script src="{% static 'js/custom/import_batch_selection.js' %}"></script>
 {# While a variant's "Leave blank" box is checked, the value it blanks is disabled (the box wins over it anyway). #}
 <script>
   (function () {

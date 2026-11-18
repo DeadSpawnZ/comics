@@ -2,7 +2,8 @@
 
 Trabajo pendiente, decisiones abiertas y limitaciones conocidas de Comi. Sirve para que una sesión de
 trabajo nueva (humana o de IA) tenga contexto suficiente para retomar cualquier punto sin la
-conversación que lo originó. Lo que ya está hecho se describe en el `README.md`, no aquí.
+conversación que lo originó. Lo que ya está hecho se describe en `PRODUCT.md` (funcionalidades y
+negocio) y en el `README.md` (técnico), no aquí.
 
 Cómo trabajar un punto: seguir `CLAUDE.md` (flujo backend con `backend-senior` → `code-reviewer`,
 tests solo en MySQL, Ruff una vez por feature, migraciones ensayadas en `comic_refactor` antes de la
@@ -24,9 +25,38 @@ migración `0123` (crea `comics_wantededition`, añade `notification.edition` y 
 notificaciones) ya está aplicada en la base real (2026-11-16, copia previa en
 `backups/comic-pre-0123-20261116_142810.sql`, ensayada antes en `comic_refactor`: aplicar, revertir
 con una notificación de cacería presente, aplicar) y la imagen reconstruida. Falta: **ver las
-páginas en el navegador** (nadie las ha visto: fila de la cacería, chips, desplegable de la nota,
-icono `travel_explore`, botones en lista y detalle, la acción de la notificación en la página y
-dentro del menú de la campana, el texto de la notificación en español).
+páginas en el navegador** (nadie las ha visto: icono `travel_explore`, botones en lista y detalle,
+la acción de la notificación en la página y dentro del menú de la campana, el texto de la
+notificación en español).
+
+**Cacería en cuadrícula de portadas** (2026-11-16, commit `f5f00ff`, APPROVED en 1 ronda): la lista pasó
+a tarjetas como las de Colección; la portada de lo que no tienes sale al 50 % de opacidad (100 % al
+pasar el cursor o con foco), lo que ya tienes (cacería de reemplazo) sale entera con el trofeo de "La
+tienes"; insignia de cacería, indicador de nota y bandera; cada tarjeta es un botón que abre un
+diálogo con la nota y su editor, "Ver edición" y "Dejar de buscarla". Falta verla en el navegador
+(opacidad y posición de las insignias son propuesta, validarlas; ancho de móvil; tema oscuro).
+Arreglado de paso: los diálogos dentro de `.row` (también en Colección) se desplazaban por el gutter
+de Bootstrap (`.row > .modal` en `collections.css`).
+
+### Probar en el navegador: selección del lote, recientes, trofeo y corazón, Connectings
+
+Commits `3b78362` (lotes) y `f5f00ff` (Mis comics), 2026-11-16, sin push; suite en MySQL 1273 OK, Ruff limpio; imagen reconstruida.
+- **Lotes de importación:** las casillas de las variantes se perdían al guardar cualquier otro
+  formulario de la página (p. ej. "Guardar cambios" de una variante). Ahora cada cambio de casilla se
+  guarda solo (`js/custom/import_batch_selection.js` → `batch_select_rows` con JSON) y los demás
+  formularios del lote esperan a que termine (si falla, no se envían y el estado lo dice). APPROVED
+  en 1 ronda. Probar: marcar/desmarcar y guardar una variante, "Crear seleccionadas" justo después
+  de un cambio, "Cerrar lote" con un guardado fallido, y que logout/idioma no esperen.
+- **Mis comics → Ediciones:** bloque "Agregadas recientemente" con las 5 últimas ediciones (Gestión
+  sigue con 10), solo en la primera página sin filtros.
+- **Trofeo y corazón:** en la lista de ediciones de Mis comics, "La tienes" es un trofeo amarillo
+  relleno (con "×N" si hay varias copias; en tema claro lleva un borde oscuro fino para el
+  contraste) y la cacería es un corazón que también es el botón (gris de contorno / rojo relleno).
+  Cada uno tiene su columna fija (`.edition-row` en `manage.css`), vacía si no aplica. El corazón
+  sustituye al marcador en el detalle de la edición y en la Cacería. Probar: alineación entre filas,
+  ancho de móvil, tema claro/oscuro y que el borde del trofeo se vea bien.
+- **Connectings:** cada pieza que falta tiene el corazón para buscarla (en la esquina de la celda y
+  en la lista "Piezas que faltan"), y el encabezado dice "Buscas X de Y". APPROVED en 1 ronda.
 
 ### Probar los filtros de Gestión → Colecciones en el navegador
 
@@ -149,12 +179,18 @@ desplegado en local. Falta:
   formulario de edición, así que si el formulario vuelve con errores (p. ej. de la sección del issue)
   la portada se descarga otra vez en cada envío. Valorar guardarla temporalmente (o en caché) la
   primera vez, o descargarla solo cuando todo el formulario es válido.
+- **Tipo de serie al importar:** el importador crea los publishings como `ongoing`. Rellenar
+  `Publishing.series_type` desde el tipo de serie de Metron (ya se lee para el formato de la
+  edición, `FORMAT_BY_SERIES_TYPE`) y desde MyComicShop, cuyos títulos de serie llevan el formato
+  como sufijo (" TPB", " HC"): quitarlo del título propuesto y usarlo como tipo. Valorar también que
+  el emparejamiento de publishing por título tenga en cuenta el tipo y que una edición nueva tome
+  el formato por defecto del tipo de su publishing.
 - Con Metron y Comic Vine, impresión, ratio (salvo cuando el nombre de la variante lo dice, p. ej.
   "1:25"), exclusivas de tienda/evento y país siguen siendo manuales (MyComicShop sí los propone).
 
 ### Importar desde MyComicShop (en `develop`)
 
-Implementado (ver README) y en `develop` con el PR #5. Falta:
+Implementado (ver `PRODUCT.md`) y en `develop` con el PR #5. Falta:
 
 - **Probar en el navegador** (la migración `0116` ya está aplicada en la base real) con los TID `57389539`
   (Batman Spawn) y `65211284` (Vampirella X Witchblade): modal, teclado, importar una RI, una
@@ -178,7 +214,7 @@ Implementado (ver README) y en `develop` con el PR #5. Falta:
   ID (la consulta no sabe qué edición está abierta); el panel "Identification numbers" no muestra el
   IVID; la caché de la serie y el `throttle` usan la `LocMemCache` por proceso (sin `CACHES`
   configurado), así que con varios workers la búsqueda tras el modal puede volver a pedir la página.
-- **Coincidencia probable + "Vincular"** (rama `chore/adjustments`, ver README): falta probarlo en el
+- **Coincidencia probable + "Vincular"** (rama `chore/adjustments`, ver `PRODUCT.md`): falta probarlo en el
   navegador con el TID `19609941` (Image United). Límites: no compara qué tienda o evento es (solo
   si es exclusiva o no) ni normaliza números ("01" ≠ "1"); sin publishing emparejado (o con varios)
   no hay candidatas; las exclusivas casi nunca tendrán candidata, porque el sufijo de MyComicShop
@@ -186,7 +222,7 @@ Implementado (ver README) y en `develop` con el PR #5. Falta:
   se inventan). `catalog_import.js` pasa de 900 líneas: separar el diálogo de series en su propio
   módulo.
 - **TID en `Publishing`** (rama `chore/adjustments`, migración `0120` ya aplicada en la base real,
-  ver README). Falta: guardar la edición importada desde MyComicShop en un publishing ya existente
+  ver `PRODUCT.md`). Falta: guardar la edición importada desde MyComicShop en un publishing ya existente
   (envío del formulario) no rellena el TID; habría que llevarlo en un campo oculto del formulario de
   ediciones. El enlace del panel de identificadores abre `search?TID=` por GET (sin probar si el
   reto de Imperva lo deja pasar en un navegador real).
@@ -284,7 +320,7 @@ Los logros por fecha (Veterano) solo se comprueban al iniciar sesión o con `awa
 usuario **no** quiere programadores del sistema (Programador de tareas de Windows / cron del host):
 cualquier tarea periódica debe vivir dentro de la app o del stack de Docker. Opciones comentadas:
 evaluar las reglas por fecha en la primera visita del día de cada usuario (recomendada) o un servicio
-`scheduler` en `docker-compose`. Al hacerlo, actualizar la sección "Logros" del README.
+`scheduler` en `docker-compose`. Al hacerlo, actualizar la sección "Logros" de `PRODUCT.md`.
 
 ## Deuda técnica
 
@@ -326,7 +362,14 @@ evaluar las reglas por fecha en la primera visita del día de cada usuario (reco
 - El borrador guarda el campo oculto `next` (añadirle `data-draft-skip`) y el texto del aviso de
   recuperación ("antes de recargar") no es exacto cuando se vuelve otro día a la misma página.
 - Al apilar diálogos, el de abajo sigue en el árbol de accesibilidad: marcarlo `inert`.
-- "Duplicated publishing" de `Publishing.validate_duplicates` sin traducir (solo en carreras).
+- Tipo de serie (menores de revisión): `Publishing.validate_duplicates` convierte cualquier fallo
+  de `validate_constraints()` en el mensaje de línea duplicada (correcto mientras solo haya una
+  restricción; dejar que el error se propague o filtrar por `DUPLICATE_PUBLISHING_CODE`); el alias
+  `Publishing.PERIODICAL_TYPES` solo lo usa un test (importar `PERIODICAL_SERIES_TYPES`).
+  `Edition.__str__` no muestra el tipo de serie, así que una edición TPB y la del número suelto se
+  leen igual en autocompletados y entradas de colección. `Publishing.__str__` consulta las
+  editoriales con `Editorial.objects.filter(...)` e ignora el prefetch (N+1 en listas); la etiqueta
+  `<dt>Publishing</dt>` de `my_comics/edition_detail.html` no está traducida.
 - Admin: dos alias nuevos en el mismo guardado que se normalizan igual (o que la intercalación de
   MySQL considera iguales) dan un `IntegrityError` (500); añadir un `clean()` al formset del inline
   que rechace `name_key` repetidos. Renombrar una editorial a uno de sus alias, borrando ese alias en
@@ -352,20 +395,38 @@ evaluar las reglas por fecha en la primera visita del día de cada usuario (reco
   cadena de JS) y propone traducciones fuzzy equivocadas. Por eso las 14 cadenas de la Cacería se
   añadieron a mano al final de `django.po`. Averiguar por qué no extrae esas cadenas y arreglar el
   comando (o documentar el procedimiento manual) antes de volver a regenerar el catálogo.
+- Guardado automático de la selección del lote (menores de revisión):
+  - `to_create` se calcula de dos formas: `count()` en `batch_select_rows` y un `sum(...)` en
+    `batch_detail`; sacar la regla "seleccionadas pendientes de crear" a `batches.py` o al QuerySet
+    de `ImportBatchRow`.
+  - `_json_error` (`manage_imports.py`) no tiene docstring y repite el `JsonResponse({"error": ...})`
+    de `manage_editions.py`; moverlo a `views/utils.py` si se reutiliza.
+  - Las referencias `#: …import_batch_selection.js` de `djangojs.po` no llevan número de línea
+    (escritas a mano); se regeneran con el próximo `makemessages`.
+- Corazón en Connectings (menores de revisión):
+  - `test_connecting_hunt.py` fija el coste de cada connecting en la lista a exactamente 2 consultas
+    (`+ 2`); bastaría con comprobar que no se consultan `WantedEdition` ni `editorials`.
+  - En connectings con muchas columnas, el disco de 32 px del corazón tapa buena parte de una celda
+    pequeña; escalarlo con la celda (`min(32px, 45%)`) u ocultarlo en celdas estrechas (la lista ya
+    ofrece el botón).
+  - El `aria-label` del corazón usa `short_name`, que no distingue impresión, año ni idioma: dos
+    piezas que solo difieren en eso tienen la misma etiqueta.
+  - `Edition.is_compilation` hace un `exists()` por cada edición sin issue: un connecting de
+    compilaciones sigue costando una consulta por pieza en el detalle.
+- Cacería en cuadrícula (menores de revisión): `test_the_cover_or_a_placeholder` solo cubre el
+  placeholder; añadir una edición con `thumbnail`/`image` y comprobar ambos `src`.
 - Cacería (menores de revisión):
   - El texto de ayuda "Up to 500 characters" de `WantedEditionNoteForm` lleva el límite escrito a
     mano; usar un msgid con marcador que lea `max_length` del modelo.
-  - `comics/views/hunt.py` repite `PAGE_SIZE = 25`; importarla de `manage_editions` como hacen
-    `collection_entries.py` y `manage_collectables.py`.
-  - `hunt_list.html` copia la fila de `edition_list.html` (miniatura, título, metadatos, chip "You
-    own") y el chip "Looking for it" está en tres plantillas; sacarlos a includes. La página de
-    Cacería no muestra el chip de compilación que sí tiene la lista.
+  - El chip "Looking for it" se repite en `edition_detail.html` e `includes/edition_row.html`, y el
+    marcador "You own it / You own N" en la tarjeta y el diálogo de `hunt_list.html`; sacarlos a
+    includes. La Cacería (ahora en cuadrícula de portadas) no indica si la edición es una compilación,
+    cosa que sí hace la lista de ediciones.
   - `my_comics.edition_detail` consulta `WantedEdition` con el ORM en la vista; añadir
     `WantedEditionQuerySet.is_wanted_by`. `owned_counts` es una consulta de dominio que vive en
     `views/my_comics.py` y ya la importa `hunt.py`; moverla al QuerySet de `Collection`.
   - La altura del `textarea` de la nota va en `attrs={"style": ...}` del formulario; pasarla a
     `.hunt-note-edit__form textarea` en `collections.css`.
-  - Falta un test de que la nota se renderiza escapada (hoy lo está, por autoescape).
   - Guardar vacía una nota que ya estaba vacía muestra "Note removed."; comparar con
     `form.has_changed()`.
   - Si una nota se rechaza se pierde lo escrito (solo ocurre con una petición manipulada: el
@@ -389,9 +450,6 @@ evaluar las reglas por fecha en la primera visita del día de cada usuario (reco
     `is_sold`.
   - La lista de Collectables de Gestión no tiene estos filtros (participante, estado, orden); el
     usuario los dejó fuera de esta tanda.
-- El listado de ediciones de Mis comics calcula `recent` (las últimas 10 ediciones, en
-  `edition_catalog_context`) aunque su plantilla no lo muestra: una consulta de más en la primera
-  página.
 - Bloqueo del borrado de compras vendidas (menores de revisión): `collectable_delete` pasa a
   `date_format` el resultado de `first_sale_date` sin comprobar `None` (hoy no ocurre, porque solo
   una venta protege un collectable; devolver el mensaje genérico si pasa); el texto "no se puede
@@ -451,6 +509,11 @@ evaluar las reglas por fecha en la primera visita del día de cada usuario (reco
 - **Configuración de producción:** `DJANGO_DEBUG` vale `True` por defecto y `DJANGO_ALLOWED_HOSTS`
   vale `*` si no se definen las variables de entorno (`comic/settings.py`); un despliegue real debe
   definir ambas, además de `DJANGO_SECRET_KEY`.
+- **Unicidad de publishings en MySQL:** la regla de línea (título, año, serie, idioma y tipo, con
+  los tipos periódicos como una sola línea) es una restricción única funcional
+  (`unique_publishing_line`), que necesita MySQL 8.0.13 o posterior. En MariaDB Django la omite
+  con solo un aviso del system check y la regla quedaría solo en Python. Deshacer la migración
+  `0124` falla mientras haya dos publishings que solo se distingan por el tipo.
 - Las re-evaluaciones de logros que lanza Gestión se ejecutan dentro de la propia petición
   (`schedule_for_everyone`); vale para unos cientos de usuarios, más allá habría que pasarlas a una
   tarea en segundo plano.

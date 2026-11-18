@@ -117,7 +117,8 @@ class RarityFieldTests(ComiTestCase):
         self.client.force_login(make_user())
         html = self.client.get(reverse("comics_editions")).content.decode()
         self.assertIn('class="rarity-badge rarity-badge--legendary"', html)
-        self.assertEqual(html.count("rarity-badge rarity-badge--"), 1)  # none for the common one
+        # None for the common one; the legendary one shows in the "Recently added" block and in the A-Z list.
+        self.assertEqual(html.count("rarity-badge rarity-badge--"), 2)
         detail = self.client.get(reverse("comics_edition_detail", args=[self.legendary.pk])).content.decode()
         self.assertIn("rarity-badge--legendary", detail)
         detail = self.client.get(reverse("comics_edition_detail", args=[self.common.pk])).content.decode()

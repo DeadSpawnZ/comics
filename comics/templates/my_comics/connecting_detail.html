@@ -40,6 +40,9 @@
             {% endif %}
             {% if not piece.owned %}
               <span class="connecting-view__badge md-assist-chip md-assist-chip--error">{% translate "Missing" %}</span>
+              <div class="connecting-view__hunt">
+                {% include "includes/hunt_button.html" with edition=piece.edition wanted=piece.wanted compact=True %}
+              </div>
             {% endif %}
           </figure>
         {% else %}
@@ -51,11 +54,19 @@
 </div>
 
 <div class="md-surface-card">
-  <h2 class="md-title-medium mb-3">{% translate "Missing pieces" %}</h2>
+  <div class="d-flex align-items-baseline justify-content-between flex-wrap gap-2 mb-3">
+    <h2 class="md-title-medium mb-0">{% translate "Missing pieces" %}</h2>
+    {% if missing_pieces %}
+      <span class="md-body-medium">{% blocktranslate with hunted=hunted missing=missing_pieces|length %}You are looking for {{ hunted }} of {{ missing }}{% endblocktranslate %}</span>
+    {% endif %}
+  </div>
   {% if missing_pieces %}
-    <ul class="md-body-medium mb-0">
+    <ul class="connecting-missing md-body-medium mb-0">
       {% for piece in missing_pieces %}
-        <li>{{ piece.edition }} <span class="text-body-secondary">({% blocktranslate with row=piece.row column=piece.column %}row {{ row }}, column {{ column }}{% endblocktranslate %})</span></li>
+        <li class="connecting-missing__row">
+          {% include "includes/hunt_button.html" with edition=piece.edition wanted=piece.wanted compact=True %}
+          <span>{{ piece.edition }} <span class="text-body-secondary">({% blocktranslate with row=piece.row column=piece.column %}row {{ row }}, column {{ column }}{% endblocktranslate %})</span></span>
+        </li>
       {% endfor %}
     </ul>
   {% elif total %}

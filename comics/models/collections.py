@@ -228,23 +228,19 @@ class Collection(PreviousTradeRules, Model):
         super().save(*args, **kwargs)
 
     def validate_duplicate(self) -> None:
-        coincidences = (
-            Collection.objects.filter(
-                edition__publishing__publishing_title__exact=self.edition.publishing.publishing_title
-            )
-            .filter(trade_date=self.trade_date)
-            .filter(amount=self.amount)
-            .filter(trade_type=self.trade_type)
-            .filter(participant=self.participant)
+        """Refuse another piece with the fields of the unique constraint, comparing the edition by id
+        (two editions may read the same, e.g. a TPB line and the single issues of the same title)."""
+        coincidences = Collection.objects.filter(
+            edition_id=self.edition_id,
+            trade_date=self.trade_date,
+            amount=self.amount,
+            trade_type=self.trade_type,
+            participant_id=self.participant_id,
         )
-
-        if hasattr(self, "id"):
-            coincidences = coincidences.exclude(id=self.id)
-
-        current_edition_str = str(self.edition).strip()
-        for collectable in coincidences:
-            if str(collectable.edition).strip() == current_edition_str:
-                raise ValidationError("Duplicated collectable")
+        if self.pk:
+            coincidences = coincidences.exclude(pk=self.pk)
+        if coincidences.exists():
+            raise ValidationError("Duplicated collectable")
 
 
 class Signature(Model):

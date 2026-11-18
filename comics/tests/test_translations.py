@@ -652,6 +652,23 @@ NEW_TRANSLATIONS = {
     "In collection": "En la colección",
     "Sale without linked purchase": "Venta sin compra vinculada",
     "No purchase linked": "Sin compra vinculada",
+    # The Hunt page as a cover grid: the card's note indicator and the detail dialog.
+    "With a note": "Con nota",
+    "View edition": "Ver edición",
+    # A connecting's page: how many of the missing pieces the collector is hunting.
+    "You are looking for %(hunted)s of %(missing)s": "Buscas %(hunted)s de %(missing)s",
+    # Publishing series types (Metron's) and the duplicate rule that tells their lines apart.
+    "Ongoing series": "Serie regular",
+    "Limited series": "Serie limitada",
+    "One-shot": "Número único",
+    "Annual": "Anual",
+    "Trade paperback": "Tomo en rústica",
+    "Hardcover": "Tapa dura",
+    "Omnibus": "Ómnibus",
+    "Graphic novel": "Novela gráfica",
+    "Series type": "Tipo de serie",
+    "Magazine": "Revista",
+    "A publishing with that title, year, series and language already exists for this kind of series.": "Ya existe un publishing con ese título, año, serie e idioma para este tipo de serie.",
 }
 
 
@@ -734,6 +751,12 @@ NEW_JS_TRANSLATIONS = {
     "Creating the import batch…": "Creando el lote de importación…",
     "The import batch could not be created. Try again.": "No se pudo crear el lote de importación. Inténtalo de nuevo.",
     "The import batch could not be created. Check your connection and try again.": "No se pudo crear el lote de importación. Revisa tu conexión e inténtalo de nuevo.",
+    # The selection of an import batch, saved at each change (import_batch_selection.js).
+    "Check the variants to create: each change is saved at once.": "Marca las variantes que quieres crear: cada cambio se guarda al momento.",
+    "Selection saved.": "Selección guardada.",
+    "Selection not saved: %(error)s": "Selección no guardada: %(error)s",
+    "Selection not saved. Check your connection and try again.": "Selección no guardada. Revisa tu conexión e inténtalo de nuevo.",
+    "Selection not saved. Check your session and try again.": "Selección no guardada. Revisa tu sesión e inténtalo de nuevo.",
 }
 
 

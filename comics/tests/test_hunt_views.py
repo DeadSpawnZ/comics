@@ -33,6 +33,15 @@ def note_field(mark: WantedEdition) -> str:
     return f"note-{mark.pk}-notes"
 
 
+def card_and_dialog(content: str, mark: WantedEdition) -> tuple[str, str]:
+    """The HTML of `mark`'s card on the Hunt page and of its detail dialog, which follows it (up to the
+    next card, or the end of the page for the last one)."""
+    card_start = content.index(f'id="hunt-{mark.pk}"')
+    dialog_start = content.index(f'id="huntDialog{mark.pk}"', card_start)
+    next_card = content.find('id="hunt-', dialog_start)
+    return content[card_start:dialog_start], content[dialog_start : next_card if next_card != -1 else len(content)]
+
+
 def completed_mark(*, collector: User, edition: Edition, notes: str = "") -> WantedEdition:
     """A mark of `collector` that a purchase of `edition` completed."""
     mark = make_wanted_edition(collector=collector, edition=edition, notes=notes)
@@ -120,8 +129,29 @@ class HuntListTests(ComiTestCase):
 
         self.assertContains(response, "You're not looking for any edition yet.")
         self.assertContains(response, f'href="{reverse("comics_editions")}"')
+        self.assertNotContains(response, "hunt-card")
 
-    def test_shows_the_owned_chip_and_the_note(self) -> None:
+    def test_each_mark_is_a_card_button_that_opens_its_dialog(self) -> None:
+        mark = make_wanted_edition(collector=self.user, edition=make_edition())
+
+        response = self.client.get(reverse("comics_hunt"))
+
+        card, dialog = card_and_dialog(response.content.decode(), mark)
+        # A real button, so the keyboard opens the dialog too.
+        self.assertIn('<button type="button" class="md-card hunt-card"', card)
+        self.assertIn(f'data-bs-target="#huntDialog{mark.pk}"', card)
+        self.assertIn("hunt-card__badge--hunt", card)  # the hunted badge (a red heart)
+        self.assertIn(mark.edition.publishing.publishing_title, card)  # the hover overlay
+        self.assertIn(f'aria-labelledby="huntDialogLabel{mark.pk}"', dialog)
+        self.assertIn(f'href="{reverse("comics_edition_detail", args=[mark.edition_id])}?next=', dialog)
+        self.assertIn(f'action="{reverse("comics_hunt_note", args=[mark.pk])}"', dialog)
+        # The non-compact "Stop looking for it" button, unmarking the edition.
+        self.assertIn(f'action="{reverse("comics_hunt_mark", args=[mark.edition_id])}"', dialog)
+        self.assertIn('name="wanted" value="0"', dialog)
+        self.assertIn("Stop looking for it", dialog)
+        self.assertNotIn('aria-label="Stop looking for it:', dialog)  # the compact icon button
+
+    def test_owned_editions_are_flagged_and_not_faded(self) -> None:
         owned = make_edition()
         make_collection(collector=self.user, edition=owned)
         twice = make_edition()
@@ -129,17 +159,64 @@ class HuntListTests(ComiTestCase):
         make_collection(collector=self.user, edition=twice)
         not_owned = make_edition()
         make_collection(collector=make_user(), edition=not_owned)  # someone else's copy
-        make_wanted_edition(collector=self.user, edition=owned, notes="A 9.8 to replace mine")
-        make_wanted_edition(collector=self.user, edition=twice)
-        make_wanted_edition(collector=self.user, edition=not_owned)
+        owned_mark = make_wanted_edition(collector=self.user, edition=owned)
+        twice_mark = make_wanted_edition(collector=self.user, edition=twice)
+        not_owned_mark = make_wanted_edition(collector=self.user, edition=not_owned)
 
         response = self.client.get(reverse("comics_hunt"))
 
-        self.assertContains(response, "You own it", count=1)
-        self.assertContains(response, "You own 2", count=1)
-        self.assertContains(response, "A 9.8 to replace mine")
+        content = response.content.decode()
+        owned_card, owned_dialog = card_and_dialog(content, owned_mark)
+        twice_card, twice_dialog = card_and_dialog(content, twice_mark)
+        not_owned_card, not_owned_dialog = card_and_dialog(content, not_owned_mark)
+        # Owned: full opacity (the CSS fades only cards without `is-owned`) and the marker on both.
+        for html in (owned_card, owned_dialog):
+            self.assertIn("You own it", html)
+        for html in (twice_card, twice_dialog):
+            self.assertIn("You own 2", html)
+        self.assertIn("hunt-card is-owned", owned_card)
+        self.assertIn("hunt-card is-owned", twice_card)
+        self.assertNotIn("is-owned", not_owned_card)
+        self.assertNotIn("You own", not_owned_card + not_owned_dialog)
         owned_counts = {mark.edition_id: mark.owned_count for mark in response.context["page_obj"]}
         self.assertEqual(owned_counts, {owned.pk: 1, twice.pk: 2, not_owned.pk: 0})
+
+    def test_the_note_is_shown_escaped_in_the_dialog_and_flagged_on_the_card(self) -> None:
+        noted = make_wanted_edition(collector=self.user, edition=make_edition(), notes="<b>A 9.8</b>\nto replace mine")
+        plain = make_wanted_edition(collector=self.user, edition=make_edition())
+
+        response = self.client.get(reverse("comics_hunt"))
+
+        content = response.content.decode()
+        noted_card, noted_dialog = card_and_dialog(content, noted)
+        plain_card, plain_dialog = card_and_dialog(content, plain)
+        self.assertIn("&lt;b&gt;A 9.8&lt;/b&gt;<br>to replace mine", noted_dialog)
+        self.assertNotIn("<b>A 9.8</b>", content)
+        self.assertIn("hunt-card__badge--note", noted_card)
+        self.assertIn("Edit note", noted_dialog)
+        self.assertNotIn("hunt-card__badge--note", plain_card)
+        self.assertNotIn('class="md-body-medium hunt-note"', plain_dialog)
+        self.assertIn("Add a note", plain_dialog)
+
+    def test_the_card_shows_the_flag_of_the_first_editorial(self) -> None:
+        mexican = make_publishing(editorials=[make_editorial(country="MX")])
+        with_flag = make_wanted_edition(collector=self.user, edition=make_edition(publishing=mexican))
+        without_editorial = make_wanted_edition(collector=self.user, edition=make_edition())
+
+        response = self.client.get(reverse("comics_hunt"))
+
+        content = response.content.decode()
+        self.assertIn("images/MX.png", card_and_dialog(content, with_flag)[0])
+        self.assertNotIn("country-flag", card_and_dialog(content, without_editorial)[0])
+
+    def test_the_cover_or_a_placeholder(self) -> None:
+        mark = make_wanted_edition(collector=self.user, edition=make_edition())
+
+        response = self.client.get(reverse("comics_hunt"))
+
+        card, dialog = card_and_dialog(response.content.decode(), mark)
+        self.assertIn('class="comic-img img-placeholder"', card)
+        self.assertIn("img-placeholder", dialog)
 
     def test_a_sold_copy_does_not_count_as_owned(self) -> None:
         edition = make_edition()
@@ -169,10 +246,9 @@ class HuntListTests(ComiTestCase):
         self.assertEqual(side_nav.index(f'href="{reverse("comics_hunt")}"', active), side_nav.index("href=", active))
 
     def test_query_count_does_not_grow_with_the_rows(self) -> None:
-        editorial = make_editorial()
-
         def add_mark() -> None:
-            edition = make_edition(publishing=make_publishing(editorials=[editorial]))
+            # Its own editorial each, so the card flags cannot come from a shared cached object.
+            edition = make_edition(publishing=make_publishing(editorials=[make_editorial()]))
             make_collection(collector=self.user, edition=edition)
             make_wanted_edition(collector=self.user, edition=edition, notes="note")
 
@@ -420,12 +496,18 @@ class EditionPagesHuntStateTests(ComiTestCase):
     def test_edition_list_flags_wanted_rows_and_offers_the_right_action(self) -> None:
         response = self.client.get(reverse("comics_editions"))
 
-        flags = {edition.pk: edition.wanted for edition in response.context["page_obj"]}
-        self.assertEqual(flags, {self.wanted.pk: True, self.not_wanted.pk: False, self.completed.pk: False})
-        self.assertContains(response, ">bookmark</span>", count=1)  # the chip (the buttons use other icons)
+        expected = {self.wanted.pk: True, self.not_wanted.pk: False, self.completed.pk: False}
+        for block in ("page_obj", "recent"):
+            with self.subTest(block=block):
+                flags = {edition.pk: edition.wanted for edition in response.context[block]}
+                self.assertEqual(flags, expected)
+        # Every row shows twice: in the "Recently added" block and in the A-Z list.
+        # The hunted one shows the filled heart (the toggle itself); the others the outlined one.
+        self.assertContains(response, "hunt-toggle is-wanted", count=2)
+        self.assertContains(response, 'class="md-icon-btn hunt-toggle"', count=4)
         content = response.content.decode()
-        self.assertEqual(content.count('name="wanted" value="0"'), 1)
-        self.assertEqual(content.count('name="wanted" value="1"'), 2)
+        self.assertEqual(content.count('name="wanted" value="0"'), 2)
+        self.assertEqual(content.count('name="wanted" value="1"'), 4)
         self.assertIn(f'action="{reverse("comics_hunt_mark", args=[self.wanted.pk])}"', content)
         self.assertIn(f'aria-label="Stop looking for it: {self.wanted.short_name}"', content)
         self.assertIn(f'aria-label="Looking for it: {self.not_wanted.short_name}"', content)

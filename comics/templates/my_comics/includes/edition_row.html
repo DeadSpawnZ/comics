@@ -1,0 +1,53 @@
+{% load i18n %}
+{% comment %}
+  One row of the Comics module edition list. Needs `edition` (with compiled_count, owned_count and
+  wanted). Whether the user owns it (a yellow trophy) and hunts it (the red heart, which also toggles
+  the hunt) each have a fixed column of their own, empty when it does not apply, so the icons line up
+  from row to row instead of piling up on the right.
+{% endcomment %}
+<li class="manage-row edition-row">
+  <div class="manage-row__thumb">
+    {% if edition.thumbnail %}
+      <img src="{{ edition.thumbnail.url }}" alt="" loading="lazy">
+    {% else %}
+      <span class="material-symbols-outlined" aria-hidden="true">image</span>
+    {% endif %}
+  </div>
+  <div class="manage-row__main">
+    <a class="manage-row__title" href="{% url 'comics_edition_detail' edition.pk %}?next={{ request.get_full_path|urlencode }}">
+      {{ edition.short_name }}
+    </a>
+    <div class="md-body-medium">
+      {% blocktranslate with printing=edition.printing %}{{ printing }} printing{% endblocktranslate %} · {% blocktranslate with serie=edition.publishing.serie %}Series {{ serie }}{% endblocktranslate %}{% if edition.publishing.year %} · {{ edition.publishing.year }}{% endif %} · {{ edition.publishing.language|upper }}{{ edition.publishing.series_type_suffix }}
+    </div>
+  </div>
+  <div class="manage-row__chips">
+    {% include 'includes/rarity_badge.html' %}
+    <span class="md-assist-chip">{{ edition.get_format_display }}</span>
+    {% if edition.compiled_count %}
+      <span class="md-assist-chip">
+        <span class="material-symbols-outlined" aria-hidden="true">library_books</span>
+        {% blocktranslate count counter=edition.compiled_count %}Compilation · {{ counter }} issue{% plural %}Compilation · {{ counter }} issues{% endblocktranslate %}
+      </span>
+    {% endif %}
+  </div>
+  <div class="edition-row__owned">
+    {% if edition.owned_count %}
+      {% if edition.owned_count > 1 %}{% blocktranslate with count=edition.owned_count asvar owned_label %}You own {{ count }}{% endblocktranslate %}{% else %}{% translate "You own it" as owned_label %}{% endif %}
+      <span class="owned-trophy" title="{{ owned_label }}">
+        <span class="material-symbols-outlined" aria-hidden="true">emoji_events</span>
+        {% if edition.owned_count > 1 %}<span class="owned-trophy__count" aria-hidden="true">×{{ edition.owned_count }}</span>{% endif %}
+        <span class="visually-hidden">{{ owned_label }}</span>
+      </span>
+    {% endif %}
+  </div>
+  <div class="edition-row__hunt">
+    {% include 'includes/hunt_button.html' with wanted=edition.wanted compact=True %}
+  </div>
+  <div class="edition-row__view">
+    <a class="md-icon-btn" href="{% url 'comics_edition_detail' edition.pk %}?next={{ request.get_full_path|urlencode }}"
+       aria-label="{% blocktranslate with title=edition.publishing.publishing_title number=edition.number variant=edition.variant_label %}View {{ title }} #{{ number }} {{ variant }}{% endblocktranslate %}" title="{% translate 'View' %}">
+      <span class="material-symbols-outlined" aria-hidden="true">visibility</span>
+    </a>
+  </div>
+</li>
