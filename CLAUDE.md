@@ -28,6 +28,12 @@ Keep verification proportionate:
 - No mutation checks or performance measurements unless the user asks or a concrete risk calls for it.
 - Ask agents for short reports: what changed, decisions, test result, and what needs the user's decision.
 
+## Branches and pull requests
+
+- Work flows `develop` → `master`. Branch features and fixes off an up-to-date `develop` (`feat/...`, `fix/...`, `docs/...`) and open their PRs against `develop`.
+- `master` is what is deployed: it only receives release PRs from `develop` (title `release: merge develop into master`). Merge PRs with a merge commit.
+- After anything lands on `master`, fast-forward `develop` to it so both stay in line.
+
 ## Commits
 
 - Only commit when the user explicitly asks for it.
