@@ -104,9 +104,9 @@ PAREN_ROLES = {
     "finishes": "Finishes",
 }
 NAME_WITH_ROLE = re.compile(r"(?P<name>.+?)\s*\((?P<roles>[^()]+)\)")
-# ", ", ", and ", " and ", " & " between names, but not inside parentheses ("X (pencils, inks)").
-NAME_SEPARATOR = re.compile(r"(?:\s*,\s*(?:and\s+|&\s*)?|\s+and\s+|\s*&\s*)(?![^()]*\))")
-ROLE_SEPARATOR = re.compile(r"\s*,\s*(?:and\s+)?|\s+and\s+|\s*&\s*")
+# ", ", "; ", ", and ", " and ", " & " between names, but not inside parentheses ("X (pencils, inks)").
+NAME_SEPARATOR = re.compile(r"(?:\s*[,;]\s*(?:and\s+|&\s*)?|\s+and\s+|\s*&\s*)(?![^()]*\))")
+ROLE_SEPARATOR = re.compile(r"\s*[,;]\s*(?:and\s+)?|\s+and\s+|\s*&\s*")
 
 # Solicitation style: "(W) X (A) Y (CA) Z", also combined as "(A/CA) Y".
 CODE_ROLES = {
@@ -628,7 +628,7 @@ def split_sentences(text: str) -> list[str]:
 
 
 def split_names(text: str) -> list[str]:
-    """Names separated by ", ", " and " or " & " (not inside parentheses), without a final period."""
+    """Names separated by ", ", "; ", " and " or " & " (not inside parentheses), without a final period."""
     text = text.strip().removesuffix(".").strip()
     return [name.strip() for name in NAME_SEPARATOR.split(text) if name and name.strip()]
 

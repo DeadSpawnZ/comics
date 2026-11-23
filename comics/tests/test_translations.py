@@ -657,15 +657,8 @@ NEW_TRANSLATIONS = {
     "View edition": "Ver edición",
     # A connecting's page: how many of the missing pieces the collector is hunting.
     "You are looking for %(hunted)s of %(missing)s": "Buscas %(hunted)s de %(missing)s",
-    # Publishing series types (Metron's) and the duplicate rule that tells their lines apart.
-    "Ongoing series": "Serie regular",
-    "Limited series": "Serie limitada",
-    "One-shot": "Número único",
-    "Annual": "Anual",
-    "Trade paperback": "Tomo en rústica",
-    "Hardcover": "Tapa dura",
-    "Omnibus": "Ómnibus",
-    "Graphic novel": "Novela gráfica",
+    # The publishing series type field and the duplicate rule that tells its lines apart. The type
+    # labels themselves stay in English (see SeriesTypeChoices).
     "Series type": "Tipo de serie",
     "Magazine": "Revista",
     "A publishing with that title, year, series and language already exists for this kind of series.": "Ya existe un publishing con ese título, año, serie e idioma para este tipo de serie.",

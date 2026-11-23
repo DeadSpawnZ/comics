@@ -207,19 +207,22 @@ class SeriesTypeChoices(TextChoices):
     """What kind of line a publishing is (modelled on Metron's series type), as
     Publishing.SeriesTypeChoices. Periodical types are single issues; collected types reprint them,
     so a collected line may share title, year, series and language with the periodical one (e.g. a
-    TPB line of a 1996 crossover)."""
+    TPB line of a 1996 crossover).
+
+    The labels are deliberately not translatable: this is collector jargon (TPB, one-shot, omnibus)
+    that reads best in English in every language."""
 
     # Periodical.
-    ONGOING = "ongoing", _("Ongoing series")
-    LIMITED = "limited", _("Limited series")
-    ONE_SHOT = "one_shot", _("One-shot")
-    ANNUAL = "annual", _("Annual")
-    MAGAZINE = "magazine", _("Magazine")
+    ONGOING = "ongoing", "Ongoing series"
+    LIMITED = "limited", "Limited series"
+    ONE_SHOT = "one_shot", "One-shot"
+    ANNUAL = "annual", "Annual"
+    MAGAZINE = "magazine", "Magazine"
     # Collected.
-    TRADE_PAPERBACK = "trade_paperback", _("Trade paperback")
-    HARDCOVER = "hardcover", _("Hardcover")
-    OMNIBUS = "omnibus", _("Omnibus")
-    GRAPHIC_NOVEL = "graphic_novel", _("Graphic novel")
+    TRADE_PAPERBACK = "trade_paperback", "Trade paperback"
+    HARDCOVER = "hardcover", "Hardcover"
+    OMNIBUS = "omnibus", "Omnibus"
+    GRAPHIC_NOVEL = "graphic_novel", "Graphic novel"
 
 
 # Every periodical type is one line: an ongoing and a limited series of the same title, year, series
