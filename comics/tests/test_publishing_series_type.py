@@ -14,6 +14,7 @@ from django.db.migrations.executor import MigrationExecutor
 from django.db.migrations.state import StateApps
 from django.test import TransactionTestCase, override_settings
 from django.urls import reverse
+from django.utils import translation
 
 from comics.models import Collection, Edition, Publishing, Title
 from comics.roles import ADMINISTRATORS
@@ -148,6 +149,13 @@ class LineRuleTests(ComiTestCase):
         self.assertEqual(tpb.select_label, "Marvel vs. DC (1996) 1st · EN · Trade paperback · DC Comics")
         self.assertEqual(str(single), "Marvel vs. DC (1996) 1st Series  [DC Comics]")
         self.assertEqual(str(tpb), "Marvel vs. DC (1996) 1st Series · Trade paperback  [DC Comics]")
+
+    def test_type_labels_stay_in_english_in_every_language(self) -> None:
+        tpb = make_publishing(publishing_title="Marvel vs. DC", year=1996, series_type=SeriesType.TRADE_PAPERBACK)
+        with translation.override("es"):
+            self.assertEqual(dict(SeriesType.choices)[SeriesType.ONE_SHOT], "One-shot")
+            self.assertEqual(tpb.get_series_type_display(), "Trade paperback")
+            self.assertEqual(tpb.series_type_suffix, " · Trade paperback")
 
 
 class GestionLineRuleTests(ComiTestCase):

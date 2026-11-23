@@ -4515,38 +4515,6 @@ msgstr "Ver edición"
 msgid "You are looking for %(hunted)s of %(missing)s"
 msgstr "Buscas %(hunted)s de %(missing)s"
 
-#: comics/models/catalog.py
-msgid "Ongoing series"
-msgstr "Serie regular"
-
-#: comics/models/catalog.py
-msgid "Limited series"
-msgstr "Serie limitada"
-
-#: comics/models/catalog.py
-msgid "One-shot"
-msgstr "Número único"
-
-#: comics/models/catalog.py
-msgid "Annual"
-msgstr "Anual"
-
-#: comics/models/catalog.py
-msgid "Trade paperback"
-msgstr "Tomo en rústica"
-
-#: comics/models/catalog.py
-msgid "Hardcover"
-msgstr "Tapa dura"
-
-#: comics/models/catalog.py
-msgid "Omnibus"
-msgstr "Ómnibus"
-
-#: comics/models/catalog.py
-msgid "Graphic novel"
-msgstr "Novela gráfica"
-
 #: comics/forms/catalog.py
 msgid "Series type"
 msgstr "Tipo de serie"
