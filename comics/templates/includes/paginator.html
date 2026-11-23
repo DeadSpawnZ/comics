@@ -1,6 +1,6 @@
 {% load i18n %}
 {% if page_obj.paginator.count %}
-<nav class="md-paginator mt-4" aria-label="{% translate 'Pagination' %}">
+<nav class="md-paginator {{ paginator_class|default:'mt-4' }}" aria-label="{% translate 'Pagination' %}">
   <span class="md-paginator__range">
     {% blocktranslate with start=page_obj.start_index end=page_obj.end_index total=page_obj.paginator.count %}{{ start }} – {{ end }} of {{ total }}{% endblocktranslate %}
   </span>

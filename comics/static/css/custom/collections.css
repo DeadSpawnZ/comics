@@ -24,11 +24,34 @@
   color: var(--md-on-surface-variant);
 }
 
-/* Seven cards per row from xl up (Bootstrap only has 12-based columns). */
+/* Collection: the search and the letter chips above the grid. */
+.collection-browse {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.collection-search {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.collection-search .md-field {
+  min-width: min(100%, 16rem);
+}
+
+/* Seven or eight cards per row from xl up (Bootstrap only has 12-based columns). */
 @media (min-width: 1200px) {
   .col-xl-seventh {
     flex: 0 0 auto;
     width: calc(100% / 7);
+  }
+
+  .col-xl-eighth {
+    flex: 0 0 auto;
+    width: 12.5%;
   }
 }
 

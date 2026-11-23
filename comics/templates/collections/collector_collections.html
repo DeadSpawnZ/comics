@@ -24,8 +24,9 @@
             {% translate "Filters" %}
           </h2>
 
-          <form method="get" class="mb-4">
+          <form method="get">
             <input type="hidden" name="letter" value="{{ selected_letter }}">
+            {% if query %}<input type="hidden" name="q" value="{{ query }}">{% endif %}
             <div class="form-floating md-field">
               <select name="country" id="country" class="form-select" onchange="this.form.submit()">
                 <option value="">{% translate "All" context "countries" %}</option>
@@ -36,9 +37,6 @@
               <label for="country">{% translate "Editorial country" %}</label>
             </div>
           </form>
-
-          <div class="md-section-label">{% translate "Letter" %}</div>
-          {% include 'includes/letter_chips.html' %}
         </div>
       </div>
 {% endblock %}
@@ -57,6 +55,27 @@
         </a>
       </div>
 
+      <div class="collection-browse mb-3">
+        {# The search spans every letter: the form leaves the letter out (see comics_view). #}
+        <form method="get" class="collection-search" role="search">
+          {% if selected_country %}<input type="hidden" name="country" value="{{ selected_country }}">{% endif %}
+          <div class="form-floating md-field flex-grow-1">
+            <input type="search" class="form-control" id="collection-q" name="q" value="{{ query }}" placeholder="{% translate 'Search' %}">
+            <label for="collection-q">{% translate "Search title or number" %}</label>
+          </div>
+          <button type="submit" class="md-btn md-btn--tonal">
+            <span class="material-symbols-outlined" aria-hidden="true">search</span>
+            {% translate "Search" %}
+          </button>
+          {% if query %}
+            <a class="md-btn md-btn--text" href="{% querystring q=None page=None %}">{% translate "Clear" %}</a>
+          {% endif %}
+        </form>
+        {% include 'includes/letter_chips.html' %}
+      </div>
+
+      {% include 'includes/paginator.html' with paginator_class="mb-3" %}
+
       {% if not page_obj.object_list %}
         <div class="md-surface-card text-center py-5">
           <span class="material-symbols-outlined d-block mb-2 empty-state-icon" aria-hidden="true">search_off</span>
@@ -66,7 +85,7 @@
 
       <div class="row g-3">
         {% for collection in page_obj %}
-        <div class="col-6 col-sm-4 col-md-3 col-xl-seventh">
+        <div class="col-6 col-sm-4 col-md-3 col-xl-eighth">
           <div class="md-card" role="button" data-bs-toggle="modal" data-bs-target="#collectionModal{{ collection.id }}">
             <div class="card-img-container">
               {% if collection.edition.thumbnail %}

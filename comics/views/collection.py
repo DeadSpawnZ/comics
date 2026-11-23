@@ -10,6 +10,7 @@ from django.db.models import (
     IntegerField,
     OuterRef,
     Prefetch,
+    Q,
     Subquery,
     Value,
     When,
@@ -56,7 +57,10 @@ def _attach_sibling_editions(collections: Sequence[Collection], user: User) -> N
 @login_required
 def comics_view(request: HttpRequest) -> HttpResponse:
     collector = request.user
-    letter = request.GET.get("letter", "A")
+    query = request.GET.get("q", "").strip()
+    # A search looks through every letter unless one is picked explicitly; without a search the
+    # page opens on "A".
+    letter = request.GET.get("letter", "" if query else "A")
     selected_country = request.GET.get("country")
 
     # Prefetch for the signing artists
@@ -102,6 +106,13 @@ def comics_view(request: HttpRequest) -> HttpResponse:
     if letter:
         collections = collections.filter(edition__publishing__title__name__istartswith=letter)
 
+    if query:
+        collections = collections.filter(
+            Q(edition__publishing__publishing_title__icontains=query)
+            | Q(edition__publishing__title__name__icontains=query)
+            | Q(edition__number__iexact=query)
+        )
+
     if selected_country:
         collections = collections.filter(edition__publishing__editorials__country=selected_country).distinct()
 
@@ -118,6 +129,7 @@ def comics_view(request: HttpRequest) -> HttpResponse:
             "page_obj": page_obj,
             "elided_page_range": elided_page_range,
             "selected_letter": letter,
+            "query": query,
             "selected_country": selected_country,
             "editorial_countries": Editorial.CountryAbbr.choices,
             "alphabet": [chr(i) for i in range(ord("A"), ord("Z") + 1)],
