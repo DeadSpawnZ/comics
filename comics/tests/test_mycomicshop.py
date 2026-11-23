@@ -348,6 +348,15 @@ class SentenceCreditTests(ComiTestCase):
                 "Written and drawn by Jeff Smith. Cover art by Frank Miller. Done.",
                 [("Jeff Smith", ["Writer", "Artist"], False), ("Frank Miller", ["Cover"], False)],
             ),
+            (
+                "Written by Brad Meltzer; Geoff Johns. Art by Pepe Larraz (pencils; inks); Gary Frank. Done.",
+                [
+                    ("Brad Meltzer", ["Writer"], False),
+                    ("Geoff Johns", ["Writer"], False),
+                    ("Pepe Larraz", ["Penciller", "Inker"], False),
+                    ("Gary Frank", ["Artist"], False),
+                ],
+            ),
         ]
         for text, expected in cases:
             with self.subTest(text=text[-60:]):
@@ -414,6 +423,22 @@ class CodeCreditTests(ComiTestCase):
                 self.assertEqual(details.price, Decimal("5.99"))
         self.assertEqual(
             parse_free_text(group["Francesco Mattina"]).note, "Limited 1 for 20 Retailer Incentive Variant Cover."
+        )
+
+    def test_semicolons_separate_names(self) -> None:
+        def crossover(cover: str) -> str:
+            return f"(W) Brad Meltzer; Geoff Johns (A) Pepe Larraz; Gary Frank (CA) {cover} {VAMPI_SYNOPSIS}"
+
+        text = crossover("Humberto Ramos")
+        self.assertEqual(
+            credits_of(text, (crossover("Stjepan Sejic"), crossover("Lucio Parrillo"))),
+            [
+                ("Brad Meltzer", ["Writer"], False),
+                ("Geoff Johns", ["Writer"], False),
+                ("Pepe Larraz", ["Artist"], False),
+                ("Gary Frank", ["Artist"], False),
+                ("Humberto Ramos", ["Cover"], False),
+            ],
         )
 
     def test_the_synopsis_may_end_differently(self) -> None:
